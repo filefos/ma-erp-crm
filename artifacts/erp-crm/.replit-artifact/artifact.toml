@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Prime Max & Elite Prefab ERP CRM"
+version = "1.0.0"
+id = "artifacts/erp-crm"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24746
+
+[services.development]
+run = "pnpm --filter @workspace/erp-crm run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/erp-crm", "run", "build" ]
+publicDir = "artifacts/erp-crm/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24746"
+BASE_PATH = "/"

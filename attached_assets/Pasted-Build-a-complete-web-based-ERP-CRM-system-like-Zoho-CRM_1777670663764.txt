@@ -1,0 +1,986 @@
+Build a complete web-based ERP + CRM system like Zoho CRM for:
+
+1. PRIME MAX PREFAB HOUSES INDUSTRY LLC
+2. ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+
+App name:
+Prime Max & Elite Prefab ERP CRM
+
+The system must be professional, modern, eye-catching, and suitable for prefab construction, manufacturing, trading, sales, accounts, inventory, procurement, attendance, and project management.
+
+DESIGN REQUIREMENTS:
+- Very eye-catching SaaS design
+- Dark blue and light blue color theme
+- Modern Zoho CRM-style layout
+- Sidebar navigation
+- Top search bar
+- Role-based dashboard
+- Clean cards, tables, charts, badges, filters
+- Mobile responsive
+- Professional animations
+- Dark/light mode option
+- Arabic/English ready structure
+
+TECH STACK:
+- Frontend: React + Tailwind CSS
+- Backend: Node.js + Express
+- Database: PostgreSQL
+- Authentication: JWT/session login
+- Password hashing
+- Role-based access control
+- PDF generation
+- Excel/CSV import/export
+- PWA-ready mobile version
+- Replit compatible
+
+--------------------------------------------------
+MAIN SYSTEM REQUIREMENTS
+--------------------------------------------------
+
+1. MULTI-COMPANY SYSTEM
+Create one CRM/ERP system for both companies:
+- Prime Max Prefab Houses Industry LLC
+- ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+
+Each company must have:
+- Separate logo
+- Separate letterhead
+- Separate quotation format
+- Separate proforma invoice format
+- Separate tax invoice format
+- Separate delivery note format
+- Separate bank details
+- Separate VAT/TRN details
+- Separate reports
+- Separate document numbering
+
+Admin can view both companies together or separately.
+
+--------------------------------------------------
+2. ADMIN CONTROL
+--------------------------------------------------
+All system control must be under Admin.
+
+Admin can:
+- Create users
+- Create departments
+- Assign roles
+- Assign company access
+- Assign permissions
+- Approve quotations
+- Approve invoices
+- Approve LPOs
+- Approve cheque printing
+- Approve stock adjustment
+- View all reports
+- View all attendance
+- View GPS/camera attendance
+- Manage document formats
+- Manage company settings
+- Manage VAT settings
+- Manage bank cheque templates
+- Manage system backups
+
+--------------------------------------------------
+3. DEPARTMENTS & LOGIN ACCESS
+--------------------------------------------------
+Create separate login access for each department.
+
+Departments:
+- Admin
+- Accounts Department
+- Sales Department
+- Finance Department
+- Procurement Department
+- Inventory Department
+- Store Department
+- Assets Department
+- Production Department
+- HR / Attendance Department
+- Management
+
+Each user must have:
+- Specific user ID
+- Name
+- Email
+- Phone
+- Department
+- Role
+- Company access
+- Permission level
+- Active/inactive status
+
+Accounts Department must have:
+- Accounts Admin
+- Accounts User
+
+Store must have separate login:
+- Storekeeper can create stock in/out
+- Storekeeper maintains stock records
+- Procurement can only view stock
+- Procurement cannot edit store records
+
+--------------------------------------------------
+4. CRM MODULE LIKE ZOHO CRM
+--------------------------------------------------
+Create full CRM modules:
+- Leads
+- Contacts
+- Companies
+- Deals / Opportunities
+- Activities
+- Tasks
+- Follow-ups
+- Sales pipeline
+- Reports
+
+Lead fields:
+- Lead name
+- Company name
+- Contact person
+- Phone
+- WhatsApp
+- Email
+- Location
+- Lead source
+- Requirement type
+- Quantity
+- Budget
+- Status
+- Assigned salesperson
+- Notes
+- Next follow-up date
+- Lead score
+- AI recommendation
+
+Lead stages:
+- New
+- Contacted
+- Qualified
+- Site Visit
+- Quotation Required
+- Quotation Sent
+- Negotiation
+- Won
+- Lost
+
+Features:
+- Add/edit/delete leads
+- Search/filter leads
+- Lead timeline
+- Convert lead to deal
+- Kanban pipeline
+- Follow-up reminders
+- WhatsApp button
+- Email button
+- AI lead scoring
+
+--------------------------------------------------
+5. CUSTOMIZED QUOTATION MODULE
+--------------------------------------------------
+Create company-wise customized quotation formats.
+
+Quotation features:
+- Auto quotation number
+- Company logo
+- Company letterhead
+- Client details
+- Project details
+- Item description
+- Quantity
+- Unit
+- Rate
+- Amount
+- Discount
+- VAT
+- Grand total
+- Payment terms
+- Delivery terms
+- Validity
+- Terms and conditions
+- Prepared by
+- Approved by
+- Signature section
+- Company stamp placeholder
+
+Quotation statuses:
+- Draft
+- Sent
+- Revised
+- Approved
+- Rejected
+- Cancelled
+
+Features:
+- Generate PDF quotation
+- Download PDF
+- Print quotation
+- Send quotation by email placeholder
+- Send quotation by WhatsApp placeholder
+- Revision history
+- Approval workflow
+- Convert quotation to project
+
+--------------------------------------------------
+6. QUOTATION AUTO-GENERATION SYSTEM
+--------------------------------------------------
+Build an auto quotation generator.
+
+User enters:
+- Building type
+- Size
+- Area
+- Number of rooms
+- Panel type
+- Roofing type
+- Flooring type
+- Electrical yes/no
+- Plumbing yes/no
+- AC yes/no
+- Installation yes/no
+- Delivery location
+
+System should:
+- Auto-calculate cost
+- Suggest quotation items
+- Add VAT
+- Add delivery charges
+- Generate quotation draft
+- Allow manual editing before approval
+
+--------------------------------------------------
+7. PROFORMA INVOICE MODULE
+--------------------------------------------------
+Add proforma invoice system.
+
+Fields:
+- PI number
+- Client name
+- Project name
+- Linked quotation
+- Items
+- Amount
+- VAT
+- Total
+- Payment terms
+- Bank details
+- Validity date
+- Prepared by
+- Approved by
+
+Features:
+- Generate PDF
+- Download
+- Print
+- Convert quotation to proforma invoice
+- Approval workflow
+
+--------------------------------------------------
+8. TAX INVOICE MODULE
+--------------------------------------------------
+Add UAE tax invoice module.
+
+Fields:
+- Tax invoice number
+- Company TRN
+- Client TRN
+- Invoice date
+- Supply date
+- Linked quotation / LPO / project
+- Item description
+- Amount before VAT
+- VAT %
+- VAT amount
+- Grand total
+- Payment status
+- Balance amount
+
+Features:
+- PDF tax invoice
+- Payment tracking
+- Partial payment tracking
+- Invoice aging report
+- Overdue invoice alerts
+
+--------------------------------------------------
+9. DELIVERY NOTE MODULE
+--------------------------------------------------
+Create delivery note system.
+
+Fields:
+- Delivery note number
+- Client name
+- Project name
+- Delivery location
+- Vehicle number
+- Driver name
+- Delivered items
+- Quantity
+- Receiver name
+- Receiver signature placeholder
+- Delivery date
+- Linked invoice/project
+
+Features:
+- Generate PDF
+- Print delivery note
+- Mark delivered
+- Attach delivery note to project
+
+--------------------------------------------------
+10. ACCOUNTS MODULE
+--------------------------------------------------
+Build full accounts module.
+
+Features:
+- Upload bills
+- Upload expenses
+- Attach receipts
+- Customer ledger
+- Supplier ledger
+- Sales invoices
+- Proforma invoices
+- Tax invoices
+- Payment receipts
+- Payment vouchers
+- Expense entries
+- Petty cash
+- VAT report
+- Statement of account
+- Invoice aging
+- Outstanding receivables
+- Outstanding payables
+- Profit/loss basic report
+- Company-wise accounts
+
+Accounts record upload:
+- Upload bill PDF/image
+- Upload expense receipt
+- Expense category
+- Supplier name
+- Invoice number
+- Amount
+- VAT
+- Payment method
+- Payment date
+- Approval status
+- Attachment preview
+
+--------------------------------------------------
+11. FINANCE MODULE
+--------------------------------------------------
+Finance features:
+- Payment approval
+- Supplier payment approval
+- Client payment tracking
+- Cash flow summary
+- Bank account records
+- Pending receivables
+- Pending payables
+- Bank reconciliation placeholder
+- Cheque approval
+- Finance approval workflow
+
+--------------------------------------------------
+12. SALES LPO MODULE
+--------------------------------------------------
+Add sales LPO generation.
+
+Fields:
+- LPO number
+- Client
+- Project
+- Linked quotation
+- LPO date
+- LPO value
+- Scope
+- Delivery schedule
+- Payment terms
+- Attachments
+
+Features:
+- Create LPO
+- Upload client LPO
+- Link LPO to quotation/project
+- Generate internal sales order
+- Track LPO status
+
+--------------------------------------------------
+13. PROCUREMENT MODULE
+--------------------------------------------------
+Procurement features:
+- Purchase requests
+- Supplier list
+- RFQ to suppliers
+- Purchase comparison
+- Purchase order generation
+- Supplier LPO
+- Approval workflow
+- Material request
+- Procurement status tracking
+
+Procurement can view inventory stock but cannot edit store stock.
+
+--------------------------------------------------
+14. INVENTORY MODULE
+--------------------------------------------------
+Inventory features:
+- Item master
+- Category
+- SKU/item code
+- Unit
+- Opening stock
+- Current stock
+- Minimum stock alert
+- Stock valuation
+- Warehouse/location-wise inventory
+- Company-wise inventory
+
+Items:
+- Steel
+- Sandwich panels
+- Doors
+- Windows
+- Flooring
+- Electrical items
+- Plumbing items
+- AC units
+- Paint
+- Hardware
+- Consumables
+- Tools
+- Finished cabins
+- Raw materials
+
+--------------------------------------------------
+15. STORE MODULE
+--------------------------------------------------
+Store module must have separate login.
+
+Storekeeper can:
+- Add stock in
+- Add stock out
+- Issue material to production
+- Receive material from suppliers
+- Return material
+- Transfer stock between locations
+
+Store entry types:
+- Stock In
+- Stock Out
+- Material Issue
+- Material Return
+- Stock Transfer
+- Damage Entry
+- Adjustment Entry
+
+Admin must approve stock adjustment.
+
+--------------------------------------------------
+16. STOCK TAKE MODULE
+--------------------------------------------------
+Add stock take system.
+
+Features:
+- Create stock take session
+- Count physical stock
+- Compare system stock vs physical stock
+- Show shortage/excess
+- Adjustment approval by Admin
+- Stock take report
+- Export stock take report
+
+--------------------------------------------------
+17. ASSETS MODULE
+--------------------------------------------------
+Asset fields:
+- Asset ID
+- Asset name
+- Category
+- Purchase date
+- Purchase value
+- Current location
+- Assigned to
+- Condition
+- Maintenance date
+- Status
+
+Asset categories:
+- Machinery
+- Vehicles
+- Tools
+- Office equipment
+- Factory equipment
+- IT equipment
+
+Features:
+- Asset register
+- Asset transfer
+- Maintenance record
+- Asset report
+
+--------------------------------------------------
+18. PROJECT MODULE
+--------------------------------------------------
+When deal is won, convert it into a project.
+
+Project fields:
+- Project name
+- Client
+- Company
+- Location
+- Scope
+- Approved quotation
+- LPO
+- Project value
+- Production status
+- Procurement status
+- Delivery status
+- Installation status
+- Payment status
+- Project manager
+- Timeline
+- Attachments
+
+Project stages:
+- New Project
+- Design
+- Procurement
+- Production
+- Quality Check
+- Delivery
+- Installation
+- Handover
+- Completed
+
+--------------------------------------------------
+19. STAFF & LABOR ATTENDANCE
+--------------------------------------------------
+Create attendance module.
+
+Features:
+- Employee master
+- Labor master
+- Department
+- Designation
+- Site location
+- Check-in
+- Check-out
+- Overtime
+- Leave
+- Absence
+- Monthly attendance report
+
+--------------------------------------------------
+20. GPS + CAMERA ATTENDANCE
+--------------------------------------------------
+Create mobile attendance with GPS and camera.
+
+Requirements:
+- Employee checks in from mobile
+- Capture GPS location
+- Capture camera selfie
+- Store date/time
+- Store latitude and longitude
+- Show map placeholder
+- Prevent attendance without GPS permission
+- Prevent attendance without camera permission
+- Admin can view attendance photo and GPS
+- HR can export attendance report
+
+Use browser geolocation API and camera API placeholders.
+
+--------------------------------------------------
+21. MOBILE APP VERSION / PWA
+--------------------------------------------------
+Create mobile responsive web app and PWA-ready structure.
+
+Mobile features:
+- Mobile dashboard
+- Mobile lead entry
+- Mobile follow-up update
+- Mobile quotation preview
+- Mobile attendance with GPS/camera
+- Mobile project status update
+- Mobile inventory view
+
+--------------------------------------------------
+22. WHATSAPP INTEGRATION
+--------------------------------------------------
+Add WhatsApp integration placeholder.
+
+Features:
+- WhatsApp button in leads, contacts, deals
+- Open WhatsApp using phone number
+- Pre-filled message templates
+- Send quotation by WhatsApp placeholder
+- Follow-up WhatsApp reminders
+- WhatsApp notes history
+
+Templates:
+- Introduction
+- Quotation follow-up
+- Payment follow-up
+- Delivery update
+- Meeting confirmation
+
+--------------------------------------------------
+23. EMAIL MARKETING
+--------------------------------------------------
+Add email marketing module.
+
+Features:
+- Email templates
+- Campaign list
+- Send email placeholder
+- Campaign status
+- Email follow-up reminder
+- Email activity log
+
+Templates:
+- Company introduction
+- Quotation follow-up
+- Proforma invoice follow-up
+- Payment reminder
+- Project handover message
+
+--------------------------------------------------
+24. AUTOMATION MODULE
+--------------------------------------------------
+Create automation rules.
+
+Examples:
+- New lead not contacted in 24 hours: remind salesperson
+- Quotation sent and no reply in 3 days: create follow-up
+- Invoice overdue: alert accounts
+- Stock below minimum: alert procurement
+- Project delivery date near: alert production
+- Employee missing attendance: alert HR
+
+--------------------------------------------------
+25. AI FEATURES
+--------------------------------------------------
+Add AI-ready features with placeholder logic.
+
+AI features:
+- Lead scoring
+- Auto reply suggestions
+- Follow-up message generator
+- Quotation item suggestion
+- Sales priority recommendation
+- Lost deal reason analysis
+- Client communication summary
+
+Lead scoring:
+- Hot Lead
+- Warm Lead
+- Cold Lead
+
+Structure code so OpenAI API can be added later.
+
+--------------------------------------------------
+26. CHEQUE PRINTING MODULE — UAE BANKS
+--------------------------------------------------
+Add cheque printing setup for UAE banks.
+
+Supported banks:
+- ADCB
+- Emirates NBD
+- Mashreq Bank
+- Dubai Islamic Bank
+- Abu Dhabi Islamic Bank
+- FAB
+- RAKBANK
+- HSBC UAE
+- Standard Chartered UAE
+- CBD
+- Custom UAE bank template
+
+Features:
+- Bank-wise cheque template
+- Cheque size setup
+- Print alignment settings
+- Payee name position
+- Amount in numbers position
+- Amount in words position
+- Date position
+- A/C payee position
+- Signature placeholder
+- Company bank account selection
+- Cheque number
+- Cheque date
+- Beneficiary name
+- Amount
+- Amount in words auto-generation
+- Voucher reference
+- Supplier/client link
+- Project link
+- Print preview
+- Test print alignment
+- Save bank template
+- Reprint cheque with Admin permission only
+- Cancelled cheque record
+- Cheque issue register
+
+Cheque status:
+- Draft
+- Printed
+- Issued
+- Cleared
+- Cancelled
+- Returned
+
+Security:
+- Only Accounts Admin, Finance Manager, and Super Admin can print cheques
+- Accounts User can prepare cheque but cannot print without approval
+- Every cheque print must be recorded in audit log
+- Reprint requires Super Admin approval
+
+--------------------------------------------------
+27. REPORTS
+--------------------------------------------------
+Reports:
+- Sales report
+- Lead source report
+- Deal stage report
+- Quotation report
+- Invoice report
+- Payment outstanding report
+- VAT report
+- Procurement report
+- Inventory report
+- Stock take report
+- Project progress report
+- Attendance report
+- Labor report
+- Asset report
+- Cheque report
+- Expense report
+- Company-wise report
+- Department-wise report
+- User performance report
+
+Export:
+- PDF
+- Excel
+- CSV
+
+--------------------------------------------------
+28. DASHBOARDS BY ROLE
+--------------------------------------------------
+Admin dashboard:
+- Total leads
+- Total deals
+- Total quotation value
+- Total invoices
+- Pending approvals
+- Stock alerts
+- Attendance summary
+- Project status
+- Company-wise performance
+
+Sales dashboard:
+- My leads
+- My follow-ups
+- My quotations
+- My deals
+
+Accounts dashboard:
+- Invoices
+- Payments
+- Expenses
+- Bills
+- Outstanding
+- VAT
+
+Procurement dashboard:
+- Purchase requests
+- Pending RFQs
+- Supplier quotations
+- Low stock
+
+Store dashboard:
+- Stock in
+- Stock out
+- Current stock
+- Pending material issue
+
+HR dashboard:
+- Staff attendance
+- Labor attendance
+- GPS check-ins
+- Absentees
+
+--------------------------------------------------
+29. DOCUMENT NUMBERING
+--------------------------------------------------
+Auto-generate:
+- Quotation
+- Proforma Invoice
+- Tax Invoice
+- Delivery Note
+- Sales LPO
+- Purchase Order
+- Material Request
+- Stock Entry
+- Asset ID
+- Project ID
+- Cheque Voucher
+- Expense Voucher
+
+Example:
+PM-QTN-2026-0001
+EP-QTN-2026-0001
+PM-INV-2026-0001
+EP-DN-2026-0001
+
+Company prefixes:
+- PM for Prime Max
+- EP for Elite Prefab
+
+--------------------------------------------------
+30. SECURITY & AUDIT LOG
+--------------------------------------------------
+Security:
+- Login required
+- Password hashing
+- JWT/session auth
+- Role-based route protection
+- Admin-only settings
+- Permission-based menus
+- Audit logs
+
+Audit log:
+- User login
+- Lead creation
+- Quotation changes
+- Invoice creation
+- Cheque printing
+- Stock adjustment
+- Attendance edit
+- Approval actions
+- Deleted records
+
+--------------------------------------------------
+31. EXTRA PROFESSIONAL FEATURES
+--------------------------------------------------
+Add:
+- File attachments everywhere
+- Document approval workflow
+- Digital signature placeholder
+- Client portal placeholder
+- Supplier portal placeholder
+- Project costing
+- Material costing
+- BOQ management
+- Estimation module
+- Work order system
+- Job card system
+- Payment receipt voucher
+- Payment voucher
+- Journal voucher
+- Debit note
+- Credit note
+- Petty cash
+- Bank reconciliation placeholder
+- UAE VAT return report
+- Salary sheet
+- Leave management
+- Vehicle management
+- Equipment maintenance
+- Task management
+- Barcode/QR code for inventory
+- QR code on invoices and delivery notes
+- Backup/export system
+- Import leads from Excel/CSV
+- Upload bills and expense receipts
+- Export all reports
+
+--------------------------------------------------
+32. DATABASE TABLES
+--------------------------------------------------
+Create database schema for:
+- Companies
+- Users
+- Roles
+- Permissions
+- Departments
+- Leads
+- Contacts
+- Clients
+- Deals
+- Activities
+- Followups
+- Quotations
+- QuotationItems
+- ProformaInvoices
+- TaxInvoices
+- DeliveryNotes
+- LPOs
+- Projects
+- Suppliers
+- PurchaseRequests
+- PurchaseOrders
+- InventoryItems
+- StockEntries
+- StockTake
+- Assets
+- Employees
+- Labor
+- Attendance
+- GPSAttendance
+- Expenses
+- Bills
+- PaymentReceipts
+- PaymentVouchers
+- Cheques
+- BankAccounts
+- Notifications
+- AutomationRules
+- AuditLogs
+- Documents
+
+--------------------------------------------------
+33. BUILD PHASES
+--------------------------------------------------
+Build step-by-step.
+
+Phase 1:
+- Login
+- Admin panel
+- Multi-company setup
+- User roles
+- CRM leads/deals
+- Quotation system
+- PDF generation
+
+Phase 2:
+- Proforma invoice
+- Tax invoice
+- Delivery note
+- Accounts uploads
+- Sales LPO
+
+Phase 3:
+- Procurement
+- Inventory
+- Store entries
+- Stock take
+- Assets
+
+Phase 4:
+- Attendance
+- GPS/camera attendance
+- Mobile PWA
+- WhatsApp
+- AI features
+- Automation
+- Cheque printing
+
+IMPORTANT:
+Start with a working MVP first.
+Use dummy data.
+Include seed users.
+Include setup instructions.
+Make sure the app runs successfully in Replit.
+Keep code clean, modular, scalable, and professional.
