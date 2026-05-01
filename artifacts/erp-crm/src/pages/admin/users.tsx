@@ -22,7 +22,7 @@ const roleColors: Record<string, string> = {
 export function UsersList() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "sales", companyId: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "sales", companyId: "all" });
   const queryClient = useQueryClient();
   const { data: users, isLoading } = useListUsers();
   const { data: companies } = useListCompanies();
@@ -55,11 +55,11 @@ export function UsersList() {
               <div className="space-y-1"><Label>Company</Label>
                 <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
                   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent><SelectItem value="">Both Companies</SelectItem>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">Both Companies</SelectItem>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
-            <Button className="mt-4" onClick={() => create.mutate({ data: { ...form, companyId: form.companyId ? parseInt(form.companyId,10) : undefined } as any })} disabled={!form.name || !form.email || !form.password || create.isPending}>
+            <Button className="mt-4" onClick={() => create.mutate({ data: { ...form, companyId: form.companyId && form.companyId !== "all" ? parseInt(form.companyId,10) : undefined } as any })} disabled={!form.name || !form.email || !form.password || create.isPending}>
               {create.isPending ? "Creating..." : "Create User"}
             </Button>
           </DialogContent>
