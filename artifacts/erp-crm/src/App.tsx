@@ -157,6 +157,24 @@ function Router() {
       <Route path="/accounts/bank-accounts">
         <ModuleGuard module="bank_accounts"><BankAccountsList /></ModuleGuard>
       </Route>
+      <Route path="/accounts/payments-received">
+        <ModuleGuard module="expenses"><PaymentsReceivedList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/payments-made">
+        <ModuleGuard module="expenses"><PaymentsMadeList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/chart-of-accounts">
+        <ModuleGuard module="expenses"><ChartOfAccountsList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/journal-entries">
+        <ModuleGuard module="expenses"><JournalEntriesList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/vat-report">
+        <ModuleGuard module="expenses"><VatReport /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/ai-assistant">
+        <ModuleGuard module="expenses"><AiAssistant /></ModuleGuard>
+      </Route>
 
       {/* Procurement */}
       <Route path="/procurement/suppliers">
