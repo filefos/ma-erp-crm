@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
   useCreateTaxInvoice, useCreateDeliveryNote,
-  getGetQuotationQueryKey,
+  getGetQuotationQueryKey, useListCompanies,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ export function QuotationDetail({ id }: Props) {
   const { data: q, isLoading } = useGetQuotation(qid, {
     query: { queryKey: getGetQuotationQueryKey(qid), enabled: !!qid },
   });
+  const { data: companies } = useListCompanies();
 
   const approve = useApproveQuotation({
     mutation: {
@@ -96,6 +97,7 @@ export function QuotationDetail({ id }: Props) {
     docNumber: q.quotationNumber,
     companyId: q.companyId,
     companyRef: (q as any).companyRef,
+    companyLogo: (companies?.find(c => c.id === q.companyId) as any)?.logo ?? undefined,
     clientName: q.clientName,
     clientContactPerson: (q as any).clientContactPerson,
     clientPhone: q.clientPhone,

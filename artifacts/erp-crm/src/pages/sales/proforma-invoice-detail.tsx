@@ -1,7 +1,7 @@
 import {
   useGetProformaInvoice, useGetQuotation,
   getGetProformaInvoiceQueryKey, getGetQuotationQueryKey,
-  useCreateTaxInvoice,
+  useCreateTaxInvoice, useListCompanies,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const { data: pi, isLoading } = useGetProformaInvoice(pid, {
     query: { queryKey: getGetProformaInvoiceQueryKey(pid), enabled: !!pid },
   });
+  const { data: companies } = useListCompanies();
 
   const qid = (pi as any)?.quotationId as number | undefined;
   const { data: quotation } = useGetQuotation(qid!, {
@@ -69,6 +70,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
     docNumber: pi.piNumber,
     companyId: pi.companyId,
     companyRef: (pi as any).companyRef,
+    companyLogo: (companies?.find(c => c.id === pi.companyId) as any)?.logo ?? undefined,
     clientName: pi.clientName,
     clientEmail: (pi as any).clientEmail,
     clientPhone: (pi as any).clientPhone,
