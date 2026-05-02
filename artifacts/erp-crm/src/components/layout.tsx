@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Users, Briefcase, Calendar, FileText, FileBox, Receipt,
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
-  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail
+  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
+  BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -52,8 +53,14 @@ const NAV: NavGroup[] = [
       { href: "/accounts/invoices", label: "Tax Invoices", icon: Receipt },
       { href: "/accounts/delivery-notes", label: "Delivery Notes", icon: TruckIcon },
       { href: "/accounts/expenses", label: "Expenses", icon: Banknote },
+      { href: "/accounts/payments-received", label: "Payments Received", icon: ArrowDownCircle },
+      { href: "/accounts/payments-made", label: "Payments Made", icon: ArrowUpCircle },
       { href: "/accounts/cheques", label: "Cheques", icon: FileBox },
       { href: "/accounts/bank-accounts", label: "Bank Accounts", icon: Landmark },
+      { href: "/accounts/chart-of-accounts", label: "Chart of Accounts", icon: BookOpen },
+      { href: "/accounts/journal-entries", label: "Journal Entries", icon: BookMarked },
+      { href: "/accounts/vat-report", label: "VAT Report", icon: PieChart },
+      { href: "/accounts/ai-assistant", label: "AI Assistant", icon: Bot },
     ],
   },
   {

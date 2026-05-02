@@ -3669,3 +3669,499 @@ export const UpdateDepartmentResponse = zod.object({
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
+
+/**
+ * @summary List chart of accounts
+ */
+export const ListChartOfAccountsQueryParams = zod.object({
+  companyId: zod.coerce.number().optional(),
+  accountType: zod.coerce.string().optional(),
+});
+
+export const ListChartOfAccountsResponseItem = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  accountCode: zod.string(),
+  accountName: zod.string(),
+  accountType: zod.string(),
+  parentId: zod.number().optional(),
+  openingBalance: zod.number().optional(),
+  currentBalance: zod.number().optional(),
+  currency: zod.string().optional(),
+  description: zod.string().optional(),
+  isActive: zod.boolean(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+export const ListChartOfAccountsResponse = zod.array(
+  ListChartOfAccountsResponseItem,
+);
+
+/**
+ * @summary Create account
+ */
+export const CreateChartOfAccountBody = zod.object({
+  companyId: zod.number(),
+  accountCode: zod.string(),
+  accountName: zod.string(),
+  accountType: zod.string(),
+  parentId: zod.number().optional(),
+  openingBalance: zod.number().optional(),
+  currentBalance: zod.number().optional(),
+  currency: zod.string().optional(),
+  description: zod.string().optional(),
+  isActive: zod.boolean().optional(),
+});
+
+/**
+ * @summary Update account
+ */
+export const UpdateChartOfAccountParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateChartOfAccountBody = zod.object({
+  companyId: zod.number(),
+  accountCode: zod.string(),
+  accountName: zod.string(),
+  accountType: zod.string(),
+  parentId: zod.number().optional(),
+  openingBalance: zod.number().optional(),
+  currentBalance: zod.number().optional(),
+  currency: zod.string().optional(),
+  description: zod.string().optional(),
+  isActive: zod.boolean().optional(),
+});
+
+export const UpdateChartOfAccountResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  accountCode: zod.string(),
+  accountName: zod.string(),
+  accountType: zod.string(),
+  parentId: zod.number().optional(),
+  openingBalance: zod.number().optional(),
+  currentBalance: zod.number().optional(),
+  currency: zod.string().optional(),
+  description: zod.string().optional(),
+  isActive: zod.boolean(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete account
+ */
+export const DeleteChartOfAccountParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteChartOfAccountResponse = zod.object({
+  success: zod.boolean().optional(),
+});
+
+/**
+ * @summary List payments received
+ */
+export const ListPaymentsReceivedQueryParams = zod.object({
+  companyId: zod.coerce.number().optional(),
+});
+
+export const ListPaymentsReceivedResponseItem = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  paymentNumber: zod.string(),
+  customerName: zod.string(),
+  invoiceRef: zod.string().optional(),
+  taxInvoiceId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  bankAccountName: zod.string().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string(),
+  createdAt: zod.string().optional(),
+});
+export const ListPaymentsReceivedResponse = zod.array(
+  ListPaymentsReceivedResponseItem,
+);
+
+/**
+ * @summary Create payment received
+ */
+export const CreatePaymentReceivedBody = zod.object({
+  companyId: zod.number(),
+  customerName: zod.string(),
+  invoiceRef: zod.string().optional(),
+  taxInvoiceId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string().optional(),
+});
+
+/**
+ * @summary Update payment received
+ */
+export const UpdatePaymentReceivedParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdatePaymentReceivedBody = zod.object({
+  companyId: zod.number(),
+  customerName: zod.string(),
+  invoiceRef: zod.string().optional(),
+  taxInvoiceId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string().optional(),
+});
+
+export const UpdatePaymentReceivedResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  paymentNumber: zod.string(),
+  customerName: zod.string(),
+  invoiceRef: zod.string().optional(),
+  taxInvoiceId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  bankAccountName: zod.string().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string(),
+  createdAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete payment received
+ */
+export const DeletePaymentReceivedParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeletePaymentReceivedResponse = zod.object({
+  success: zod.boolean().optional(),
+});
+
+/**
+ * @summary List payments made
+ */
+export const ListPaymentsMadeQueryParams = zod.object({
+  companyId: zod.coerce.number().optional(),
+});
+
+export const ListPaymentsMadeResponseItem = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  paymentNumber: zod.string(),
+  payeeName: zod.string(),
+  expenseRef: zod.string().optional(),
+  expenseId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  bankAccountName: zod.string().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string(),
+  createdAt: zod.string().optional(),
+});
+export const ListPaymentsMadeResponse = zod.array(ListPaymentsMadeResponseItem);
+
+/**
+ * @summary Create payment made
+ */
+export const CreatePaymentMadeBody = zod.object({
+  companyId: zod.number(),
+  payeeName: zod.string(),
+  expenseRef: zod.string().optional(),
+  expenseId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string().optional(),
+});
+
+/**
+ * @summary Update payment made
+ */
+export const UpdatePaymentMadeParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdatePaymentMadeBody = zod.object({
+  companyId: zod.number(),
+  payeeName: zod.string(),
+  expenseRef: zod.string().optional(),
+  expenseId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string().optional(),
+});
+
+export const UpdatePaymentMadeResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  paymentNumber: zod.string(),
+  payeeName: zod.string(),
+  expenseRef: zod.string().optional(),
+  expenseId: zod.number().optional(),
+  paymentDate: zod.string(),
+  amount: zod.number(),
+  paymentMethod: zod.string(),
+  bankAccountId: zod.number().optional(),
+  bankAccountName: zod.string().optional(),
+  referenceNumber: zod.string().optional(),
+  notes: zod.string().optional(),
+  status: zod.string(),
+  createdAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete payment made
+ */
+export const DeletePaymentMadeParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeletePaymentMadeResponse = zod.object({
+  success: zod.boolean().optional(),
+});
+
+/**
+ * @summary List journal entries
+ */
+export const ListJournalEntriesQueryParams = zod.object({
+  companyId: zod.coerce.number().optional(),
+  status: zod.coerce.string().optional(),
+});
+
+export const ListJournalEntriesResponseItem = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  journalNumber: zod.string(),
+  entryDate: zod.string(),
+  description: zod.string(),
+  reference: zod.string().optional(),
+  status: zod.string(),
+  totalDebit: zod.number().optional(),
+  totalCredit: zod.number().optional(),
+  preparedById: zod.number().optional(),
+  preparedByName: zod.string().optional(),
+  approvedById: zod.number().optional(),
+  approvedByName: zod.string().optional(),
+  lines: zod
+    .array(
+      zod.object({
+        id: zod.number().optional(),
+        journalId: zod.number().optional(),
+        accountId: zod.number().optional(),
+        accountName: zod.string(),
+        description: zod.string().optional(),
+        debit: zod.number().optional(),
+        credit: zod.number().optional(),
+        sortOrder: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+export const ListJournalEntriesResponse = zod.array(
+  ListJournalEntriesResponseItem,
+);
+
+/**
+ * @summary Create journal entry
+ */
+export const CreateJournalEntryBody = zod.object({
+  companyId: zod.number(),
+  entryDate: zod.string(),
+  description: zod.string(),
+  reference: zod.string().optional(),
+  status: zod.string().optional(),
+  lines: zod
+    .array(
+      zod.object({
+        id: zod.number().optional(),
+        journalId: zod.number().optional(),
+        accountId: zod.number().optional(),
+        accountName: zod.string(),
+        description: zod.string().optional(),
+        debit: zod.number().optional(),
+        credit: zod.number().optional(),
+        sortOrder: zod.number().optional(),
+      }),
+    )
+    .optional(),
+});
+
+/**
+ * @summary Get journal entry
+ */
+export const GetJournalEntryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetJournalEntryResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  journalNumber: zod.string(),
+  entryDate: zod.string(),
+  description: zod.string(),
+  reference: zod.string().optional(),
+  status: zod.string(),
+  totalDebit: zod.number().optional(),
+  totalCredit: zod.number().optional(),
+  preparedById: zod.number().optional(),
+  preparedByName: zod.string().optional(),
+  approvedById: zod.number().optional(),
+  approvedByName: zod.string().optional(),
+  lines: zod
+    .array(
+      zod.object({
+        id: zod.number().optional(),
+        journalId: zod.number().optional(),
+        accountId: zod.number().optional(),
+        accountName: zod.string(),
+        description: zod.string().optional(),
+        debit: zod.number().optional(),
+        credit: zod.number().optional(),
+        sortOrder: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Update journal entry
+ */
+export const UpdateJournalEntryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateJournalEntryBody = zod.object({
+  companyId: zod.number(),
+  entryDate: zod.string(),
+  description: zod.string(),
+  reference: zod.string().optional(),
+  status: zod.string().optional(),
+  lines: zod
+    .array(
+      zod.object({
+        id: zod.number().optional(),
+        journalId: zod.number().optional(),
+        accountId: zod.number().optional(),
+        accountName: zod.string(),
+        description: zod.string().optional(),
+        debit: zod.number().optional(),
+        credit: zod.number().optional(),
+        sortOrder: zod.number().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export const UpdateJournalEntryResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  journalNumber: zod.string(),
+  entryDate: zod.string(),
+  description: zod.string(),
+  reference: zod.string().optional(),
+  status: zod.string(),
+  totalDebit: zod.number().optional(),
+  totalCredit: zod.number().optional(),
+  preparedById: zod.number().optional(),
+  preparedByName: zod.string().optional(),
+  approvedById: zod.number().optional(),
+  approvedByName: zod.string().optional(),
+  lines: zod
+    .array(
+      zod.object({
+        id: zod.number().optional(),
+        journalId: zod.number().optional(),
+        accountId: zod.number().optional(),
+        accountName: zod.string(),
+        description: zod.string().optional(),
+        debit: zod.number().optional(),
+        credit: zod.number().optional(),
+        sortOrder: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete journal entry
+ */
+export const DeleteJournalEntryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteJournalEntryResponse = zod.object({
+  success: zod.boolean().optional(),
+});
+
+/**
+ * @summary Approve journal entry
+ */
+export const ApproveJournalEntryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ApproveJournalEntryResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  journalNumber: zod.string(),
+  entryDate: zod.string(),
+  description: zod.string(),
+  reference: zod.string().optional(),
+  status: zod.string(),
+  totalDebit: zod.number().optional(),
+  totalCredit: zod.number().optional(),
+  preparedById: zod.number().optional(),
+  preparedByName: zod.string().optional(),
+  approvedById: zod.number().optional(),
+  approvedByName: zod.string().optional(),
+  lines: zod
+    .array(
+      zod.object({
+        id: zod.number().optional(),
+        journalId: zod.number().optional(),
+        accountId: zod.number().optional(),
+        accountName: zod.string(),
+        description: zod.string().optional(),
+        debit: zod.number().optional(),
+        credit: zod.number().optional(),
+        sortOrder: zod.number().optional(),
+      }),
+    )
+    .optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});

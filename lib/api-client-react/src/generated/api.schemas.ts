@@ -1085,6 +1085,138 @@ export interface AdminSummary {
   companyCards: AdminCompanyCard[];
 }
 
+export interface ChartOfAccount {
+  id: number;
+  companyId: number;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  parentId?: number;
+  openingBalance?: number;
+  currentBalance?: number;
+  currency?: string;
+  description?: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateChartOfAccountBody {
+  companyId: number;
+  accountCode: string;
+  accountName: string;
+  accountType: string;
+  parentId?: number;
+  openingBalance?: number;
+  currentBalance?: number;
+  currency?: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface PaymentReceived {
+  id: number;
+  companyId: number;
+  paymentNumber: string;
+  customerName: string;
+  invoiceRef?: string;
+  taxInvoiceId?: number;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: string;
+  bankAccountId?: number;
+  bankAccountName?: string;
+  referenceNumber?: string;
+  notes?: string;
+  status: string;
+  createdAt?: string;
+}
+
+export interface CreatePaymentReceivedBody {
+  companyId: number;
+  customerName: string;
+  invoiceRef?: string;
+  taxInvoiceId?: number;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: string;
+  bankAccountId?: number;
+  referenceNumber?: string;
+  notes?: string;
+  status?: string;
+}
+
+export interface PaymentMade {
+  id: number;
+  companyId: number;
+  paymentNumber: string;
+  payeeName: string;
+  expenseRef?: string;
+  expenseId?: number;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: string;
+  bankAccountId?: number;
+  bankAccountName?: string;
+  referenceNumber?: string;
+  notes?: string;
+  status: string;
+  createdAt?: string;
+}
+
+export interface CreatePaymentMadeBody {
+  companyId: number;
+  payeeName: string;
+  expenseRef?: string;
+  expenseId?: number;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: string;
+  bankAccountId?: number;
+  referenceNumber?: string;
+  notes?: string;
+  status?: string;
+}
+
+export interface JournalEntryLine {
+  id?: number;
+  journalId?: number;
+  accountId?: number;
+  accountName: string;
+  description?: string;
+  debit?: number;
+  credit?: number;
+  sortOrder?: number;
+}
+
+export interface JournalEntry {
+  id: number;
+  companyId: number;
+  journalNumber: string;
+  entryDate: string;
+  description: string;
+  reference?: string;
+  status: string;
+  totalDebit?: number;
+  totalCredit?: number;
+  preparedById?: number;
+  preparedByName?: string;
+  approvedById?: number;
+  approvedByName?: string;
+  lines?: JournalEntryLine[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateJournalEntryBody {
+  companyId: number;
+  entryDate: string;
+  description: string;
+  reference?: string;
+  status?: string;
+  lines?: JournalEntryLine[];
+}
+
 export type ListUsersParams = {
   departmentId?: number;
   companyId?: number;
@@ -1239,4 +1371,38 @@ export type GetSalesPipelineParams = {
 
 export type GetRecentActivityParams = {
   limit?: number;
+};
+
+export type ListChartOfAccountsParams = {
+  companyId?: number;
+  accountType?: string;
+};
+
+export type DeleteChartOfAccount200 = {
+  success?: boolean;
+};
+
+export type ListPaymentsReceivedParams = {
+  companyId?: number;
+};
+
+export type DeletePaymentReceived200 = {
+  success?: boolean;
+};
+
+export type ListPaymentsMadeParams = {
+  companyId?: number;
+};
+
+export type DeletePaymentMade200 = {
+  success?: boolean;
+};
+
+export type ListJournalEntriesParams = {
+  companyId?: number;
+  status?: string;
+};
+
+export type DeleteJournalEntry200 = {
+  success?: boolean;
 };
