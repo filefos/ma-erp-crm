@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { localDayKey } from "@/components/crm/premium";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, CheckCircle, X, Trash2, Edit, ChevronDown, ChevronUp } from "lucide-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
@@ -47,7 +48,7 @@ export function SupplierQuotationsList() {
     rfqId: "" as string | number,
     supplierId: "" as string | number,
     supplierQuotationRef: "",
-    quotationDate: new Date().toISOString().slice(0, 10),
+    quotationDate: localDayKey(),
     deliveryTime: "",
     paymentTerms: "",
     warranty: "",
@@ -110,7 +111,7 @@ export function SupplierQuotationsList() {
       rfqId: sq.rfqId ?? "",
       supplierId: sq.supplierId,
       supplierQuotationRef: sq.supplierQuotationRef ?? "",
-      quotationDate: sq.quotationDate ?? new Date().toISOString().slice(0, 10),
+      quotationDate: sq.quotationDate ?? localDayKey(),
       deliveryTime: sq.deliveryTime ?? "",
       paymentTerms: sq.paymentTerms ?? "",
       warranty: sq.warranty ?? "",

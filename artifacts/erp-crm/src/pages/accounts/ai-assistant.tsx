@@ -34,8 +34,8 @@ function generateResponse(prompt: string, data: { expenses: any[]; paymentsRecei
   const lower = prompt.toLowerCase();
 
   if (lower.includes("categor")) {
-    const cats = expenses.reduce((m: Record<string, number>, e) => { m[e.category] = (m[e.category] ?? 0) + (e.total ?? 0); return m; }, {});
-    const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+    const cats: Record<string, number> = expenses.reduce((m: Record<string, number>, e) => { m[e.category] = (m[e.category] ?? 0) + (e.total ?? 0); return m; }, {});
+    const sorted: [string, number][] = Object.entries(cats).sort((a, b) => b[1] - a[1]);
     return `**Expense Categorization Analysis**\n\nBased on your ${expenses.length} recorded expenses (Total: AED ${totalExpenses.toFixed(2)}):\n\n${sorted.map(([cat, amt]) => `• **${cat}**: AED ${amt.toFixed(2)} (${((amt / totalExpenses) * 100).toFixed(1)}%)`).join("\n")}\n\n**Recommendations:**\n• Consider creating sub-categories under "other" for better tracking\n• Labour and material expenses could be project-coded for better profitability analysis\n• Transport and fuel should be separated if possible — useful for fleet cost reporting`;
   }
 
@@ -75,8 +75,8 @@ function generateResponse(prompt: string, data: { expenses: any[]; paymentsRecei
   }
 
   if (lower.includes("expense") || lower.includes("summar") || lower.includes("trend")) {
-    const cats = expenses.reduce((m: Record<string, number>, e) => { m[e.category] = (m[e.category] ?? 0) + (e.total ?? 0); return m; }, {});
-    const top = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const cats: Record<string, number> = expenses.reduce((m: Record<string, number>, e) => { m[e.category] = (m[e.category] ?? 0) + (e.total ?? 0); return m; }, {});
+    const top: [string, number][] = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 5);
     return `**Expense Summary & Trend Analysis**\n\n📊 **Overview**\n• Total Transactions: ${expenses.length}\n• Total Amount: AED ${totalExpenses.toFixed(2)}\n• Total VAT: AED ${totalVat.toFixed(2)}\n\n🏆 **Top 5 Spending Categories:**\n${top.map(([cat, amt], i) => `${i + 1}. **${cat}**: AED ${amt.toFixed(2)} (${((amt / totalExpenses) * 100).toFixed(1)}%)`).join("\n")}\n\n💡 **AI Insights:**\n• Consider negotiating better payment terms with top vendors\n• Material and labour costs should be tracked per project\n• Monthly budgets per category would help control spending`;
   }
 

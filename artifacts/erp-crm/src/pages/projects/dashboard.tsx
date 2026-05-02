@@ -70,7 +70,7 @@ export function ProjectsDashboard() {
   const lpos      = useMemo(() => filterByCompany(lposRaw     ?? []), [lposRaw,     filterByCompany]);
   const invoices  = useMemo(() => filterByCompany(invoicesRaw ?? []), [invoicesRaw, filterByCompany]);
   const dns       = useMemo(() => filterByCompany(dnRaw       ?? []), [dnRaw,       filterByCompany]);
-  const users     = usersRaw ?? [];
+  const users     = useMemo(() => filterByCompany(usersRaw ?? []), [usersRaw, filterByCompany]);
 
   // ---- KPIs ----
   const totalProjects     = projects.length;

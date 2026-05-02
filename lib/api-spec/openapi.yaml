@@ -4417,6 +4417,8 @@ components:
           type: integer
         projectId:
           type: integer
+        projectName:
+          type: string
         subtotal:
           type: number
         vatPercent:

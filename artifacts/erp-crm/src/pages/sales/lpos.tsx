@@ -54,7 +54,7 @@ const EMPTY_FORM: LpoForm = {
 export function LposList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -178,7 +178,7 @@ export function LposList() {
         </div>
         <div className="flex items-center gap-3">
           <ExportMenu
-            data={(lpos ?? []) as Record<string, unknown>[]}
+            data={(lpos ?? []) as unknown as Record<string, unknown>[]}
             columns={[
               { header: "LPO Number", key: "lpoNumber" },
               { header: "Client", key: "clientName" },
@@ -351,7 +351,7 @@ function LpoFormFields({
   attachments: AttachmentMeta[];
   setAttachments: React.Dispatch<React.SetStateAction<AttachmentMeta[]>>;
   companies: Array<{ id: number; shortName?: string; name?: string }>;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isEdit?: boolean;
 }) {

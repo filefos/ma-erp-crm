@@ -17,7 +17,7 @@ import {
 import { suggestNextAction } from "@/lib/ai-crm";
 import {
   ExecutiveHeader, KPIWidget, StatusBadge, AIScoreBadge, Avatar,
-  weeklyCounts, weeklyValues, trendPct,
+  weeklyCounts, weeklyValues, trendPct, localDayKey,
 } from "@/components/crm/premium";
 
 const STAGE_LABELS: Record<string, string> = {
@@ -41,7 +41,7 @@ export function CRMDashboard() {
   const activities = useMemo(() => filterByCompany(activitiesRaw ?? []), [activitiesRaw, filterByCompany]);
   const quotations = useMemo(() => filterByCompany(quotationsRaw ?? []), [quotationsRaw, filterByCompany]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDayKey();
   const monthStart = new Date(); monthStart.setDate(1);
 
   // --- KPIs ---

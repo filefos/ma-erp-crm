@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import {
   ExecutiveHeader, KPIWidget, PremiumCard, Avatar,
-  weeklyValues, weeklyCounts, trendPct,
+  weeklyValues, weeklyCounts, trendPct, localDayKey,
 } from "@/components/crm/premium";
 
 const PALETTE = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444"];
@@ -139,7 +139,7 @@ export function MainExecutiveDashboard() {
   }).length;
 
   const activeEmployees = employees.filter((e: any) => (e.status ?? "active").toLowerCase() === "active").length;
-  const todayKey = now.toISOString().slice(0, 10);
+  const todayKey = localDayKey(now);
   const presentToday = attendance.filter((a: any) => {
     const d = (a.date ?? "").toString().slice(0, 10);
     return d === todayKey && (a.status ?? "").toLowerCase() === "present";

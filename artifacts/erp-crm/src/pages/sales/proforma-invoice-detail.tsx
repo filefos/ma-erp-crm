@@ -102,8 +102,6 @@ export function ProformaInvoiceDetail({ id }: Props) {
     createTax.mutate({ data: {
       companyId: pi.companyId,
       clientName: pi.clientName,
-      clientEmail: (pi as any).clientEmail,
-      clientPhone: (pi as any).clientPhone,
       projectName: pi.projectName,
       quotationId: qid,
       invoiceDate: today,

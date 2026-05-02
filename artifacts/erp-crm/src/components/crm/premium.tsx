@@ -16,6 +16,21 @@ const TONES = {
 
 export type Tone = keyof typeof TONES;
 
+/** Local-day "YYYY-MM-DD" key (avoids UTC drift around midnight). */
+export function localDayKey(d: Date | string | number = new Date()): string {
+  const x = d instanceof Date ? d : new Date(d);
+  const y = x.getFullYear();
+  const m = `${x.getMonth() + 1}`.padStart(2, "0");
+  const day = `${x.getDate()}`.padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Local-midnight epoch for the start of a given day. */
+export function localDayMs(d: Date | string | number = new Date()): number {
+  const x = d instanceof Date ? d : new Date(d);
+  return new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+}
+
 export function Sparkline({
   data, color = "#1e6ab0", height = 28, width = 80,
 }: { data: number[]; color?: string; height?: number; width?: number }) {

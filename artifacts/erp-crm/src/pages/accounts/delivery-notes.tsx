@@ -57,7 +57,7 @@ export function DeliveryNotesList() {
         </div>
         <div className="flex items-center gap-3">
           <ExportMenu
-            data={(notes ?? []) as Record<string, unknown>[]}
+            data={(notes ?? []) as unknown as Record<string, unknown>[]}
             columns={[
               { header: "DN Number", key: "dnNumber" },
               { header: "Client", key: "clientName" },

@@ -5,6 +5,8 @@
 // future upgrade can swap the implementations to call OpenAI / Anthropic
 // using OPENAI_API_KEY without changing any caller.
 
+import { localDayKey } from "@/components/crm/premium";
+
 export interface LeadLike {
   leadName?: string | null;
   companyName?: string | null;
@@ -94,7 +96,7 @@ export function scoreLead(lead: LeadLike, activities: ActivityLike[] = []) {
 
 /** Suggest the next best action for the salesperson. */
 export function suggestNextAction(lead: LeadLike, activities: ActivityLike[] = []): string {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localDayKey();
   const overdue = lead.nextFollowUp && lead.nextFollowUp < today;
   const last = activities[0];
 
@@ -178,7 +180,7 @@ export function predictDealSuccess(lead: LeadLike, activities: ActivityLike[] = 
   if (stale > 21) { p -= 15; reasons.push(`No activity in ${stale} days — momentum lost`); }
 
   if (lead.nextFollowUp) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = localDayKey();
     if (lead.nextFollowUp < today) { p -= 10; reasons.push("Follow-up is overdue"); }
   } else {
     p -= 5; reasons.push("No follow-up scheduled");

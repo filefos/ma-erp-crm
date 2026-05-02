@@ -101,7 +101,7 @@ export function ProformaInvoicesList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(invoices ?? []) as Record<string, unknown>[]}
+            data={(invoices ?? []) as unknown as Record<string, unknown>[]}
             columns={[
               { header: "PI Number", key: "piNumber" },
               { header: "Client", key: "clientName" },

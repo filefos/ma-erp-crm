@@ -17,6 +17,7 @@ import {
   Calendar, Clock, AlertTriangle, CalendarDays, MessageCircle, Phone, Mail,
   CheckCircle2, ArrowRight, Search, Sparkles, ListChecks,
 } from "lucide-react";
+import { localDayKey } from "@/components/crm/premium";
 
 type FollowUpItem = {
   kind: "lead" | "activity";
@@ -29,10 +30,10 @@ type FollowUpItem = {
   type?: string;         // activity type
 };
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayISO = () => localDayKey();
 const inDaysISO = (d: number) => {
   const t = new Date(); t.setDate(t.getDate() + d);
-  return t.toISOString().slice(0, 10);
+  return localDayKey(t);
 };
 
 export function FollowUpCenter() {

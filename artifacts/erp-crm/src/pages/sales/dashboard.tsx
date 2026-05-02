@@ -51,7 +51,7 @@ export function SalesDashboard() {
   const targets    = useMemo(() => filterByCompany(targetsRaw   ?? []), [targetsRaw,   filterByCompany]);
   const invoices   = useMemo(() => filterByCompany(invoicesRaw  ?? []), [invoicesRaw,  filterByCompany]);
   const payments   = useMemo(() => filterByCompany(paymentsRaw  ?? []), [paymentsRaw,  filterByCompany]);
-  const users      = usersRaw ?? [];
+  const users      = useMemo(() => filterByCompany(usersRaw ?? []), [usersRaw, filterByCompany]);
 
   // ---- KPIs ----
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

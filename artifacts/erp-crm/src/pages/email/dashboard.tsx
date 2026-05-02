@@ -14,6 +14,7 @@ import {
 import {
   ExecutiveHeader, KPIWidget, weeklyValues, trendPct, Avatar,
 } from "@/components/crm/premium";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 
 interface Email {
   id: number;
@@ -49,10 +50,11 @@ const FOLDER_COLORS: Record<string, string> = {
 };
 
 export function EmailDashboard() {
+  const { activeCompanyId } = useActiveCompany();
   const queries = FOLDERS.map(folder =>
     useQuery<Email[]>({
-      queryKey: ["emails", folder],
-      queryFn: () => apiFetch(`/emails?folder=${folder}`),
+      queryKey: ["emails", folder, activeCompanyId],
+      queryFn: () => apiFetch(`/emails?folder=${folder}&companyId=${activeCompanyId}`),
       retry: 1,
       staleTime: 30_000,
     }),

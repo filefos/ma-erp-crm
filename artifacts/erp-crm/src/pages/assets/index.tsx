@@ -41,7 +41,7 @@ export function AssetsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={filtered as Record<string, unknown>[]}
+            data={filtered as unknown as Record<string, unknown>[]}
             columns={[
               { header: "Asset Name", key: "name" },
               { header: "Category", key: "category" },
