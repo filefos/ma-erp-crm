@@ -10,7 +10,7 @@ export interface DocumentItem {
   total?: number;
 }
 
-export type DocumentType = "quotation" | "proforma" | "tax_invoice" | "delivery_note";
+export type DocumentType = "quotation" | "proforma" | "tax_invoice" | "delivery_note" | "purchase_order";
 
 export interface DocumentData {
   type: DocumentType;
@@ -47,7 +47,12 @@ export interface DocumentData {
   receiverName?: string;
   deliveryLocation?: string;
   deliveryDate?: string;
+  deliveryAddress?: string;
   notes?: string;
+  supplierName?: string;
+  supplierContact?: string;
+  supplierPhone?: string;
+  supplierEmail?: string;
 }
 
 interface CompanyInfo {
@@ -172,6 +177,7 @@ const DOC_TITLES: Record<DocumentType, string> = {
   proforma: "PROFORMA INVOICE",
   tax_invoice: "TAX INVOICE",
   delivery_note: "DELIVERY NOTE",
+  purchase_order: "PURCHASE ORDER",
 };
 
 const REF_LABELS: Record<DocumentType, string> = {
@@ -179,6 +185,7 @@ const REF_LABELS: Record<DocumentType, string> = {
   proforma: "Proforma Invoice No.",
   tax_invoice: "Tax Invoice No.",
   delivery_note: "Delivery Note No.",
+  purchase_order: "PO Number",
 };
 
 function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
@@ -206,6 +213,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
   const isDelivery = data.type === "delivery_note";
   const isQuotation = data.type === "quotation";
   const isTax = data.type === "tax_invoice";
+  const isPO = data.type === "purchase_order";
   const vat = data.vatPercent ?? 5;
   const subtotal = data.subtotal ?? data.items.reduce((s, i) => s + (i.total ?? (i.unitPrice ?? 0) * i.quantity), 0);
   const vatAmt = data.vatAmount ?? (subtotal * vat / 100);
@@ -240,58 +248,106 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         </div>
 
         {/* ── COMPANY / CLIENT HEADER ─────────────────────────────────── */}
-        <table className="w-full border-collapse border border-gray-400 mb-3">
-          <thead>
-            <tr>
-              <Th>Company Detail</Th>
-              <Th>Client &amp; Project Detail</Th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <Td><span className="font-semibold">Company: </span>{coName}</Td>
-              <Td><span className="font-semibold">Company: </span>{data.clientName}</Td>
-            </tr>
-            <tr>
-              <Td><span className="font-semibold">Contact Person: </span>{co.contact}</Td>
-              <Td><span className="font-semibold">Contact Person: </span>{data.clientContact ?? "—"}</Td>
-            </tr>
-            <tr>
-              <Td><span className="font-semibold">Contact #: </span>{co.phone}</Td>
-              <Td><span className="font-semibold">Contact #: </span>{data.clientPhone ?? "—"}</Td>
-            </tr>
-            <tr>
-              <Td><span className="font-semibold">Email: </span>{co.email}</Td>
-              <Td><span className="font-semibold">Email: </span>{data.clientEmail ?? "—"}</Td>
-            </tr>
-          </tbody>
-        </table>
+        {isPO ? (
+          <table className="w-full border-collapse border border-gray-400 mb-3">
+            <thead>
+              <tr>
+                <Th>Buyer (Our Company)</Th>
+                <Th>Supplier Detail</Th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <Td><span className="font-semibold">Company: </span>{coName}</Td>
+                <Td><span className="font-semibold">Supplier: </span>{data.supplierName ?? data.clientName}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Contact Person: </span>{co.contact}</Td>
+                <Td><span className="font-semibold">Contact Person: </span>{data.supplierContact ?? "—"}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Contact #: </span>{co.phone}</Td>
+                <Td><span className="font-semibold">Contact #: </span>{data.supplierPhone ?? "—"}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Email: </span>{co.email}</Td>
+                <Td><span className="font-semibold">Email: </span>{data.supplierEmail ?? "—"}</Td>
+              </tr>
+            </tbody>
+          </table>
+        ) : (
+          <table className="w-full border-collapse border border-gray-400 mb-3">
+            <thead>
+              <tr>
+                <Th>Company Detail</Th>
+                <Th>Client &amp; Project Detail</Th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <Td><span className="font-semibold">Company: </span>{coName}</Td>
+                <Td><span className="font-semibold">Company: </span>{data.clientName}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Contact Person: </span>{co.contact}</Td>
+                <Td><span className="font-semibold">Contact Person: </span>{data.clientContact ?? "—"}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Contact #: </span>{co.phone}</Td>
+                <Td><span className="font-semibold">Contact #: </span>{data.clientPhone ?? "—"}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Email: </span>{co.email}</Td>
+                <Td><span className="font-semibold">Email: </span>{data.clientEmail ?? "—"}</Td>
+              </tr>
+            </tbody>
+          </table>
+        )}
 
         {/* ── REFERENCE ROW ───────────────────────────────────────────── */}
-        <table className="w-full border-collapse border border-gray-400 mb-3">
-          <tbody>
-            <tr>
-              <Td><span className="font-semibold">Project Ref.: </span>{data.projectRef ?? data.projectName ?? "—"}</Td>
-              <Td><span className="font-semibold">{REF_LABELS[data.type]}: </span><span className="font-bold font-mono">{data.docNumber}</span></Td>
-            </tr>
-            <tr>
-              <Td><span className="font-semibold">Project / Site: </span>{data.projectLocation ?? data.deliveryLocation ?? "—"}</Td>
-              {isTax ? (
-                <Td><span className="font-semibold">Invoice Date: </span>{docDate}
-                  {data.supplyDate ? <> &nbsp;|&nbsp; <span className="font-semibold">Supply Date: </span>{data.supplyDate}</> : null}
-                </Td>
-              ) : (
-                <Td><span className="font-semibold">Date: </span>{docDate}
-                  {data.validity ? <> &nbsp;|&nbsp; <span className="font-semibold">Valid Until: </span>{data.validity}</> : null}
-                </Td>
-              )}
-            </tr>
-            <tr>
-              <Td><span className="font-semibold">Our TRN: </span>{co.trn}</Td>
-              <Td><span className="font-semibold">Customer TRN: </span>{data.clientTrn ?? "—"}</Td>
-            </tr>
-          </tbody>
-        </table>
+        {isPO ? (
+          <table className="w-full border-collapse border border-gray-400 mb-3">
+            <tbody>
+              <tr>
+                <Td><span className="font-semibold">PO Number: </span><span className="font-bold font-mono">{data.docNumber}</span></Td>
+                <Td><span className="font-semibold">Date: </span>{docDate}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Delivery Date: </span>{data.deliveryDate ?? "—"}</Td>
+                <Td><span className="font-semibold">Payment Terms: </span>{data.paymentTerms ?? "—"}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Delivery Address: </span>{data.deliveryAddress ?? data.deliveryLocation ?? "—"}</Td>
+                <Td><span className="font-semibold">Our TRN: </span>{co.trn}</Td>
+              </tr>
+            </tbody>
+          </table>
+        ) : (
+          <table className="w-full border-collapse border border-gray-400 mb-3">
+            <tbody>
+              <tr>
+                <Td><span className="font-semibold">Project Ref.: </span>{data.projectRef ?? data.projectName ?? "—"}</Td>
+                <Td><span className="font-semibold">{REF_LABELS[data.type]}: </span><span className="font-bold font-mono">{data.docNumber}</span></Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Project / Site: </span>{data.projectLocation ?? data.deliveryLocation ?? "—"}</Td>
+                {isTax ? (
+                  <Td><span className="font-semibold">Invoice Date: </span>{docDate}
+                    {data.supplyDate ? <> &nbsp;|&nbsp; <span className="font-semibold">Supply Date: </span>{data.supplyDate}</> : null}
+                  </Td>
+                ) : (
+                  <Td><span className="font-semibold">Date: </span>{docDate}
+                    {data.validity ? <> &nbsp;|&nbsp; <span className="font-semibold">Valid Until: </span>{data.validity}</> : null}
+                  </Td>
+                )}
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">Our TRN: </span>{co.trn}</Td>
+                <Td><span className="font-semibold">Customer TRN: </span>{data.clientTrn ?? "—"}</Td>
+              </tr>
+            </tbody>
+          </table>
+        )}
 
         {/* ── DELIVERY NOTE DETAILS ───────────────────────────────────── */}
         {isDelivery && (
@@ -340,8 +396,24 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </tbody>
         </table>
 
+        {/* ── TOTALS ───────────────────────────────────────────────────── */}
+        {isPO && (
+          <table className="w-full border-collapse border border-gray-400 mb-3">
+            <tbody>
+              <tr className="bg-gray-50">
+                <Td bold>TOTAL AMOUNT (AED)</Td>
+                <Td right bold>{formatAED(grand)}</Td>
+              </tr>
+              <tr>
+                <Td><span className="font-semibold">In Words: </span><span className="italic">{numberToWords(grand)}</span></Td>
+                <Td right>{" "}</Td>
+              </tr>
+            </tbody>
+          </table>
+        )}
+
         {/* ── TOTAL EXCL VAT (in words) ────────────────────────────────── */}
-        {!isDelivery && (
+        {!isDelivery && !isPO && (
           <>
             <table className="w-full border-collapse border border-gray-400 mb-1">
               <tbody>
