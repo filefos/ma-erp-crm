@@ -45,7 +45,7 @@ interface ComposeData {
 const BASE = import.meta.env.BASE_URL;
 
 async function apiFetch(path: string, opts?: RequestInit) {
-  const token = localStorage.getItem("auth_token");
+  const token = localStorage.getItem("erp_token");
   const res = await fetch(`${BASE}api${path}`, {
     ...opts,
     headers: {
