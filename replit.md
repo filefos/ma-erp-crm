@@ -213,11 +213,24 @@ The Sales/CRM module is being elevated to a "World-Class Executive CRM". Phase-2
 
 Deferred to a later phase (require backend/schema work): dedicated CRM Reports page, "Approved" deal stage, attachments / tags / priority / quantity fields, automation-rule engine, monthly sales targets table, deeper RBAC scoping (sales sees only own).
 
-### Task #2 — Final pass updates (May 2026)
-- **Projects Dashboard** now includes **Upcoming Handovers** panel (next 30 days, color-coded urgency: red overdue / orange ≤7d / blue) and **Revenue by Project** horizontal bar chart (top 8 by contract value, with invoiced overlay) per task spec.
-- **Email routes** (`/email`, `/email/dashboard`) are now ungated — Email is treated as a personal productivity surface available to every authenticated user. Sidebar Email group is appended unconditionally to non-admin users in `visibleGroupsFor()`.
-- **Reports Dashboard** no longer calls `useGetDashboardSummary()`. Deals value, Outstanding receivables, and Won-deals-this-month figures derived from already company-filtered deals + invoices.
-- **Procurement Dashboard** no longer calls `useGetProcurementDashboard()`. All KPI counts computed from company-filtered list data; the previous `computed || summary` fallback (which both leaked across tenants and clobbered legitimate zero counts) is removed.
+### Task #2 — Ultra-premium dashboard suite (final, May 2026)
+
+Final shipped behavior (supersedes any earlier descriptions in this file):
+
+- **Routing**: `/` and `/dashboard` render the executive `MainDashboard`. Each module has a dashboard route guarded by its module key:
+  - `/sales` (`quotations`), `/projects/dashboard` (`projects`), `/hr` & `/hr/dashboard` (`employees`), `/assets/dashboard` (`assets`), `/reports/dashboard` & `/reports` (`dashboard`), `/procurement/dashboard` (`purchase_orders`), `/email` & `/email/dashboard` (`emails`).
+  - `/projects` and `/assets` retain their list views; `/projects/dashboard` and `/assets/dashboard` are the analytics surfaces.
+- **Main Executive Dashboard** (`pages/main-dashboard.tsx`):
+  - Permission-gates every list query via `usePermissions().can(...)` and the matching `enabled` flag, so the dashboard never fetches data the user cannot see.
+  - Company-scopes everything via `useActiveCompany().filterByCompany(...)`. Attendance is scoped by in-company employee IDs when the row lacks a `companyId`, preventing cross-company leakage.
+  - Primary KPI strip: Revenue MTD, Expenses MTD, Quotations Value, Open Pipeline, Leads · 30d, Open POs, Active Projects, Active Workforce, Low Stock — each gated by its `can*` flag.
+  - Top Clients (highest payments received) and Top Payees (largest vendor outflow from `expenses`) are now distinct panels.
+  - Segment-shortcut grid uses the same module keys as the corresponding routes (Email → `can("emails")`, Reports → `can("dashboard")`, HR → `canEmployees`).
+- **Sales Dashboard** primary KPI strip (8 cards): Open Quotations · Quotation Value · Proforma Pending · Conversion Rate · Win Rate · LPOs MTD · Top Salesperson · Top Customer. Sales Leaderboard rows include a 6-month "won AED" sparkline derived from the user's deals.
+- **Projects Dashboard** includes Upcoming Handovers (next 30 days, color-coded by urgency) and Revenue by Project (top 8, horizontal bar with invoiced overlay).
+- **Email Dashboard** volume series is 14 days, matching the panel label.
+- **Reports & Procurement Dashboards** no longer call `useGetDashboardSummary()` / `useGetProcurementDashboard()`. All figures derive from already company-filtered lists, eliminating cross-tenant leakage and zero-count clobbering from the previous `computed || summary` fallback.
+- **Sidebar nav** (`components/layout.tsx`): `visibleGroupsFor(user, canEmails)` filters by department/role mapping AND drops the Email group when `can("emails")` is false, keeping nav and route guards consistent.
 
 ## Important Notes
 
