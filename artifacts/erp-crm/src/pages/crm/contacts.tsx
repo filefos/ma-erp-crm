@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Search, Plus, MessageCircle, Trash2 } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListContactsQueryKey } from "@workspace/api-client-react";
 
@@ -25,9 +26,23 @@ export function ContactsList() {
           <h1 className="text-2xl font-bold tracking-tight">Contacts</h1>
           <p className="text-muted-foreground">Manage your client contacts and directory.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(contacts ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Name", key: "name" },
+              { header: "Email", key: "email" },
+              { header: "Phone", key: "phone" },
+              { header: "WhatsApp", key: "whatsapp" },
+              { header: "Company", key: "companyName" },
+              { header: "Designation", key: "designation" },
+            ]}
+            filename="contacts"
+            title="Contacts"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Add Contact</Button>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Contact</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Add Contact</DialogTitle></DialogHeader>
@@ -44,6 +59,7 @@ export function ContactsList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

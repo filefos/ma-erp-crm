@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListStockEntriesQueryKey, getListInventoryItemsQueryKey } from "@workspace/api-client-react";
 
@@ -33,8 +34,22 @@ export function StockEntriesList() {
           <h1 className="text-2xl font-bold tracking-tight">Stock Entries</h1>
           <p className="text-muted-foreground">Log all stock movements — in, out, returns and adjustments.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />New Entry</Button></DialogTrigger>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(entries ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Date", key: "date" },
+              { header: "Type", key: "type" },
+              { header: "Item", key: "itemName" },
+              { header: "Quantity", key: "quantity" },
+              { header: "Reference", key: "reference" },
+              { header: "Notes", key: "notes" },
+            ]}
+            filename="stock-entries"
+            title="Stock Entries"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />New Entry</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Stock Entry</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
@@ -66,6 +81,7 @@ export function StockEntriesList() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <div className="border rounded-lg bg-card">
         <Table>

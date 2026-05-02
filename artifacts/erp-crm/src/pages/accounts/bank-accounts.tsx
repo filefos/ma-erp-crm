@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Landmark, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 
 const CURRENCIES = ["AED","USD","EUR","GBP","SAR","INR"];
@@ -41,7 +42,22 @@ export function BankAccountsList() {
           <h1 className="text-2xl font-bold tracking-tight">Bank Accounts</h1>
           <p className="text-muted-foreground">Company bank account details for both entities.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(accounts ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Bank Name", key: "bankName" },
+              { header: "Account Name", key: "accountName" },
+              { header: "Account No.", key: "accountNumber" },
+              { header: "IBAN", key: "iban" },
+              { header: "SWIFT", key: "swiftCode" },
+              { header: "Currency", key: "currency" },
+              { header: "Branch", key: "branch" },
+            ]}
+            filename="bank-accounts"
+            title="Bank Accounts"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Bank Account</Button>
           </DialogTrigger>
@@ -76,6 +92,7 @@ export function BankAccountsList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {isLoading ? <div className="text-muted-foreground">Loading...</div> :

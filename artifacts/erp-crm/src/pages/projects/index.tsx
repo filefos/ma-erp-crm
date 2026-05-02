@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "wouter";
 import { Search } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const stageColors: Record<string, string> = {
@@ -37,6 +38,21 @@ export function ProjectsList() {
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
           <p className="text-muted-foreground">Track all active and completed prefab projects.</p>
         </div>
+        <ExportMenu
+          data={(projects ?? []) as Record<string, unknown>[]}
+          columns={[
+            { header: "Project Name", key: "name" },
+            { header: "Client", key: "clientName" },
+            { header: "Stage", key: "stage" },
+            { header: "Budget (AED)", key: "budget", format: v => Number(v ?? 0).toFixed(2) },
+            { header: "Progress (%)", key: "progress" },
+            { header: "Site Manager", key: "siteManager" },
+            { header: "Start Date", key: "startDate" },
+            { header: "End Date", key: "expectedEndDate" },
+          ]}
+          filename="projects"
+          title="Projects"
+        />
       </div>
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListCompanies } from "@workspace/api-client-react";
 import { Search, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListAssetsQueryKey } from "@workspace/api-client-react";
 
@@ -35,8 +36,23 @@ export function AssetsList() {
           <h1 className="text-2xl font-bold tracking-tight">Asset Register</h1>
           <p className="text-muted-foreground">Track all company assets — vehicles, machinery, equipment.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Add Asset</Button></DialogTrigger>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(assets ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Asset Name", key: "name" },
+              { header: "Category", key: "category" },
+              { header: "Purchase Date", key: "purchaseDate" },
+              { header: "Purchase Value (AED)", key: "purchaseValue", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Location", key: "currentLocation" },
+              { header: "Assigned To", key: "assignedTo" },
+              { header: "Condition", key: "condition" },
+            ]}
+            filename="assets"
+            title="Asset Register"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Asset</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Asset</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-2">
@@ -69,6 +85,7 @@ export function AssetsList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

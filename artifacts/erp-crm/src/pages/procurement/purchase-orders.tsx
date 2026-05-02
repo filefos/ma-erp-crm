@@ -8,10 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Download } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { downloadCSV, tableToCSV } from "@/lib/export";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -52,18 +52,6 @@ export function PurchaseOrdersList() {
 
   const totalValue = filtered?.reduce((s, o) => s + (o.total ?? 0), 0) ?? 0;
 
-  const handleExportCSV = () => {
-    if (!filtered) return;
-    const rows = tableToCSV(filtered, [
-      { header: "PO Number", key: "poNumber" },
-      { header: "Supplier", key: "supplierName" as any },
-      { header: "Delivery Date", key: "deliveryDate" },
-      { header: "Payment Terms", key: "paymentTerms" },
-      { header: "Total (AED)", key: "total", format: v => (v as number ?? 0).toFixed(2) },
-      { header: "Status", key: "status" },
-    ]);
-    downloadCSV("purchase-orders.csv", rows);
-  };
 
   return (
     <div className="space-y-4">
@@ -73,7 +61,20 @@ export function PurchaseOrdersList() {
           <p className="text-muted-foreground">Official orders placed with suppliers.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="w-4 h-4 mr-1" />CSV</Button>
+          <ExportMenu
+            data={(filtered ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "PO Number", key: "poNumber" },
+              { header: "Supplier", key: "supplierName" },
+              { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Status", key: "status" },
+              { header: "Delivery Date", key: "deliveryDate" },
+              { header: "Payment Terms", key: "paymentTerms" },
+            ]}
+            filename="purchase-orders"
+            title="Purchase Orders"
+            size="sm"
+          />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">

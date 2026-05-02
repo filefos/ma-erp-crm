@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, Truck } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -53,6 +54,20 @@ export function DeliveryNotesList() {
           <p className="text-muted-foreground">Track deliveries to client sites.</p>
         </div>
         <div className="flex items-center gap-3">
+          <ExportMenu
+            data={(notes ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "DN Number", key: "dnNumber" },
+              { header: "Client", key: "clientName" },
+              { header: "Project", key: "projectName" },
+              { header: "Delivery Date", key: "deliveryDate" },
+              { header: "Status", key: "status" },
+              { header: "Driver", key: "driverName" },
+            ]}
+            filename="delivery-notes"
+            title="Delivery Notes"
+            size="sm"
+          />
           {pending > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
               <Truck className="w-4 h-4" />{pending} pending

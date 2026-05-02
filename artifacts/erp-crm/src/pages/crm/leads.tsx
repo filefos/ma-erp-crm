@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, MessageCircle, Filter } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -74,7 +75,23 @@ export function LeadsList() {
           <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
           <p className="text-muted-foreground">Manage your sales prospects and inquiries.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(filtered ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Lead Name", key: "leadName" },
+              { header: "Company", key: "companyName" },
+              { header: "Phone", key: "phone" },
+              { header: "Email", key: "email" },
+              { header: "Score", key: "leadScore" },
+              { header: "Status", key: "status" },
+              { header: "Source", key: "source" },
+              { header: "Est. Value (AED)", key: "estimatedValue", format: v => Number(v ?? 0).toFixed(2) },
+            ]}
+            filename="leads"
+            title="Leads"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
               <Plus className="w-4 h-4 mr-2" />Add Lead
@@ -132,6 +149,7 @@ export function LeadsList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">

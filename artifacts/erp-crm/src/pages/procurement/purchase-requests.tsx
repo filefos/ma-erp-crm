@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 
 const priorityColors: Record<string, string> = {
@@ -62,7 +63,21 @@ export function PurchaseRequestsList() {
           <h1 className="text-2xl font-bold tracking-tight">Purchase Requests</h1>
           <p className="text-muted-foreground">Internal material and service purchase requests.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(requests ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "PR Number", key: "prNumber" },
+              { header: "Title", key: "title" },
+              { header: "Priority", key: "priority" },
+              { header: "Est. Cost (AED)", key: "estimatedCost", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Status", key: "status" },
+              { header: "Required By", key: "requiredDate" },
+            ]}
+            filename="purchase-requests"
+            title="Purchase Requests"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
               <Plus className="w-4 h-4 mr-2" />New PR
@@ -105,6 +120,7 @@ export function PurchaseRequestsList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {(pendingCount > 0 || urgentCount > 0) && (

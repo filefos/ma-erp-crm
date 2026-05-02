@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, AlertTriangle } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListInventoryItemsQueryKey } from "@workspace/api-client-react";
 
@@ -32,6 +33,21 @@ export function InventoryItemsList() {
           <p className="text-muted-foreground">Warehouse stock and material inventory.</p>
         </div>
         <div className="flex items-center gap-3">
+          <ExportMenu
+            data={(items ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Item Name", key: "name" },
+              { header: "Category", key: "category" },
+              { header: "Unit", key: "unit" },
+              { header: "Quantity", key: "quantity" },
+              { header: "Min Stock", key: "minStockLevel" },
+              { header: "Location", key: "location" },
+              { header: "Cost (AED)", key: "unitCost", format: v => Number(v ?? 0).toFixed(2) },
+            ]}
+            filename="inventory-items"
+            title="Inventory Items"
+            size="sm"
+          />
           {lowStockCount > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
               <AlertTriangle className="w-4 h-4" />

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListDealsQueryKey } from "@workspace/api-client-react";
 
@@ -39,9 +40,23 @@ export function DealsList() {
           <h1 className="text-2xl font-bold tracking-tight">Deals</h1>
           <p className="text-muted-foreground">Track and manage your active deals.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(deals ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Title", key: "title" },
+              { header: "Client", key: "clientName" },
+              { header: "Value (AED)", key: "value", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Probability (%)", key: "probability" },
+              { header: "Stage", key: "stage" },
+              { header: "Expected Close", key: "expectedCloseDate" },
+            ]}
+            filename="deals"
+            title="Deals"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Add Deal</Button>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Deal</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Deal</DialogTitle></DialogHeader>
@@ -65,6 +80,7 @@ export function DealsList() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

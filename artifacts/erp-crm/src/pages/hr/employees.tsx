@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListCompanies } from "@workspace/api-client-react";
 import { Search, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListEmployeesQueryKey } from "@workspace/api-client-react";
 
@@ -29,8 +30,24 @@ export function EmployeesList() {
           <h1 className="text-2xl font-bold tracking-tight">Employees & Labour</h1>
           <p className="text-muted-foreground">Manage staff and labour workforce directory.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Add Employee</Button></DialogTrigger>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(employees ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Emp. No.", key: "employeeNumber" },
+              { header: "Name", key: "name" },
+              { header: "Type", key: "type" },
+              { header: "Designation", key: "designation" },
+              { header: "Phone", key: "phone" },
+              { header: "Nationality", key: "nationality" },
+              { header: "Site", key: "siteLocation" },
+              { header: "Joining Date", key: "joiningDate" },
+            ]}
+            filename="employees"
+            title="Employees & Labour"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Employee</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Employee / Labour</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-2">
@@ -58,6 +75,7 @@ export function EmployeesList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">

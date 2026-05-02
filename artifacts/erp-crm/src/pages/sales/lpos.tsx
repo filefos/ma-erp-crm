@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function LposList() {
@@ -47,6 +48,21 @@ export function LposList() {
           <p className="text-muted-foreground">LPOs received from clients for confirmed orders.</p>
         </div>
         <div className="flex items-center gap-3">
+          <ExportMenu
+            data={(lpos ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "LPO Number", key: "lpoNumber" },
+              { header: "Client", key: "clientName" },
+              { header: "Project", key: "projectName" },
+              { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Status", key: "status" },
+              { header: "LPO Date", key: "lpoDate" },
+              { header: "Validity Date", key: "validityDate" },
+            ]}
+            filename="lpos"
+            title="Local Purchase Orders (LPO)"
+            size="sm"
+          />
           {activeCount > 0 && (
             <div className="text-sm text-muted-foreground"><span className="font-semibold text-foreground">{activeCount}</span> active LPOs</div>
           )}

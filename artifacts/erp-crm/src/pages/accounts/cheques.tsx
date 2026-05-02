@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Download } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { downloadCSV, tableToCSV } from "@/lib/export";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -53,18 +53,6 @@ export function ChequesList() {
   const totalIssued = filtered?.filter(c => c.status === "issued").reduce((s, c) => s + (c.amount ?? 0), 0) ?? 0;
   const totalCleared = filtered?.filter(c => c.status === "cleared").reduce((s, c) => s + (c.amount ?? 0), 0) ?? 0;
 
-  const handleExportCSV = () => {
-    if (!filtered) return;
-    const rows = tableToCSV(filtered, [
-      { header: "Cheque No.", key: "chequeNumber" },
-      { header: "Bank", key: "bankName" as any },
-      { header: "Payee", key: "payeeName" },
-      { header: "Date", key: "chequeDate" },
-      { header: "Amount (AED)", key: "amount", format: v => (v as number ?? 0).toFixed(2) },
-      { header: "Status", key: "status" },
-    ]);
-    downloadCSV("cheques.csv", rows);
-  };
 
   return (
     <div className="space-y-4">
@@ -74,7 +62,20 @@ export function ChequesList() {
           <p className="text-muted-foreground">Track and manage company cheques.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="w-4 h-4 mr-1" />CSV</Button>
+          <ExportMenu
+            data={(filtered ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Cheque No.", key: "chequeNumber" },
+              { header: "Payee", key: "payeeName" },
+              { header: "Bank", key: "bankName" },
+              { header: "Amount (AED)", key: "amount", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Status", key: "status" },
+              { header: "Cheque Date", key: "chequeDate" },
+            ]}
+            filename="cheques"
+            title="Cheques"
+            size="sm"
+          />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">

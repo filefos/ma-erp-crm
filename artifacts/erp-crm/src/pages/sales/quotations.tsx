@@ -9,6 +9,7 @@ import { Link } from "wouter";
 import { Search, Plus, Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListQuotationsQueryKey } from "@workspace/api-client-react";
+import { ExportMenu } from "@/components/ExportMenu";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -32,9 +33,25 @@ export function QuotationsList() {
           <h1 className="text-2xl font-bold tracking-tight">Quotations</h1>
           <p className="text-muted-foreground">Manage quotations for both companies.</p>
         </div>
-        <Button asChild>
-          <Link href="/sales/quotations/new"><Plus className="w-4 h-4 mr-2" />New Quotation</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(quotations ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Quotation No.", key: "quotationNumber" },
+              { header: "Client", key: "clientName" },
+              { header: "Project", key: "projectName" },
+              { header: "Total (AED)", key: "grandTotal", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Status", key: "status" },
+              { header: "Validity", key: "validityDate" },
+            ]}
+            filename="quotations"
+            title="Quotations"
+          />
+          <Button asChild className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+            <Link href="/sales/quotations/new"><Plus className="w-4 h-4 mr-2" />New Quotation</Link>
+          </Button>
+        </div>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">

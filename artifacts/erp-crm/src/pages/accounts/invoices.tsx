@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Search } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 
 const paymentStatusColors: Record<string, string> = {
   paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -29,9 +30,26 @@ export function TaxInvoicesList() {
           <h1 className="text-2xl font-bold tracking-tight">Tax Invoices</h1>
           <p className="text-muted-foreground">UAE VAT-compliant tax invoices.</p>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-muted-foreground">Total Outstanding</div>
-          <div className="text-xl font-bold text-red-600">AED {totalOutstanding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+        <div className="flex items-center gap-3">
+          <ExportMenu
+            data={(filtered ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Invoice No.", key: "invoiceNumber" },
+              { header: "Client", key: "clientName" },
+              { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Paid (AED)", key: "amountPaid", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Balance (AED)", key: "balance", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Status", key: "paymentStatus" },
+              { header: "Due Date", key: "dueDate" },
+            ]}
+            filename="tax-invoices"
+            title="Tax Invoices"
+          />
+          <div className="text-right">
+            <div className="text-xs text-muted-foreground">Total Outstanding</div>
+            <div className="text-xl font-bold text-red-600">AED {totalOutstanding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-3 flex-wrap">

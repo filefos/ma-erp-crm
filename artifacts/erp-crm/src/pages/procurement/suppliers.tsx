@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Search, Plus, MessageCircle } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListSuppliersQueryKey } from "@workspace/api-client-react";
 
@@ -25,8 +26,23 @@ export function SuppliersList() {
           <h1 className="text-2xl font-bold tracking-tight">Suppliers</h1>
           <p className="text-muted-foreground">Manage your vendor and supplier directory.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Add Supplier</Button></DialogTrigger>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(suppliers ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Supplier Name", key: "name" },
+              { header: "Contact Person", key: "contactPerson" },
+              { header: "Email", key: "email" },
+              { header: "Phone", key: "phone" },
+              { header: "Category", key: "category" },
+              { header: "Payment Terms", key: "paymentTerms" },
+              { header: "TRN", key: "trn" },
+            ]}
+            filename="suppliers"
+            title="Suppliers"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Supplier</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Supplier</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-2">
@@ -42,6 +58,7 @@ export function SuppliersList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

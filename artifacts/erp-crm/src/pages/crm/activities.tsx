@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, CheckCircle2, Circle } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListActivitiesQueryKey } from "@workspace/api-client-react";
 
@@ -28,8 +29,21 @@ export function ActivitiesList() {
           <h1 className="text-2xl font-bold tracking-tight">Activities</h1>
           <p className="text-muted-foreground">Track all CRM activities, tasks and follow-ups.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Add Activity</Button></DialogTrigger>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(activities ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Type", key: "type" },
+              { header: "Subject", key: "subject" },
+              { header: "Status", key: "status" },
+              { header: "Due Date", key: "dueDate" },
+              { header: "Description", key: "description" },
+            ]}
+            filename="activities"
+            title="Activities"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Activity</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Activity</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
@@ -50,6 +64,7 @@ export function ActivitiesList() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
       <div className="border rounded-lg bg-card">
         <Table>

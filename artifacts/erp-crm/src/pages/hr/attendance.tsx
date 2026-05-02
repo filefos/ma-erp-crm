@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Plus, UserCheck } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 
 const statusColors: Record<string, string> = {
@@ -54,7 +55,22 @@ export function AttendanceList() {
           <h1 className="text-2xl font-bold tracking-tight">Attendance</h1>
           <p className="text-muted-foreground">Daily attendance tracking with GPS verification.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(filtered ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "Employee", key: "employeeName" },
+              { header: "Date", key: "date" },
+              { header: "Status", key: "status" },
+              { header: "Check In", key: "checkIn" },
+              { header: "Check Out", key: "checkOut" },
+              { header: "Overtime (hrs)", key: "overtime" },
+              { header: "Notes", key: "notes" },
+            ]}
+            filename="attendance"
+            title="Attendance"
+          />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
               <Plus className="w-4 h-4 mr-2" />Mark Attendance
@@ -100,6 +116,7 @@ export function AttendanceList() {
             </Button>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-3">

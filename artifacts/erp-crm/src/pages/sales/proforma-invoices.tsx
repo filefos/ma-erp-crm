@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Plus, Trash2 } from "lucide-react";
+import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -96,7 +97,22 @@ export function ProformaInvoicesList() {
           <h1 className="text-2xl font-bold tracking-tight">Proforma Invoices</h1>
           <p className="text-muted-foreground">Pre-shipment invoices sent to clients.</p>
         </div>
-        <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) resetForm(); }}>
+        <div className="flex items-center gap-2">
+          <ExportMenu
+            data={(invoices ?? []) as Record<string, unknown>[]}
+            columns={[
+              { header: "PI Number", key: "piNumber" },
+              { header: "Client", key: "clientName" },
+              { header: "Project", key: "projectName" },
+              { header: "Total (AED)", key: "grandTotal", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Status", key: "status" },
+              { header: "Validity Date", key: "validityDate" },
+            ]}
+            filename="proforma-invoices"
+            title="Proforma Invoices"
+          />
+          <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />New Proforma</Button>
           </DialogTrigger>
@@ -195,6 +211,7 @@ export function ProformaInvoicesList() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="flex items-center justify-between">
