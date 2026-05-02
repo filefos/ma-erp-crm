@@ -1,0 +1,512 @@
+Build a web-based Inventory & Store Management System for my companies:
+
+1. ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+2. PRIME MAX PREFAB HOUSES INDUSTRY LLC
+
+System name:
+Elite & Prime Max Inventory System
+
+GOAL:
+Create a professional Zoho Inventory-style system for prefab materials, stock control, store entries, stock in/out, material issue, stock transfer, stock take, damage entry, and low-stock alerts.
+
+DESIGN:
+- Dark blue + light blue theme
+- Executive professional UI
+- Sidebar navigation
+- Top search bar
+- Dashboard cards
+- Clean stock tables
+- Status badges
+- Filters
+- Mobile responsive
+
+TECH STACK:
+- React + Tailwind CSS frontend
+- Node.js + Express backend
+- PostgreSQL database
+- JWT authentication
+- Password hashing
+- File upload support
+- PDF generation
+- Excel/CSV import/export
+- Replit compatible
+
+--------------------------------------------------
+1. MULTI-COMPANY INVENTORY
+--------------------------------------------------
+Support both companies:
+- Elite Prefab
+- Prime Max Prefab
+
+Each company must have separate:
+- Inventory items
+- Warehouses
+- Stock entries
+- Stock reports
+- Store users
+- Approval workflow
+
+Company prefixes:
+- EP
+- PM
+
+--------------------------------------------------
+2. INVENTORY DASHBOARD
+--------------------------------------------------
+Show:
+- Total inventory items
+- Current stock value
+- Low stock items
+- Out of stock items
+- Stock in today
+- Stock out today
+- Pending stock approvals
+- Pending stock adjustments
+- Recent stock movements
+
+--------------------------------------------------
+3. INVENTORY ITEM MASTER
+--------------------------------------------------
+Item fields:
+- Item ID
+- Company: Elite Prefab / Prime Max / Both
+- Item code / SKU
+- Item name
+- Category
+- Subcategory
+- Description
+- Unit
+- Opening stock
+- Current stock
+- Minimum stock level
+- Maximum stock level
+- Average cost
+- Selling price
+- Warehouse/location
+- Rack/bin location
+- Status: Active / Inactive
+- Created by
+- Created date
+
+Categories:
+- Steel
+- Sandwich Panels
+- Roofing
+- Flooring
+- Doors
+- Windows
+- Electrical
+- Plumbing
+- AC
+- Paint
+- Hardware
+- Toilet Fittings
+- Kitchen Fittings
+- Tools
+- Consumables
+- Finished Cabins
+- Raw Materials
+- Custom Items
+
+Features:
+- Add item
+- Edit item
+- View item
+- Search/filter items
+- Filter by company/category/location/status
+- Low stock alert
+- Out of stock alert
+- Deactivate item instead of delete
+- Import items from Excel/CSV
+- Export inventory list
+
+--------------------------------------------------
+4. WAREHOUSE / LOCATION MODULE
+--------------------------------------------------
+Fields:
+- Warehouse ID
+- Company
+- Warehouse name
+- Location/address
+- Store manager
+- Status
+
+Features:
+- Add/edit/view warehouses
+- Link stock to warehouse/location
+- Location-wise stock report
+
+--------------------------------------------------
+5. STORE MODULE — SEPARATE LOGIN
+--------------------------------------------------
+Store users:
+- Store Manager
+- Storekeeper
+- Data Entry Operator
+
+Rules:
+- Store Manager can manage stock entries and pricing if permission granted
+- Storekeeper can create stock in/out entries
+- Data Entry Operator can only add data and quantity
+- Procurement can view stock but cannot edit
+- Admin can access everything
+
+--------------------------------------------------
+6. STOCK ENTRY MODULE
+--------------------------------------------------
+Stock entry types:
+- Stock In
+- Stock Out
+- Material Issue
+- Material Return
+- Stock Transfer
+- Damage Entry
+- Adjustment Entry
+
+Common fields:
+- Entry ID
+- Entry number
+- Company
+- Entry type
+- Item
+- Quantity
+- Unit
+- Warehouse/location
+- Reference document
+- Reference number
+- Related PO placeholder
+- Related project placeholder
+- Notes
+- Created by
+- Approved by
+- Status
+- Created date
+
+Entry number format:
+- PM-STK-YYYY-0001
+- EP-STK-YYYY-0001
+
+Status:
+- Draft
+- Submitted
+- Approved
+- Rejected
+- Posted
+- Cancelled
+
+--------------------------------------------------
+7. STOCK IN
+--------------------------------------------------
+Fields:
+- Supplier
+- Linked PO placeholder
+- Delivery note number
+- Received quantity
+- Received by
+- Received date
+- Attachment upload
+
+Rules:
+- Stock increases only after approval/posting
+- Can be linked to approved PO from procurement
+
+--------------------------------------------------
+8. STOCK OUT
+--------------------------------------------------
+Fields:
+- Issued to
+- Department
+- Project placeholder
+- Purpose
+- Issued quantity
+- Issued by
+- Received by
+
+Rules:
+- Stock decreases only after approval/posting
+- Cannot issue more than available stock
+- Negative stock not allowed
+
+--------------------------------------------------
+9. MATERIAL ISSUE / RETURN
+--------------------------------------------------
+Material Issue:
+- Issue material to project / production / department
+
+Material Return:
+- Return unused material to store
+
+Rules:
+- Issue decreases stock
+- Return increases stock
+- Full activity history required
+
+--------------------------------------------------
+10. STOCK TRANSFER
+--------------------------------------------------
+Fields:
+- From warehouse
+- To warehouse
+- Item
+- Quantity
+- Transfer date
+- Transfer status
+
+Rules:
+- Decrease from source warehouse
+- Increase destination warehouse
+- Transfer requires approval if enabled
+
+--------------------------------------------------
+11. DAMAGE ENTRY
+--------------------------------------------------
+Fields:
+- Item
+- Quantity damaged
+- Damage reason
+- Photo upload
+- Responsible person
+- Approved by
+
+Rules:
+- Damage reduces usable stock only after approval
+- Audit log required
+
+--------------------------------------------------
+12. STOCK ADJUSTMENT
+--------------------------------------------------
+Fields:
+- Item
+- System quantity
+- Physical quantity
+- Difference
+- Reason
+- Approved by Admin
+
+Rules:
+- Only Admin / Inventory Manager can approve adjustment
+- Adjustment cannot be posted without approval
+- Full audit log required
+
+--------------------------------------------------
+13. STOCK TAKE MODULE
+--------------------------------------------------
+Stock take fields:
+- Stock Take ID
+- Company
+- Warehouse/location
+- Date
+- Counted by
+- Verified by
+- Status
+
+Status:
+- Draft
+- In Progress
+- Submitted
+- Verified
+- Adjustment Pending
+- Completed
+
+Features:
+- Create stock take session
+- Add counted items
+- Compare system stock vs physical stock
+- Show shortage/excess
+- Generate adjustment request
+- Admin approval required for adjustment
+- Stock take report
+
+--------------------------------------------------
+14. STOCK MOVEMENT HISTORY
+--------------------------------------------------
+Every item must show full movement timeline:
+- Opening stock
+- Stock in
+- Stock out
+- Material issue
+- Material return
+- Transfer
+- Damage
+- Adjustment
+- Current balance
+
+--------------------------------------------------
+15. INVENTORY REPORTS
+--------------------------------------------------
+Reports:
+- Current stock report
+- Stock movement report
+- Low stock report
+- Out of stock report
+- Stock valuation report
+- Stock take report
+- Damage report
+- Warehouse-wise stock report
+- Category-wise stock report
+- Company-wise stock report
+
+Export:
+- PDF
+- Excel
+- CSV
+
+--------------------------------------------------
+16. AI INVENTORY ASSISTANT
+--------------------------------------------------
+Add AI-ready inventory assistant with placeholder logic.
+
+AI features:
+- Suggest reorder items
+- Detect unusual stock movement
+- Predict low stock risk
+- Suggest minimum stock level
+- Summarize stock take difference
+- Detect duplicate SKU
+- Generate stock adjustment explanation
+- Recommend procurement request for low stock
+
+AI buttons:
+- Analyze stock
+- Suggest reorder
+- Explain adjustment
+- Predict shortage
+- Check duplicate SKU
+
+Structure code so OpenAI API can be added later.
+
+--------------------------------------------------
+17. ACCESS CONTROL
+--------------------------------------------------
+Roles:
+- Super Admin
+- Inventory Admin
+- Inventory User
+- Store Manager
+- Storekeeper
+- Data Entry Operator
+- Procurement Viewer
+
+Rules:
+- Admin sees all inventory/store data
+- Inventory Admin manages item master and reports
+- Store Department creates stock entries
+- Store Manager can approve entries if permission granted
+- Storekeeper can create stock in/out
+- Data Entry Operator can only enter quantity/data
+- Procurement can view stock only
+- Procurement cannot edit stock
+- Sales/Accounts/Finance/HR cannot access inventory unless permission granted
+- Users cannot delete stock records
+- Posted stock entries cannot be edited
+
+--------------------------------------------------
+18. NOTIFICATIONS
+--------------------------------------------------
+Create notifications for:
+- Low stock
+- Out of stock
+- Stock entry submitted
+- Stock entry approved/rejected
+- Stock adjustment requested
+- Stock adjustment approved/rejected
+- Stock take submitted
+- Damage entry submitted
+- Unusual stock movement detected
+
+--------------------------------------------------
+19. AUDIT LOG
+--------------------------------------------------
+Track:
+- Inventory item created/updated
+- Stock in created/posted
+- Stock out created/posted
+- Material issued/returned
+- Stock transferred
+- Damage entry posted
+- Stock adjustment approved
+- Stock take completed
+- Low stock alert generated
+- Report exported
+
+--------------------------------------------------
+20. DATABASE TABLES
+--------------------------------------------------
+Create tables:
+- companies
+- users
+- roles
+- permissions
+- inventory_items
+- inventory_categories
+- warehouses
+- stock_entries
+- stock_entry_items
+- stock_movements
+- stock_transfers
+- damage_entries
+- stock_adjustments
+- stock_take_sessions
+- stock_take_items
+- stock_take_adjustments
+- inventory_notifications
+- inventory_audit_logs
+- ai_inventory_requests
+
+--------------------------------------------------
+21. SEED DATA
+--------------------------------------------------
+Add sample:
+- Both companies
+- Admin user
+- Inventory Admin
+- Store Manager
+- Storekeeper
+- Procurement Viewer
+- 50 inventory items
+- Inventory categories
+- 2 warehouses
+- 10 stock entries
+- 5 stock movements
+- 2 stock take sessions
+- Low stock sample items
+- Out of stock sample items
+
+--------------------------------------------------
+22. VALIDATION
+--------------------------------------------------
+Rules:
+- Item code/SKU must be unique
+- Stock out cannot exceed available stock
+- Negative stock not allowed
+- Adjustment requires reason
+- Damage entry requires reason
+- Stock take adjustment requires Admin approval
+- Posted stock entries cannot be edited
+- Unauthorized users cannot view/edit inventory
+- File uploads must validate type and size
+
+--------------------------------------------------
+23. OUTPUT REQUIRED
+--------------------------------------------------
+- Working Inventory dashboard
+- Inventory Item Master
+- Warehouse module
+- Store module with separate login
+- Stock In
+- Stock Out
+- Material Issue
+- Material Return
+- Stock Transfer
+- Damage Entry
+- Stock Adjustment
+- Stock Take
+- Stock Movement History
+- Inventory Reports
+- AI Inventory Assistant placeholder
+- Notifications
+- Audit logs
+- Correct permissions
+- Setup instructions
+- Sample login credentials
+- Must run successfully in Replit

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
-import { Building2, Shield, ArrowRight, Loader2, Check } from "lucide-react";
+import { Shield, ArrowRight, Loader2, Check } from "lucide-react";
 import { useListAuthCompanies } from "@workspace/api-client-react";
 
 export function Login() {
@@ -50,17 +50,11 @@ export function Login() {
         />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center ring-1 ring-white/25">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-base font-bold leading-tight tracking-tight">
-                Prime Max & Elite Prefab
-              </div>
-              <div className="text-[11px] text-white/60 uppercase tracking-wider">
-                Enterprise ERP CRM
-              </div>
-            </div>
+            <img
+              src="/prime-max-logo.png"
+              alt="Prime Max & Elite Prefab"
+              className="h-12 w-auto object-contain"
+            />
           </div>
 
           <div className="space-y-6 max-w-md">
@@ -84,13 +78,11 @@ export function Login() {
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-sm space-y-6">
           <div className="lg:hidden flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-[#0f2d5a] flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-sm font-bold tracking-tight">Prime Max & Elite Prefab</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">ERP CRM</div>
-            </div>
+            <img
+              src="/prime-max-logo.png"
+              alt="Prime Max & Elite Prefab"
+              className="h-10 w-auto object-contain"
+            />
           </div>
 
           <div className="space-y-2">
