@@ -316,7 +316,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           @page { size: A4 portrait; margin: 8mm; }
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
-          .print-doc { position: fixed; left: 0; top: 0; width: 100%; max-width: 100% !important;
+          .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
             box-shadow: none !important; border: none !important; padding: 4mm !important;
             margin: 0 !important; border-radius: 0 !important; }
           .print-page-break { page-break-before: always !important; break-before: page !important; }
