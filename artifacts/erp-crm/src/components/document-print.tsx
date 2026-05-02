@@ -319,7 +319,30 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
             box-shadow: none !important; border: none !important; padding: 4mm !important;
             margin: 0 !important; border-radius: 0 !important; }
-          .print-page-break { page-break-before: always !important; break-before: page !important; }
+          .print-page-break {
+            page-break-before: always !important; break-before: page !important;
+            page-break-inside: avoid !important; break-inside: avoid !important;
+          }
+          .print-spec-table td, .print-spec-table th {
+            font-size: 7.5pt !important; padding: 1.5pt 4pt !important; line-height: 1.25 !important;
+          }
+          .print-tc-text {
+            font-size: 8pt !important; line-height: 1.4 !important; padding: 6pt 8pt !important;
+          }
+          .print-page-break .text-\\[22px\\] { font-size: 14pt !important; }
+          .print-page-break .text-\\[11px\\] { font-size: 7.5pt !important; }
+          .print-page-break .text-\\[15px\\] { font-size: 10pt !important; }
+          .print-page-break .py-3 { padding-top: 4pt !important; padding-bottom: 4pt !important; }
+          .print-page-break .py-2 { padding-top: 3pt !important; padding-bottom: 3pt !important; }
+          .print-page-break .mb-3 { margin-bottom: 4pt !important; }
+          .print-page-break .mt-4 { margin-top: 4pt !important; }
+          .print-page-break .mt-6 { margin-top: 6pt !important; }
+          .print-page-break .mb-4 { margin-bottom: 4pt !important; }
+          .print-page-break .pt-4 { padding-top: 4pt !important; }
+          .print-page-break .p-4 { padding: 6pt !important; }
+          .print-page-break .gap-8 { gap: 16pt !important; }
+          .print-page-break .h-12 { height: 28pt !important; }
+          .print-page-break .h-10 { height: 20pt !important; }
         }
       `}</style>
 
@@ -683,7 +706,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <table className="w-full border-collapse border border-gray-400 mb-3">
+            <table className="print-spec-table w-full border-collapse border border-gray-400 mb-3">
               <thead>
                 <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                   <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-center w-8">Pt.</th>
@@ -744,7 +767,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <div className="border border-gray-400 p-4 text-[11px] whitespace-pre-line bg-gray-50 mb-4" style={{ lineHeight: "1.7" }}>
+            <div className="print-tc-text border border-gray-400 p-4 text-[11px] whitespace-pre-line bg-gray-50 mb-4" style={{ lineHeight: "1.7" }}>
               {data.termsConditions ?? STANDARD_TC}
             </div>
 
