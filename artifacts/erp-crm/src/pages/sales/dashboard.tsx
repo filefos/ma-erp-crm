@@ -1,0 +1,427 @@
+import { useMemo } from "react";
+import { Link } from "wouter";
+import {
+  useListQuotations, useListProformaInvoices, useListLpos, useListDeals, useListLeads,
+  useListUsers, useListSalesTargets,
+} from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  Legend, AreaChart, Area, PieChart as RPieChart, Pie, Cell,
+} from "recharts";
+import {
+  FileText, FileCheck, ClipboardList, Trophy, Target, Users, ArrowRight,
+  TrendingUp, Sparkles, ShoppingBag, Receipt, Briefcase, Crown, Calendar,
+} from "lucide-react";
+import {
+  ExecutiveHeader, KPIWidget, StatusBadge, Avatar, PremiumCard,
+  weeklyCounts, weeklyValues, trendPct,
+} from "@/components/crm/premium";
+
+const PALETTE = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444"];
+
+function fmtAED(v: number): string {
+  if (v >= 1_000_000) return `AED ${(v / 1_000_000).toFixed(2)}M`;
+  if (v >= 1_000)     return `AED ${(v / 1_000).toFixed(0)}k`;
+  return `AED ${Math.round(v).toLocaleString()}`;
+}
+
+export function SalesDashboard() {
+  const { filterByCompany } = useActiveCompany();
+  const now = new Date();
+  const year = now.getFullYear();
+
+  const { data: quotationsRaw } = useListQuotations();
+  const { data: proformaRaw }   = useListProformaInvoices();
+  const { data: lposRaw }       = useListLpos();
+  const { data: dealsRaw }      = useListDeals();
+  const { data: leadsRaw }      = useListLeads({});
+  const { data: usersRaw }      = useListUsers();
+  const { data: targetsRaw }    = useListSalesTargets({ year });
+
+  const quotations = useMemo(() => filterByCompany(quotationsRaw ?? []), [quotationsRaw, filterByCompany]);
+  const proformas  = useMemo(() => filterByCompany(proformaRaw  ?? []), [proformaRaw,  filterByCompany]);
+  const lpos       = useMemo(() => filterByCompany(lposRaw      ?? []), [lposRaw,      filterByCompany]);
+  const deals      = useMemo(() => filterByCompany(dealsRaw     ?? []), [dealsRaw,     filterByCompany]);
+  const leads      = useMemo(() => filterByCompany(leadsRaw     ?? []), [leadsRaw,     filterByCompany]);
+  const targets    = useMemo(() => filterByCompany(targetsRaw   ?? []), [targetsRaw,   filterByCompany]);
+  const users      = usersRaw ?? [];
+
+  // ---- KPIs ----
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const quotationsThisMonth = quotations.filter((q: any) => q.createdAt && new Date(q.createdAt) >= monthStart);
+  const quotationValue   = quotations.reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
+  const quotationValueMtd = quotationsThisMonth.reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
+  const piValue          = proformas.reduce((s: number, p: any) => s + Number(p.total ?? 0), 0);
+  const lpoValue         = lpos.reduce((s: number, l: any) => s + Number(l.lpoValue ?? 0), 0);
+  const wonDealsValue    = deals.filter((d: any) => d.stage === "won").reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+  const acceptedQuotes   = quotations.filter((q: any) => ["accepted", "approved", "won"].includes((q.status ?? "").toLowerCase())).length;
+  const winRate = quotations.length > 0 ? Math.round((acceptedQuotes / quotations.length) * 100) : 0;
+
+  // ---- Sparklines ----
+  const quoteSpark = useMemo(() => weeklyValues(quotations, "createdAt", (q: any) => Number(q.grandTotal ?? 0), 8), [quotations]);
+  const piSpark    = useMemo(() => weeklyValues(proformas,  "createdAt", (p: any) => Number(p.total ?? 0), 8), [proformas]);
+  const lpoSpark   = useMemo(() => weeklyValues(lpos,       "createdAt", (l: any) => Number(l.lpoValue ?? 0), 8), [lpos]);
+  const wonSpark   = useMemo(
+    () => weeklyValues(deals.filter((d: any) => d.stage === "won"), "updatedAt", (d: any) => Number(d.value ?? 0), 8),
+    [deals],
+  );
+
+  // ---- Funnel: Leads → Quotations → PIs → LPOs → Won Deals ----
+  const funnelData = useMemo(() => ([
+    { stage: "Leads",        count: leads.length,                                                                                        value: leads.reduce((s: number, l: any) => s + Number(l.budget ?? 0), 0) },
+    { stage: "Quotations",   count: quotations.length,                                                                                   value: quotationValue },
+    { stage: "Proforma Inv", count: proformas.length,                                                                                    value: piValue },
+    { stage: "LPOs",         count: lpos.length,                                                                                         value: lpoValue },
+    { stage: "Won Deals",    count: deals.filter((d: any) => d.stage === "won").length,                                                  value: wonDealsValue },
+  ]), [leads, quotations, proformas, lpos, deals, quotationValue, piValue, lpoValue, wonDealsValue]);
+
+  // ---- Monthly revenue trend (12 months: quotations vs LPOs) ----
+  const monthlyTrend = useMemo(() => {
+    const months: { month: string; quotations: number; lpos: number; piValue: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      const inRange = (raw?: string) => {
+        if (!raw) return false;
+        const t = new Date(raw).getTime();
+        return t >= d.getTime() && t < next.getTime();
+      };
+      months.push({
+        month: d.toLocaleDateString("en-AE", { month: "short" }),
+        quotations: quotations.filter((q: any) => inRange(q.createdAt)).reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0),
+        lpos: lpos.filter((l: any) => inRange(l.createdAt ?? l.lpoDate)).reduce((s: number, l: any) => s + Number(l.lpoValue ?? 0), 0),
+        piValue: proformas.filter((p: any) => inRange(p.createdAt)).reduce((s: number, p: any) => s + Number(p.total ?? 0), 0),
+      });
+    }
+    return months;
+  }, [quotations, lpos, proformas, now]);
+
+  // ---- Quotation status mix ----
+  const statusMix = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const q of quotations as any[]) {
+      const s = (q.status ?? "draft").toLowerCase();
+      m[s] = (m[s] ?? 0) + 1;
+    }
+    return Object.entries(m).map(([name, value]) => ({ name: name.replace(/_/g, " "), value }));
+  }, [quotations]);
+
+  // ---- Top clients by quotation value ----
+  const topClients = useMemo(() => {
+    const m: Record<string, { value: number; count: number }> = {};
+    for (const q of quotations as any[]) {
+      const key = q.clientName ?? "Unknown";
+      const e = m[key] ?? { value: 0, count: 0 };
+      e.value += Number(q.grandTotal ?? 0);
+      e.count += 1;
+      m[key] = e;
+    }
+    return Object.entries(m)
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+  }, [quotations]);
+
+  // ---- Top salespeople (by won deals + quotations + projects-via-deals) ----
+  const salesUsers = useMemo(() => users.filter((u: any) => {
+    const r = (u.role ?? "").toLowerCase();
+    return r === "sales" || r.includes("sales") || r === "manager" || r === "main_admin" || r === "admin";
+  }), [users]);
+
+  const leaderboard = useMemo(() => {
+    return salesUsers
+      .map((u: any) => {
+        const quoted = quotations.filter((q: any) => q.preparedById === u.id || q.preparedByName === u.name)
+          .reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
+        const won = deals.filter((d: any) => d.stage === "won" && (d.assignedToId === u.id || d.assignedToName === u.name))
+          .reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+        const userTargets = targets.filter((t: any) => t.userId === u.id && t.year === year);
+        const target = userTargets.reduce((s: number, t: any) => {
+          if (t.period === "yearly")    return s + Number(t.targetAmount ?? 0);
+          if (t.period === "quarterly") return s + Number(t.targetAmount ?? 0) * 4;
+          if (t.period === "monthly")   return s + Number(t.targetAmount ?? 0) * 12;
+          return s;
+        }, 0);
+        return { id: u.id, name: u.name, quoted, won, target, attainment: target > 0 ? Math.round((won / target) * 100) : null };
+      })
+      .filter((r: any) => r.quoted > 0 || r.won > 0 || r.target > 0)
+      .sort((a: any, b: any) => b.won - a.won)
+      .slice(0, 8);
+  }, [salesUsers, quotations, deals, targets, year]);
+
+  // ---- Recent quotations ----
+  const recentQuotations = useMemo(
+    () => [...quotations].sort((a: any, b: any) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")).slice(0, 6),
+    [quotations],
+  );
+
+  // ---- Pending approvals / hot lists ----
+  const draftQuotations    = quotations.filter((q: any) => (q.status ?? "").toLowerCase() === "draft").length;
+  const pendingApprovalQ   = quotations.filter((q: any) => (q.status ?? "").toLowerCase() === "pending_approval").length;
+  const sentQuotations     = quotations.filter((q: any) => (q.status ?? "").toLowerCase() === "sent").length;
+  const pendingPIs         = proformas.filter((p: any) => ["draft", "pending_approval"].includes((p.status ?? "").toLowerCase())).length;
+  const openLpos           = lpos.filter((l: any) => !["completed", "delivered", "closed"].includes((l.status ?? "").toLowerCase())).length;
+
+  return (
+    <div className="space-y-5">
+      <ExecutiveHeader
+        icon={ShoppingBag}
+        title="Sales Command Center"
+        subtitle="Quotations, Proforma Invoices, LPOs · Conversion · Targets"
+      >
+        <Button size="sm" variant="secondary" asChild className="bg-white/15 hover:bg-white/25 text-white border-0">
+          <Link href="/sales/quotations"><FileText className="w-4 h-4 mr-1.5" />Quotations</Link>
+        </Button>
+        <Button size="sm" variant="secondary" asChild className="bg-white/15 hover:bg-white/25 text-white border-0">
+          <Link href="/sales/proforma-invoices"><FileCheck className="w-4 h-4 mr-1.5" />PIs</Link>
+        </Button>
+        <Button size="sm" asChild className="bg-white text-[#0f2d5a] hover:bg-white/90">
+          <Link href="/sales/quotations/new"><Sparkles className="w-4 h-4 mr-1.5" />New Quote</Link>
+        </Button>
+      </ExecutiveHeader>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KPIWidget icon={FileText}   tone="blue"   label="Quotations Value"   value={fmtAED(quotationValue)} sub={`${quotations.length} total · ${fmtAED(quotationValueMtd)} MTD`} sparkline={quoteSpark} trend={trendPct(quoteSpark)} href="/sales/quotations" testId="kpi-quote-value" />
+        <KPIWidget icon={FileCheck}  tone="amber"  label="Proforma Invoices"  value={fmtAED(piValue)}        sub={`${proformas.length} issued`}                                  sparkline={piSpark}    trend={trendPct(piSpark)}    href="/sales/proforma-invoices" testId="kpi-pi-value" />
+        <KPIWidget icon={ClipboardList} tone="purple" label="LPOs Received"   value={fmtAED(lpoValue)}       sub={`${lpos.length} LPOs · ${openLpos} open`}                       sparkline={lpoSpark}   trend={trendPct(lpoSpark)}   href="/sales/lpos" testId="kpi-lpo-value" />
+        <KPIWidget icon={Trophy}     tone="green"  label="Won Deals"          value={fmtAED(wonDealsValue)}  sub={`${deals.filter((d: any) => d.stage === "won").length} closed`} sparkline={wonSpark}   trend={trendPct(wonSpark)}   href="/crm/deals" testId="kpi-won-value" />
+        <KPIWidget icon={Target}     tone="teal"   label="Win Rate"           value={`${winRate}%`}          sub={`${acceptedQuotes}/${quotations.length} quotes accepted`}        href="/sales/quotations" testId="kpi-win-rate" />
+        <KPIWidget icon={FileText}   tone="slate"  label="Drafts"             value={draftQuotations}        sub={`${pendingApprovalQ} pending approval`}                          href="/sales/quotations" testId="kpi-drafts" />
+        <KPIWidget icon={Receipt}    tone="indigo" label="Sent Quotations"    value={sentQuotations}         sub="Awaiting client response"                                        href="/sales/quotations" testId="kpi-sent" />
+        <KPIWidget icon={Briefcase}  tone="navy"   label="Active Pipeline"    value={fmtAED(deals.filter((d: any) => !["won", "lost"].includes(d.stage)).reduce((s: number, d: any) => s + Number(d.value ?? 0), 0))} sub={`${deals.filter((d: any) => !["won", "lost"].includes(d.stage)).length} open deals`} href="/crm/pipeline" testId="kpi-pipeline" />
+      </div>
+
+      {/* Funnel + Status Mix */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <PanelCard title="Sales Funnel" subtitle="Lead → Won progression" icon={TrendingUp} className="lg:col-span-2">
+          {funnelData.every(f => f.count === 0) ? (
+            <Empty>No funnel activity yet.</Empty>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={funnelData} layout="vertical" margin={{ left: 40, right: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
+                <XAxis type="number" tick={{ fontSize: 11 }} />
+                <YAxis dataKey="stage" type="category" tick={{ fontSize: 12 }} width={100} />
+                <Tooltip formatter={(v: number, name: string) => name === "value" ? fmtAED(v) : v} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="count" fill="#1e6ab0" name="Count" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </PanelCard>
+
+        <PanelCard title="Quotation Status" subtitle="Distribution across all quotations" icon={FileText}>
+          {statusMix.length === 0 ? (
+            <Empty>No quotations yet.</Empty>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <RPieChart>
+                <Pie data={statusMix} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2}>
+                  {statusMix.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                </Pie>
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+              </RPieChart>
+            </ResponsiveContainer>
+          )}
+        </PanelCard>
+      </div>
+
+      {/* Monthly Trend */}
+      <PanelCard title="Monthly Revenue Trend" subtitle="Quotations vs Proforma Invoices vs LPOs over the last 12 months" icon={Calendar}>
+        {monthlyTrend.every(m => m.quotations === 0 && m.lpos === 0 && m.piValue === 0) ? (
+          <Empty>No revenue data yet.</Empty>
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={monthlyTrend}>
+              <defs>
+                <linearGradient id="grad-q" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1e6ab0" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="#1e6ab0" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="grad-p" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f97316" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="grad-l" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v: number) => fmtAED(v)} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Area type="monotone" dataKey="quotations" stroke="#1e6ab0" strokeWidth={2} fill="url(#grad-q)" name="Quotations" />
+              <Area type="monotone" dataKey="piValue"    stroke="#f97316" strokeWidth={2} fill="url(#grad-p)" name="Proforma" />
+              <Area type="monotone" dataKey="lpos"       stroke="#10b981" strokeWidth={2} fill="url(#grad-l)" name="LPOs" />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </PanelCard>
+
+      {/* Sales leaderboard + Pending list */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-card border rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+                <Crown className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold">Sales Leaderboard · {year}</div>
+                <div className="text-[11px] text-muted-foreground">Won deals, quotations & target attainment</div>
+              </div>
+            </div>
+            <Link href="/projects/sales-performance" className="text-[11px] text-primary hover:underline flex items-center gap-1">
+              Sales Performance <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {leaderboard.length === 0 ? (
+            <Empty>No salesperson activity yet.</Empty>
+          ) : (
+            <div className="space-y-2">
+              {leaderboard.map((row: any, i: number) => (
+                <div key={row.id} className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-amber-500 to-orange-600" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-amber-700" : "bg-[#1e6ab0]"}`}>
+                    {i + 1}
+                  </div>
+                  <Avatar name={row.name} size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold truncate">{row.name}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      Won {fmtAED(row.won)} · Quoted {fmtAED(row.quoted)}
+                      {row.target > 0 && ` · Target ${fmtAED(row.target)}`}
+                    </div>
+                  </div>
+                  {row.attainment != null && (
+                    <Badge className={`text-[10px] ${row.attainment >= 100 ? "bg-emerald-100 text-emerald-700" : row.attainment >= 75 ? "bg-blue-100 text-blue-700" : row.attainment >= 50 ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
+                      {row.attainment}% target
+                    </Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <PremiumCard tone="amber">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 text-orange-600" />
+                <span className="text-sm font-semibold">Pending Approval</span>
+              </div>
+              <div className="text-2xl font-bold">{pendingApprovalQ + pendingPIs}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">{pendingApprovalQ} quotations · {pendingPIs} PIs</div>
+            </div>
+          </PremiumCard>
+          <PremiumCard tone="blue">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Receipt className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-semibold">Sent Quotations</span>
+              </div>
+              <div className="text-2xl font-bold">{sentQuotations}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">Awaiting client decision</div>
+            </div>
+          </PremiumCard>
+          <PremiumCard tone="green">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <ClipboardList className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm font-semibold">Open LPOs</span>
+              </div>
+              <div className="text-2xl font-bold">{openLpos}</div>
+              <div className="text-[11px] text-muted-foreground mt-1">In production / delivery</div>
+            </div>
+          </PremiumCard>
+        </div>
+      </div>
+
+      {/* Top clients + recent quotations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PanelCard title="Top Clients by Quote Value" subtitle="Cumulative across all quotations" icon={Users}>
+          {topClients.length === 0 ? (
+            <Empty>No clients yet.</Empty>
+          ) : (
+            <div className="space-y-2">
+              {topClients.map((c, i) => (
+                <div key={c.name} className="flex items-center gap-3">
+                  <Avatar name={c.name} size={32} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{c.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{c.count} quotation{c.count === 1 ? "" : "s"}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(c.value)}</div>
+                    <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden mt-1">
+                      <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${Math.min(100, (c.value / topClients[0].value) * 100)}%` }} />
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5">#{i + 1}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </PanelCard>
+
+        <PanelCard title="Recent Quotations" subtitle="Latest 6 quotes created" icon={FileText}>
+          {recentQuotations.length === 0 ? (
+            <Empty>No quotations yet — <Link href="/sales/quotations/new" className="text-primary underline">create one</Link></Empty>
+          ) : (
+            <div className="space-y-2">
+              {recentQuotations.map((q: any) => (
+                <Link key={q.id} href={`/sales/quotations/${q.id}`} className="block">
+                  <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[11px] font-mono text-primary">{q.quotationNumber}</span>
+                        <StatusBadge status={q.status} />
+                      </div>
+                      <div className="text-sm font-medium truncate">{q.clientName}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">{q.projectName ?? "—"}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(q.grandTotal ?? 0))}</div>
+                      <div className="text-[10px] text-muted-foreground">{q.createdAt ? new Date(q.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short" }) : "—"}</div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </PanelCard>
+      </div>
+    </div>
+  );
+}
+
+function PanelCard({ title, subtitle, icon: Icon, children, className = "" }: {
+  title: string; subtitle?: string; icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode; className?: string;
+}) {
+  return (
+    <div className={`bg-card border rounded-2xl p-4 space-y-3 shadow-sm ${className}`}>
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-blue-600" />
+        </div>
+        <div>
+          <div className="text-sm font-semibold">{title}</div>
+          {subtitle && <div className="text-[11px] text-muted-foreground">{subtitle}</div>}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <div className="text-xs text-muted-foreground italic py-6 text-center">{children}</div>;
+}
