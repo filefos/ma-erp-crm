@@ -85,14 +85,22 @@ export function QuotationDetail({ id }: Props) {
     description: string; unit?: string; rate?: number; quantity: number; amount?: number;
   }[];
 
+  let additionalItems: import("@/components/document-print").AdditionalCommercialItem[] | undefined;
+  try {
+    const raw = (q as any).additionalItems;
+    if (raw) additionalItems = JSON.parse(raw);
+  } catch { /* use default */ }
+
   const docData: DocumentData = {
     type: "quotation",
     docNumber: q.quotationNumber,
     companyId: q.companyId,
     companyRef: (q as any).companyRef,
     clientName: q.clientName,
+    clientContactPerson: (q as any).clientContactPerson,
     clientPhone: q.clientPhone,
     clientEmail: q.clientEmail,
+    customerTrn: (q as any).customerTrn,
     projectName: q.projectName,
     projectLocation: q.projectLocation,
     date: q.createdAt ? new Date(q.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
@@ -105,6 +113,7 @@ export function QuotationDetail({ id }: Props) {
     paymentTerms: q.paymentTerms,
     termsConditions: q.termsConditions,
     techSpecs: (q as any).techSpecs,
+    additionalItems,
     items: items.map(i => ({
       description: i.description,
       sizeStatus: i.unit,

@@ -3256,6 +3256,10 @@ components:
           type: string
         clientPhone:
           type: string
+        clientContactPerson:
+          type: string
+        customerTrn:
+          type: string
         projectName:
           type: string
         projectLocation:
@@ -3279,6 +3283,10 @@ components:
         validity:
           type: string
         termsConditions:
+          type: string
+        techSpecs:
+          type: string
+        additionalItems:
           type: string
         preparedById:
           type: integer
@@ -3313,6 +3321,10 @@ components:
           type: string
         clientPhone:
           type: string
+        clientContactPerson:
+          type: string
+        customerTrn:
+          type: string
         projectName:
           type: string
         projectLocation:
@@ -3330,6 +3342,10 @@ components:
         validity:
           type: string
         termsConditions:
+          type: string
+        techSpecs:
+          type: string
+        additionalItems:
           type: string
         leadId:
           type: integer

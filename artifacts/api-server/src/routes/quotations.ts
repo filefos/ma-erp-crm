@@ -68,10 +68,12 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
   const [quotation] = await db.insert(quotationsTable).values({
     quotationNumber, companyId: data.companyId, clientName: data.clientName,
     clientEmail: data.clientEmail, clientPhone: data.clientPhone,
+    clientContactPerson: data.clientContactPerson, customerTrn: data.customerTrn,
     projectName: data.projectName, projectLocation: data.projectLocation,
     status: data.status ?? "draft", subtotal, discount, vatPercent, vatAmount, grandTotal,
     paymentTerms: data.paymentTerms, deliveryTerms: data.deliveryTerms,
     validity: data.validity, termsConditions: data.termsConditions,
+    techSpecs: data.techSpecs, additionalItems: data.additionalItems,
     preparedById: req.user?.id, leadId: data.leadId, dealId: data.dealId,
   }).returning();
 

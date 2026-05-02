@@ -366,6 +366,8 @@ export interface Quotation {
   clientName: string;
   clientEmail?: string;
   clientPhone?: string;
+  clientContactPerson?: string;
+  customerTrn?: string;
   projectName?: string;
   projectLocation?: string;
   status: string;
@@ -378,6 +380,8 @@ export interface Quotation {
   deliveryTerms?: string;
   validity?: string;
   termsConditions?: string;
+  techSpecs?: string;
+  additionalItems?: string;
   preparedById?: number;
   preparedByName?: string;
   approvedById?: number;
@@ -403,6 +407,8 @@ export interface CreateQuotationBody {
   clientName: string;
   clientEmail?: string;
   clientPhone?: string;
+  clientContactPerson?: string;
+  customerTrn?: string;
   projectName?: string;
   projectLocation?: string;
   status?: string;
@@ -412,6 +418,8 @@ export interface CreateQuotationBody {
   deliveryTerms?: string;
   validity?: string;
   termsConditions?: string;
+  techSpecs?: string;
+  additionalItems?: string;
   leadId?: number;
   dealId?: number;
   items?: CreateQuotationBodyItemsItem[];

@@ -10,6 +10,12 @@ export interface DocumentItem {
   total?: number;
 }
 
+export interface AdditionalCommercialItem {
+  description: string;
+  status: string;
+  amount?: number;
+}
+
 export type DocumentType = "quotation" | "proforma" | "tax_invoice" | "delivery_note" | "purchase_order";
 
 export interface DocumentData {
@@ -19,9 +25,11 @@ export interface DocumentData {
   companyRef?: string;
   clientName: string;
   clientContact?: string;
+  clientContactPerson?: string;
   clientPhone?: string;
   clientEmail?: string;
   clientTrn?: string;
+  customerTrn?: string;
   projectRef?: string;
   projectName?: string;
   projectLocation?: string;
@@ -38,6 +46,7 @@ export interface DocumentData {
   deliveryTerms?: string;
   termsConditions?: string;
   techSpecs?: string;
+  additionalItems?: AdditionalCommercialItem[];
   items: DocumentItem[];
   preparedByName?: string;
   preparedBySignatureUrl?: string;
@@ -83,94 +92,124 @@ const COMPANIES: Record<number, CompanyInfo> = {
   },
 };
 
-const STANDARD_INCLUSIONS = [
-  { label: "Transportation including RTA Permit", status: "Included" },
-  { label: "Brand New SUPER GENERAL SPLIT AC UNIT", status: "Excluded" },
-  { label: "Foundation Detail", status: "Excluded" },
-  { label: "Staircase", status: "Excluded" },
-  { label: "Additional Commercial Item", status: "Excluded" },
+const DEFAULT_ADDITIONAL_ITEMS: AdditionalCommercialItem[] = [
+  { description: "Transportation including RTA Permit", status: "Included" },
+  { description: "Brand New SUPER GENERAL SPLIT AC UNIT", status: "Excluded" },
+  { description: "Foundation Detail", status: "Excluded" },
+  { description: "Staircase", status: "Excluded" },
+  { description: "Additional Commercial Item", status: "Excluded" },
 ];
 
 const TECH_SPECS = [
   {
     title: "BASE FRAME",
     points: [
-      "Steel base & top frame: MS I-BEAM 120×64, full perimeter beams with central runner and cross members.",
-      "Lifting eyes at intermediate points at base of cabin; painted with 01 coat red oxide primer and 01 coat matt enamel paint.",
-      "Base frame painted with 02 coats: one red oxide, one rust-free enamel paint.",
+      "The steel base & top frame shall be constructed from MS I-BEAM 120X64, full perimeter beams with central runner and cross members.",
+      "Lifting eyes are provided at intermediate points at the Base of the cabin welded and painted in 01 coat of red oxide primer and 01 coat with matt enamel paint.",
+      "Base frame shall be painted with 02 coat paint, one with red oxide, one with rust free enamel paint.",
     ],
   },
   {
     title: "FLOOR SYSTEM",
     points: [
-      "Floor Frame: MS angle 50×50×2.7mm welded into base/top frame (400mm joist spacing). Grit blasted SA2.5 + 02 coat epoxy paint.",
-      "Floor Decking: 18mm thick cement board, bottom painted with bitumen paint.",
-      "Floor Finish – Dry Area: 1.5mm PVC vinyl sheet.",
-      "Floor Finish – Wet Area: 1.5mm PVC vinyl sheet.",
+      "Floor Frame: The Floor frame shall be constructed from MS angle 50X50X2.7MM welded into the base & top frame, making the floor assembly one integral frame. (400mm joists spacing). Grit blasted to SA2.5 and painted with 02 coat system of epoxy paint.",
+      "Floor Decking: One layer of 18mm thick cement board, fixed to the base frame and floor frame. Bottom of the cement board is painted with bitumen paint.",
+      "Floor Finish in Dry Area: 1.5mm PVC vinyl sheet from a good brand.",
+      "Floor Finish in Wet Area: PVC vinyl sheet 1.5mm thick.",
     ],
   },
   {
     title: "WALL SYSTEM",
     points: [
-      "External Finish: 6mm cement board with heavy texture paint (approved colour); joints covered by 6mm CFB strips.",
-      "Internal Finish (Dry): 12.5mm gypsum board + emulsion paint (off-white). MDF 50mm / PVC 75mm skirting.",
-      "Internal Finish (Wet): 12mm MR gypsum board on LGS framing + MDF 5cm skirting.",
-      "Wall Framing: LGS GI studs 70×35×0.45mm at 610mm vertical / 1200mm horizontal spacing.",
-      "Wall Insulation: 50mm glass-wool, 12 kg/m³ density.",
+      "External Finish: 06mm thick cement board finish with heavy texture paint (approved color). External wall joints covered by 6mm thick CFB joint strips.",
+      "Internal Finish in Dry Area: 12.5mm thick gypsum board finish with emulsion paint. Floor skirting MDF 50mm / PVC 75MM SKIRTING.",
+      "Internal Finish in Wet Area: 12mm thick MR GYPSUM board fixed to cold formed steel wall framing. Joints covered with MDF 5cm skirting.",
+      "Wall Framing: LGS profile framing GI studs 70x35x0.45 fixed together by screws at spacing of 610mm vertically & 1200mm horizontally.",
+      "Wall Insulation: 50mm thick glass-wool insulation 12kg/m3 density.",
+      "Dry Area: Emulsion paint (off-white color) applied to gypsum board. (National). Wet Area: Enamel paint (white color) applied to cement fiber board. (National).",
     ],
   },
   {
-    title: "ROOFING & CEILING",
+    title: "ROOFING",
     points: [
-      "Roof: 0.5mm GI corrugated steel on furry-channel purlins; trusses from MS Angle 40×40×2.7mm.",
-      "Ceiling (Dry & Wet): 12mm gypsum board with fine texture paint.",
+      "Roof Covering: 0.5mm thick GI Corrugated steel fixed on furry channel 0.5mm purlins as per drawing.",
+      "Trusses: Truss made of MS Angle 40x40x2.7mm.",
+    ],
+  },
+  {
+    title: "CEILING",
+    points: [
+      "Ceiling in Dry Area: 12mm gypsum board finish with fine texture paint.",
+      "Ceiling in Wet Areas: 12mm gypsum board finish with fine texture paint.",
     ],
   },
   {
     title: "DOORS",
     points: [
-      "External Door: Aluminium/PVC, 900×2100mm. Mortice lockset with cylinder and SS handles.",
-      "Internal / Toilet Door: 900/700×2100mm PVC door. Single cylinder with thumb-turn latch for toilet doors.",
+      "External Door: Supply and installation of Aluminum/PVC Door 900x2100mm. Door Lock: Mortice lockset with cylinder and SS door handles for all internal doors; Single cylinder with thumb turn latch for internal toilet doors.",
+      "Internal / Toilet Door: 900/700x2100mm PVC DOOR. Door Lock: Mortice lockset with cylinder and SS door handles for internal doors; Single cylinder with thumb turn latch for toilet doors.",
     ],
   },
   {
     title: "WINDOWS",
     points: [
-      "External: Powder-coated aluminium (non-thermal break), 6mm clear glass, hinged, 900×900mm.",
-      "Exhaust: Powder-coated aluminium, fixed, obscure glass, 400×400mm.",
+      "External Windows: Powder coated aluminum frame (non-thermal break), 6mm thick clear glass, externally Hinged window (One shutter hinged & other fixed). 900x900mm.",
+      "Exhaust Window: Powder coated aluminum frame (non-thermal break), fixed Exhaust window with 6mm thick Single obscure glass. Size: 400x400mm.",
     ],
   },
   {
     title: "ELECTRICAL",
     points: [
-      "Conduits and wiring: National / Du-Cab / RR brands.",
-      "Ceiling lights: 36W tube light by MAX.",
+      "Electrical Supply: Conduits and wiring by National / Du-cab / RR.",
+      "Tube light 36W ceiling light by MAX.",
     ],
   },
 ];
 
 const STANDARD_TC = `1. COMMERCIAL BASIS
-• Prices are quoted per the attached specification. Any revision or additional requirement is a variation priced separately.
-• Unless included, the customer shall provide crane support, foundation, safe offloading access, and all site arrangements.
-• Commercial basis: Ex-factory. All cheques in favour of the company name above.
+
+1. Prices are quoted in accordance with the attached specification and the received project requirements. Any revision, deviation, or additional requirement shall be treated as a variation and priced separately.
+
+2. Unless specifically included in the quotation, the customer shall provide crane support, foundation, safe offloading access, and all site arrangements required for unloading and installation.
+
+3. Commercial basis: Ex-factory.
+
+4. All cheques shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
+
 
 2. EXCLUSIONS
-• Offloading, excavation, foundation works, and on-site civil works (unless included).
-• Third-party inspections, testing, statutory approvals, and authority clearances.
-• Window blinds, fire extinguishers, smoke detectors, fire alarm systems, and similar items unless expressly included.
-• Third-party certification costs for welding, painting, and lifting eye inspections.
-• Design calculations and certifications (live load, dead load, wind load).
-• Replaceable wear items: lights, wash-basin/shower mixers, cistern covers, door handles.
+
+1. Offloading, excavation, foundation works, and any on-site civil works unless specifically included in the quotation.
+
+2. Expenses related to third-party inspections, testing, statutory approvals, and authority clearances.
+
+3. Window blinds, fire extinguishers, firefighting systems, smoke detectors, fire alarm panel systems, and similar items unless expressly included.
+
+4. Additional third-party certification or testing costs related to welding, painting, lifting eyes, and comparable specialized requirements.
+
+5. Charges for third-party design calculations and certifications, including live load, dead load, wind load, and related engineering assessments.
+
+6. Replaceable items and components subject to normal wear and tear, including ceiling lights, wash basin and shower mixers, shattaf, cistern seat covers, door handles, and locks.
+
 
 3. PAYMENT TERMS
-• 75% advance upon receipt of LPO and approved drawings.
-• 25% balance before delivery.
-• All cheques in favour of the company name above.
+
+1. 75% advance payment upon receipt of the LPO and approved drawings.
+
+2. 25% balance payment before delivery.
+
+3. Cheque shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
+
+4. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
+
 
 4. TECHNICAL & GENERAL NOTES
-• Drawings remain subject to client approval. The attached specification is the governing manufacturing reference.
-• We reserve the right to upgrade or substitute materials with equal or better performance.
-• For queries, contact our sales team.`;
+
+1. All drawings and designs remain subject to client approval. The attached technical specification shall be considered the governing reference for manufacturing and installation.
+
+2. As part of our quality-control procedures, we reserve the right to introduce, upgrade, or modify materials with equivalent or better performance where required.
+
+3. For any queries or clarifications, please contact our sales team. We shall be pleased to assist you.`;
 
 const DOC_TITLES: Record<DocumentType, string> = {
   quotation: "QUOTATION ON PREFABRICATED CABIN",
@@ -188,19 +227,33 @@ const REF_LABELS: Record<DocumentType, string> = {
   purchase_order: "PO Number",
 };
 
-function Th({ children, right }: { children: React.ReactNode; right?: boolean }) {
+function Th({ children, right, center }: { children: React.ReactNode; right?: boolean; center?: boolean }) {
   return (
-    <th className={`border border-gray-400 px-2 py-1.5 text-xs font-bold bg-gray-100 ${right ? "text-right" : "text-left"}`}>
+    <th
+      className={`border border-gray-400 px-2 py-1.5 text-xs font-bold bg-gray-100 ${right ? "text-right" : center ? "text-center" : "text-left"}`}
+    >
       {children}
     </th>
   );
 }
 
-function Td({ children, right, center, bold, colSpan }: { children: React.ReactNode; right?: boolean; center?: boolean; bold?: boolean; colSpan?: number }) {
+function Td({
+  children, right, center, bold, colSpan, green, red, style,
+}: {
+  children: React.ReactNode;
+  right?: boolean;
+  center?: boolean;
+  bold?: boolean;
+  colSpan?: number;
+  green?: boolean;
+  red?: boolean;
+  style?: React.CSSProperties;
+}) {
   return (
     <td
       colSpan={colSpan}
-      className={`border border-gray-400 px-2 py-1.5 text-xs ${right ? "text-right" : center ? "text-center" : "text-left"} ${bold ? "font-bold" : ""}`}
+      style={style}
+      className={`border border-gray-400 px-2 py-1.5 text-xs ${right ? "text-right" : center ? "text-center" : "text-left"} ${bold ? "font-bold" : ""} ${green ? "text-green-700 font-bold" : ""} ${red ? "text-red-600 font-bold" : ""}`}
     >
       {children}
     </td>
@@ -219,15 +272,20 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
   const vatAmt = data.vatAmount ?? (subtotal * vat / 100);
   const grand = data.grandTotal;
   const docDate = data.invoiceDate ?? data.date ?? new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const clientContact = data.clientContactPerson ?? data.clientContact ?? "—";
+  const customerTrn = data.customerTrn ?? data.clientTrn ?? "—";
+
+  const additionalItems = data.additionalItems ?? DEFAULT_ADDITIONAL_ITEMS;
 
   return (
     <>
       <style>{`
         @media print {
-          @page { size: A4; margin: 12mm; }
+          @page { size: A4 portrait; margin: 10mm; }
           .no-print { display: none !important; }
           body { -webkit-print-color-adjust: exact; color-adjust: exact; }
           .print-doc { box-shadow: none !important; border: none !important; padding: 0 !important; }
+          .print-page-break { page-break-before: always !important; break-before: page !important; }
         }
       `}</style>
 
@@ -235,14 +293,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="border-2 border-gray-700 mb-3">
-          <div className="bg-[#0f2d5a] text-white text-center py-3 px-4">
+          <div className="bg-[#0f2d5a] text-white text-center py-3 px-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
             <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
             <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
             <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}</div>
           </div>
-
-          {/* Document title strip */}
-          <div className="bg-[#1e6ab0] text-white text-center py-2">
+          <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
             <span className="text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
           </div>
         </div>
@@ -290,7 +346,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </tr>
               <tr>
                 <Td><span className="font-semibold">Contact Person: </span>{co.contact}</Td>
-                <Td><span className="font-semibold">Contact Person: </span>{data.clientContact ?? "—"}</Td>
+                <Td><span className="font-semibold">Contact Person: </span>{clientContact}</Td>
               </tr>
               <tr>
                 <Td><span className="font-semibold">Contact #: </span>{co.phone}</Td>
@@ -332,18 +388,20 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <tr>
                 <Td><span className="font-semibold">Project / Site: </span>{data.projectLocation ?? data.deliveryLocation ?? "—"}</Td>
                 {isTax ? (
-                  <Td><span className="font-semibold">Invoice Date: </span>{docDate}
+                  <Td>
+                    <span className="font-semibold">Invoice Date: </span>{docDate}
                     {data.supplyDate ? <> &nbsp;|&nbsp; <span className="font-semibold">Supply Date: </span>{data.supplyDate}</> : null}
                   </Td>
                 ) : (
-                  <Td><span className="font-semibold">Date: </span>{docDate}
+                  <Td>
+                    <span className="font-semibold">Date: </span>{docDate}
                     {data.validity ? <> &nbsp;|&nbsp; <span className="font-semibold">Valid Until: </span>{data.validity}</> : null}
                   </Td>
                 )}
               </tr>
               <tr>
                 <Td><span className="font-semibold">Our TRN: </span>{co.trn}</Td>
-                <Td><span className="font-semibold">Customer TRN: </span>{data.clientTrn ?? "—"}</Td>
+                <Td><span className="font-semibold">Customer TRN: </span>{customerTrn}</Td>
               </tr>
             </tbody>
           </table>
@@ -366,13 +424,13 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         )}
 
         {/* ── LINE ITEMS TABLE ─────────────────────────────────────────── */}
-        <table className="w-full border-collapse border border-gray-400 mb-1">
+        <table className="w-full border-collapse border border-gray-400 mb-0">
           <thead>
-            <tr className="bg-gray-100">
-              <Th>S#</Th>
+            <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <Th center>S#</Th>
               <Th>Description</Th>
-              <Th>Size / Specification</Th>
-              {!isDelivery && <Th right>Unit Price (AED)</Th>}
+              <Th center>Size / Status</Th>
+              {!isDelivery && <Th right>Price (AED)</Th>}
               <Th right>Qty.</Th>
               {!isDelivery && <Th right>Total (AED)</Th>}
             </tr>
@@ -380,14 +438,16 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           <tbody>
             {data.items.length === 0 && (
               <tr>
-                <Td colSpan={isDelivery ? 3 : 5} center><span className="text-gray-400 italic">No items</span></Td>
+                <Td colSpan={isDelivery ? 3 : 6} center>
+                  <span className="text-gray-400 italic">No items</span>
+                </Td>
               </tr>
             )}
             {data.items.map((item, i) => (
               <tr key={i}>
                 <Td center bold>{String(i + 1).padStart(2, "0")}</Td>
-                <Td>{item.description}</Td>
-                <Td>{item.sizeStatus ?? item.unit ?? "—"}</Td>
+                <Td style={{ whiteSpace: "pre-line" }}>{item.description}</Td>
+                <Td center>{item.sizeStatus ?? item.unit ?? "—"}</Td>
                 {!isDelivery && <Td right>{item.unitPrice != null ? formatAED(item.unitPrice) : "—"}</Td>}
                 <Td right>{item.quantity}</Td>
                 {!isDelivery && <Td right bold>{item.total != null ? formatAED(item.total) : "—"}</Td>}
@@ -396,9 +456,9 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </tbody>
         </table>
 
-        {/* ── TOTALS ───────────────────────────────────────────────────── */}
+        {/* ── TOTALS / ADDITIONAL ITEMS BLOCK ─────────────────────────── */}
         {isPO && (
-          <table className="w-full border-collapse border border-gray-400 mb-3">
+          <table className="w-full border-collapse border border-gray-400 mb-3 mt-0">
             <tbody>
               <tr className="bg-[#0f2d5a] text-white" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <td className="border border-gray-400 px-2 py-2 text-sm font-black">TOTAL AMOUNT (AED)</td>
@@ -411,39 +471,47 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </table>
         )}
 
-        {/* ── TOTAL EXCL VAT (in words) ────────────────────────────────── */}
         {!isDelivery && !isPO && (
           <>
-            <table className="w-full border-collapse border border-gray-400 mb-1">
+            {/* Project Items Subtotal row */}
+            <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
               <tbody>
                 <tr className="bg-gray-50">
-                  <Td bold>TOTAL AMOUNT (EXCLUDING VAT)</Td>
+                  <Td bold colSpan={4}>TOTAL AMOUNT IN WORDS = EXCLUDING VAT (PROJECT ITEMS)</Td>
                   <Td right bold>{formatAED(subtotal)}</Td>
                 </tr>
                 <tr>
-                  <Td><span className="font-semibold">In Words: </span><span className="italic">{numberToWords(subtotal)}</span></Td>
-                  <Td right>{" "}</Td>
+                  <Td colSpan={5}>
+                    <span className="font-semibold">In Words: </span>
+                    <span className="italic">{numberToWords(subtotal)}</span>
+                  </Td>
                 </tr>
               </tbody>
             </table>
 
-            {/* ── INCLUSIONS / EXCLUSIONS (quotation + proforma only) ─── */}
+            {/* Additional Commercial Items (quotation + proforma) */}
             {(isQuotation || data.type === "proforma") && (
-              <table className="w-full border-collapse border border-gray-400 mb-1">
+              <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
                 <thead>
-                  <tr>
+                  <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                     <Th>Item</Th>
-                    <Th>Status</Th>
+                    <Th center>Status</Th>
+                    <Th right>Amount (AED)</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {STANDARD_INCLUSIONS.map((row) => (
-                    <tr key={row.label}>
-                      <Td>{row.label}</Td>
-                      <Td>
-                        <span className={`font-bold ${row.status === "Included" ? "text-green-700" : "text-red-600"}`}>
+                  {additionalItems.map((row, idx) => (
+                    <tr key={idx}>
+                      <Td>{row.description}</Td>
+                      <Td center>
+                        <span className={row.status === "Included" ? "text-green-700 font-bold" : "text-red-600 font-bold"}>
                           {row.status}
                         </span>
+                      </Td>
+                      <Td right>
+                        {row.status === "Included" && row.amount && row.amount > 0
+                          ? formatAED(row.amount)
+                          : row.status === "Included" ? "Included" : "—"}
                       </Td>
                     </tr>
                   ))}
@@ -451,25 +519,35 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </table>
             )}
 
-            {/* ── GRAND TOTAL BLOCK ────────────────────────────────────── */}
-            <table className="w-full border-collapse border border-gray-400 mb-3">
+            {/* Grand Total block */}
+            <table className="w-full border-collapse border border-gray-400 mb-3 mt-0">
               <tbody>
+                <tr className="bg-gray-50">
+                  <Td bold colSpan={4}>TOTAL AMOUNT IN WORDS = EXCLUDING VAT</Td>
+                  <Td right bold>{formatAED(subtotal)}</Td>
+                </tr>
+                <tr>
+                  <Td colSpan={5}>
+                    <span className="font-semibold">In Words: </span>
+                    <span className="italic">{numberToWords(subtotal)}</span>
+                  </Td>
+                </tr>
                 {(data.discount ?? 0) > 0 && (
                   <tr>
-                    <Td>Discount ({data.discount}%)</Td>
-                    <Td right>— AED {formatAED((subtotal * (data.discount ?? 0)) / 100)}</Td>
+                    <Td colSpan={4}>Discount ({data.discount}%)</Td>
+                    <Td right>— {formatAED((subtotal * (data.discount ?? 0)) / 100)}</Td>
                   </tr>
                 )}
                 <tr>
-                  <Td>VAT {vat}%</Td>
+                  <Td colSpan={4}>VAT {vat}%</Td>
                   <Td right>{formatAED(vatAmt)}</Td>
                 </tr>
-                <tr className="bg-[#0f2d5a] text-white">
-                  <td className="border border-gray-400 px-2 py-2 text-sm font-black">GRAND TOTAL (AED)</td>
+                <tr className="bg-[#0f2d5a] text-white" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                  <td colSpan={4} className="border border-gray-400 px-2 py-2 text-sm font-black">GRAND TOTAL (AED)</td>
                   <td className="border border-gray-400 px-2 py-2 text-sm font-black text-right">{formatAED(grand)}</td>
                 </tr>
                 <tr>
-                  <Td colSpan={2}>
+                  <Td colSpan={5}>
                     <span className="font-semibold">Grand Total in Words: </span>
                     <span className="italic">{numberToWords(grand)}</span>
                   </Td>
@@ -513,77 +591,136 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         )}
 
-        {/* ── TECHNICAL SPECIFICATIONS (Quotation only) ───────────────── */}
-        {isQuotation && (
-          <div className="mt-4">
-            <div className="bg-[#0f2d5a] text-white px-3 py-1.5 font-black text-[13px] uppercase tracking-wide mb-0">
-              Technical Specifications
+        {/* ── SIGNATURE BLOCK (non-quotation, or quotation page 1 footer) */}
+        {!isQuotation && (
+          <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
+            <div>
+              <div className="font-bold mb-1">Prepared by:</div>
+              <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+              {data.preparedBySignatureUrl ? (
+                <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
+              ) : (
+                <div className="h-10 mt-2 mb-1" />
+              )}
+              <div className="border-t border-gray-500 pt-1 text-gray-500">Signature</div>
             </div>
-            {data.techSpecs ? (
-              <div className="border border-gray-400 p-3 text-[11px] whitespace-pre-line bg-gray-50">
-                {data.techSpecs}
-              </div>
-            ) : (
-              <table className="w-full border-collapse border border-gray-400 mb-3">
-                <tbody>
-                  {TECH_SPECS.map((section, si) => (
-                    <React.Fragment key={si}>
-                      <tr className="bg-gray-200">
-                        <td className="border border-gray-400 px-2 py-1 font-bold text-xs uppercase" colSpan={2}>
-                          {String.fromCharCode(65 + si)}. {section.title}
-                        </td>
-                      </tr>
-                      {section.points.map((pt, pi) => (
-                        <tr key={pi}>
-                          <td className="border border-gray-400 px-2 py-1 text-xs w-6 text-center align-top font-semibold">
-                            {String.fromCharCode(97 + pi)}.
-                          </td>
-                          <td className="border border-gray-400 px-2 py-1 text-xs">{pt}</td>
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
-            )}
+            <div className="text-right">
+              <div className="font-bold mb-1">For &amp; on behalf of</div>
+              <div className="font-bold text-[13px]">{coName}</div>
+              <div className="h-10 mt-2 mb-1" />
+              <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
+            </div>
           </div>
         )}
 
-        {/* ── TERMS & CONDITIONS ───────────────────────────────────────── */}
-        {(isQuotation || data.termsConditions) && (
-          <div className="mt-2">
-            <div className="bg-[#0f2d5a] text-white px-3 py-1.5 font-black text-[13px] uppercase tracking-wide mb-0">
-              Terms &amp; Conditions
+        {!isQuotation && (
+          <div className="mt-4 text-center text-[10px] text-gray-400 border-t pt-2">
+            This document was generated by Prime Max &amp; Elite Prefab Smart ERP CRM System
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            PAGE 2 — TECHNICAL SPECIFICATIONS (Quotation only)
+        ══════════════════════════════════════════════════════════════ */}
+        {isQuotation && (
+          <div className="print-page-break mt-8">
+            {/* Page 2 Letterhead */}
+            <div className="border-2 border-gray-700 mb-3">
+              <div className="bg-[#0f2d5a] text-white text-center py-3 px-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
+                <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+                <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}</div>
+              </div>
+              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
+              </div>
             </div>
-            <div className="border border-gray-400 p-3 text-[11px] whitespace-pre-line bg-gray-50">
+
+            <table className="w-full border-collapse border border-gray-400 mb-3">
+              <thead>
+                <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                  <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-center w-8">Pt.</th>
+                  <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-left" colSpan={2}>
+                    TECHNICAL SPECIFICATION DETAIL
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {TECH_SPECS.map((section, si) => (
+                  <React.Fragment key={si}>
+                    <tr className="bg-gray-200" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <td className="border border-gray-400 px-2 py-1 font-bold text-xs text-center">
+                        {si + 1}
+                      </td>
+                      <td className="border border-gray-400 px-2 py-1 font-bold text-xs uppercase" colSpan={2}>
+                        {section.title}
+                      </td>
+                    </tr>
+                    {section.points.map((pt, pi) => (
+                      <tr key={pi}>
+                        <td className="border border-gray-400 px-2 py-1 text-xs text-center align-top font-semibold text-gray-500">
+                          {String.fromCharCode(97 + pi)}.
+                        </td>
+                        <td className="border border-gray-400 px-2 py-1.5 text-xs" colSpan={2}>{pt}</td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="mt-4 text-center text-[10px] text-gray-400 border-t pt-2">
+              This document was generated by Prime Max &amp; Elite Prefab Smart ERP CRM System
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            PAGE 3 — TERMS & CONDITIONS (Quotation only)
+        ══════════════════════════════════════════════════════════════ */}
+        {isQuotation && (
+          <div className="print-page-break mt-8">
+            {/* Page 3 Letterhead */}
+            <div className="border-2 border-gray-700 mb-3">
+              <div className="bg-[#0f2d5a] text-white text-center py-3 px-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
+                <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+                <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}</div>
+              </div>
+              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
+              </div>
+            </div>
+
+            <div className="border border-gray-400 p-4 text-[11px] whitespace-pre-line bg-gray-50 mb-4" style={{ lineHeight: "1.7" }}>
               {data.termsConditions ?? STANDARD_TC}
             </div>
+
+            {/* Signature */}
+            <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
+              <div>
+                <div className="font-bold mb-1">Prepared by:</div>
+                <div className="text-gray-700 font-semibold">{data.preparedByName ?? `"${coName}"`}</div>
+                {data.preparedBySignatureUrl ? (
+                  <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
+                ) : (
+                  <div className="h-10 mt-2 mb-1" />
+                )}
+                <div className="border-t border-gray-500 pt-1 text-gray-500">Signature: ____________________</div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold mb-1">For &amp; on behalf of</div>
+                <div className="font-bold text-[13px]">{coName}</div>
+                <div className="h-10 mt-2 mb-1" />
+                <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
+              </div>
+            </div>
+
+            <div className="mt-4 text-center text-[10px] text-gray-400 border-t pt-2">
+              This document was generated by Prime Max &amp; Elite Prefab Smart ERP CRM System
+            </div>
           </div>
         )}
-
-        {/* ── SIGNATURE BLOCK ─────────────────────────────────────────── */}
-        <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
-          <div>
-            <div className="font-bold mb-1">Prepared by:</div>
-            <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
-            {data.preparedBySignatureUrl ? (
-              <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
-            ) : (
-              <div className="h-10 mt-2 mb-1" />
-            )}
-            <div className="border-t border-gray-500 pt-1 text-gray-500">Signature</div>
-          </div>
-          <div className="text-right">
-            <div className="font-bold mb-1">For &amp; on behalf of</div>
-            <div className="font-bold text-[13px]">{coName}</div>
-            <div className="h-10 mt-2 mb-1" />
-            <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
-          </div>
-        </div>
-
-        <div className="mt-4 text-center text-[10px] text-gray-400 border-t pt-2">
-          This document was generated by Prime Max &amp; Elite Prefab Smart ERP CRM System
-        </div>
       </div>
     </>
   );

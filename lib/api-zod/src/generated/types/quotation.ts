@@ -15,6 +15,8 @@ export interface Quotation {
   clientName: string;
   clientEmail?: string;
   clientPhone?: string;
+  clientContactPerson?: string;
+  customerTrn?: string;
   projectName?: string;
   projectLocation?: string;
   status: string;
@@ -27,6 +29,8 @@ export interface Quotation {
   deliveryTerms?: string;
   validity?: string;
   termsConditions?: string;
+  techSpecs?: string;
+  additionalItems?: string;
   preparedById?: number;
   preparedByName?: string;
   approvedById?: number;
