@@ -50,6 +50,7 @@ import { StockEntriesList } from "@/pages/inventory/stock-entries";
 import { InventoryDashboard } from "@/pages/inventory/dashboard";
 import { ProjectsList } from "@/pages/projects/index";
 import { ProjectDetail } from "@/pages/projects/detail";
+import { SalesPerformance } from "@/pages/projects/sales-performance";
 import { EmployeesList } from "@/pages/hr/employees";
 import { AttendanceList } from "@/pages/hr/attendance";
 import { AssetsList } from "@/pages/assets/index";
@@ -248,6 +249,9 @@ function Router() {
       </Route>
 
       {/* Projects */}
+      <Route path="/projects/sales-performance">
+        <ModuleGuard module="projects"><SalesPerformance /></ModuleGuard>
+      </Route>
       <Route path="/projects/:id">
         {(params) => (
           <ModuleGuard module="projects"><ProjectDetail id={params.id} /></ModuleGuard>

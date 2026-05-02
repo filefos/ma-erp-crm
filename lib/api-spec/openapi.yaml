@@ -1352,6 +1352,91 @@ paths:
               schema:
                 $ref: "#/components/schemas/Project"
 
+  # SALES TARGETS
+  /sales-targets:
+    get:
+      operationId: listSalesTargets
+      tags: [sales-targets]
+      summary: List sales targets
+      parameters:
+        - name: userId
+          in: query
+          schema: { type: integer }
+        - name: year
+          in: query
+          schema: { type: integer }
+        - name: period
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of sales targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalesTarget"
+    post:
+      operationId: createSalesTarget
+      tags: [sales-targets]
+      summary: Create sales target
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSalesTargetBody"
+      responses:
+        "201":
+          description: Sales target created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesTarget"
+
+  /sales-targets/{id}:
+    put:
+      operationId: updateSalesTarget
+      tags: [sales-targets]
+      summary: Update sales target
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSalesTargetBody"
+      responses:
+        "200":
+          description: Sales target updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesTarget"
+    delete:
+      operationId: deleteSalesTarget
+      tags: [sales-targets]
+      summary: Delete sales target
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Sales target deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
   # SUPPLIERS
   /suppliers:
     get:
@@ -4558,9 +4643,15 @@ components:
           type: integer
         projectManagerName:
           type: string
+        salespersonId:
+          type: integer
+        salespersonName:
+          type: string
         startDate:
           type: string
         endDate:
+          type: string
+        deliveryDate:
           type: string
         createdAt:
           type: string
@@ -4601,11 +4692,45 @@ components:
           type: string
         projectManagerId:
           type: integer
+        salespersonId:
+          type: integer
         startDate:
           type: string
         endDate:
           type: string
+        deliveryDate:
+          type: string
       required: [projectName, clientName, companyId]
+
+    SalesTarget:
+      type: object
+      properties:
+        id: { type: integer }
+        companyId: { type: integer }
+        userId: { type: integer }
+        userName: { type: string }
+        period: { type: string }
+        year: { type: integer }
+        month: { type: integer }
+        quarter: { type: integer }
+        targetAmount: { type: number }
+        notes: { type: string }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+      required: [id, companyId, userId, period, year, targetAmount]
+
+    CreateSalesTargetBody:
+      type: object
+      properties:
+        companyId: { type: integer }
+        userId: { type: integer }
+        period: { type: string }
+        year: { type: integer }
+        month: { type: integer }
+        quarter: { type: integer }
+        targetAmount: { type: number }
+        notes: { type: string }
+      required: [companyId, userId, period, year, targetAmount]
 
     Supplier:
       type: object

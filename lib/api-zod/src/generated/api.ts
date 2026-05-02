@@ -2040,8 +2040,11 @@ export const ListProjectsResponseItem = zod.object({
   paymentStatus: zod.string().optional(),
   projectManagerId: zod.number().optional(),
   projectManagerName: zod.string().optional(),
+  salespersonId: zod.number().optional(),
+  salespersonName: zod.string().optional(),
   startDate: zod.string().optional(),
   endDate: zod.string().optional(),
+  deliveryDate: zod.string().optional(),
   createdAt: zod.string(),
   updatedAt: zod.string().optional(),
 });
@@ -2066,8 +2069,10 @@ export const CreateProjectBody = zod.object({
   installationStatus: zod.string().optional(),
   paymentStatus: zod.string().optional(),
   projectManagerId: zod.number().optional(),
+  salespersonId: zod.number().optional(),
   startDate: zod.string().optional(),
   endDate: zod.string().optional(),
+  deliveryDate: zod.string().optional(),
 });
 
 /**
@@ -2097,8 +2102,11 @@ export const GetProjectResponse = zod.object({
   paymentStatus: zod.string().optional(),
   projectManagerId: zod.number().optional(),
   projectManagerName: zod.string().optional(),
+  salespersonId: zod.number().optional(),
+  salespersonName: zod.string().optional(),
   startDate: zod.string().optional(),
   endDate: zod.string().optional(),
+  deliveryDate: zod.string().optional(),
   createdAt: zod.string(),
   updatedAt: zod.string().optional(),
 });
@@ -2126,8 +2134,10 @@ export const UpdateProjectBody = zod.object({
   installationStatus: zod.string().optional(),
   paymentStatus: zod.string().optional(),
   projectManagerId: zod.number().optional(),
+  salespersonId: zod.number().optional(),
   startDate: zod.string().optional(),
   endDate: zod.string().optional(),
+  deliveryDate: zod.string().optional(),
 });
 
 export const UpdateProjectResponse = zod.object({
@@ -2150,10 +2160,96 @@ export const UpdateProjectResponse = zod.object({
   paymentStatus: zod.string().optional(),
   projectManagerId: zod.number().optional(),
   projectManagerName: zod.string().optional(),
+  salespersonId: zod.number().optional(),
+  salespersonName: zod.string().optional(),
   startDate: zod.string().optional(),
   endDate: zod.string().optional(),
+  deliveryDate: zod.string().optional(),
   createdAt: zod.string(),
   updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary List sales targets
+ */
+export const ListSalesTargetsQueryParams = zod.object({
+  userId: zod.coerce.number().optional(),
+  year: zod.coerce.number().optional(),
+  period: zod.coerce.string().optional(),
+});
+
+export const ListSalesTargetsResponseItem = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  userId: zod.number(),
+  userName: zod.string().optional(),
+  period: zod.string(),
+  year: zod.number(),
+  month: zod.number().optional(),
+  quarter: zod.number().optional(),
+  targetAmount: zod.number(),
+  notes: zod.string().optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+export const ListSalesTargetsResponse = zod.array(ListSalesTargetsResponseItem);
+
+/**
+ * @summary Create sales target
+ */
+export const CreateSalesTargetBody = zod.object({
+  companyId: zod.number(),
+  userId: zod.number(),
+  period: zod.string(),
+  year: zod.number(),
+  month: zod.number().optional(),
+  quarter: zod.number().optional(),
+  targetAmount: zod.number(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary Update sales target
+ */
+export const UpdateSalesTargetParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateSalesTargetBody = zod.object({
+  companyId: zod.number(),
+  userId: zod.number(),
+  period: zod.string(),
+  year: zod.number(),
+  month: zod.number().optional(),
+  quarter: zod.number().optional(),
+  targetAmount: zod.number(),
+  notes: zod.string().optional(),
+});
+
+export const UpdateSalesTargetResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  userId: zod.number(),
+  userName: zod.string().optional(),
+  period: zod.string(),
+  year: zod.number(),
+  month: zod.number().optional(),
+  quarter: zod.number().optional(),
+  targetAmount: zod.number(),
+  notes: zod.string().optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete sales target
+ */
+export const DeleteSalesTargetParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteSalesTargetResponse = zod.object({
+  ok: zod.boolean().optional(),
 });
 
 /**

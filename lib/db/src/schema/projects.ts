@@ -20,8 +20,10 @@ export const projectsTable = pgTable("projects", {
   installationStatus: text("installation_status").default("pending"),
   paymentStatus: text("payment_status").default("pending"),
   projectManagerId: integer("project_manager_id"),
+  salespersonId: integer("salesperson_id"),
   startDate: text("start_date"),
   endDate: text("end_date"),
+  deliveryDate: text("delivery_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

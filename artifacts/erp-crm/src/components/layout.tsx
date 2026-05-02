@@ -94,6 +94,7 @@ const NAV: NavGroup[] = [
     icon: Folders,
     items: [
       { href: "/projects", label: "All Projects", icon: Folders },
+      { href: "/projects/sales-performance", label: "Sales Performance", icon: TrendingUp },
     ],
   },
   {

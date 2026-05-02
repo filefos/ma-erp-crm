@@ -26,8 +26,11 @@ export interface Project {
   paymentStatus?: string;
   projectManagerId?: number;
   projectManagerName?: string;
+  salespersonId?: number;
+  salespersonName?: string;
   startDate?: string;
   endDate?: string;
+  deliveryDate?: string;
   createdAt: string;
   updatedAt?: string;
 }

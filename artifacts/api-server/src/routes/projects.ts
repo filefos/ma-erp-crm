@@ -9,6 +9,7 @@ router.use(requireAuth);
 async function enrichProject(p: typeof projectsTable.$inferSelect) {
   let companyRef: string | undefined;
   let projectManagerName: string | undefined;
+  let salespersonName: string | undefined;
   if (p.companyId) {
     const [co] = await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, p.companyId));
     companyRef = co?.name;
@@ -17,7 +18,11 @@ async function enrichProject(p: typeof projectsTable.$inferSelect) {
     const [u] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, p.projectManagerId));
     projectManagerName = u?.name;
   }
-  return { ...p, companyRef, projectManagerName };
+  if (p.salespersonId) {
+    const [u] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, p.salespersonId));
+    salespersonName = u?.name;
+  }
+  return { ...p, companyRef, projectManagerName, salespersonName };
 }
 
 router.get("/projects", requirePermission("projects", "view"), async (req, res): Promise<void> => {

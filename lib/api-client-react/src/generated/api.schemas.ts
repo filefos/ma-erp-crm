@@ -606,8 +606,11 @@ export interface Project {
   paymentStatus?: string;
   projectManagerId?: number;
   projectManagerName?: string;
+  salespersonId?: number;
+  salespersonName?: string;
   startDate?: string;
   endDate?: string;
+  deliveryDate?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -628,8 +631,36 @@ export interface CreateProjectBody {
   installationStatus?: string;
   paymentStatus?: string;
   projectManagerId?: number;
+  salespersonId?: number;
   startDate?: string;
   endDate?: string;
+  deliveryDate?: string;
+}
+
+export interface SalesTarget {
+  id: number;
+  companyId: number;
+  userId: number;
+  userName?: string;
+  period: string;
+  year: number;
+  month?: number;
+  quarter?: number;
+  targetAmount: number;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateSalesTargetBody {
+  companyId: number;
+  userId: number;
+  period: string;
+  year: number;
+  month?: number;
+  quarter?: number;
+  targetAmount: number;
+  notes?: string;
 }
 
 export interface Supplier {
@@ -1424,6 +1455,16 @@ export type ListProjectsParams = {
   stage?: string;
   companyId?: number;
   search?: string;
+};
+
+export type ListSalesTargetsParams = {
+  userId?: number;
+  year?: number;
+  period?: string;
+};
+
+export type DeleteSalesTarget200 = {
+  ok?: boolean;
 };
 
 export type ListSuppliersParams = {

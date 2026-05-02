@@ -9,6 +9,7 @@ export * from "./activities";
 export * from "./quotations";
 export * from "./invoices";
 export * from "./projects";
+export * from "./sales-targets";
 export * from "./procurement";
 export * from "./inventory";
 export * from "./assets";

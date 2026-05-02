@@ -22,6 +22,8 @@ export interface CreateProjectBody {
   installationStatus?: string;
   paymentStatus?: string;
   projectManagerId?: number;
+  salespersonId?: number;
   startDate?: string;
   endDate?: string;
+  deliveryDate?: string;
 }

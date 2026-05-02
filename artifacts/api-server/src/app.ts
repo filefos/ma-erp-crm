@@ -39,6 +39,23 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS notes TEXT`);
     await db.execute(sql`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS prepared_by_id INTEGER`);
     await db.execute(sql`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS rejection_reason TEXT`);
+    // Project enhancements: salesperson + delivery date
+    await db.execute(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS salesperson_id INTEGER`);
+    await db.execute(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_date TEXT`);
+    // Sales targets table
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS sales_targets (
+      id SERIAL PRIMARY KEY,
+      company_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      period TEXT NOT NULL DEFAULT 'monthly',
+      year INTEGER NOT NULL,
+      month INTEGER,
+      quarter INTEGER,
+      target_amount DOUBLE PRECISION NOT NULL DEFAULT 0,
+      notes TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
     // New RFQ table
     await db.execute(sql`CREATE TABLE IF NOT EXISTS rfqs (
       id SERIAL PRIMARY KEY,

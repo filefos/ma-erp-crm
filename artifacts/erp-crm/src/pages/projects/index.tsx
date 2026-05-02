@@ -5,20 +5,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Search } from "lucide-react";
+import { Search, Target } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const stageColors: Record<string, string> = {
-  new_project: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  production: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  procurement: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-  delivery: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400",
+  new_project:  "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  production:   "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  procurement:  "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  delivery:     "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400",
   installation: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-  testing: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400",
-  handover: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
-  completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  testing:      "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400",
+  handover:     "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
+  completed:    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
 };
 
 function getProgress(project: any) {
@@ -41,21 +42,28 @@ export function ProjectsList() {
           <h1 className="text-2xl font-bold tracking-tight">Projects</h1>
           <p className="text-muted-foreground">Track all active and completed prefab projects.</p>
         </div>
-        <ExportMenu
-          data={filtered as Record<string, unknown>[]}
-          columns={[
-            { header: "Project Name", key: "name" },
-            { header: "Client", key: "clientName" },
-            { header: "Stage", key: "stage" },
-            { header: "Budget (AED)", key: "budget", format: v => Number(v ?? 0).toFixed(2) },
-            { header: "Progress (%)", key: "progress" },
-            { header: "Site Manager", key: "siteManager" },
-            { header: "Start Date", key: "startDate" },
-            { header: "End Date", key: "expectedEndDate" },
-          ]}
-          filename="projects"
-          title="Projects"
-        />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/projects/sales-performance"><Target className="w-4 h-4 mr-1.5" />Sales Performance</Link>
+          </Button>
+          <ExportMenu
+            data={filtered as Record<string, unknown>[]}
+            columns={[
+              { header: "Project No.", key: "projectNumber" },
+              { header: "Project Name", key: "projectName" },
+              { header: "Client", key: "clientName" },
+              { header: "Location", key: "location" },
+              { header: "Salesperson", key: "salespersonName" },
+              { header: "Stage", key: "stage" },
+              { header: "Value (AED)", key: "projectValue", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Start Date", key: "startDate" },
+              { header: "End Date", key: "endDate" },
+              { header: "Delivery Date", key: "deliveryDate" },
+            ]}
+            filename="projects"
+            title="Projects"
+          />
+        </div>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -70,22 +78,26 @@ export function ProjectsList() {
           </SelectContent>
         </Select>
       </div>
-      <div className="border rounded-lg bg-card">
+      <div className="border rounded-lg bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Project No.</TableHead>
               <TableHead>Project Name</TableHead>
               <TableHead>Client</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Salesperson</TableHead>
               <TableHead className="text-right">Value (AED)</TableHead>
               <TableHead>Stage</TableHead>
               <TableHead>Progress</TableHead>
-              <TableHead>Start Date</TableHead>
+              <TableHead>Start</TableHead>
+              <TableHead>Finish</TableHead>
+              <TableHead>Delivery</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No projects found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered.length === 0 ? <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No projects found.</TableCell></TableRow> :
             filtered.map(p => {
               const progress = getProgress(p);
               return (
@@ -95,7 +107,9 @@ export function ProjectsList() {
                   </TableCell>
                   <TableCell className="font-medium">{p.projectName}</TableCell>
                   <TableCell>{p.clientName}</TableCell>
-                  <TableCell className="text-right">AED {p.projectValue?.toLocaleString()}</TableCell>
+                  <TableCell className="text-muted-foreground">{p.location || "-"}</TableCell>
+                  <TableCell>{(p as any).salespersonName || <span className="text-muted-foreground italic text-xs">Unassigned</span>}</TableCell>
+                  <TableCell className="text-right font-semibold">AED {Number(p.projectValue ?? 0).toLocaleString()}</TableCell>
                   <TableCell><Badge variant="secondary" className={stageColors[p.stage] ?? ""}>{p.stage.replace("_"," ")}</Badge></TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 min-w-[100px]">
@@ -103,7 +117,9 @@ export function ProjectsList() {
                       <span className="text-xs text-muted-foreground w-8">{progress}%</span>
                     </div>
                   </TableCell>
-                  <TableCell>{p.startDate || "-"}</TableCell>
+                  <TableCell className="text-xs">{p.startDate || "-"}</TableCell>
+                  <TableCell className="text-xs">{p.endDate || "-"}</TableCell>
+                  <TableCell className="text-xs">{(p as any).deliveryDate || "-"}</TableCell>
                 </TableRow>
               );
             })}
