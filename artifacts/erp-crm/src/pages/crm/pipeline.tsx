@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GripVertical, Search, TrendingUp, DollarSign, Briefcase } from "lucide-react";
+import { GripVertical, Search, TrendingUp, DollarSign, Briefcase, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Stage {
@@ -66,6 +66,15 @@ export function SalesPipeline() {
   const openValue = deals.filter(d => !["won", "lost"].includes(d.stage)).reduce((s, d) => s + Number(d.value ?? 0), 0);
   const wonValue = deals.filter(d => d.stage === "won").reduce((s, d) => s + Number(d.value ?? 0), 0);
 
+  // A deal is "stuck" if it hasn't been updated for 7+ days and isn't in a closed stage.
+  const STUCK_DAYS = 7;
+  const isStuck = (d: any): boolean => {
+    if (["won", "lost"].includes(d.stage)) return false;
+    const last = new Date(d.updatedAt ?? d.createdAt ?? Date.now()).getTime();
+    return (Date.now() - last) / 86_400_000 >= STUCK_DAYS;
+  };
+  const stuckCount = deals.filter(isStuck).length;
+
   const handleDragStart = (e: React.DragEvent, id: number) => {
     setDraggingId(id);
     e.dataTransfer.effectAllowed = "move";
@@ -120,8 +129,16 @@ export function SalesPipeline() {
           <PipelineStat icon={Briefcase}  label="All deals"     value={deals.length} />
           <PipelineStat icon={TrendingUp} label="Open value"    value={`AED ${openValue.toLocaleString()}`} tone="blue" />
           <PipelineStat icon={DollarSign} label="Won value"     value={`AED ${wonValue.toLocaleString()}`} tone="green" />
+          {stuckCount > 0 && <PipelineStat icon={AlertTriangle} label="Stuck deals" value={stuckCount} tone="amber" />}
         </div>
       </div>
+
+      {stuckCount > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-lg p-2.5 text-sm flex items-center gap-2 text-amber-800 dark:text-amber-300" data-testid="banner-stuck-deals">
+          <AlertTriangle className="w-4 h-4" />
+          <span><strong>{stuckCount}</strong> deal{stuckCount === 1 ? " has" : "s have"} been stuck for {STUCK_DAYS}+ days — review and act.</span>
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -159,37 +176,43 @@ export function SalesPipeline() {
                     <div className="text-xs text-muted-foreground text-center py-6">Loading…</div>
                   ) : stageDeals.length === 0 ? (
                     <div className="text-xs text-muted-foreground/60 text-center py-8 italic">Drop deals here</div>
-                  ) : stageDeals.map(d => (
-                    <div
-                      key={d.id}
-                      draggable
-                      onDragStart={e => handleDragStart(e, d.id)}
-                      onDragEnd={() => setDraggingId(null)}
-                      className={`bg-card border rounded-lg p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${draggingId === d.id ? "opacity-50" : ""}`}
-                      data-testid={`pipeline-card-${d.id}`}
-                    >
-                      <div className="flex items-start gap-1.5">
-                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/crm/deals`} className="block">
-                            <div className="text-[11px] font-mono text-primary truncate">{d.dealNumber}</div>
-                            <div className="text-sm font-semibold leading-tight truncate">{d.title}</div>
-                            {d.clientName && <div className="text-[11px] text-muted-foreground truncate">{d.clientName}</div>}
-                          </Link>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs font-bold text-emerald-600">AED {Number(d.value ?? 0).toLocaleString()}</span>
-                            <span className="text-[10px] text-muted-foreground">{d.probability ?? 0}%</span>
+                  ) : stageDeals.map(d => {
+                    const stuck = isStuck(d);
+                    return (
+                      <div
+                        key={d.id}
+                        draggable
+                        onDragStart={e => handleDragStart(e, d.id)}
+                        onDragEnd={() => setDraggingId(null)}
+                        className={`bg-card border rounded-lg p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${draggingId === d.id ? "opacity-50" : ""} ${stuck ? "ring-1 ring-amber-300 dark:ring-amber-700" : ""}`}
+                        data-testid={`pipeline-card-${d.id}`}
+                      >
+                        <div className="flex items-start gap-1.5">
+                          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <Link href={`/crm/deals`} className="block">
+                              <div className="flex items-center gap-1">
+                                <span className="text-[11px] font-mono text-primary truncate">{d.dealNumber}</span>
+                                {stuck && <span title="Stuck — no movement in 7+ days"><AlertTriangle className="w-3 h-3 text-amber-500" /></span>}
+                              </div>
+                              <div className="text-sm font-semibold leading-tight truncate">{d.title}</div>
+                              {d.clientName && <div className="text-[11px] text-muted-foreground truncate">{d.clientName}</div>}
+                            </Link>
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="text-xs font-bold text-emerald-600">AED {Number(d.value ?? 0).toLocaleString()}</span>
+                              <span className="text-[10px] text-muted-foreground">{d.probability ?? 0}%</span>
+                            </div>
+                            {d.expectedCloseDate && (
+                              <div className="text-[10px] text-muted-foreground mt-0.5">Close: {d.expectedCloseDate}</div>
+                            )}
+                            {(d as any).assignedToName && (
+                              <div className="text-[10px] text-muted-foreground mt-0.5">@ {(d as any).assignedToName}</div>
+                            )}
                           </div>
-                          {d.expectedCloseDate && (
-                            <div className="text-[10px] text-muted-foreground mt-0.5">Close: {d.expectedCloseDate}</div>
-                          )}
-                          {(d as any).assignedToName && (
-                            <div className="text-[10px] text-muted-foreground mt-0.5">@ {(d as any).assignedToName}</div>
-                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -202,12 +225,13 @@ export function SalesPipeline() {
 
 function PipelineStat({ icon: Icon, label, value, tone = "slate" }: {
   icon: React.ComponentType<{ className?: string }>;
-  label: string; value: string | number; tone?: "slate" | "blue" | "green";
+  label: string; value: string | number; tone?: "slate" | "blue" | "green" | "amber";
 }) {
   const colors = {
     slate: "bg-slate-100 text-slate-700",
     blue:  "bg-blue-100 text-blue-700",
     green: "bg-emerald-100 text-emerald-700",
+    amber: "bg-amber-100 text-amber-700",
   }[tone];
   return (
     <div className="bg-card border rounded-lg px-3 py-2 flex items-center gap-2">

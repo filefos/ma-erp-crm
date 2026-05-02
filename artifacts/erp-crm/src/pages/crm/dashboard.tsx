@@ -80,6 +80,25 @@ export function CRMDashboard() {
     [leads],
   );
 
+  // --- Executive AI insights (banner) ---
+  const insights = useMemo(() => {
+    const out: { tone: "red" | "amber" | "blue"; text: string }[] = [];
+    const uncontactedHot = leads.filter(l => {
+      const last = (l as any).lastContactedAt ?? l.updatedAt ?? l.createdAt;
+      return l.leadScore === "hot"
+        && !["won", "lost"].includes(l.status)
+        && (!last || (Date.now() - new Date(last).getTime()) > 3 * 86_400_000);
+    }).length;
+    if (uncontactedHot > 0) out.push({ tone: "red",   text: `${uncontactedHot} hot lead${uncontactedHot === 1 ? "" : "s"} not contacted in 3+ days` });
+    if (overdueFollowUps.length > 0) out.push({ tone: "red",   text: `${overdueFollowUps.length} follow-up${overdueFollowUps.length === 1 ? "" : "s"} overdue — clear them today` });
+    const stuckDeals = deals.filter((d: any) => !["won", "lost"].includes(d.stage) && d.updatedAt && (Date.now() - new Date(d.updatedAt).getTime()) >= 7 * 86_400_000);
+    if (stuckDeals.length > 0) out.push({ tone: "amber", text: `${stuckDeals.length} deal${stuckDeals.length === 1 ? "" : "s"} stuck for 7+ days in the pipeline` });
+    const highValueAtRisk = deals.filter((d: any) => Number(d.value ?? 0) >= 500_000 && !["won", "lost"].includes(d.stage) && d.updatedAt && (Date.now() - new Date(d.updatedAt).getTime()) >= 5 * 86_400_000);
+    if (highValueAtRisk.length > 0) out.push({ tone: "amber", text: `${highValueAtRisk.length} high-value deal${highValueAtRisk.length === 1 ? "" : "s"} need attention` });
+    if (out.length === 0 && totalLeads > 0) out.push({ tone: "blue", text: "Your pipeline looks healthy — no critical issues detected." });
+    return out.slice(0, 4);
+  }, [leads, deals, overdueFollowUps, totalLeads]);
+
   // --- AI suggestions ---
   const aiSuggestions = useMemo(() => {
     const items: { lead: typeof leads[number]; suggestion: string }[] = [];
@@ -111,6 +130,24 @@ export function CRMDashboard() {
           </Button>
         </div>
       </div>
+
+      {/* AI Insights Banner */}
+      {insights.length > 0 && (
+        <div className="bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] rounded-xl p-4 text-white" data-testid="banner-ai-insights">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="w-4 h-4" />
+            <h3 className="text-sm font-semibold">AI Executive Insights</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {insights.map((i, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-sm bg-white/10 rounded-lg p-2 backdrop-blur-sm">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${i.tone === "red" ? "bg-red-300" : i.tone === "amber" ? "bg-amber-300" : "bg-emerald-300"}`} />
+                <span className="text-white/95">{i.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">

@@ -9,7 +9,7 @@ import {
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
-  BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft,
+  BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft, TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -33,6 +33,8 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/crm", label: "CRM Dashboard", icon: LayoutDashboard },
       { href: "/crm/pipeline", label: "Sales Pipeline", icon: Briefcase },
+      { href: "/crm/follow-ups", label: "Follow-up Center", icon: Calendar },
+      { href: "/crm/leaderboard", label: "Sales Leaderboard", icon: TrendingUp },
       { href: "/crm/leads", label: "Leads", icon: Users },
       { href: "/crm/contacts", label: "Contacts", icon: HardHat },
       { href: "/crm/deals", label: "Deals", icon: Briefcase },
@@ -311,7 +313,7 @@ const ROUTE_LABELS: Record<string, string> = {
   crm: "CRM", sales: "Sales", accounts: "Accounts",
   procurement: "Procurement", inventory: "Inventory", hr: "HR",
   projects: "Projects", assets: "Assets", reports: "Reports", admin: "Admin",
-  leads: "Leads", contacts: "Contacts", deals: "Deals", activities: "Activities", pipeline: "Sales Pipeline",
+  leads: "Leads", contacts: "Contacts", deals: "Deals", activities: "Activities", pipeline: "Sales Pipeline", "follow-ups": "Follow-up Center", leaderboard: "Sales Leaderboard",
   quotations: "Quotations", "proforma-invoices": "Proforma Invoices", lpos: "LPOs",
   invoices: "Tax Invoices", "delivery-notes": "Delivery Notes",
   expenses: "Expenses", cheques: "Cheques", "bank-accounts": "Bank Accounts",

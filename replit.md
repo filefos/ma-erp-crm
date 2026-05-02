@@ -145,6 +145,21 @@ pnpm workspace monorepo with React+Vite frontend, Express 5 backend, PostgreSQL 
   - **Add Account** — existing single-account create dialog for fully customised additions on top of (or instead of) the template.
 - Bulk-seed uses a separate `seedMutation = useCreateChartOfAccount()` instance with no toast handlers to avoid 100+ toast spam; one summary toast fires after the loop completes.
 
+## CRM — Executive Upgrade (Phase 2)
+
+The Sales/CRM module is being elevated to a "World-Class Executive CRM". Phase-2 deliverables (frontend-only; no schema changes):
+
+- **Follow-up Center** (`/crm/follow-ups`, `pages/crm/follow-ups.tsx`) — unified view of lead `nextFollowUp` and activity due-dates with Today / Overdue / Week / All tabs. Reschedule dialog (pre-fills with current date), Done action, plus inline call / WhatsApp / email shortcuts.
+- **Sales Leaderboard** (`/crm/leaderboard`, `pages/crm/leaderboard.tsx`) — ranks sales-role users by composite score (won AED + deal counts + activities + conversion %). Conversion only counts when a rep has ≥5 leads to avoid low-volume outliers. Includes top-performer card and Recharts Won-vs-Pipeline bar chart.
+- **CSV Lead Import** (`components/crm/LeadCsvImport.tsx`) — template download, custom CSV parser (BOM-stripping, quoted commas, escaped quotes, embedded newlines), live progress, batched `useCreateLead` calls. Mounted from Leads page "Import CSV" button.
+- **Bulk Assign-To** on Leads — dropdown of sales-role users (filtered via `useListUsers`) for assigning multiple leads at once.
+- **Stuck-Deal Detection** on Pipeline — deals not updated in 7+ days get an amber ring + AlertTriangle, plus a stat tile and banner with the count.
+- **AI Executive Insights** banner on the CRM Dashboard — gradient strip surfacing: uncontacted hot leads (3+ days), overdue follow-ups, stuck deals (7+ days), high-value (≥AED 500k) deals at risk.
+- **AI Assistant additions** on Lead Detail — `predictDealSuccess` (probability + rationale), `analyzeLostDeal` (post-mortem, only when status=lost), `improveNotes` (rewrites notes professionally). Heuristic implementations live in `lib/ai-crm.ts`; signatures are stable so they can be swapped to an LLM-backed implementation later via the AI integrations skill.
+- **Navigation** — `components/layout.tsx` has new entries (Follow-up Center, Sales Leaderboard) under the CRM group.
+
+Deferred to a later phase (require backend/schema work): dedicated CRM Reports page, "Approved" deal stage, attachments / tags / priority / quantity fields, automation-rule engine, monthly sales targets table, deeper RBAC scoping (sales sees only own).
+
 ## Important Notes
 
 - `lib/api-zod/src/index.ts` must only contain `export * from "./generated/api";` — codegen overwrites it

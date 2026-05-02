@@ -160,6 +160,88 @@ export function summarizeClient(lead: LeadLike, activities: ActivityLike[] = [])
   return lines.join(" ");
 }
 
+/** Predict the probability (0-100) the deal will close successfully. */
+export function predictDealSuccess(lead: LeadLike, activities: ActivityLike[] = []): { probability: number; rationale: string[] } {
+  const { score } = scoreLead(lead, activities);
+  const reasons: string[] = [];
+  let p = score;
+
+  const completed = activities.filter(a => a.isDone).length;
+  if (completed >= 5) { p += 5; reasons.push(`Strong engagement (${completed} completed activities)`); }
+
+  if (lead.status === "negotiation") { p += 10; reasons.push("In active negotiation"); }
+  if (lead.status === "quotation_sent") { p += 5; reasons.push("Quotation already sent"); }
+  if (lead.status === "won") { return { probability: 100, rationale: ["Already won"] }; }
+  if (lead.status === "lost") { return { probability: 0, rationale: ["Already lost"] }; }
+
+  const stale = daysSince(lead.updatedAt ?? lead.createdAt);
+  if (stale > 21) { p -= 15; reasons.push(`No activity in ${stale} days — momentum lost`); }
+
+  if (lead.nextFollowUp) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (lead.nextFollowUp < today) { p -= 10; reasons.push("Follow-up is overdue"); }
+  } else {
+    p -= 5; reasons.push("No follow-up scheduled");
+  }
+
+  p = Math.max(0, Math.min(100, p));
+  reasons.unshift(`Base AI score: ${score}`);
+  return { probability: p, rationale: reasons };
+}
+
+/** Suggest likely reasons a deal was lost based on context. */
+export function analyzeLostDeal(lead: LeadLike, activities: ActivityLike[] = []): string {
+  const reasons: string[] = [];
+  const budget = num(lead.budget);
+  const stale = daysSince(lead.updatedAt ?? lead.createdAt);
+  const acts = activities.length;
+  const followUps = activities.filter(a => a.type === "follow_up").length;
+  const siteVisits = activities.filter(a => a.type === "site_visit").length;
+
+  if (budget < 50_000) reasons.push("Budget may have been below the project floor");
+  if (stale > 30) reasons.push(`Long delay (${stale} days) before final response — competitor may have moved faster`);
+  if (acts < 2) reasons.push("Very few touchpoints recorded — relationship was thin");
+  if (followUps === 0) reasons.push("No structured follow-ups logged");
+  if (siteVisits === 0 && (lead.requirementType ?? "").length > 0) reasons.push("Project never reached a site-visit stage");
+  if (!lead.email || !lead.phone) reasons.push("Incomplete contact details suggest weak qualification");
+  if (lead.status === "quotation_sent") reasons.push("Lost after quotation — likely price or specification mismatch");
+
+  if (reasons.length === 0) reasons.push("No obvious anti-pattern detected — collect lost-reason notes from sales rep for a clearer picture.");
+
+  return [
+    `Likely loss factors for ${lead.leadName ?? "this lead"}:`,
+    "",
+    ...reasons.map(r => `• ${r}`),
+    "",
+    "Recommendation: capture the actual lost reason in notes, set a 90-day win-back reminder, and review the quotation template if multiple recent losses share the same root cause.",
+  ].join("\n");
+}
+
+/** Lightweight grammar/professionalism polish for sales notes (heuristic). */
+export function improveNotes(text: string): string {
+  if (!text || !text.trim()) return "Add a few bullet points covering: client situation, key requirement, decision-maker, timeline, blockers, next step.";
+  let t = text.trim();
+  // Capitalise first letter of each sentence.
+  t = t.replace(/(^|[.!?]\s+)([a-z])/g, (_m, p, c) => p + c.toUpperCase());
+  // Collapse multiple spaces.
+  t = t.replace(/[ \t]+/g, " ");
+  // Common contractions/expansions.
+  t = t.replace(/\bdnt\b/gi, "do not")
+       .replace(/\bdn't\b/gi, "do not")
+       .replace(/\bwhatsap\b/gi, "WhatsApp")
+       .replace(/\bppl\b/gi, "people")
+       .replace(/\bpls\b/gi, "please")
+       .replace(/\bthx\b/gi, "thanks")
+       .replace(/\bbk\b/gi, "back");
+  // Ensure ending punctuation.
+  if (!/[.!?]$/.test(t)) t += ".";
+  return [
+    t,
+    "",
+    "Suggested next step: confirm decision-maker availability and book the next touchpoint within the week.",
+  ].join("\n");
+}
+
 /** Heuristic duplicate detector — returns leads with same phone/email/whatsapp. */
 export function findDuplicates<T extends LeadLike & { id: number }>(target: T, all: T[]): T[] {
   const norm = (s: string | null | undefined) => (s ?? "").replace(/[^a-z0-9]/gi, "").toLowerCase();

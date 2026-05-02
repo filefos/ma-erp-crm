@@ -21,6 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
   scoreLead, suggestNextAction, generateFollowUpMessage, generateWhatsAppMessage, summarizeClient,
+  predictDealSuccess, analyzeLostDeal, improveNotes,
 } from "@/lib/ai-crm";
 
 const scoreColors: Record<string, string> = {
@@ -410,6 +411,21 @@ export function LeadDetail({ id }: Props) {
               </Button>
               <Button size="sm" variant="outline" onClick={() => showAi("Client Snapshot", summarizeClient(l, leadActivities))} data-testid="button-ai-summary">
                 <Brain className="w-3.5 h-3.5 mr-1.5" />Summarize Client
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => {
+                const r = predictDealSuccess(l, leadActivities);
+                showAi("Deal Success Prediction",
+                  `Estimated probability of closing: ${r.probability}%\n\nReasoning:\n${r.rationale.map(x => "• " + x).join("\n")}`);
+              }} data-testid="button-ai-predict">
+                <Trophy className="w-3.5 h-3.5 mr-1.5" />Predict Success
+              </Button>
+              {l.status === "lost" && (
+                <Button size="sm" variant="outline" onClick={() => showAi("Lost Deal Analysis", analyzeLostDeal(l, leadActivities))} data-testid="button-ai-lost">
+                  <Brain className="w-3.5 h-3.5 mr-1.5 text-red-600" />Analyze Lost Deal
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={() => showAi("Improved Notes", improveNotes(l.notes ?? ""))} data-testid="button-ai-notes">
+                <Wand2 className="w-3.5 h-3.5 mr-1.5" />Improve Notes
               </Button>
               <Button size="sm" variant="ghost" onClick={() => update.mutate({ id: lid, data: { ...l, leadScore: ai.band } as any })} data-testid="button-ai-apply-score">
                 Apply AI score → {ai.band}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useListLeads, useCreateLead, useUpdateLead, useListCompanies } from "@workspace/api-client-react";
+import { useListLeads, useCreateLead, useUpdateLead, useListCompanies, useListUsers } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, MessageCircle, Filter, ArrowLeft, X, Sparkles, CheckSquare } from "lucide-react";
+import { Search, Plus, MessageCircle, Filter, ArrowLeft, X, Sparkles, CheckSquare, Upload, UserPlus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { LeadCsvImport } from "@/components/crm/LeadCsvImport";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -51,8 +52,14 @@ export function LeadsList() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [importOpen, setImportOpen] = useState(false);
   const { data: leads, isLoading } = useListLeads({ search: search || undefined });
   const { data: companies } = useListCompanies();
+  const { data: users } = useListUsers();
+  const salesUsers = (users ?? []).filter((u: any) =>
+    ["sales", "sales_manager", "manager", "main_admin", "admin"].includes((u.role ?? "").toLowerCase())
+    || (u.role ?? "").toLowerCase().includes("sales"),
+  );
   const create = useCreateLead({
     mutation: {
       onSuccess: () => {
@@ -134,6 +141,9 @@ export function LeadsList() {
             title="Leads"
             defaultLandscape={true}
           />
+          <Button variant="outline" onClick={() => setImportOpen(true)} data-testid="button-import-leads">
+            <Upload className="w-4 h-4 mr-2" />Import CSV
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
@@ -250,10 +260,18 @@ export function LeadsList() {
               <SelectItem value="cold">❄️ Cold</SelectItem>
             </SelectContent>
           </Select>
+          <Select onValueChange={v => bulkUpdate({ assignedToId: parseInt(v, 10) }, `Assigned`)}>
+            <SelectTrigger className="h-8 w-44 text-xs"><UserPlus className="w-3 h-3 mr-1.5 text-muted-foreground" /><SelectValue placeholder="Assign to…" /></SelectTrigger>
+            <SelectContent>
+              {salesUsers.map((u: any) => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Button size="sm" variant="outline" className="h-8" onClick={() => bulkUpdate({ isActive: false }, "Archived")} data-testid="button-bulk-archive">Archive</Button>
           <Button size="sm" variant="ghost" className="h-8 ml-auto" onClick={clearSelection}><X className="w-3.5 h-3.5 mr-1" />Clear</Button>
         </div>
       )}
+
+      <LeadCsvImport open={importOpen} onOpenChange={setImportOpen} companyId={companies?.[0]?.id} />
 
       <div className="border rounded-lg bg-card">
         <Table>

@@ -1,0 +1,341 @@
+Upgrade my Sales Department into a WORLD-CLASS EXECUTIVE CRM SYSTEM like Salesforce + Zoho CRM Enterprise.
+
+SYSTEM NAME:
+Elite & Prime Max Executive Sales CRM
+
+GOAL:
+Create a high-performance, AI-powered, executive-level sales system for a prefab construction company, focusing on lead conversion, deal management, quotation tracking, and revenue growth.
+
+This system must be designed for:
+- Sales team
+- Sales manager
+- General manager
+- CEO level decision making
+
+--------------------------------------------------
+1. EXECUTIVE SALES DASHBOARD
+--------------------------------------------------
+Create a powerful executive dashboard showing:
+
+- Total leads (today, week, month)
+- Hot leads (AI scored)
+- Follow-ups due today
+- Overdue follow-ups
+- Total deals value
+- Won deals
+- Lost deals
+- Conversion rate %
+- Monthly sales revenue
+- Sales target vs achievement
+- Top performing salesperson
+- Weak performing salesperson
+- Lead source performance
+- Deal pipeline value
+
+Charts:
+- Pipeline funnel
+- Sales trend graph
+- Lead source chart
+- Conversion chart
+
+AI Insights:
+- “You have 6 hot leads not contacted”
+- “Sales dropped 12% this week”
+- “Follow-up delay detected for 9 leads”
+- “High-value deal needs attention”
+
+--------------------------------------------------
+2. LEADS MANAGEMENT (PRO LEVEL)
+--------------------------------------------------
+Lead fields:
+
+- Lead ID (Auto)
+- Company (Elite / Prime Max)
+- Lead name
+- Client company
+- Contact person
+- Phone
+- WhatsApp
+- Email
+- Location
+- Project type (Prefab house / Office / Camp / etc.)
+- Requirement details
+- Budget
+- Quantity
+- Estimated project value
+- Lead source (Google / Referral / Direct / etc.)
+- Priority (Low / Medium / High / VIP)
+- AI Lead Score (0–100)
+- Status
+- Assigned salesperson
+- Next follow-up date
+- Last contact date
+- Notes
+- Attachments
+- Created by
+- Created date
+
+Features:
+- Add / edit / view lead
+- Advanced filters
+- Global search
+- Duplicate detection
+- Import leads (Excel/CSV)
+- Export leads
+- Bulk assignment
+- Bulk status update
+- Tag system (VIP, Urgent, Government, etc.)
+- Timeline history (calls, messages, updates)
+
+--------------------------------------------------
+3. AI LEAD SCORING SYSTEM
+--------------------------------------------------
+Automatically score leads:
+
+Factors:
+- Budget
+- Quantity
+- Urgency
+- Response behavior
+- Project size
+- Source quality
+
+Categories:
+- Hot Lead (80–100)
+- Warm Lead (50–79)
+- Cold Lead (0–49)
+
+AI must:
+- Show score badge
+- Suggest next action
+- Highlight high-value leads
+- Alert ignored hot leads
+
+--------------------------------------------------
+4. SALES PIPELINE (KANBAN)
+--------------------------------------------------
+Create drag-and-drop pipeline:
+
+Stages:
+- New Inquiry
+- Contacted
+- Qualified
+- Site Visit
+- Quotation Required
+- Quotation Sent
+- Negotiation
+- Approved
+- Won
+- Lost
+
+Each card shows:
+- Client name
+- Project value
+- Salesperson
+- Follow-up date
+- AI score
+- Probability %
+
+Features:
+- Drag between stages
+- Pipeline value summary
+- Stage-wise revenue
+- Movement tracking log
+- Highlight stuck deals
+
+--------------------------------------------------
+5. FOLLOW-UP SYSTEM (VERY IMPORTANT)
+--------------------------------------------------
+Follow-up types:
+- Call
+- WhatsApp
+- Email
+- Meeting
+- Site Visit
+
+Features:
+- Today follow-ups
+- Overdue follow-ups
+- Upcoming follow-ups
+- Auto reminders
+- Repeat follow-ups
+- Activity tracking
+- Follow-up history
+
+Rules:
+- Every lead must have follow-up
+- Overdue follow-ups trigger alerts
+- Manager gets alerts for delays
+
+--------------------------------------------------
+6. DEAL MANAGEMENT
+--------------------------------------------------
+Deal fields:
+
+- Deal ID
+- Linked lead
+- Client
+- Project name
+- Estimated value
+- Probability %
+- Expected closing date
+- Assigned salesperson
+- Status
+- Notes
+
+Features:
+- Convert lead to deal
+- Track deal progress
+- Track deal value
+- Link quotation
+- Link project after win
+- Deal history timeline
+
+--------------------------------------------------
+7. QUOTATION INTEGRATION
+--------------------------------------------------
+Features:
+- Create quotation directly from deal
+- Show quotation status in CRM
+- Show quotation value
+- Track revisions
+- Track approval status
+- Convert approved quotation → project
+
+--------------------------------------------------
+8. CLIENT COMMUNICATION CENTER
+--------------------------------------------------
+Track all communication:
+
+- Calls
+- WhatsApp messages
+- Emails
+- Meetings
+
+Features:
+- Timeline view
+- Notes
+- Attachments
+- AI summary of conversation
+- Quick WhatsApp button
+- Email compose button
+
+--------------------------------------------------
+9. AI SALES ASSISTANT
+--------------------------------------------------
+Add AI tools:
+
+- Generate follow-up message
+- Improve notes
+- Write professional email
+- Write WhatsApp message
+- Suggest next action
+- Analyze lost deal reason
+- Summarize client
+- Predict deal success
+- Highlight risks
+
+AI buttons:
+- “Generate follow-up”
+- “Improve message”
+- “Suggest next step”
+- “Analyze deal”
+
+--------------------------------------------------
+10. SALES AUTOMATION
+--------------------------------------------------
+Automations:
+
+- New lead → assign salesperson
+- Lead not contacted in 24 hrs → reminder
+- Follow-up overdue → alert
+- Quotation sent → auto follow-up after 3 days
+- Hot lead → notify manager
+- Deal won → create project
+- Deal lost → require reason
+
+--------------------------------------------------
+11. SALES PERFORMANCE SYSTEM
+--------------------------------------------------
+Track:
+
+- Sales per user
+- Deals closed
+- Conversion rate
+- Revenue generated
+- Follow-up efficiency
+
+Features:
+- Leaderboard
+- Monthly targets
+- Achievement %
+- Bonus calculation placeholder
+
+--------------------------------------------------
+12. REPORTS
+--------------------------------------------------
+Reports:
+
+- Leads by source
+- Leads by salesperson
+- Hot leads report
+- Follow-up report
+- Overdue follow-ups
+- Deals by stage
+- Won/lost deals
+- Sales performance
+- Conversion rate
+- Monthly revenue
+
+Export:
+- PDF
+- Excel
+- CSV
+
+--------------------------------------------------
+13. ROLE & ACCESS CONTROL
+--------------------------------------------------
+Roles:
+
+- Admin → full control
+- Sales Manager → team access
+- Sales User → own leads only
+- GM → full view only
+
+Rules:
+- Users cannot delete leads
+- Only Admin can archive
+- Sales sees only assigned data
+- All actions logged
+
+--------------------------------------------------
+14. SECURITY & QUALITY
+--------------------------------------------------
+- Duplicate lead detection
+- Input validation
+- Audit logs
+- Permission-based API
+- Fast search
+- Pagination
+- Clean UI
+
+--------------------------------------------------
+15. OUTPUT REQUIRED
+--------------------------------------------------
+- Executive dashboard
+- Pro leads module
+- AI lead scoring
+- Pipeline system
+- Follow-up system
+- Deal management
+- AI assistant
+- Automation rules
+- Reports
+- Permissions
+- Premium UI
+- Mobile responsive
+- Clean scalable code
+
+IMPORTANT:
+Upgrade current CRM into an enterprise-level executive sales system.
+Do not remove existing data.

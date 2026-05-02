@@ -7,6 +7,8 @@ import { Login } from "@/pages/login";
 import { Dashboard } from "@/pages/dashboard";
 import { CRMDashboard } from "@/pages/crm/dashboard";
 import { SalesPipeline } from "@/pages/crm/pipeline";
+import { FollowUpCenter } from "@/pages/crm/follow-ups";
+import { SalesLeaderboard } from "@/pages/crm/leaderboard";
 import { LeadsList } from "@/pages/crm/leads";
 import { LeadDetail } from "@/pages/crm/lead-detail";
 import { ContactsList } from "@/pages/crm/contacts";
@@ -92,6 +94,12 @@ function Router() {
       </Route>
       <Route path="/crm/pipeline">
         <ModuleGuard module="deals"><SalesPipeline /></ModuleGuard>
+      </Route>
+      <Route path="/crm/follow-ups">
+        <ModuleGuard module="leads"><FollowUpCenter /></ModuleGuard>
+      </Route>
+      <Route path="/crm/leaderboard">
+        <ModuleGuard module="leads"><SalesLeaderboard /></ModuleGuard>
       </Route>
       <Route path="/crm/leads/:id">
         {(params) => (
