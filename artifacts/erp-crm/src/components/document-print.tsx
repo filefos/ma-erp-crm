@@ -87,8 +87,8 @@ interface CompanyInfo {
 const COMPANIES: Record<number, CompanyInfo> = {
   1: {
     name: "PRIME MAX PREFAB HOUSES IND. LLC",
-    address: "Industrial Area 12, Sharjah, UAE",
-    trn: "100234567890001",
+    address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
+    trn: "105383255400003",
     phone: "+971 50 2940 131",
     email: "info@primemaxprefab.com",
     contact: "ASIF LATIF",
@@ -279,10 +279,20 @@ function Td({
   );
 }
 
+function LabelTd({ children }: { children: React.ReactNode }) {
+  return (
+    <td className="border border-gray-400 px-2 py-1.5 text-[11px] font-semibold text-white whitespace-nowrap w-[18%]"
+      style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+      {children}
+    </td>
+  );
+}
+
 export function DocumentPrint({ data }: { data: DocumentData }) {
   const co = COMPANIES[data.companyId] ?? COMPANIES[1];
   const coName = data.companyRef ?? co.name;
-  const companyLogo = data.companyLogo;
+  const defaultLogo = data.companyId === 1 ? "/prime-max-logo.png" : undefined;
+  const companyLogo = data.companyLogo ?? defaultLogo;
   const isDelivery = data.type === "delivery_note";
   const isQuotation = data.type === "quotation";
   const isTax = data.type === "tax_invoice";
@@ -301,10 +311,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     <>
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 10mm; }
-          .no-print { display: none !important; }
-          body { -webkit-print-color-adjust: exact; color-adjust: exact; }
-          .print-doc { box-shadow: none !important; border: none !important; padding: 0 !important; }
+          @page { size: A4 portrait; margin: 8mm; }
+          body * { visibility: hidden; }
+          .print-doc, .print-doc * { visibility: visible; }
+          .print-doc { position: fixed; left: 0; top: 0; width: 100%; max-width: 100% !important;
+            box-shadow: none !important; border: none !important; padding: 4mm !important;
+            margin: 0 !important; border-radius: 0 !important; }
           .print-page-break { page-break-before: always !important; break-before: page !important; }
         }
       `}</style>
@@ -318,8 +330,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <img
                 src={companyLogo}
                 alt="Company Logo"
-                className="h-14 w-14 object-contain rounded bg-white p-0.5 flex-shrink-0"
-                style={{ maxHeight: 56, maxWidth: 56 }}
+                className="object-contain rounded bg-white p-1 flex-shrink-0"
+                style={{ maxHeight: 64, maxWidth: 140, height: "auto" }}
               />
             )}
             <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
@@ -333,106 +345,53 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         </div>
 
-        {/* ── COMPANY / CLIENT HEADER ─────────────────────────────────── */}
+        {/* ── COMPANY / CLIENT + REFERENCE (4-column) ─────────────────── */}
         {isPO ? (
-          <table className="w-full border-collapse border border-gray-400 mb-3">
-            <thead>
-              <tr>
-                <Th>Buyer (Our Company)</Th>
-                <Th>Supplier Detail</Th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <Td><span className="font-semibold">Company: </span>{coName}</Td>
-                <Td><span className="font-semibold">Supplier: </span>{data.supplierName ?? data.clientName}</Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Contact Person: </span>{co.contact}</Td>
-                <Td><span className="font-semibold">Contact Person: </span>{data.supplierContact ?? "—"}</Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Contact #: </span>{co.phone}</Td>
-                <Td><span className="font-semibold">Contact #: </span>{data.supplierPhone ?? "—"}</Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Email: </span>{co.email}</Td>
-                <Td><span className="font-semibold">Email: </span>{data.supplierEmail ?? "—"}</Td>
-              </tr>
-            </tbody>
-          </table>
+          <>
+            <table className="w-full border-collapse border border-gray-400 mb-3">
+              <thead>
+                <tr>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Buyer (Our Company)</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Supplier Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><LabelTd>Company</LabelTd><Td>{coName}</Td><LabelTd>Supplier</LabelTd><Td>{data.supplierName ?? data.clientName}</Td></tr>
+                <tr><LabelTd>Contact Person</LabelTd><Td>{co.contact}</Td><LabelTd>Contact Person</LabelTd><Td>{data.supplierContact ?? "—"}</Td></tr>
+                <tr><LabelTd>Contact #</LabelTd><Td>{co.phone}</Td><LabelTd>Contact #</LabelTd><Td>{data.supplierPhone ?? "—"}</Td></tr>
+                <tr><LabelTd>Email</LabelTd><Td>{co.email}</Td><LabelTd>Email</LabelTd><Td>{data.supplierEmail ?? "—"}</Td></tr>
+                <tr><LabelTd>PO Number</LabelTd><Td><span className="font-bold font-mono">{data.docNumber}</span></Td><LabelTd>Date</LabelTd><Td>{docDate}</Td></tr>
+                <tr><LabelTd>Delivery Date</LabelTd><Td>{data.deliveryDate ?? "—"}</Td><LabelTd>Payment Terms</LabelTd><Td>{data.paymentTerms ?? "—"}</Td></tr>
+                <tr><LabelTd>Delivery Address</LabelTd><Td>{data.deliveryAddress ?? data.deliveryLocation ?? "—"}</Td><LabelTd>Our TRN</LabelTd><Td>{co.trn}</Td></tr>
+              </tbody>
+            </table>
+          </>
         ) : (
           <table className="w-full border-collapse border border-gray-400 mb-3">
             <thead>
               <tr>
-                <Th>Company Detail</Th>
-                <Th>Client &amp; Project Detail</Th>
+                <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Company Detail</th>
+                <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Client &amp; Project Detail</th>
               </tr>
             </thead>
             <tbody>
+              <tr><LabelTd>Company</LabelTd><Td>{coName}</Td><LabelTd>Company</LabelTd><Td>{data.clientName}</Td></tr>
+              <tr><LabelTd>Contact Person</LabelTd><Td>{co.contact}</Td><LabelTd>Contact Person</LabelTd><Td>{clientContact !== "—" ? clientContact : ""}</Td></tr>
+              <tr><LabelTd>Contact #</LabelTd><Td>{co.phone}</Td><LabelTd>Contact #</LabelTd><Td>{data.clientPhone ?? ""}</Td></tr>
+              <tr><LabelTd>Email</LabelTd><Td>{co.email}</Td><LabelTd>Email</LabelTd><Td>{data.clientEmail ?? ""}</Td></tr>
               <tr>
-                <Td><span className="font-semibold">Company: </span>{coName}</Td>
-                <Td><span className="font-semibold">Company: </span>{data.clientName}</Td>
+                <LabelTd>Project Ref</LabelTd><Td>{data.projectRef ?? data.projectName ?? ""}</Td>
+                <LabelTd>{REF_LABELS[data.type]}</LabelTd><Td><span className="font-bold font-mono">{data.docNumber}</span></Td>
               </tr>
               <tr>
-                <Td><span className="font-semibold">Contact Person: </span>{co.contact}</Td>
-                <Td><span className="font-semibold">Contact Person: </span>{clientContact}</Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Contact #: </span>{co.phone}</Td>
-                <Td><span className="font-semibold">Contact #: </span>{data.clientPhone ?? "—"}</Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Email: </span>{co.email}</Td>
-                <Td><span className="font-semibold">Email: </span>{data.clientEmail ?? "—"}</Td>
-              </tr>
-            </tbody>
-          </table>
-        )}
-
-        {/* ── REFERENCE ROW ───────────────────────────────────────────── */}
-        {isPO ? (
-          <table className="w-full border-collapse border border-gray-400 mb-3">
-            <tbody>
-              <tr>
-                <Td><span className="font-semibold">PO Number: </span><span className="font-bold font-mono">{data.docNumber}</span></Td>
-                <Td><span className="font-semibold">Date: </span>{docDate}</Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Delivery Date: </span>{data.deliveryDate ?? "—"}</Td>
-                <Td><span className="font-semibold">Payment Terms: </span>{data.paymentTerms ?? "—"}</Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Delivery Address: </span>{data.deliveryAddress ?? data.deliveryLocation ?? "—"}</Td>
-                <Td><span className="font-semibold">Our TRN: </span>{co.trn}</Td>
-              </tr>
-            </tbody>
-          </table>
-        ) : (
-          <table className="w-full border-collapse border border-gray-400 mb-3">
-            <tbody>
-              <tr>
-                <Td><span className="font-semibold">Project Ref.: </span>{data.projectRef ?? data.projectName ?? "—"}</Td>
-                <Td><span className="font-semibold">{REF_LABELS[data.type]}: </span><span className="font-bold font-mono">{data.docNumber}</span></Td>
-              </tr>
-              <tr>
-                <Td><span className="font-semibold">Project / Site: </span>{data.projectLocation ?? data.deliveryLocation ?? "—"}</Td>
+                <LabelTd>Project / Site</LabelTd><Td>{data.projectLocation ?? data.deliveryLocation ?? ""}</Td>
                 {isTax ? (
-                  <Td>
-                    <span className="font-semibold">Invoice Date: </span>{docDate}
-                    {data.supplyDate ? <> &nbsp;|&nbsp; <span className="font-semibold">Supply Date: </span>{data.supplyDate}</> : null}
-                  </Td>
+                  <><LabelTd>Invoice Date</LabelTd><Td>{docDate}{data.supplyDate ? ` | Supply: ${data.supplyDate}` : ""}</Td></>
                 ) : (
-                  <Td>
-                    <span className="font-semibold">Date: </span>{docDate}
-                    {data.validity ? <> &nbsp;|&nbsp; <span className="font-semibold">Valid Until: </span>{data.validity}</> : null}
-                  </Td>
+                  <><LabelTd>Date</LabelTd><Td>{docDate}{data.validity ? ` | Valid: ${data.validity}` : ""}</Td></>
                 )}
               </tr>
-              <tr>
-                <Td><span className="font-semibold">Our TRN: </span>{co.trn}</Td>
-                <Td><span className="font-semibold">Customer TRN: </span>{customerTrn}</Td>
-              </tr>
+              <tr><LabelTd>Customer TRN</LabelTd><Td>{co.trn}</Td><LabelTd>Customer TRN</LabelTd><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
             </tbody>
           </table>
         )}
@@ -709,7 +668,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <div className="border-2 border-gray-700 mb-3">
               <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
-                  <img src={companyLogo} alt="Logo" className="h-14 w-14 object-contain rounded bg-white p-0.5 flex-shrink-0" style={{ maxHeight: 56, maxWidth: 56 }} />
+                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
                 )}
                 <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
                   <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
@@ -770,7 +729,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <div className="border-2 border-gray-700 mb-3">
               <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
-                  <img src={companyLogo} alt="Logo" className="h-14 w-14 object-contain rounded bg-white p-0.5 flex-shrink-0" style={{ maxHeight: 56, maxWidth: 56 }} />
+                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
                 )}
                 <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
                   <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
