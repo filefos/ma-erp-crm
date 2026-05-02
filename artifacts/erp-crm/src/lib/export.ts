@@ -109,48 +109,143 @@ export function printTable(
 ) {
   const header = rows[0] ?? [];
   const body = rows.slice(1);
+  const printDate = new Date().toLocaleString("en-GB", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
 
   const headerCells = header.map(h =>
-    `<th style="background:#0f2d5a;color:#fff;padding:8px 10px;border:1px solid #ddd;text-align:left;">${h ?? ""}</th>`
+    `<th>${h ?? ""}</th>`
   ).join("");
 
   const bodyRows = body.map((row, i) => {
     const cells = row.map(cell =>
-      `<td style="padding:7px 10px;border:1px solid #ddd;">${cell ?? ""}</td>`
+      `<td>${cell ?? ""}</td>`
     ).join("");
-    const bg = i % 2 === 0 ? "" : "background:#f7f9fc;";
-    return `<tr style="${bg}">${cells}</tr>`;
+    const cls = i % 2 === 0 ? "" : ' class="alt"';
+    return `<tr${cls}>${cells}</tr>`;
   }).join("");
 
-  const win = window.open("", "_blank", "width=900,height=700");
+  const win = window.open("", "_blank", "width=1050,height=750");
   if (!win) { window.print(); return; }
 
-  win.document.write(`
-<!DOCTYPE html>
+  win.document.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <title>${title}</title>
   <style>
-    @page { margin: 15mm; size: A4 landscape; }
-    body { font-family: Arial, sans-serif; font-size: 10pt; color: #222; }
-    h2 { color: #0f2d5a; margin-bottom: 12px; }
-    table { border-collapse: collapse; width: 100%; }
-    th { background: #0f2d5a !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 8px 10px; border: 1px solid #ddd; text-align: left; font-weight: bold; }
-    td { padding: 7px 10px; border: 1px solid #ddd; }
-    .footer { margin-top: 24px; font-size: 8pt; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 8px; }
+    @page { margin: 12mm 10mm; size: A4 landscape; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 9.5pt; color: #222; background: #fff; }
+
+    /* ── LETTERHEAD ── */
+    .letterhead {
+      background: #0f2d5a;
+      color: #fff;
+      padding: 10px 16px 8px;
+      text-align: center;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .letterhead .co-name { font-size: 17pt; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; line-height: 1.2; }
+    .letterhead .co-sub  { font-size: 8pt; opacity: 0.88; margin-top: 2px; }
+    .letterhead .co-div  { display: inline-block; width: 1px; background: rgba(255,255,255,0.35); height: 10px; margin: 0 8px; vertical-align: middle; }
+
+    /* ── TITLE STRIP ── */
+    .doc-title {
+      background: #1e6ab0;
+      color: #fff;
+      text-align: center;
+      padding: 5px 16px;
+      font-size: 11pt;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* ── META ROW ── */
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 4px;
+      font-size: 8.5pt;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 8px;
+      color: #444;
+    }
+    .meta .rec-count { font-weight: bold; color: #0f2d5a; }
+
+    /* ── DATA TABLE ── */
+    table { border-collapse: collapse; width: 100%; font-size: 8.5pt; }
+    th {
+      background: #0f2d5a !important;
+      color: #fff !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      padding: 7px 8px;
+      border: 1px solid #999;
+      text-align: left;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    td { padding: 6px 8px; border: 1px solid #ccc; vertical-align: top; }
+    tr.alt td { background: #f3f7fc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 14px;
+      padding-top: 6px;
+      border-top: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      font-size: 7.5pt;
+      color: #888;
+    }
+    .footer .left  { text-align: left; }
+    .footer .right { text-align: right; }
+    .footer strong { color: #0f2d5a; }
   </style>
 </head>
 <body>
-  <h2>${title}</h2>
+
+  <div class="letterhead">
+    <div class="co-name">Prime Max Prefab Houses Ind. LLC <span class="co-div"></span> Elite Prefab Industries LLC</div>
+    <div class="co-sub">
+      Industrial Area 12, Sharjah, UAE &nbsp;|&nbsp; TRN: 100234567890001
+      &nbsp;&nbsp;&bull;&nbsp;&nbsp;
+      Industrial Area, Dubai, UAE &nbsp;|&nbsp; TRN: 100345678900001
+    </div>
+    <div class="co-sub">
+      Tel: +971 50 2940 131 &nbsp;|&nbsp; info@primemaxprefab.com
+      &nbsp;&nbsp;&bull;&nbsp;&nbsp;
+      Tel: +971 55 100 2000 &nbsp;|&nbsp; info@eliteprefab.ae
+    </div>
+  </div>
+
+  <div class="doc-title">${title}</div>
+
+  <div class="meta">
+    <span class="rec-count">${body.length} record${body.length !== 1 ? "s" : ""}</span>
+    <span>Printed: ${printDate}</span>
+  </div>
+
   <table>
     <thead><tr>${headerCells}</tr></thead>
     <tbody>${bodyRows}</tbody>
   </table>
-  <div class="footer">Prime Max &amp; Elite Prefab Smart ERP CRM — Printed on ${new Date().toLocaleString()}</div>
+
+  <div class="footer">
+    <div class="left"><strong>Prime Max &amp; Elite Prefab Smart ERP CRM</strong> — Confidential</div>
+    <div class="right">Generated: ${printDate}</div>
+  </div>
+
 </body>
 </html>`);
   win.document.close();
   win.focus();
-  setTimeout(() => { win.print(); }, 400);
+  setTimeout(() => { win.print(); }, 500);
 }

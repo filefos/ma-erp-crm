@@ -400,13 +400,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {isPO && (
           <table className="w-full border-collapse border border-gray-400 mb-3">
             <tbody>
-              <tr className="bg-gray-50">
-                <Td bold>TOTAL AMOUNT (AED)</Td>
-                <Td right bold>{formatAED(grand)}</Td>
+              <tr className="bg-[#0f2d5a] text-white" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <td className="border border-gray-400 px-2 py-2 text-sm font-black">TOTAL AMOUNT (AED)</td>
+                <td className="border border-gray-400 px-2 py-2 text-sm font-black text-right">{formatAED(grand)}</td>
               </tr>
               <tr>
-                <Td><span className="font-semibold">In Words: </span><span className="italic">{numberToWords(grand)}</span></Td>
-                <Td right>{" "}</Td>
+                <Td colSpan={2}><span className="font-semibold">Total in Words: </span><span className="italic">{numberToWords(grand)}</span></Td>
               </tr>
             </tbody>
           </table>
