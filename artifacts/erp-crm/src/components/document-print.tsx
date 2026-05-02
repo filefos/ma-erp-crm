@@ -364,11 +364,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
             </div>
+            <div className="flex-shrink-0 text-right self-start pt-0.5">
+              <div className="text-[11px] font-bold opacity-90 bg-white/10 rounded px-2 py-0.5">Page 1 of {isQuotation ? "3" : "1"}</div>
+            </div>
           </div>
-          <div className="bg-[#1e6ab0] text-white py-2 px-4 flex items-center" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-            <span className="text-[11px] font-medium opacity-75 w-20">Page 1 of {isQuotation ? "3" : "1"}</span>
-            <span className="flex-1 text-center text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
-            <span className="text-[11px] font-medium opacity-75 w-20 text-right">{data.docNumber}</span>
+          <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <span className="text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
           </div>
         </div>
 
@@ -702,11 +703,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
+                <div className="flex-shrink-0 text-right self-start pt-0.5">
+                  <div className="text-[11px] font-bold opacity-90 bg-white/10 rounded px-2 py-0.5">Page 2 of 3</div>
+                </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white py-2 px-4 flex items-center" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                <span className="text-[11px] font-medium opacity-75 w-20">Page 2 of 3</span>
-                <span className="flex-1 text-center text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
-                <span className="text-[11px] font-medium opacity-75 w-20 text-right">{data.docNumber}</span>
+              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
               </div>
             </div>
 
@@ -765,11 +767,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
+                <div className="flex-shrink-0 text-right self-start pt-0.5">
+                  <div className="text-[11px] font-bold opacity-90 bg-white/10 rounded px-2 py-0.5">Page 3 of 3</div>
+                </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white py-2 px-4 flex items-center" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                <span className="text-[11px] font-medium opacity-75 w-20">Page 3 of 3</span>
-                <span className="flex-1 text-center text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
-                <span className="text-[11px] font-medium opacity-75 w-20 text-right">{data.docNumber}</span>
+              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
               </div>
             </div>
 
