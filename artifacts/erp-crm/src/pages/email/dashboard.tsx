@@ -1,10 +1,9 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart as RPieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
 import {
@@ -15,35 +14,7 @@ import {
   ExecutiveHeader, KPIWidget, weeklyValues, trendPct, Avatar,
 } from "@/components/crm/premium";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
-
-interface Email {
-  id: number;
-  folder: string;
-  fromAddress: string;
-  fromName?: string;
-  toAddress: string;
-  toName?: string;
-  subject: string;
-  body: string;
-  isRead: boolean;
-  isStarred: boolean;
-  replyToId?: number;
-  sentAt?: string;
-  createdAt: string;
-}
-
-const BASE = import.meta.env.BASE_URL;
-
-async function apiFetch(path: string) {
-  const token = localStorage.getItem("erp_token");
-  const res = await fetch(`${BASE}api${path}`, {
-    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-const FOLDERS = ["inbox", "sent", "draft", "trash", "starred"] as const;
+import { useEmailFolder } from "./api";
 
 const FOLDER_COLORS: Record<string, string> = {
   inbox: "#1e6ab0", sent: "#10b981", draft: "#64748b", trash: "#ef4444", starred: "#f97316",
@@ -51,28 +22,27 @@ const FOLDER_COLORS: Record<string, string> = {
 
 export function EmailDashboard() {
   const { activeCompanyId } = useActiveCompany();
-  const queries = FOLDERS.map(folder =>
-    useQuery<Email[]>({
-      queryKey: ["emails", folder, activeCompanyId],
-      queryFn: () => apiFetch(`/emails?folder=${folder}&companyId=${activeCompanyId}`),
-      retry: 1,
-      staleTime: 30_000,
-    }),
+  // One named hook call per folder — same `useEmailFolder` hook that the
+  // main email page uses, so React Query caches stay coherent across
+  // dashboard ↔ inbox navigation.
+  const inboxQ   = useEmailFolder("inbox",   activeCompanyId);
+  const sentQ    = useEmailFolder("sent",    activeCompanyId);
+  const draftQ   = useEmailFolder("draft",   activeCompanyId);
+  const trashQ   = useEmailFolder("trash",   activeCompanyId);
+  const starredQ = useEmailFolder("starred", activeCompanyId);
+
+  const isLoading = inboxQ.isLoading || sentQ.isLoading || draftQ.isLoading || trashQ.isLoading || starredQ.isLoading;
+
+  const inboxAll = inboxQ.data   ?? [];
+  const sentAll  = sentQ.data    ?? [];
+  const drafts   = draftQ.data   ?? [];
+  const trash    = trashQ.data   ?? [];
+  const starred  = starredQ.data ?? [];
+
+  const byFolder = useMemo(
+    () => ({ inbox: inboxAll, sent: sentAll, draft: drafts, trash, starred }),
+    [inboxAll, sentAll, drafts, trash, starred],
   );
-
-  const isLoading = queries.some(q => q.isLoading);
-
-  const byFolder = useMemo(() => {
-    const m: Record<string, Email[]> = {};
-    FOLDERS.forEach((f, i) => { m[f] = queries[i].data ?? []; });
-    return m;
-  }, [queries.map(q => q.data).join("|")]);
-
-  const inboxAll = byFolder.inbox ?? [];
-  const sentAll  = byFolder.sent  ?? [];
-  const drafts   = byFolder.draft ?? [];
-  const trash    = byFolder.trash ?? [];
-  const starred  = byFolder.starred ?? [];
 
   // KPI numbers
   const unread        = inboxAll.filter(e => !e.isRead).length;
@@ -111,10 +81,12 @@ export function EmailDashboard() {
   }, [inboxAll, sentAll]);
 
   // ---- Folder distribution ----
-  const folderMix = useMemo(() => FOLDERS.map(f => ({
-    name: f,
-    value: (byFolder[f] ?? []).length,
-  })).filter(e => e.value > 0), [byFolder]);
+  const folderMix = useMemo(
+    () => (["inbox", "sent", "draft", "trash", "starred"] as const)
+      .map(f => ({ name: f, value: (byFolder[f] ?? []).length }))
+      .filter(e => e.value > 0),
+    [byFolder],
+  );
 
   // ---- Top senders (inbox) ----
   const topSenders = useMemo(() => {

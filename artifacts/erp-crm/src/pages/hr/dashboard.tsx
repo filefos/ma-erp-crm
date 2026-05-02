@@ -58,6 +58,7 @@ export function HrDashboard() {
   const presentToday = todayAttendance.filter(a => ["present", "checked_in", "in"].includes((a.status ?? "").toLowerCase())).length;
   const absentToday  = todayAttendance.filter(a => ["absent"].includes((a.status ?? "").toLowerCase())).length;
   const lateToday    = todayAttendance.filter(a => ["late"].includes((a.status ?? "").toLowerCase())).length;
+  const halfDayToday = todayAttendance.filter(a => ["half_day", "halfday", "half-day"].includes((a.status ?? "").toLowerCase())).length;
   const onLeaveToday = todayAttendance.filter(a => ["leave", "on_leave"].includes((a.status ?? "").toLowerCase())).length;
   const attendancePct = activeEmployees > 0 ? Math.round((presentToday / activeEmployees) * 100) : 0;
   const overtimeToday = todayAttendance.reduce((s, a) => s + Number(a.overtime ?? 0), 0);
@@ -152,27 +153,28 @@ export function HrDashboard() {
     return Object.values(m).sort((a, b) => b.presentDays - a.presentDays).slice(0, 6);
   }, [myAttendance, employees]);
 
-  // ---- Birthdays & work anniversaries (next 30 days) ----
+  // ---- Birthdays & work anniversaries (this calendar month only) ----
   const upcomingDates = useMemo(() => {
     const now = new Date();
-    const horizon = 30;
+    const monthIdx = now.getMonth();
+    const year     = now.getFullYear();
     const out: { id: number; name: string; kind: "birthday" | "anniversary"; date: Date; days: number; years?: number }[] = [];
     for (const e of employees as any[]) {
       const push = (raw: string | null | undefined, kind: "birthday" | "anniversary") => {
         if (!raw) return;
         const d = new Date(raw);
         if (isNaN(d.getTime())) return;
-        const next = new Date(now.getFullYear(), d.getMonth(), d.getDate());
-        if (next.getTime() < now.getTime() - 86_400_000) next.setFullYear(now.getFullYear() + 1);
-        const days = Math.ceil((next.getTime() - now.getTime()) / 86_400_000);
-        if (days < 0 || days > horizon) return;
-        const years = kind === "anniversary" ? next.getFullYear() - d.getFullYear() : undefined;
+        // Only celebrate dates that fall within the current calendar month.
+        if (d.getMonth() !== monthIdx) return;
+        const next = new Date(year, monthIdx, d.getDate());
+        const days = Math.ceil((next.getTime() - now.setHours(0, 0, 0, 0)) / 86_400_000);
+        const years = kind === "anniversary" ? year - d.getFullYear() : undefined;
         out.push({ id: e.id, name: e.name, kind, date: next, days, years });
       };
       push(e.dateOfBirth ?? e.dob, "birthday");
       push(e.joiningDate, "anniversary");
     }
-    return out.sort((a, b) => a.days - b.days).slice(0, 8);
+    return out.sort((a, b) => a.days - b.days).slice(0, 12);
   }, [employees]);
 
   // ---- Recent attendance feed (today + yesterday, latest first) ----
@@ -242,7 +244,7 @@ export function HrDashboard() {
         <KPIWidget icon={HardHat}      tone="amber"  label="Labour"             value={labourCount}          sub={`${staffCount} staff`}                        href="/hr/employees" testId="kpi-labour" />
         <KPIWidget icon={UserCheck}    tone="green"  label="Present Today"      value={presentToday}         sub={`${attendancePct}% attendance`}               sparkline={presentSpark} trend={trendPct(presentSpark)} href="/hr/attendance" testId="kpi-present" />
         <KPIWidget icon={XCircle}      tone={absentToday > 0 ? "red" : "slate"} label="Absent Today" value={absentToday} sub={`${onLeaveToday} on leave`} href="/hr/attendance" testId="kpi-absent" />
-        <KPIWidget icon={AlertTriangle} tone={lateToday > 0 ? "amber" : "slate"} label="Late Today" value={lateToday} sub="Tardiness today"               href="/hr/attendance" testId="kpi-late" />
+        <KPIWidget icon={AlertTriangle} tone={lateToday > 0 ? "amber" : "slate"} label="Late Today" value={lateToday} sub={`${halfDayToday} half-day`} href="/hr/attendance" testId="kpi-late" />
         <KPIWidget icon={Clock}        tone="purple" label="Overtime Hours"     value={overtimeToday.toFixed(1)} sub="Today's total"                            href="/hr/attendance" testId="kpi-overtime" />
         <KPIWidget icon={UserPlus}     tone="teal"   label="New Joiners (MTD)"  value={newJoinersThisMonth}  sub="This month"                                  href="/hr/employees" testId="kpi-joiners" />
         <KPIWidget icon={Globe2}       tone="indigo" label="Nationalities"      value={nationalityMix.length} sub="Diverse workforce"                          testId="kpi-nationalities" />
@@ -342,9 +344,9 @@ export function HrDashboard() {
 
       {/* Birthdays + Recent Attendance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PanelCard title="Birthdays & Anniversaries" subtitle="Next 30 days · celebrate your team" icon={Award}>
+        <PanelCard title="Birthdays & Anniversaries" subtitle="This month · celebrate your team" icon={Award}>
           {upcomingDates.length === 0 ? (
-            <Empty>No upcoming birthdays or anniversaries.</Empty>
+            <Empty>No birthdays or anniversaries this month.</Empty>
           ) : (
             <div className="space-y-2 max-h-[280px] overflow-y-auto" data-testid="list-birthdays">
               {upcomingDates.map(u => (
@@ -358,8 +360,8 @@ export function HrDashboard() {
                       {u.kind === "birthday" ? "Birthday" : `${u.years}-year work anniversary`} · {u.date.toLocaleDateString("en-AE", { day: "2-digit", month: "short" })}
                     </div>
                   </div>
-                  <Badge className={u.days === 0 ? "bg-emerald-100 text-emerald-700" : u.days <= 7 ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"}>
-                    {u.days === 0 ? "Today" : `in ${u.days}d`}
+                  <Badge className={u.days === 0 ? "bg-emerald-100 text-emerald-700" : u.days < 0 ? "bg-slate-100 text-slate-600" : u.days <= 7 ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"}>
+                    {u.days === 0 ? "Today" : u.days < 0 ? `${Math.abs(u.days)}d ago` : `in ${u.days}d`}
                   </Badge>
                 </div>
               ))}

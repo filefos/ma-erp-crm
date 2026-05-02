@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import {
   useGetDashboardSummary, useListQuotations, useListTaxInvoices, useListProjects,
   useListExpenses, useListPurchaseOrders, useListAttendance, useListInventoryItems,
+  useListEmployees,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ export function ReportsDashboard() {
   const { data: itemsRaw }      = useListInventoryItems({});
   const { data: leadsRaw }      = useListLeads({});
   const { data: dealsRaw }      = useListDeals();
+  const { data: employeesRaw }  = useListEmployees({});
 
   const quotations = useMemo(() => filterByCompany(quotationsRaw ?? []), [quotationsRaw, filterByCompany]);
   const invoices   = useMemo(() => filterByCompany(invoicesRaw   ?? []), [invoicesRaw,   filterByCompany]);
@@ -56,7 +58,19 @@ export function ReportsDashboard() {
   const items      = useMemo(() => filterByCompany(itemsRaw      ?? []), [itemsRaw,      filterByCompany]);
   const leads      = useMemo(() => filterByCompany(leadsRaw      ?? []), [leadsRaw,      filterByCompany]);
   const deals      = useMemo(() => filterByCompany(dealsRaw      ?? []), [dealsRaw,      filterByCompany]);
-  const attendance = useMemo(() => filterByCompany(attendanceRaw ?? []), [attendanceRaw, filterByCompany]);
+  // Employees are company-scoped; attendance rows do not carry a companyId
+  // of their own, so we must restrict attendance to the in-company employee
+  // ids to avoid showing another company's attendance counts/rates — same
+  // pattern used by `hr/dashboard.tsx` and `main-dashboard.tsx`.
+  const employees  = useMemo(() => filterByCompany(employeesRaw ?? []), [employeesRaw, filterByCompany]);
+  const employeeIdsInCompany = useMemo(
+    () => new Set((employees as any[]).map(e => e.id)),
+    [employees],
+  );
+  const attendance = useMemo(
+    () => (attendanceRaw ?? []).filter((a: any) => employeeIdsInCompany.has(a.employeeId)),
+    [attendanceRaw, employeeIdsInCompany],
+  );
 
   // ---- KPIs ----
   const totalRevenue   = invoices.reduce((s: number, i: any) => s + Number(i.grandTotal ?? 0), 0);

@@ -138,7 +138,19 @@ export function MainExecutiveDashboard() {
   const suppliers  = useMemo(() => filterByCompany(suppliersRaw  ?? []), [suppliersRaw,  filterByCompany]);
   const items      = useMemo(() => filterByCompany(itemsRaw      ?? []), [itemsRaw,      filterByCompany]);
   const employees  = useMemo(() => filterByCompany(employeesRaw  ?? []), [employeesRaw,  filterByCompany]);
-  const attendance = useMemo(() => filterByCompany(attendanceRaw ?? []), [attendanceRaw, filterByCompany]);
+  // Attendance rows do not carry a companyId, so `filterByCompany` would
+  // pass ALL of them through (it is permissive on missing companyId). We
+  // must scope attendance via the in-company employee ids — same approach
+  // as `hr/dashboard.tsx` — otherwise this dashboard could surface another
+  // company's attendance counts.
+  const employeeIdsInCompany = useMemo(
+    () => new Set((employees as any[]).map(e => e.id)),
+    [employees],
+  );
+  const attendance = useMemo(
+    () => (attendanceRaw ?? []).filter((a: any) => employeeIdsInCompany.has(a.employeeId)),
+    [attendanceRaw, employeeIdsInCompany],
+  );
   const projects   = useMemo(() => filterByCompany(projectsRaw   ?? []), [projectsRaw,   filterByCompany]);
   const assets     = useMemo(() => filterByCompany(assetsRaw     ?? []), [assetsRaw,     filterByCompany]);
   const cheques    = useMemo(() => filterByCompany(chequesRaw    ?? []), [chequesRaw,    filterByCompany]);

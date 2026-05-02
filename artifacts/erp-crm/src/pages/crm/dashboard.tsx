@@ -66,6 +66,48 @@ export function CRMDashboard() {
   const dealSpark = useMemo(() => weeklyCounts(deals, "createdAt", 8), [deals]);
   const wonSpark = useMemo(() => weeklyValues(deals.filter(d => d.stage === "won"), "updatedAt", d => Number(d.value ?? 0), 8), [deals]);
   const quoteSpark = useMemo(() => weeklyValues(quotations, "createdAt", (q: any) => Number(q.grandTotal ?? 0), 8), [quotations]);
+  // Daily series for follow-up + conversion KPIs (8 day buckets so the
+  // sparkline reads "this week" rather than calendar weeks).
+  const followUpsTodaySpark = useMemo(() => {
+    const buckets = new Array(8).fill(0);
+    const now = new Date();
+    for (const l of leads) {
+      if (!l.nextFollowUp || ["won", "lost"].includes(l.status)) continue;
+      const t = new Date(l.nextFollowUp).getTime();
+      const days = Math.floor((t - now.getTime()) / 86_400_000);
+      const idx = 7 + days; // today=7, yesterday=6, +1=8 (skip)
+      if (idx >= 0 && idx < 8) buckets[idx]++;
+    }
+    return buckets;
+  }, [leads]);
+  const overdueSpark = useMemo(() => {
+    const buckets = new Array(8).fill(0);
+    const now = new Date();
+    for (const l of leads) {
+      if (!l.nextFollowUp || ["won", "lost"].includes(l.status)) continue;
+      const t = new Date(l.nextFollowUp).getTime();
+      const days = Math.floor((now.getTime() - t) / 86_400_000);
+      const idx = 7 - days;
+      if (days > 0 && idx >= 0 && idx < 8) buckets[idx]++;
+    }
+    return buckets;
+  }, [leads]);
+  const conversionSpark = useMemo(() => {
+    // Rolling 8-week conversion rate (won/total leads created in that week).
+    const buckets = new Array(8).fill(0);
+    const now = new Date();
+    for (let i = 0; i < 8; i++) {
+      const end   = new Date(now); end.setDate(now.getDate() - i * 7);
+      const start = new Date(end); start.setDate(end.getDate() - 7);
+      const inWindow = leads.filter(l => {
+        const t = new Date(l.createdAt).getTime();
+        return t >= start.getTime() && t < end.getTime();
+      });
+      const wonCount = inWindow.filter(l => l.status === "won").length;
+      buckets[7 - i] = inWindow.length > 0 ? Math.round((wonCount / inWindow.length) * 100) : 0;
+    }
+    return buckets;
+  }, [leads]);
 
   // --- Charts ---
   const sourceData = useMemo(() => {
@@ -198,10 +240,10 @@ export function CRMDashboard() {
         <KPIWidget icon={Flame}        tone="red"    label="Hot Leads"        value={hotLeads}                     sub={`${activeLeads} active`}                              href="/crm/leads"        sparkline={hotSpark}   trend={trendPct(hotSpark)}   testId="kpi-hot-leads" />
         <KPIWidget icon={Briefcase}    tone="amber"  label="Active Deals"     value={activeDeals}                  sub={`AED ${pipelineValue.toLocaleString()} pipeline`}     href="/crm/pipeline"     sparkline={dealSpark}  trend={trendPct(dealSpark)}  testId="kpi-active-deals" />
         <KPIWidget icon={Trophy}       tone="green"  label="Won Value"        value={`AED ${(wonValue / 1000).toFixed(0)}k`} sub={`${wonDeals} closed deals`}                  href="/crm/deals"        sparkline={wonSpark}   trend={trendPct(wonSpark)}   testId="kpi-won-value" />
-        <KPIWidget icon={Calendar}     tone="indigo" label="Follow-ups Today" value={followUpsToday.length}         sub={overdueFollowUps.length ? `${overdueFollowUps.length} overdue` : "All on track"} href="/crm/follow-ups" testId="kpi-followups-today" />
-        <KPIWidget icon={AlertTriangle} tone={overdueFollowUps.length ? "red" : "slate"} label="Overdue" value={overdueFollowUps.length} sub="Need action now" href="/crm/follow-ups" testId="kpi-overdue" />
-        <KPIWidget icon={FileText}     tone="purple" label="Quotation Value"  value={`AED ${(quotationValue / 1000).toFixed(0)}k`} sub={`${quotations.length} quotations`}      href="/sales/quotations" sparkline={quoteSpark} testId="kpi-quote-value" />
-        <KPIWidget icon={Target}       tone="teal"   label="Conversion"       value={`${conversionRate}%`}         sub={`${wonLeads}/${totalLeads} won`}                      href="/crm/reports"      testId="kpi-conversion" />
+        <KPIWidget icon={Calendar}     tone="indigo" label="Follow-ups Today" value={followUpsToday.length}         sub={overdueFollowUps.length ? `${overdueFollowUps.length} overdue` : "All on track"} href="/crm/follow-ups" sparkline={followUpsTodaySpark} testId="kpi-followups-today" />
+        <KPIWidget icon={AlertTriangle} tone={overdueFollowUps.length ? "red" : "slate"} label="Overdue" value={overdueFollowUps.length} sub="Need action now" href="/crm/follow-ups" sparkline={overdueSpark} trend={trendPct(overdueSpark)} testId="kpi-overdue" />
+        <KPIWidget icon={FileText}     tone="purple" label="Quotation Value"  value={`AED ${(quotationValue / 1000).toFixed(0)}k`} sub={`${quotations.length} quotations`}      href="/sales/quotations" sparkline={quoteSpark} trend={trendPct(quoteSpark)} testId="kpi-quote-value" />
+        <KPIWidget icon={Target}       tone="teal"   label="Conversion"       value={`${conversionRate}%`}         sub={`${wonLeads}/${totalLeads} won`}                      href="/crm/reports"      sparkline={conversionSpark} trend={trendPct(conversionSpark)} testId="kpi-conversion" />
       </div>
 
       {/* Charts */}

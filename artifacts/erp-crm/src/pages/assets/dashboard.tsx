@@ -99,13 +99,29 @@ export function AssetsDashboard() {
     return Object.entries(m).map(([k, value]) => ({ name: k.replace(/_/g, " "), key: k, value }));
   }, [assets]);
 
+  // Stacked-by-status condition breakdown — one bar per condition, segments
+  // showing how those assets are split across operational status.
   const conditionMix = useMemo(() => {
-    const m: Record<string, number> = {};
+    const order = ["excellent", "good", "fair", "poor", "damaged"];
+    const buckets: Record<string, Record<string, number>> = {};
     for (const a of assets as any[]) {
-      const k = (a.condition ?? "good").toLowerCase();
-      m[k] = (m[k] ?? 0) + 1;
+      const cond   = (a.condition ?? "good").toLowerCase();
+      const status = (a.status ?? "available").toLowerCase();
+      buckets[cond] = buckets[cond] ?? {};
+      buckets[cond][status] = (buckets[cond][status] ?? 0) + 1;
     }
-    return Object.entries(m).map(([k, value]) => ({ name: k.replace(/_/g, " "), key: k, value }));
+    return Object.entries(buckets)
+      .map(([cond, statuses]) => ({
+        name: cond.replace(/_/g, " "),
+        key: cond,
+        in_use:        statuses.in_use ?? 0,
+        available:     statuses.available ?? 0,
+        maintenance:   statuses.maintenance ?? 0,
+        retired:       statuses.retired ?? 0,
+        damaged:       (statuses.damaged ?? 0) + (statuses.out_of_service ?? 0),
+        value: Object.values(statuses).reduce((s, n) => s + n, 0),
+      }))
+      .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   }, [assets]);
 
   const locationMix = useMemo(() => {
@@ -177,21 +193,29 @@ export function AssetsDashboard() {
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <PanelCard title="By Category" subtitle="Count + invested value" icon={Wrench} className="lg:col-span-2">
+        <PanelCard title="By Category" subtitle="Invested value share" icon={Wrench} className="lg:col-span-2">
           {categoryMix.length === 0 ? (
             <Empty>No assets registered yet.</Empty>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={categoryMix}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" height={60} />
-                <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v: number, name: string) => name === "Value (AED)" ? fmtAED(v) : v} />
+              <RPieChart>
+                <Pie
+                  data={categoryMix}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  innerRadius={60}
+                  paddingAngle={2}
+                  label={({ name, percent }) => `${name} ${Math.round((percent ?? 0) * 100)}%`}
+                  labelLine={false}
+                >
+                  {categoryMix.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                </Pie>
+                <Tooltip formatter={(v: number, _n: string, p: any) => [`${fmtAED(v)} · ${p.payload.count} assets`, p.payload.name]} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar yAxisId="left"  dataKey="count" name="Count"        fill="#1e6ab0" radius={[6, 6, 0, 0]} />
-                <Bar yAxisId="right" dataKey="value" name="Value (AED)"  fill="#0f2d5a" radius={[6, 6, 0, 0]} />
-              </BarChart>
+              </RPieChart>
             </ResponsiveContainer>
           )}
         </PanelCard>
@@ -215,7 +239,7 @@ export function AssetsDashboard() {
 
       {/* Condition + locations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PanelCard title="Condition" subtitle="Health rating distribution" icon={ShieldCheck}>
+        <PanelCard title="Condition" subtitle="Health rating · stacked by status" icon={ShieldCheck}>
           {conditionMix.length === 0 ? (
             <Empty>No condition recorded.</Empty>
           ) : (
@@ -225,9 +249,12 @@ export function AssetsDashboard() {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="value" name="Assets" radius={[6, 6, 0, 0]}>
-                  {conditionMix.map((e, i) => <Cell key={i} fill={CONDITION_COLORS[e.key] ?? PALETTE[i % PALETTE.length]} />)}
-                </Bar>
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Bar dataKey="in_use"      stackId="s" name="In use"      fill={STATUS_COLORS.in_use}      />
+                <Bar dataKey="available"   stackId="s" name="Available"   fill={STATUS_COLORS.available}   />
+                <Bar dataKey="maintenance" stackId="s" name="Maintenance" fill={STATUS_COLORS.maintenance} />
+                <Bar dataKey="retired"     stackId="s" name="Retired"     fill={STATUS_COLORS.retired}     />
+                <Bar dataKey="damaged"     stackId="s" name="Damaged"     fill={STATUS_COLORS.damaged}     radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
