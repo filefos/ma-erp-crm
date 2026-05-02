@@ -1,6 +1,5 @@
-import { pgTable, serial, text, boolean, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
 
 export const emailsTable = pgTable("emails", {
   id: serial("id").primaryKey(),
@@ -14,6 +13,7 @@ export const emailsTable = pgTable("emails", {
   bccAddress: text("bcc_address"),
   subject: text("subject").notNull(),
   body: text("body").notNull(),
+  attachments: jsonb("attachments").default([]),
   isRead: boolean("is_read").notNull().default(false),
   isStarred: boolean("is_starred").notNull().default(false),
   replyToId: integer("reply_to_id"),

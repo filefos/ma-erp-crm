@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Mail, Send, Inbox, Star, Trash2, FileText, Plus, X, Reply,
-  ChevronLeft, Search, RefreshCw, Eye, EyeOff, Settings, RotateCcw, Loader2,
+  ChevronLeft, Search, RefreshCw, Eye, EyeOff, Settings,
+  RotateCcw, Loader2, Paperclip, FileIcon, LogOut,
 } from "lucide-react";
 import { EmailSettingsModal } from "./settings-modal";
 
@@ -31,6 +32,14 @@ interface Email {
   sentAt?: string;
   createdAt: string;
   companyId?: number;
+  attachments?: Array<{ filename: string; contentType: string; size: number }>;
+}
+
+interface Attachment {
+  filename: string;
+  content: string; // base64
+  contentType: string;
+  size: number;
 }
 
 interface ComposeData {
@@ -43,6 +52,7 @@ interface ComposeData {
 }
 
 const BASE = import.meta.env.BASE_URL;
+const MAX_ATTACH_MB = 10;
 
 async function apiFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem("erp_token");
@@ -76,17 +86,25 @@ function formatDate(d: string) {
   return date.toLocaleDateString("en-AE", { day: "2-digit", month: "short" });
 }
 
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export function EmailPanel() {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
   const companyId: number = (user as any)?.companyId ?? 1;
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [folder, setFolder] = useState<Folder>("inbox");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [composing, setComposing] = useState(false);
   const [search, setSearch] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [compose, setCompose] = useState<ComposeData>({
     toAddress: "", toName: "", ccAddress: "", subject: "", body: "",
   });
@@ -96,7 +114,7 @@ export function EmailPanel() {
     queryFn: () => apiFetch(`/email-settings?companyId=${companyId}`),
   });
 
-  const isConfigured = !!(settings?.imapHost && settings?.smtpHost);
+  const isConnected = !!(settings?.smtpHost && settings?.smtpUser);
 
   const emailsKey = ["emails", folder, search];
   const { data: emails = [], isLoading, refetch } = useQuery<Email[]>({
@@ -139,6 +157,7 @@ export function EmailPanel() {
     onSuccess: () => {
       toast({ title: "Email sent!" });
       setComposing(false);
+      setAttachments([]);
       setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
       qc.invalidateQueries({ queryKey: ["emails"] });
     },
@@ -150,6 +169,7 @@ export function EmailPanel() {
     onSuccess: () => {
       toast({ title: "Draft saved." });
       setComposing(false);
+      setAttachments([]);
       setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
       qc.invalidateQueries({ queryKey: ["emails"] });
     },
@@ -190,6 +210,7 @@ export function EmailPanel() {
       body: `\n\n---\nOn ${formatDate(email.createdAt)}, ${email.fromName ?? email.fromAddress} wrote:\n${email.body.substring(0, 500)}`,
       replyToId: email.id,
     });
+    setAttachments([]);
     setComposing(true);
     setSelectedId(null);
   };
@@ -199,8 +220,35 @@ export function EmailPanel() {
       toast({ title: "To and Subject are required.", variant: "destructive" });
       return;
     }
-    sendMutation.mutate({ ...compose, action: "send", companyId });
+    sendMutation.mutate({ ...compose, action: "send", companyId, attachments });
   };
+
+  // File attachment handler
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const newAttachments: Attachment[] = [];
+    for (const file of files) {
+      if (file.size > MAX_ATTACH_MB * 1024 * 1024) {
+        toast({ title: `${file.name} exceeds ${MAX_ATTACH_MB}MB limit.`, variant: "destructive" });
+        continue;
+      }
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]); // strip data:...;base64,
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      newAttachments.push({ filename: file.name, content: base64, contentType: file.type || "application/octet-stream", size: file.size });
+    }
+    setAttachments(prev => [...prev, ...newAttachments]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAttachment = (idx: number) => setAttachments(prev => prev.filter((_, i) => i !== idx));
 
   const unreadCount = emails.filter(e => !e.isRead && e.folder === "inbox").length;
 
@@ -216,15 +264,14 @@ export function EmailPanel() {
               onClick={() => {
                 setComposing(true);
                 setSelectedId(null);
+                setAttachments([]);
                 setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
               }}
             >
               <Plus className="w-4 h-4 mr-2" /> Compose
             </Button>
             <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
+              variant="outline" size="sm" className="w-full text-xs"
               onClick={() => syncMutation.mutate()}
               disabled={syncMutation.isPending}
             >
@@ -240,7 +287,8 @@ export function EmailPanel() {
               <button
                 key={f}
                 onClick={() => { setFolder(f); setSelectedId(null); setComposing(false); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${folder === f ? "bg-[#1e6ab0] text-white font-medium" : "text-gray-600 hover:bg-gray-200"}`}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors
+                  ${folder === f ? "bg-[#1e6ab0] text-white font-medium" : "text-gray-600 hover:bg-gray-200"}`}
               >
                 {f === "inbox" && <Inbox className="w-4 h-4" />}
                 {f === "sent" && <Send className="w-4 h-4" />}
@@ -257,24 +305,28 @@ export function EmailPanel() {
             ))}
           </nav>
 
-          {/* Bottom: account status + settings */}
-          <div className="p-3 border-t border-gray-200 space-y-1.5">
-            <div className={`flex items-center gap-1.5 text-xs px-1 ${isConfigured ? "text-green-600" : "text-amber-600"}`}>
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isConfigured ? "bg-green-500" : "bg-amber-400"}`} />
-              {isConfigured ? "Account connected" : "Not connected"}
-            </div>
-            {settings?.lastSyncedAt && (
-              <div className="text-[10px] text-gray-400 px-1">
-                Last sync: {formatDate(settings.lastSyncedAt)}
+          {/* Account status */}
+          <div className="p-3 border-t border-gray-200 space-y-2">
+            {isConnected ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5 text-xs text-green-600 px-1">
+                  <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                  <span className="truncate font-medium">{settings?.smtpUser}</span>
+                </div>
+                {settings?.lastSyncedAt && (
+                  <div className="text-[10px] text-gray-400 px-1">Synced {formatDate(settings.lastSyncedAt)}</div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 text-xs text-amber-600 px-1">
+                <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                Not connected
               </div>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => setShowSettings(true)}
-            >
-              <Settings className="w-3 h-3 mr-1.5" /> Email Settings
+            <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => setShowSettings(true)}>
+              {isConnected
+                ? <><Settings className="w-3 h-3 mr-1.5" /> Account Settings</>
+                : <><Mail className="w-3 h-3 mr-1.5" /> Connect Email</>}
             </Button>
           </div>
         </div>
@@ -308,13 +360,13 @@ export function EmailPanel() {
             {!isLoading && displayEmails.length === 0 && (
               <div className="flex flex-col items-center justify-center h-40 text-gray-400 gap-2">
                 <Mail className="w-8 h-8 opacity-30" />
-                <span className="text-sm">No emails here</span>
-                {folder === "inbox" && !isConfigured && (
+                <span className="text-sm">No emails</span>
+                {folder === "inbox" && !isConnected && (
                   <Button variant="link" size="sm" className="text-xs" onClick={() => setShowSettings(true)}>
-                    Connect your email account
+                    Connect email account
                   </Button>
                 )}
-                {folder === "inbox" && isConfigured && (
+                {folder === "inbox" && isConnected && (
                   <Button variant="link" size="sm" className="text-xs" onClick={() => syncMutation.mutate()}>
                     Sync now
                   </Button>
@@ -334,6 +386,7 @@ export function EmailPanel() {
                     {email.folder === "sent" ? email.toAddress : (email.fromName ?? email.fromAddress)}
                   </span>
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    {email.attachments && (email.attachments as any[]).length > 0 && <Paperclip className="w-2.5 h-2.5 text-gray-400" />}
                     {email.isStarred && <Star className="w-3 h-3 text-amber-400 fill-amber-400" />}
                     {!email.isRead && email.folder === "inbox" && <span className="w-2 h-2 rounded-full bg-[#1e6ab0]" />}
                     <span className="text-[10px] text-gray-400">{formatDate(email.createdAt)}</span>
@@ -363,19 +416,18 @@ export function EmailPanel() {
                     Save Draft
                   </Button>
                   <Button
-                    size="sm"
-                    className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
-                    onClick={handleSend}
-                    disabled={sendMutation.isPending}
+                    size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                    onClick={handleSend} disabled={sendMutation.isPending}
                   >
                     {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
                     {sendMutation.isPending ? "Sending…" : "Send"}
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setComposing(false)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setComposing(false); setAttachments([]); }}>
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
+
               <div className="flex-1 overflow-y-auto p-5 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
@@ -383,8 +435,7 @@ export function EmailPanel() {
                     <Input
                       value={compose.toAddress}
                       onChange={e => setCompose(p => ({ ...p, toAddress: e.target.value }))}
-                      placeholder="recipient@email.com"
-                      className="h-8 text-sm"
+                      placeholder="recipient@email.com" className="h-8 text-sm"
                     />
                   </div>
                   <div className="space-y-1">
@@ -392,37 +443,81 @@ export function EmailPanel() {
                     <Input
                       value={compose.ccAddress}
                       onChange={e => setCompose(p => ({ ...p, ccAddress: e.target.value }))}
-                      placeholder="cc@email.com"
-                      className="h-8 text-sm"
+                      placeholder="cc@email.com" className="h-8 text-sm"
                     />
                   </div>
                 </div>
+
                 <div className="space-y-1">
                   <Label className="text-xs text-gray-500">Subject *</Label>
                   <Input
                     value={compose.subject}
                     onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))}
-                    placeholder="Email subject"
-                    className="h-8 text-sm"
+                    placeholder="Email subject" className="h-8 text-sm"
                   />
                 </div>
+
                 <div className="space-y-1">
                   <Label className="text-xs text-gray-500">Message</Label>
                   <Textarea
                     value={compose.body}
                     onChange={e => setCompose(p => ({ ...p, body: e.target.value }))}
                     placeholder="Write your message here…"
-                    className="min-h-[340px] text-sm font-sans resize-y"
+                    className="min-h-[260px] text-sm font-sans resize-y"
                   />
                 </div>
-                {!isConfigured && (
+
+                {/* Attachments */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button" variant="outline" size="sm" className="text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Paperclip className="w-3.5 h-3.5 mr-1.5" /> Attach File
+                    </Button>
+                    <span className="text-[11px] text-gray-400">Max {MAX_ATTACH_MB}MB per file</span>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileSelect}
+                    />
+                  </div>
+
+                  {attachments.length > 0 && (
+                    <div className="space-y-1.5">
+                      {attachments.map((att, idx) => (
+                        <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
+                          <FileIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-medium text-gray-700 truncate">{att.filename}</div>
+                            <div className="text-[10px] text-gray-400">{formatBytes(att.size)}</div>
+                          </div>
+                          <Button
+                            type="button" variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0"
+                            onClick={() => removeAttachment(idx)}
+                          >
+                            <X className="w-3.5 h-3.5 text-gray-400" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {!isConnected && (
                   <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-                    <span>SMTP not configured — email will be saved but not sent.</span>
-                    <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setShowSettings(true)}>Configure</Button>
+                    SMTP not configured — email will be saved but not sent.
+                    <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setShowSettings(true)}>
+                      Connect account
+                    </Button>
                   </div>
                 )}
               </div>
             </div>
+
           ) : selectedEmail ? (
             <div className="flex flex-col h-full">
               <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200 bg-gray-50 flex-wrap">
@@ -438,20 +533,17 @@ export function EmailPanel() {
                       <Reply className="w-3.5 h-3.5 mr-1" /> Reply
                     </Button>
                   )}
-                  <Button
-                    variant="ghost" size="icon" className="h-8 w-8"
+                  <Button variant="ghost" size="icon" className="h-8 w-8"
                     onClick={() => patchMutation.mutate({ id: selectedEmail.id, patch: { isStarred: !selectedEmail.isStarred } })}
                   >
                     <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-amber-400 text-amber-400" : "text-gray-400"}`} />
                   </Button>
-                  <Button
-                    variant="ghost" size="icon" className="h-8 w-8"
+                  <Button variant="ghost" size="icon" className="h-8 w-8"
                     onClick={() => patchMutation.mutate({ id: selectedEmail.id, patch: { isRead: !selectedEmail.isRead } })}
                   >
                     {selectedEmail.isRead ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
                   </Button>
-                  <Button
-                    variant="ghost" size="icon" className="h-8 w-8 text-destructive"
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"
                     onClick={() => deleteMutation.mutate(selectedEmail.id)}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -487,6 +579,19 @@ export function EmailPanel() {
                 </div>
               </div>
 
+              {/* Attachment list on received email */}
+              {selectedEmail.attachments && (selectedEmail.attachments as any[]).length > 0 && (
+                <div className="px-5 py-2 border-b border-gray-100 bg-gray-50 flex flex-wrap gap-2">
+                  {(selectedEmail.attachments as any[]).map((att, i) => (
+                    <div key={i} className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-md px-2.5 py-1.5">
+                      <Paperclip className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs text-gray-700 max-w-[140px] truncate">{att.filename}</span>
+                      <span className="text-[10px] text-gray-400">{formatBytes(att.size)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex-1 overflow-y-auto px-5 py-5">
                 <div className="prose max-w-none text-sm text-gray-800 whitespace-pre-line leading-relaxed">
                   {selectedEmail.body}
@@ -500,6 +605,7 @@ export function EmailPanel() {
                 </Button>
               </div>
             </div>
+
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
               <Mail className="w-16 h-16 opacity-20" />
@@ -507,15 +613,19 @@ export function EmailPanel() {
                 <p className="font-medium text-gray-500">Select an email to read</p>
                 <p className="text-sm mt-1">Or compose a new message</p>
               </div>
-              {!isConfigured ? (
+              {!isConnected ? (
                 <div className="mt-2 text-center space-y-2">
                   <p className="text-xs text-amber-600">No email account connected yet.</p>
                   <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => setShowSettings(true)}>
-                    <Settings className="w-4 h-4 mr-2" /> Connect Email Account
+                    <Mail className="w-4 h-4 mr-2" /> Connect Email Account
                   </Button>
                 </div>
               ) : (
-                <Button className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => { setComposing(true); setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" }); }}>
+                <Button className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => {
+                  setComposing(true);
+                  setAttachments([]);
+                  setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
+                }}>
                   <Plus className="w-4 h-4 mr-2" /> Compose Email
                 </Button>
               )}

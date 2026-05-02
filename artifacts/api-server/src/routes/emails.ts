@@ -48,17 +48,49 @@ router.post("/emails", requireAuth, async (req, res): Promise<void> => {
   const fromName = data.fromName ?? (req.user as any)?.name ?? "Prime Max ERP";
 
   if (isSend) {
-    const transporter = getTransporter();
+    const companyId = data.companyId ?? (req.user as any)?.companyId ?? null;
+    const attachments: Array<{ filename: string; content: string; contentType: string }> = data.attachments ?? [];
+
+    // Try to use company SMTP settings, fall back to env-var transporter
+    let transporter = null;
+    if (companyId) {
+      const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
+      if (settings?.smtpHost && settings?.smtpUser && settings?.smtpPass) {
+        const fromSetting = settings.smtpFromName ? `"${settings.smtpFromName}" <${settings.smtpUser}>` : settings.smtpUser;
+        transporter = nodemailer.createTransport({
+          host: settings.smtpHost,
+          port: settings.smtpPort ?? 587,
+          secure: settings.smtpSecure === "ssl",
+          requireTLS: settings.smtpSecure === "starttls",
+          auth: { user: settings.smtpUser, pass: settings.smtpPass },
+          tls: { rejectUnauthorized: false },
+        });
+        // override fromAddress/fromName from saved settings
+        Object.assign(data, {
+          _smtpFrom: fromSetting,
+          _smtpFromAddr: settings.smtpUser,
+          _smtpFromName: settings.smtpFromName ?? fromName,
+        });
+      }
+    }
+    if (!transporter) transporter = getTransporter();
+
     if (transporter) {
       try {
+        const mailAttachments = attachments.map(a => ({
+          filename: a.filename,
+          content: Buffer.from(a.content, "base64"),
+          contentType: a.contentType,
+        }));
         await transporter.sendMail({
-          from: `"${fromName}" <${fromAddress}>`,
+          from: data._smtpFrom ?? `"${fromName}" <${fromAddress}>`,
           to: data.toAddress,
           cc: data.ccAddress || undefined,
           bcc: data.bccAddress || undefined,
           subject: data.subject,
           html: data.body.replace(/\n/g, "<br>"),
           text: data.body,
+          attachments: mailAttachments,
         });
         logger.info("Email sent via SMTP to " + data.toAddress);
       } catch (err: any) {
@@ -69,14 +101,15 @@ router.post("/emails", requireAuth, async (req, res): Promise<void> => {
     const [email] = await db.insert(emailsTable).values({
       companyId: data.companyId ?? null,
       folder: "sent",
-      fromAddress,
-      fromName,
+      fromAddress: data._smtpFromAddr ?? fromAddress,
+      fromName: data._smtpFromName ?? fromName,
       toAddress: data.toAddress,
       toName: data.toName ?? null,
       ccAddress: data.ccAddress ?? null,
       bccAddress: data.bccAddress ?? null,
       subject: data.subject,
       body: data.body,
+      attachments: attachments.map(a => ({ filename: a.filename, contentType: a.contentType, size: a.content.length })),
       isRead: true,
       replyToId: data.replyToId ?? null,
       sentAt: new Date(),

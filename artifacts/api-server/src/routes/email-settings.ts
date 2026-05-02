@@ -93,4 +93,10 @@ router.post("/email-settings/test-imap", async (req, res): Promise<void> => {
   }
 });
 
+router.delete("/email-settings", async (req, res): Promise<void> => {
+  const companyId = req.query.companyId ? parseInt(req.query.companyId as string, 10) : (req.user as any)?.companyId ?? 1;
+  await db.delete(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
+  res.json({ success: true });
+});
+
 export default router;
