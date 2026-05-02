@@ -25,6 +25,17 @@ pnpm workspace monorepo with React+Vite frontend, Express 5 backend, PostgreSQL 
 ## Key Commands
 
 ## Modules / Features
+- **Inventory — ULTRA PREMIUM Dashboard** (`pages/inventory/dashboard.tsx`, `/inventory` and `/inventory/dashboard`, nav: "Inventory Dashboard"): unified command center across the **three pillars** of the inventory module — (1) **inventory tracking** (items + stock movements), (2) **purchase orders** (procurement side), (3) **sales orders / LPOs** (customer side). Built with the existing `components/crm/premium.tsx` UI kit. Sections:
+  - `ExecutiveHeader` with embedded action chips: + Item / + Stock Entry / + PO / + LPO.
+  - **AI Inventory Insights** banner (live indicator) — tone-coloured cards for out-of-stock, low-stock, stale POs (>14 days), no open POs warning, and active sales-order pipeline summary.
+  - **8 KPI widgets** with sparklines + trend pills: Total Items, Stock Value (AED), Low Stock, Out of Stock, Open POs, PO Value Pending, Active Sales Orders, Sales Order Value (AED).
+  - **Stock Movements — Last 30 Days** dual-area chart (stock-in vs stock-out) using daily buckets.
+  - **Stock Value by Category** donut on a navy gradient card with top-5 legend list.
+  - **Reorder Alerts** grid showing OUT and LOW items with computed reorder quantity (`max(min*2 - current, min)`) and Create-PO CTA.
+  - **PO by Status** donut + breakdown list and **Sales Orders (LPO) by Status** stacked progress bars side-by-side.
+  - **Top Suppliers** (by PO value) and **Top Clients** (by LPO value) progress-bar leaderboards with avatars.
+  - **Recent Stock Movements** timeline (last 8) with in/out/adjustment icons, signed quantity, approval status.
+  - All sections company-scoped via `useActiveCompany().filterByCompany()`. Pure read-only; no API/schema changes. Routes `/inventory` and `/inventory/dashboard` registered in `App.tsx` under `<ModuleGuard module="inventory_items">`. Sidebar Inventory group reordered to put "Inventory Dashboard" first; `CATEGORY_HOMES.inventory` now points to `/inventory`.
 - **CRM — ULTRA PREMIUM (Phase 3)** — Salesforce/Zoho-grade visual polish across the CRM, frontend-only (no API or schema changes; existing data preserved):
   - **Premium UI kit** (`components/crm/premium.tsx`): `ExecutiveHeader` (gradient navy→blue header w/ icon + slot for action chips), `KPIWidget` (gradient card w/ icon, value, sub, trend pill, optional inline `Sparkline` SVG), `Sparkline`, `PremiumCard`, `StatusBadge` (status-coloured pill w/ dot), `PriorityBadge`, `AIScoreBadge` (gradient hot/warm/cold), `Avatar` (initials w/ stable HSL gradient + ring), plus helpers `weeklyCounts` / `weeklyValues` / `trendPct`.
   - **CRM Command Center** rewritten with `ExecutiveHeader`, 8 `KPIWidget`s with sparklines + 4-week vs 4-week trend %, refined AI Insights banner (left navy gradient stripe, live badge), `Avatar` + `AIScoreBadge` on hot-leads strip, `StatusBadge` on AI Suggested cards.

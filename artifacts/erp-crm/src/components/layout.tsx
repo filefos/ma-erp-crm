@@ -84,6 +84,7 @@ const NAV: NavGroup[] = [
     label: "Inventory",
     icon: Package,
     items: [
+      { href: "/inventory", label: "Inventory Dashboard", icon: LayoutDashboard },
       { href: "/inventory/items", label: "Items", icon: Package },
       { href: "/inventory/stock-entries", label: "Stock Entries", icon: FileBox },
     ],
@@ -205,7 +206,9 @@ function NavGroupItem({ group }: { group: NavGroup }) {
         <div className="ml-4 mt-0.5 space-y-0.5 border-l border-white/10 pl-3">
           {group.items.map(item => {
             const ItemIcon = item.icon;
-            const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+            const isActive =
+              location === item.href ||
+              (item.href !== "/" && location.startsWith(item.href + "/"));
             return (
               <Link key={item.href} href={item.href}
                 className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-[#1e6ab0] text-white font-medium" : "text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-white/8"}`}>
@@ -320,7 +323,7 @@ const ROUTE_LABELS: Record<string, string> = {
   expenses: "Expenses", cheques: "Cheques", "bank-accounts": "Bank Accounts",
   suppliers: "Suppliers", "purchase-requests": "Purchase Requests",
   "purchase-orders": "Purchase Orders", items: "Items",
-  "stock-entries": "Stock Entries", employees: "Employees", attendance: "Attendance",
+  "stock-entries": "Stock Entries", dashboard: "Dashboard", employees: "Employees", attendance: "Attendance",
 };
 
 // Each top-level category's "home" / landing route — used by the
@@ -330,7 +333,7 @@ const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
   sales:       { label: "Sales",       href: "/sales/quotations" },
   accounts:    { label: "Accounts",    href: "/accounts/invoices" },
   procurement: { label: "Procurement", href: "/procurement/dashboard" },
-  inventory:   { label: "Inventory",   href: "/inventory/items" },
+  inventory:   { label: "Inventory",   href: "/inventory" },
   projects:    { label: "Projects",    href: "/projects" },
   hr:          { label: "HR",          href: "/hr/employees" },
   assets:      { label: "Assets",      href: "/assets" },

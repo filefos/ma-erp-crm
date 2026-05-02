@@ -47,6 +47,7 @@ import ProcurementDashboardPage from "@/pages/procurement/procurement-dashboard"
 import { ChequeDetail } from "@/pages/accounts/cheque-detail";
 import { InventoryItemsList } from "@/pages/inventory/items";
 import { StockEntriesList } from "@/pages/inventory/stock-entries";
+import { InventoryDashboard } from "@/pages/inventory/dashboard";
 import { ProjectsList } from "@/pages/projects/index";
 import { ProjectDetail } from "@/pages/projects/detail";
 import { EmployeesList } from "@/pages/hr/employees";
@@ -233,6 +234,12 @@ function Router() {
       </Route>
 
       {/* Inventory */}
+      <Route path="/inventory">
+        <ModuleGuard module="inventory_items"><InventoryDashboard /></ModuleGuard>
+      </Route>
+      <Route path="/inventory/dashboard">
+        <ModuleGuard module="inventory_items"><InventoryDashboard /></ModuleGuard>
+      </Route>
       <Route path="/inventory/items">
         <ModuleGuard module="inventory_items"><InventoryItemsList /></ModuleGuard>
       </Route>

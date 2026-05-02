@@ -1,0 +1,240 @@
+Upgrade the Executive Sales CRM UI into an ULTRA PREMIUM enterprise interface.
+
+Design quality target:
+- Salesforce Enterprise
+- Zoho CRM Plus
+- Odoo Enterprise
+- Microsoft Dynamics
+- Apple-level clean UI
+
+Do not rebuild backend. Upgrade frontend UI/UX only.
+
+--------------------------------------------------
+1. VISUAL STYLE
+--------------------------------------------------
+Theme:
+- Deep navy blue
+- Electric light blue
+- White
+- Soft glass effects
+- Premium shadows
+- Smooth rounded cards
+- Clean typography
+- Executive spacing
+- Modern icons
+- Subtle gradients
+
+UI must look:
+- Expensive
+- Professional
+- Boardroom-ready
+- Fast
+- Clean
+- Not crowded
+
+--------------------------------------------------
+2. EXECUTIVE DASHBOARD UI
+--------------------------------------------------
+Create a premium dashboard with:
+
+Top section:
+- Welcome message
+- Company selector
+- Date filter
+- Global search
+- Notification bell
+- AI command button
+
+KPI cards:
+- Total leads
+- Hot leads
+- Active deals
+- Pipeline value
+- Monthly revenue
+- Conversion rate
+- Follow-ups due
+- Overdue follow-ups
+
+Each KPI card must have:
+- Icon
+- Value
+- Trend %
+- Mini sparkline placeholder
+- Status badge
+
+--------------------------------------------------
+3. SALES PIPELINE UI
+--------------------------------------------------
+Create beautiful Kanban pipeline.
+
+Each stage:
+- Stage name
+- Deal count
+- Total value
+- Cards
+
+Each deal card:
+- Client name
+- Project type
+- Deal value
+- Probability %
+- Salesperson avatar
+- Follow-up date
+- AI score badge
+- Priority badge
+
+Add:
+- Drag-and-drop design placeholder
+- Smooth hover animation
+- Stuck deal warning
+
+--------------------------------------------------
+4. LEADS TABLE UI
+--------------------------------------------------
+Create premium leads table.
+
+Features:
+- Search bar
+- Advanced filters drawer
+- Saved views
+- Column visibility
+- Bulk actions
+- Tags
+- Priority labels
+- AI score badge
+- Status badges
+- Pagination
+- Row hover preview
+- Quick action buttons:
+  - Call
+  - WhatsApp
+  - Email
+  - Follow-up
+  - Convert
+
+--------------------------------------------------
+5. LEAD DETAIL PAGE UI
+--------------------------------------------------
+Create executive lead profile page.
+
+Layout:
+Left:
+- Lead profile card
+- Client info
+- Contact info
+- AI score
+- Assigned salesperson
+
+Center:
+- Activity timeline
+- Notes
+- Follow-ups
+- Quotation history
+
+Right:
+- AI suggested next action
+- Related documents
+- Upcoming reminders
+- Deal probability
+
+--------------------------------------------------
+6. AI SALES ASSISTANT UI
+--------------------------------------------------
+Create premium AI side panel.
+
+AI panel includes:
+- Lead score explanation
+- Suggested next action
+- Auto follow-up generator
+- WhatsApp message generator
+- Email writing assistant
+- Lost deal risk warning
+- Smart summary
+
+Buttons:
+- Generate reply
+- Improve message
+- Create follow-up
+- Summarize client
+- Score lead
+
+--------------------------------------------------
+7. REPORTS UI
+--------------------------------------------------
+Create executive reports dashboard.
+
+Cards:
+- Sales by source
+- Sales by user
+- Conversion funnel
+- Won/lost ratio
+- Monthly target
+- Revenue trend
+
+Use chart placeholders:
+- Line chart
+- Bar chart
+- Funnel chart
+- Donut chart
+
+--------------------------------------------------
+8. MOBILE RESPONSIVE UI
+--------------------------------------------------
+Make all screens responsive:
+- Desktop executive view
+- Tablet view
+- Mobile sales app view
+
+Mobile must include:
+- Bottom navigation
+- Touch-friendly cards
+- Quick lead add
+- Today follow-ups
+- WhatsApp shortcut
+- Voice note placeholder
+
+--------------------------------------------------
+9. MICRO-INTERACTIONS
+--------------------------------------------------
+Add:
+- Smooth hover effects
+- Card lift animation
+- Button transitions
+- Loading skeletons
+- Empty states
+- Success toast
+- Error toast
+- Slide-over panels
+- Modal animations
+
+--------------------------------------------------
+10. COMPONENT SYSTEM
+--------------------------------------------------
+Create reusable components:
+- PremiumCard
+- KPIWidget
+- StatusBadge
+- PriorityBadge
+- AIScoreBadge
+- DataTable
+- FilterDrawer
+- CommandSearch
+- Timeline
+- KanbanBoard
+- AICommandPanel
+- ExecutiveHeader
+
+--------------------------------------------------
+11. FINAL OUTPUT
+--------------------------------------------------
+Deliver:
+- Ultra premium Sales CRM dashboard
+- Premium leads table
+- Lead detail page
+- Pipeline board
+- AI assistant panel
+- Reports dashboard
+- Mobile responsive views
+- Clean reusable components
+- No broken pages
+- Keep existing data/API integration
