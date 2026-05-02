@@ -357,15 +357,36 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return items;
   })();
 
-  // "Back to <Category>" target — only shows when the user is on a sub-page
-  // under a known main category and isn't already on that category's home.
+  // "Back to ..." target — appears on every page except Dashboard / root /
+  // login / profile. Strategy:
+  //   - 3+ URL segments  → back to the 2-segment parent (e.g. quotation
+  //     detail/edit → quotations list)
+  //   - 2 segments       → back to the category's home page if different,
+  //     otherwise to Dashboard
+  //   - 1 segment        → back to Dashboard
   const backTarget = (() => {
+    if (!showBreadcrumb) return null;
     const parts = location.split("/").filter(Boolean);
-    if (parts.length < 2) return null;          // top-level category page or root
-    const cat = CATEGORY_HOMES[parts[0]];
-    if (!cat) return null;                       // unknown category
-    if (location === cat.href) return null;      // already on the category home
-    return cat;
+    if (parts.length === 0) return null;
+
+    // 3+ segments → parent route (drop the last segment)
+    if (parts.length >= 3) {
+      const parentSeg = parts[parts.length - 2];
+      // Skip numeric IDs as the visible parent label
+      const labelSeg = /^\d+$/.test(parentSeg) ? parts[0] : parentSeg;
+      const label = ROUTE_LABELS[labelSeg]
+        ?? labelSeg.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      return { label, href: "/" + parts.slice(0, -1).join("/") };
+    }
+
+    // 2 segments under a known category → category home (if different)
+    if (parts.length === 2) {
+      const cat = CATEGORY_HOMES[parts[0]];
+      if (cat && location !== cat.href) return cat;
+    }
+
+    // Fallback (1 segment, or 2 segments already at category home / unknown)
+    return { label: "Dashboard", href: "/dashboard" };
   })();
 
   if (isLoading) {
