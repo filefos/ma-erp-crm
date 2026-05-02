@@ -1,0 +1,122 @@
+Start Phase 1 of the Prime Max & Elite Prefab Secure ERP CRM System.
+
+Build only the foundation first:
+
+1. Login system
+- Admin login
+- Department user login
+- Password hashing
+- JWT/session authentication
+
+2. Multi-company setup
+- Elite Prefabricated Houses Trading Co. LLC
+- Prime Max Prefab Houses Industry LLC
+- Company logo upload placeholder
+- Company selector
+
+3. Role & permission system
+- Main Admin
+- Sales Department
+- Accounts Department
+- Finance Department
+- Procurement Department
+- Store Department
+- HR Department
+
+Important:
+- Only Admin can see Admin Panel
+- Every department sees only its own menu
+- Every user sees only their own assigned data
+- Users cannot delete leads
+- Admin can create users and assign permissions
+
+4. Dashboard
+Create different dashboards:
+- Admin Dashboard
+- Sales Dashboard
+- Accounts Dashboard
+- Finance Dashboard
+- Procurement Dashboard
+- Store Dashboard
+- HR Dashboard
+
+5. CRM Leads Module
+Fields:
+- Lead name
+- Company name
+- Contact person
+- Phone
+- WhatsApp
+- Email
+- Location
+- Requirement type
+- Lead source
+- Status
+- Assigned salesperson
+- Notes
+- Next follow-up date
+
+Lead features:
+- Add lead
+- Edit lead
+- View lead
+- Search/filter lead
+- Users cannot delete leads
+- Admin can view all leads
+- Sales users can view only their own leads
+
+6. Quotation Module Basic
+Create basic quotation module with:
+- Quotation number
+- Client details
+- Project details
+- Technical details
+- Terms & conditions
+- Item/material list
+- Quantity
+- Unit
+- Rate
+- Amount
+- VAT
+- Grand total
+- PDF preview placeholder
+
+Important:
+Quotation format must be flexible so I can later upload my Word quotation format and system will follow it.
+
+7. UI Design
+- Dark blue and light blue theme
+- Premium Zoho-style layout
+- Sidebar navigation
+- Top search
+- Cards and tables
+- Mobile responsive
+
+8. Database
+Create PostgreSQL schema for:
+- companies
+- users
+- departments
+- roles
+- permissions
+- leads
+- quotations
+- quotation_items
+- audit_logs
+
+9. Seed Data
+Add sample login users:
+- Main Admin
+- Sales User
+- Accounts User
+- Finance User
+- Procurement User
+- Store User
+- HR User
+
+10. Security
+- Protected routes
+- Role-based menus
+- Audit log for login, lead creation, quotation creation
+
+Make sure Phase 1 runs successfully in Replit before adding other modules.

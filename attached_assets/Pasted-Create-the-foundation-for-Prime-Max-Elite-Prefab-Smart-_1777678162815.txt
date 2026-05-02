@@ -1,0 +1,200 @@
+Create the foundation for “Prime Max & Elite Prefab Smart ERP CRM Ecosystem”.
+
+IMPORTANT:
+Build only Step 1 now. Do not build sales, quotation, accounts, inventory, HR, email, AI, WhatsApp, or mobile apps yet. Prepare the structure so these modules can be added later.
+
+PLATFORMS TO SUPPORT LATER:
+1. Web-based Admin Panel
+2. Admin Mobile App
+3. User Mobile App
+
+STEP 1 GOAL:
+Create a secure web-based admin panel foundation with login, multi-company setup, departments, users, roles, permissions, and dashboards.
+
+TECH STACK:
+- Frontend: React + Tailwind CSS
+- Backend: Node.js + Express
+- Database: PostgreSQL
+- Authentication: JWT
+- Password hashing: bcrypt
+- Replit compatible
+
+DESIGN:
+- Premium Zoho CRM-style UI
+- Dark blue + light blue theme
+- Sidebar navigation
+- Top search bar
+- Modern dashboard cards
+- Clean tables
+- Mobile responsive
+- Professional, eye-catching SaaS design
+
+COMPANIES:
+Create multi-company setup for:
+1. ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+   Website: www.eliteprefab.com
+
+2. PRIME MAX PREFAB HOUSES INDUSTRY LLC
+   Website: www.primemaxprefab.com
+
+Each company must support:
+- Company name
+- Website
+- Logo upload placeholder
+- Address placeholder
+- TRN/VAT placeholder
+- Bank details placeholder
+- Company prefix:
+  - EP for Elite Prefab
+  - PM for Prime Max
+
+DEPARTMENTS:
+Create departments:
+- Main Admin
+- Sales
+- Accounts
+- Finance
+- Procurement
+- Store
+- Inventory
+- Assets
+- HR
+- Production
+- Management
+
+USER MANAGEMENT:
+Main Admin can:
+- Create users
+- Edit users
+- Activate/deactivate users
+- Assign department
+- Assign role
+- Assign company access
+- Assign permissions
+
+Each user must have:
+- User ID
+- Full name
+- Email
+- Password
+- Phone
+- Department
+- Role
+- Company access
+- Status
+- Created date
+
+ROLES:
+Create base roles:
+- Super Admin
+- Company Admin
+- Department Admin
+- Manager
+- User
+- Data Entry Operator
+- Viewer
+
+PERMISSIONS:
+Create permission structure for:
+- view
+- create
+- edit
+- approve
+- delete
+- export
+- print
+
+STRICT ACCESS RULES:
+- Super Admin sees everything
+- Admin panel visible only to Super Admin / authorized Admin
+- Every department sees only its own dashboard/menu
+- Every user sees only assigned company data
+- Every user sees only assigned records unless permission allows otherwise
+- Non-admin users cannot access admin settings
+- Hide unauthorized menus completely
+
+DASHBOARDS:
+Create separate dashboard layouts for:
+- Admin Dashboard
+- Sales Dashboard placeholder
+- Accounts Dashboard placeholder
+- Finance Dashboard placeholder
+- Procurement Dashboard placeholder
+- Store Dashboard placeholder
+- Inventory Dashboard placeholder
+- HR Dashboard placeholder
+- Production Dashboard placeholder
+- Management Dashboard placeholder
+
+Admin Dashboard must show:
+- Total companies
+- Total users
+- Active users
+- Departments count
+- Recent login/activity
+- Company-wise quick cards
+
+AUDIT LOG:
+Track:
+- User login
+- Failed login
+- User created
+- User updated
+- User deactivated
+- Permission changed
+- Company updated
+
+DATABASE TABLES:
+Create tables:
+- companies
+- departments
+- roles
+- permissions
+- users
+- user_company_access
+- user_permissions
+- audit_logs
+
+SEED DATA:
+Create seed records for:
+- Both companies
+- All departments
+- Base roles
+- Permission list
+- Sample users:
+  1. Super Admin
+  2. Sales User
+  3. Accounts User
+  4. Finance User
+  5. Procurement User
+  6. Store User
+  7. Inventory User
+  8. HR User
+  9. Production User
+
+SECURITY:
+- Secure password hashing
+- JWT protected routes
+- Role-based middleware
+- Permission-based middleware
+- Input validation
+- Basic error handling
+- No hardcoded passwords in frontend
+- Store secrets in environment variables
+
+OUTPUT REQUIRED:
+- Working Replit app
+- Clear folder structure
+- Setup instructions
+- Environment variable instructions
+- Seed login credentials for testing
+- Clean modular code
+- No broken pages
+
+AFTER BUILD:
+Show me how to run the app and test:
+1. Super Admin login
+2. Create user
+3. Assign department
+4. Confirm non-admin cannot see Admin Panel
+5. Confirm department dashboard loads correctly
