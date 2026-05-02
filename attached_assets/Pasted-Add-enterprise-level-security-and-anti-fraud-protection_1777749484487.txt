@@ -1,0 +1,95 @@
+Add enterprise-level security and anti-fraud protection to my ERP/CRM web application.
+
+Security standards:
+Follow OWASP ASVS, OWASP Top 10 2025, and NIST digital identity best practices.
+
+Add:
+
+1. Secure Authentication
+- bcrypt password hashing
+- JWT access tokens
+- refresh tokens
+- MFA/2FA placeholder
+- account lock after failed logins
+- session timeout
+- password reset placeholder
+- device/session tracking
+
+2. Strict Role-Based Access Control
+- Admin full access
+- Department-level access
+- User-level data access
+- Company-wise data isolation
+- Client sees only own data
+- Supplier sees only own data
+- Hide unauthorized menus
+- Protect backend APIs with permission middleware
+
+3. Anti-Fraud Alerts
+Alert Admin for:
+- duplicate invoice number
+- duplicate supplier bill
+- duplicate cheque number
+- cheque reprint request
+- high expense amount
+- high quotation discount
+- stock adjustment without reason
+- payment mismatch
+- unauthorized access attempt
+- multiple failed logins
+- sensitive report export
+
+4. Audit Logs
+Track:
+- login and failed login
+- record create/edit/archive
+- quotation approval
+- invoice creation
+- payment approval
+- cheque printing
+- stock movement
+- salary view
+- document download
+- report export
+- permission changes
+
+5. Secure File Upload
+- validate file type
+- validate file size
+- private storage
+- protected download routes
+- block executable files
+- audit file upload/download
+
+6. API Security
+- input validation
+- SQL injection protection
+- rate limiting
+- CORS protection
+- Helmet security headers
+- request size limits
+- secure error messages
+
+7. Document Locking
+- lock approved quotations, invoices, POs, cheques, stock adjustments
+- unlock only by Super Admin with reason
+- keep version history
+
+8. Backup and Recovery
+- manual backup
+- daily backup placeholder
+- backup history
+- restore only by Super Admin
+- audit backup download/restore
+
+9. Security Dashboard
+Show:
+- failed logins
+- locked accounts
+- suspicious activities
+- fraud alerts
+- recent admin actions
+- sensitive exports
+- backup status
+
+Do not remove existing features. Add this as a security layer across the whole system.

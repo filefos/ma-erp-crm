@@ -55,6 +55,7 @@ const NAV: NavGroup[] = [
     label: "Accounts",
     icon: Receipt,
     items: [
+      { href: "/accounts", label: "Accounts Dashboard", icon: LayoutDashboard },
       { href: "/accounts/invoices", label: "Tax Invoices", icon: Receipt },
       { href: "/accounts/delivery-notes", label: "Delivery Notes", icon: TruckIcon },
       { href: "/accounts/expenses", label: "Expenses", icon: Banknote },
@@ -332,7 +333,7 @@ const ROUTE_LABELS: Record<string, string> = {
 const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
   crm:         { label: "CRM",         href: "/crm" },
   sales:       { label: "Sales",       href: "/sales/quotations" },
-  accounts:    { label: "Accounts",    href: "/accounts/invoices" },
+  accounts:    { label: "Accounts",    href: "/accounts" },
   procurement: { label: "Procurement", href: "/procurement/dashboard" },
   inventory:   { label: "Inventory",   href: "/inventory" },
   projects:    { label: "Projects",    href: "/projects" },
