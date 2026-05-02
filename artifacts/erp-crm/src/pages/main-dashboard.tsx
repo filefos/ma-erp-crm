@@ -341,6 +341,40 @@ export function MainExecutiveDashboard() {
         <KPIWidget icon={HardHat}      tone="navy"   label="Active Workforce" value={activeEmployees}             sub={`${presentToday} present today · ${totalAssets} assets · ${fmtAED(totalAssetValue)}`} href="/hr" testId="kpi-workforce" />
       </div>
 
+      {/* Segment shortcuts — quick jump to every module dashboard */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-[#1e6ab0]" />
+            <h2 className="text-sm font-semibold text-[#0f2d5a] dark:text-white">Jump to a module dashboard</h2>
+          </div>
+          <span className="text-[11px] text-muted-foreground">{segments.length} workspaces</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {segments.map(s => {
+            const Icon = s.icon;
+            return (
+              <Link key={s.label} href={s.href} className="block group">
+                <PremiumCard tone="blue" className="h-full">
+                  <div className="p-3 flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow shrink-0 bg-gradient-to-br ${s.tone}`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1 text-sm font-semibold text-[#0f2d5a] dark:text-white">
+                        {s.label}
+                        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate">{s.sub}</div>
+                    </div>
+                  </div>
+                </PremiumCard>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Revenue trend + cash split */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <PanelCard title="Revenue · Expenses · Profit" subtitle="Last 12 months · all currencies in AED" icon={TrendingUp} className="lg:col-span-2">
@@ -456,39 +490,6 @@ export function MainExecutiveDashboard() {
         </PanelCard>
       </div>
 
-      {/* Segment shortcuts */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#1e6ab0]" />
-            <h2 className="text-sm font-semibold text-[#0f2d5a] dark:text-white">Jump to a module dashboard</h2>
-          </div>
-          <span className="text-[11px] text-muted-foreground">{segments.length} workspaces</span>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {segments.map(s => {
-            const Icon = s.icon;
-            return (
-              <Link key={s.label} href={s.href} className="block group">
-                <PremiumCard tone="blue" className="h-full">
-                  <div className="p-3 flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow shrink-0 bg-gradient-to-br ${s.tone}`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1 text-sm font-semibold text-[#0f2d5a] dark:text-white">
-                        {s.label}
-                        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                      </div>
-                      <div className="text-[11px] text-muted-foreground truncate">{s.sub}</div>
-                    </div>
-                  </div>
-                </PremiumCard>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
