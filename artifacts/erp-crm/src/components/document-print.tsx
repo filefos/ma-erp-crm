@@ -13,6 +13,8 @@ export interface DocumentItem {
 export interface AdditionalCommercialItem {
   description: string;
   status: string;
+  price?: number;
+  quantity?: number;
   amount?: number;
 }
 
@@ -94,11 +96,11 @@ const COMPANIES: Record<number, CompanyInfo> = {
 };
 
 const DEFAULT_ADDITIONAL_ITEMS: AdditionalCommercialItem[] = [
-  { description: "Transportation including RTA Permit", status: "Included" },
-  { description: "Brand New SUPER GENERAL SPLIT AC UNIT", status: "Excluded" },
-  { description: "Foundation Detail", status: "Excluded" },
-  { description: "Staircase", status: "Excluded" },
-  { description: "Additional Commercial Item", status: "Excluded" },
+  { description: "Transportation including RTA Permit", status: "Included", price: 0, quantity: 1 },
+  { description: "Brand New SUPER GENERAL SPLIT AC UNIT", status: "Excluded", price: 0, quantity: 1 },
+  { description: "Foundation Detail", status: "Excluded", price: 0, quantity: 1 },
+  { description: "Staircase", status: "Excluded", price: 0, quantity: 1 },
+  { description: "Additional Commercial Item", status: "Excluded", price: 0, quantity: 1 },
 ];
 
 const TECH_SPECS = [
@@ -507,26 +509,39 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <thead>
                   <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                     <Th>Item</Th>
+                    <Th right>Price (AED)</Th>
+                    <Th right>Qty</Th>
                     <Th center>Status</Th>
-                    <Th right>Amount (AED)</Th>
+                    <Th right>Total (AED)</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {additionalItems.map((row, idx) => (
-                    <tr key={idx}>
-                      <Td>{row.description}</Td>
-                      <Td center>
-                        <span className={row.status === "Included" ? "text-green-700 font-bold" : "text-red-600 font-bold"}>
-                          {row.status}
-                        </span>
-                      </Td>
-                      <Td right>
-                        {row.status === "Included" && row.amount && row.amount > 0
-                          ? formatAED(row.amount)
-                          : row.status === "Included" ? "Included" : "—"}
-                      </Td>
-                    </tr>
-                  ))}
+                  {additionalItems.map((row, idx) => {
+                    const rowTotal = (row.price ?? 0) * (row.quantity ?? 1);
+                    return (
+                      <tr key={idx}>
+                        <Td>{row.description}</Td>
+                        <Td right>
+                          {row.status === "Included" && (row.price ?? 0) > 0
+                            ? formatAED(row.price!)
+                            : "—"}
+                        </Td>
+                        <Td right>
+                          {row.status === "Included" ? (row.quantity ?? 1) : "—"}
+                        </Td>
+                        <Td center>
+                          <span className={row.status === "Included" ? "text-green-700 font-bold" : "text-red-600 font-bold"}>
+                            {row.status}
+                          </span>
+                        </Td>
+                        <Td right>
+                          {row.status === "Included"
+                            ? (rowTotal > 0 ? formatAED(rowTotal) : "Included")
+                            : "—"}
+                        </Td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}

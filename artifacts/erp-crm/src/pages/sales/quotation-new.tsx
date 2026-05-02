@@ -24,17 +24,19 @@ interface Item {
 interface AdditionalItem {
   description: string;
   status: string;
+  price: number;
+  quantity: number;
   amount: number;
 }
 
 const emptyItem = (): Item => ({ description: "", quantity: 1, unit: "", rate: 0, amount: 0, discount: 0 });
 
 const DEFAULT_ADDITIONAL_ITEMS: AdditionalItem[] = [
-  { description: "Transportation including RTA Permit", status: "Included", amount: 0 },
-  { description: "Brand New SUPER GENERAL SPLIT AC UNIT", status: "Excluded", amount: 0 },
-  { description: "Foundation Detail", status: "Excluded", amount: 0 },
-  { description: "Staircase", status: "Excluded", amount: 0 },
-  { description: "Additional Commercial Item", status: "Excluded", amount: 0 },
+  { description: "Transportation including RTA Permit", status: "Included", price: 0, quantity: 1, amount: 0 },
+  { description: "Brand New SUPER GENERAL SPLIT AC UNIT", status: "Excluded", price: 0, quantity: 1, amount: 0 },
+  { description: "Foundation Detail", status: "Excluded", price: 0, quantity: 1, amount: 0 },
+  { description: "Staircase", status: "Excluded", price: 0, quantity: 1, amount: 0 },
+  { description: "Additional Commercial Item", status: "Excluded", price: 0, quantity: 1, amount: 0 },
 ];
 
 const DEFAULT_TECH_SPECS = `BASE FRAME
@@ -171,7 +173,11 @@ export function QuotationNew() {
   const updateAdditionalItem = (i: number, field: keyof AdditionalItem, val: string | number) => {
     setAdditionalItems(prev => {
       const next = [...prev];
-      next[i] = { ...next[i], [field]: val };
+      const updated = { ...next[i], [field]: val };
+      const p = field === "price" ? Number(val) : updated.price;
+      const q = field === "quantity" ? Number(val) : updated.quantity;
+      updated.amount = updated.status === "Included" ? p * q : 0;
+      next[i] = updated;
       return next;
     });
   };
@@ -356,8 +362,10 @@ export function QuotationNew() {
             <thead>
               <tr className="border-b bg-gray-50">
                 <th className="text-left pb-2 pt-1 font-semibold pl-2">Item</th>
+                <th className="text-right pb-2 pt-1 font-semibold w-32">Price (AED)</th>
+                <th className="text-right pb-2 pt-1 font-semibold w-16">Qty</th>
                 <th className="text-center pb-2 pt-1 font-semibold w-36">Status</th>
-                <th className="text-right pb-2 pt-1 font-semibold w-36 pr-2">Amount (AED)</th>
+                <th className="text-right pb-2 pt-1 font-semibold w-36 pr-2">Total (AED)</th>
                 <th className="w-8"></th>
               </tr>
             </thead>
@@ -369,6 +377,24 @@ export function QuotationNew() {
                       value={ai.description}
                       onChange={e => updateAdditionalItem(i, "description", e.target.value)}
                       className="h-8 text-sm"
+                    />
+                  </td>
+                  <td className="py-1.5 px-1">
+                    <Input
+                      type="number"
+                      value={ai.price ?? 0}
+                      onChange={e => updateAdditionalItem(i, "price", parseFloat(e.target.value) || 0)}
+                      className="h-8 text-right text-sm"
+                      disabled={ai.status === "Excluded"}
+                    />
+                  </td>
+                  <td className="py-1.5 px-1">
+                    <Input
+                      type="number"
+                      value={ai.quantity ?? 1}
+                      onChange={e => updateAdditionalItem(i, "quantity", parseFloat(e.target.value) || 1)}
+                      className="h-8 text-right text-sm"
+                      disabled={ai.status === "Excluded"}
                     />
                   </td>
                   <td className="py-1.5 px-2">
@@ -385,14 +411,10 @@ export function QuotationNew() {
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="py-1.5 px-2">
-                    <Input
-                      type="number"
-                      value={ai.amount}
-                      onChange={e => updateAdditionalItem(i, "amount", parseFloat(e.target.value) || 0)}
-                      className="h-8 text-right text-sm"
-                      disabled={ai.status === "Excluded"}
-                    />
+                  <td className="py-1.5 px-2 text-right text-sm font-medium">
+                    {ai.status === "Included"
+                      ? `AED ${ai.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      : <span className="text-muted-foreground">—</span>}
                   </td>
                   <td className="py-1.5 pl-1">
                     {additionalItems.length > 1 && (
@@ -414,7 +436,7 @@ export function QuotationNew() {
             variant="outline"
             size="sm"
             className="mt-3"
-            onClick={() => setAdditionalItems(p => [...p, { description: "", status: "Excluded", amount: 0 }])}
+            onClick={() => setAdditionalItems(p => [...p, { description: "", status: "Excluded", price: 0, quantity: 1, amount: 0 }])}
           >
             <Plus className="w-4 h-4 mr-1" />Add Row
           </Button>
