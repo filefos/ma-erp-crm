@@ -3,19 +3,20 @@ import { Link } from "wouter";
 import {
   useListTaxInvoices, useListPaymentsReceived, useListPaymentsMade,
   useListExpenses, useListCheques, useListBankAccounts,
-  useListJournalEntries, useListChartOfAccounts,
+  useListJournalEntries, useListChartOfAccounts, useListDeliveryNotes,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Button } from "@/components/ui/button";
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
-  XAxis, YAxis, CartesianGrid, Area, AreaChart, Legend,
+  XAxis, YAxis, CartesianGrid, Area, AreaChart,
 } from "recharts";
 import {
   Receipt, Wallet, Banknote, ArrowDownCircle, ArrowUpCircle,
   FileBox, Landmark, BookMarked, PieChart as PieIcon,
   Plus, Sparkles, TrendingUp, AlertTriangle, FileWarning,
-  CreditCard, DollarSign, Building2, Activity, Clock,
+  CreditCard, Building2, Activity, Clock,
+  Truck, ShieldCheck, Calculator, BellRing,
 } from "lucide-react";
 import {
   ExecutiveHeader, KPIWidget, PremiumCard,
@@ -68,6 +69,19 @@ function localDayKey(d: string | Date | null | undefined): string | null {
   return `${y}-${m}-${day}`;
 }
 
+// Local-midnight timestamp for the given date. Use this — not raw .getTime() —
+// when computing whole-calendar-day differences (e.g. "days until cheque date"),
+// otherwise the answer drifts depending on the user's wall-clock time-of-day.
+function localDayMs(d: string | Date | null | undefined): number {
+  if (!d) return NaN;
+  const dt = typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)
+    ? new Date(`${d}T00:00:00`)
+    : new Date(d);
+  if (!isFinite(dt.getTime())) return NaN;
+  dt.setHours(0, 0, 0, 0);
+  return dt.getTime();
+}
+
 export function AccountsDashboard() {
   const { filterByCompany } = useActiveCompany();
   const { data: invoicesRaw, isLoading: invLoading } = useListTaxInvoices({});
@@ -78,6 +92,7 @@ export function AccountsDashboard() {
   const { data: bankAccountsRaw } = useListBankAccounts();
   const { data: journalEntriesRaw } = useListJournalEntries();
   const { data: chartOfAccountsRaw } = useListChartOfAccounts();
+  const { data: deliveryNotesRaw } = useListDeliveryNotes();
 
   const invoices       = useMemo(() => filterByCompany(invoicesRaw       ?? []), [invoicesRaw, filterByCompany]);
   const paymentsRec    = useMemo(() => filterByCompany(paymentsRecRaw    ?? []), [paymentsRecRaw, filterByCompany]);
@@ -87,6 +102,7 @@ export function AccountsDashboard() {
   const bankAccounts   = useMemo(() => filterByCompany(bankAccountsRaw   ?? []), [bankAccountsRaw, filterByCompany]);
   const journalEntries = useMemo(() => filterByCompany(journalEntriesRaw ?? []), [journalEntriesRaw, filterByCompany]);
   const chartOfAccts   = useMemo(() => filterByCompany(chartOfAccountsRaw ?? []), [chartOfAccountsRaw, filterByCompany]);
+  const deliveryNotes  = useMemo(() => filterByCompany(deliveryNotesRaw   ?? []), [deliveryNotesRaw, filterByCompany]);
 
   // ===== Receivables KPIs =====
   const totalRevenue       = invoices.reduce((s, i) => s + (i.grandTotal ?? 0), 0);
@@ -109,10 +125,42 @@ export function AccountsDashboard() {
   const pendingCheques  = cheques.filter(c => c.status !== "cleared" && c.status !== "cancelled" && c.status !== "bounced");
   const pendingChqValue = pendingCheques.reduce((s, c) => s + (c.amount ?? 0), 0);
 
-  // ===== VAT (Output - Input) =====
+  // ===== Cheques due soon (HIGH ALERT) — issued cheques within the next 7 days =====
+  // Compare WHOLE CALENDAR DAYS in the user's local timezone. Using raw timestamps
+  // makes "today" flip to "1d left" depending on wall-clock time-of-day.
+  const chequesDueSoon = useMemo(() => {
+    const todayLocal = localDayMs(new Date());
+    return pendingCheques
+      .map(c => {
+        const chqLocal = localDayMs(c.chequeDate);
+        const daysUntil = isFinite(chqLocal) ? Math.round((chqLocal - todayLocal) / 86_400_000) : NaN;
+        return { ...c, _ts: chqLocal, _daysUntil: daysUntil };
+      })
+      .filter(c => isFinite(c._ts) && c._daysUntil <= 7)
+      .sort((a, b) => a._ts - b._ts);
+  }, [pendingCheques]);
+  const chequesOverdue = chequesDueSoon.filter(c => c._daysUntil < 0);
+  const chequesDueValue = chequesDueSoon.reduce((s, c) => s + (c.amount ?? 0), 0);
+
+  // ===== Delivery Notes =====
+  const pendingDeliveryNotes = deliveryNotes.filter(d => d.status !== "delivered" && d.status !== "cancelled");
+  const dnSpark = weeklyCounts(deliveryNotes, "createdAt", 8);
+  const dnTrend = trendPct(dnSpark);
+
+  // ===== UAE FTA — VAT @ 5% (Output - Input) =====
+  const VAT_RATE = 0.05;
   const vatOutput = invoices.reduce((s, i) => s + (i.vatAmount ?? 0), 0);
   const vatInput  = expenses.reduce((s, e) => s + (e.vatAmount ?? 0), 0);
   const vatPayable = vatOutput - vatInput;
+  const totalSubtotal = invoices.reduce((s, i) => s + (i.subtotal ?? Math.max(0, (i.grandTotal ?? 0) - (i.vatAmount ?? 0))), 0);
+
+  // ===== UAE Corporate Tax @ 9% (above AED 375,000 threshold) =====
+  const CT_RATE = 0.09;
+  const CT_THRESHOLD = 375_000;
+  const expensesNetVat = expenses.reduce((s, e) => s + Math.max(0, (e.total ?? 0) - (e.vatAmount ?? 0)), 0);
+  const taxableProfit = Math.max(0, totalSubtotal - expensesNetVat);
+  const ctTaxableAmount = Math.max(0, taxableProfit - CT_THRESHOLD);
+  const ctEstimated = ctTaxableAmount * CT_RATE;
 
   // ===== Sparklines =====
   const invSpark    = weeklyCounts(invoices, "createdAt", 8);
@@ -272,6 +320,13 @@ export function AccountsDashboard() {
 
   // ===== AI Insights =====
   const insights: { tone: "red" | "amber" | "blue" | "green"; text: string; cta?: { href: string; label: string } }[] = [];
+  if (chequesDueSoon.length > 0) {
+    insights.push({
+      tone: "red",
+      text: `${chequesDueSoon.length} cheque${chequesDueSoon.length > 1 ? "s" : ""} due within 7 days · ${fmtAED(chequesDueValue)} — ensure bank balance is funded`,
+      cta: { href: "/accounts/cheques", label: "Open cheques" },
+    });
+  }
   if (overdueInvoices.length > 0) {
     insights.push({
       tone: "red",
@@ -333,6 +388,9 @@ export function AccountsDashboard() {
       <Button asChild size="sm" variant="outline" className="bg-white/15 hover:bg-white/25 border-white/20 text-white h-8">
         <Link href="/accounts/expenses"><Plus className="w-3.5 h-3.5 mr-1.5" />Expense</Link>
       </Button>
+      <Button asChild size="sm" variant="outline" className="bg-white/15 hover:bg-white/25 border-white/20 text-white h-8">
+        <Link href="/accounts/delivery-notes"><Plus className="w-3.5 h-3.5 mr-1.5" />Delivery Note</Link>
+      </Button>
     </div>
   );
 
@@ -345,6 +403,82 @@ export function AccountsDashboard() {
       >
         {headerActions}
       </ExecutiveHeader>
+
+      {/* HIGH ALERT — Cheques due / overdue (only renders when relevant) */}
+      {chequesDueSoon.length > 0 && (
+        <div className="relative overflow-hidden rounded-2xl border-2 border-red-400 dark:border-red-700 bg-gradient-to-r from-red-50 via-red-50 to-amber-50 dark:from-red-950/40 dark:via-red-950/30 dark:to-amber-950/30 shadow-lg">
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-red-600 to-red-700 animate-pulse" />
+          <div className="p-4 pl-5">
+            <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <BellRing className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-600" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-red-700 dark:text-red-300 uppercase tracking-wide">
+                    High Alert — Cheques due soon
+                  </div>
+                  <div className="text-xs text-red-700/80 dark:text-red-300/80">
+                    {chequesDueSoon.length} cheque{chequesDueSoon.length > 1 ? "s" : ""} payable in next 7 days
+                    {chequesOverdue.length > 0 && <span className="font-semibold"> · {chequesOverdue.length} already past date</span>}
+                    {" · total "}
+                    <span className="font-bold">{fmtAED(chequesDueValue)}</span>
+                  </div>
+                </div>
+              </div>
+              <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white h-8 shrink-0">
+                <Link href="/accounts/cheques"><AlertTriangle className="w-3.5 h-3.5 mr-1.5" />Open cheques register</Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {chequesDueSoon.slice(0, 6).map(c => {
+                const isOverdue = c._daysUntil < 0;
+                const isToday = c._daysUntil === 0;
+                const urgencyText = isOverdue
+                  ? `OVERDUE ${Math.abs(c._daysUntil)}d`
+                  : isToday
+                  ? "DUE TODAY"
+                  : `${c._daysUntil}d left`;
+                const urgencyClass = isOverdue
+                  ? "bg-red-600 text-white"
+                  : isToday
+                  ? "bg-red-500 text-white animate-pulse"
+                  : c._daysUntil <= 2
+                  ? "bg-amber-500 text-white"
+                  : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+                return (
+                  <div key={c.id} className="rounded-lg bg-white dark:bg-card border border-red-200 dark:border-red-900/60 p-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-foreground truncate">
+                          {c.payeeName || "Unnamed payee"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground truncate">
+                          Cheque #{c.chequeNumber} · {c.bankName ?? "—"}
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${urgencyClass}`}>
+                        {urgencyText}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border/40">
+                      <span className="text-[10px] text-muted-foreground">{c.chequeDate}</span>
+                      <span className="text-sm font-bold tabular-nums text-red-700 dark:text-red-400">{fmtAED(c.amount ?? 0)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {chequesDueSoon.length > 6 && (
+              <div className="mt-2 text-[11px] text-red-700/80 dark:text-red-300/80 text-center">
+                +{chequesDueSoon.length - 6} more cheque{chequesDueSoon.length - 6 > 1 ? "s" : ""} due in the next 7 days — see register for full list
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* AI Insights */}
       <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
@@ -420,13 +554,13 @@ export function AccountsDashboard() {
           href="/accounts/cheques"
         />
         <KPIWidget
-          tone="teal" icon={Landmark} label="Bank Accounts" value={fmtNum(bankAccounts.length)}
-          sub={`${chartOfAccts.length} ledger accounts`}
-          href="/accounts/bank-accounts"
+          tone="teal" icon={Truck} label="Delivery Notes" value={fmtNum(deliveryNotes.length)}
+          sub={`${pendingDeliveryNotes.length} pending`} sparkline={dnSpark} trend={dnTrend}
+          href="/accounts/delivery-notes"
         />
         <KPIWidget
-          tone="blue" icon={PieIcon} label="VAT Payable (est.)" value={fmtAED(Math.max(0, vatPayable))}
-          sub={`Output ${fmtAED(vatOutput)} − Input ${fmtAED(vatInput)}`}
+          tone="blue" icon={PieIcon} label="VAT Payable (5%)" value={fmtAED(Math.max(0, vatPayable))}
+          sub={`Out ${fmtAED(vatOutput)} − In ${fmtAED(vatInput)}`}
           href="/accounts/vat-report"
         />
       </div>
@@ -573,30 +707,145 @@ export function AccountsDashboard() {
           </div>
         </PremiumCard>
 
-        <PremiumCard tone="indigo">
+        <PremiumCard>
           <div className="p-5">
-            <div className="text-sm font-semibold flex items-center gap-2">
-              <FileBox className="w-4 h-4 text-indigo-700" />
-              Cheques by Status
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                <FileBox className="w-4 h-4 text-indigo-600" />
+                Cheques by Status
+              </div>
+              <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
+                <Link href="/accounts/cheques">All cheques</Link>
+              </Button>
             </div>
-            <div className="text-[11px] text-muted-foreground mt-0.5">{cheques.length} cheques · {fmtAED(cheques.reduce((s, c) => s + (c.amount ?? 0), 0))}</div>
-            <div className="mt-3 space-y-2">
+            <div className="text-xs text-foreground/70 font-medium">
+              <span className="tabular-nums">{cheques.length}</span> cheques ·
+              <span className="font-bold text-foreground ml-1">{fmtAED(cheques.reduce((s, c) => s + (c.amount ?? 0), 0))}</span>
+            </div>
+            <div className="mt-4 space-y-3">
               {chqByStatus.map(s => {
                 const total = cheques.length || 1;
                 const pct = Math.round((s.count / total) * 100);
+                const color = STATUS_COLORS[s.name] ?? "#94a3b8";
                 return (
                   <div key={s.name}>
-                    <div className="flex items-center justify-between text-[11px] mb-0.5">
-                      <span className="capitalize font-medium">{s.name}</span>
-                      <span className="tabular-nums text-muted-foreground">{s.count} · {fmtAED(s.value)}</span>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="capitalize font-bold text-foreground flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: color }} />
+                        {s.name}
+                      </span>
+                      <span className="tabular-nums text-foreground font-semibold">
+                        <span className="text-foreground/70 font-normal mr-1">{s.count} ×</span>
+                        {fmtAED(s.value)}
+                      </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: STATUS_COLORS[s.name] ?? "#94a3b8" }} />
+                    <div className="h-2.5 rounded-full bg-foreground/10 overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
                     </div>
                   </div>
                 );
               })}
-              {chqByStatus.length === 0 && <div className="text-muted-foreground text-[11px] italic">No cheques recorded</div>}
+              {chqByStatus.length === 0 && <div className="text-muted-foreground text-xs italic py-2">No cheques recorded</div>}
+            </div>
+          </div>
+        </PremiumCard>
+      </div>
+
+      {/* UAE FTA Tax Compliance — VAT (5%) + Corporate Tax (9%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* VAT Card */}
+        <PremiumCard tone="blue">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">UAE VAT (5%)</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">FTA Compliant · Output minus Input</div>
+                </div>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
+                <Link href="/accounts/vat-report">VAT Report</Link>
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="rounded-lg bg-white dark:bg-card/40 border border-border/40 p-2.5">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Output VAT</div>
+                <div className="text-sm font-bold text-foreground tabular-nums mt-1">{fmtAED(vatOutput)}</div>
+                <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium mt-0.5">collected on sales</div>
+              </div>
+              <div className="rounded-lg bg-white dark:bg-card/40 border border-border/40 p-2.5">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Input VAT</div>
+                <div className="text-sm font-bold text-foreground tabular-nums mt-1">{fmtAED(vatInput)}</div>
+                <div className="text-[10px] text-blue-700 dark:text-blue-400 font-medium mt-0.5">recoverable on costs</div>
+              </div>
+              <div className={`rounded-lg p-2.5 border ${vatPayable >= 0 ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800" : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800"}`}>
+                <div className={`text-[10px] uppercase tracking-wide font-semibold ${vatPayable >= 0 ? "text-amber-800 dark:text-amber-300" : "text-emerald-800 dark:text-emerald-300"}`}>
+                  {vatPayable >= 0 ? "Net Payable" : "Refundable"}
+                </div>
+                <div className={`text-sm font-bold tabular-nums mt-1 ${vatPayable >= 0 ? "text-amber-900 dark:text-amber-200" : "text-emerald-900 dark:text-emerald-200"}`}>
+                  {fmtAED(Math.abs(vatPayable))}
+                </div>
+                <div className={`text-[10px] font-medium mt-0.5 ${vatPayable >= 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"}`}>
+                  {vatPayable >= 0 ? "due to FTA" : "claim from FTA"}
+                </div>
+              </div>
+            </div>
+            <div className="text-[10px] text-muted-foreground leading-relaxed pl-1 border-l-2 border-blue-300 dark:border-blue-800">
+              <span className="font-semibold text-foreground">Standard rate {(VAT_RATE * 100).toFixed(0)}%</span> · returns due quarterly via the FTA EmaraTax portal · taxable supplies of {fmtAED(totalSubtotal)} (excluding VAT)
+            </div>
+          </div>
+        </PremiumCard>
+
+        {/* Corporate Tax Card */}
+        <PremiumCard tone="purple">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 text-white flex items-center justify-center shrink-0">
+                  <Calculator className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">UAE Corporate Tax (9%)</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Above AED 375,000 threshold</div>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-1 rounded bg-purple-200 text-purple-800 dark:bg-purple-900/60 dark:text-purple-200">
+                YTD ESTIMATE
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="rounded-lg bg-white dark:bg-card/40 border border-border/40 p-2.5">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Taxable Income</div>
+                <div className="text-sm font-bold text-foreground tabular-nums mt-1">{fmtAED(taxableProfit)}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">Revenue − Expenses (net of VAT)</div>
+              </div>
+              <div className="rounded-lg bg-white dark:bg-card/40 border border-border/40 p-2.5">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Threshold</div>
+                <div className="text-sm font-bold text-foreground tabular-nums mt-1">{fmtAED(CT_THRESHOLD)}</div>
+                <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium mt-0.5">0% rate up to this amount</div>
+              </div>
+              <div className="rounded-lg bg-white dark:bg-card/40 border border-border/40 p-2.5">
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Above Threshold</div>
+                <div className="text-sm font-bold text-foreground tabular-nums mt-1">{fmtAED(ctTaxableAmount)}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">subject to {(CT_RATE * 100).toFixed(0)}% CT</div>
+              </div>
+              <div className={`rounded-lg p-2.5 border ${ctEstimated > 0 ? "bg-purple-100 dark:bg-purple-950/60 border-purple-300 dark:border-purple-700" : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800"}`}>
+                <div className={`text-[10px] uppercase tracking-wide font-semibold ${ctEstimated > 0 ? "text-purple-800 dark:text-purple-300" : "text-emerald-800 dark:text-emerald-300"}`}>
+                  CT Estimated
+                </div>
+                <div className={`text-sm font-bold tabular-nums mt-1 ${ctEstimated > 0 ? "text-purple-900 dark:text-purple-200" : "text-emerald-900 dark:text-emerald-200"}`}>
+                  {fmtAED(ctEstimated)}
+                </div>
+                <div className={`text-[10px] font-medium mt-0.5 ${ctEstimated > 0 ? "text-purple-700 dark:text-purple-400" : "text-emerald-700 dark:text-emerald-400"}`}>
+                  {ctEstimated > 0 ? "annual CT liability" : "below threshold"}
+                </div>
+              </div>
+            </div>
+            <div className="text-[10px] text-muted-foreground leading-relaxed pl-1 border-l-2 border-purple-300 dark:border-purple-800">
+              <span className="font-semibold text-foreground">FTA CT Law (Federal Decree-Law No. 47 of 2022)</span> · effective from FYs starting on or after 1 June 2023 · figure shown is <span className="font-semibold text-foreground">year-to-date</span> profit vs the AED 375,000 annual threshold — full-year liability will be higher if YTD profit grows · final amount depends on accounting adjustments, exempt income &amp; reliefs (Small Business Relief, Free Zone, etc.)
             </div>
           </div>
         </PremiumCard>
@@ -768,8 +1017,8 @@ export function AccountsDashboard() {
         </PremiumCard>
       </div>
 
-      {/* Bank accounts + journal entries summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Bank accounts + Delivery Notes + Journal entries summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <PremiumCard tone="teal">
           <div className="p-5">
             <div className="flex items-center justify-between mb-3">
@@ -802,6 +1051,51 @@ export function AccountsDashboard() {
                 </div>
               ))}
               {bankAccounts.length === 0 && <div className="text-muted-foreground text-xs italic text-center py-4">No bank accounts yet</div>}
+            </div>
+          </div>
+        </PremiumCard>
+
+        {/* Recent Delivery Notes */}
+        <PremiumCard tone="amber">
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-semibold flex items-center gap-2">
+                <Truck className="w-4 h-4 text-amber-700" />
+                Recent Delivery Notes ({deliveryNotes.length})
+              </div>
+              <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
+                <Link href="/accounts/delivery-notes">View all</Link>
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {[...deliveryNotes]
+                .sort((a, b) => new Date((b.deliveryDate ?? b.createdAt) as any).getTime() - new Date((a.deliveryDate ?? a.createdAt) as any).getTime())
+                .slice(0, 6)
+                .map(d => {
+                  const status = (d.status ?? "draft").toLowerCase();
+                  const statusClass =
+                    status === "delivered" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
+                    status === "in_transit" || status === "dispatched" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" :
+                    status === "cancelled" ? "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300" :
+                    "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
+                  return (
+                    <div key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-border/50 bg-card/40">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold">{d.dnNumber}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize ${statusClass}`}>
+                            {status.replace(/_/g, " ")}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground truncate mt-0.5">{d.clientName ?? "—"}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-[10px] text-muted-foreground">{d.deliveryDate ?? "—"}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              {deliveryNotes.length === 0 && <div className="text-muted-foreground text-xs italic text-center py-4">No delivery notes yet</div>}
             </div>
           </div>
         </PremiumCard>
