@@ -57,10 +57,98 @@ export const expensesTable = pgTable("expenses", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const chartOfAccountsTable = pgTable("chart_of_accounts", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(),
+  accountCode: text("account_code").notNull(),
+  accountName: text("account_name").notNull(),
+  accountType: text("account_type").notNull(),
+  parentId: integer("parent_id"),
+  openingBalance: doublePrecision("opening_balance").default(0),
+  currentBalance: doublePrecision("current_balance").default(0),
+  currency: text("currency").default("AED"),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const paymentsReceivedTable = pgTable("payments_received", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(),
+  paymentNumber: text("payment_number").notNull().unique(),
+  customerName: text("customer_name").notNull(),
+  invoiceRef: text("invoice_ref"),
+  taxInvoiceId: integer("tax_invoice_id"),
+  paymentDate: text("payment_date").notNull(),
+  amount: doublePrecision("amount").notNull().default(0),
+  paymentMethod: text("payment_method").notNull().default("bank_transfer"),
+  bankAccountId: integer("bank_account_id"),
+  referenceNumber: text("reference_number"),
+  notes: text("notes"),
+  status: text("status").notNull().default("completed"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const paymentsMadeTable = pgTable("payments_made", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(),
+  paymentNumber: text("payment_number").notNull().unique(),
+  payeeName: text("payee_name").notNull(),
+  expenseRef: text("expense_ref"),
+  expenseId: integer("expense_id"),
+  paymentDate: text("payment_date").notNull(),
+  amount: doublePrecision("amount").notNull().default(0),
+  paymentMethod: text("payment_method").notNull().default("bank_transfer"),
+  bankAccountId: integer("bank_account_id"),
+  referenceNumber: text("reference_number"),
+  notes: text("notes"),
+  status: text("status").notNull().default("completed"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const journalEntriesTable = pgTable("journal_entries", {
+  id: serial("id").primaryKey(),
+  companyId: integer("company_id").notNull(),
+  journalNumber: text("journal_number").notNull().unique(),
+  entryDate: text("entry_date").notNull(),
+  description: text("description").notNull(),
+  reference: text("reference"),
+  status: text("status").notNull().default("draft"),
+  totalDebit: doublePrecision("total_debit").default(0),
+  totalCredit: doublePrecision("total_credit").default(0),
+  preparedById: integer("prepared_by_id"),
+  approvedById: integer("approved_by_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const journalEntryLinesTable = pgTable("journal_entry_lines", {
+  id: serial("id").primaryKey(),
+  journalId: integer("journal_id").notNull(),
+  accountId: integer("account_id"),
+  accountName: text("account_name").notNull(),
+  description: text("description"),
+  debit: doublePrecision("debit").default(0),
+  credit: doublePrecision("credit").default(0),
+  sortOrder: integer("sort_order").default(0),
+});
+
 export const insertBankAccountSchema = createInsertSchema(bankAccountsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertChequeSchema = createInsertSchema(chequesTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertExpenseSchema = createInsertSchema(expensesTable).omit({ id: true, expenseNumber: true, createdAt: true, updatedAt: true });
+export const insertChartOfAccountSchema = createInsertSchema(chartOfAccountsTable).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPaymentReceivedSchema = createInsertSchema(paymentsReceivedTable).omit({ id: true, paymentNumber: true, createdAt: true, updatedAt: true });
+export const insertPaymentMadeSchema = createInsertSchema(paymentsMadeTable).omit({ id: true, paymentNumber: true, createdAt: true, updatedAt: true });
+export const insertJournalEntrySchema = createInsertSchema(journalEntriesTable).omit({ id: true, journalNumber: true, createdAt: true, updatedAt: true });
 
 export type BankAccount = typeof bankAccountsTable.$inferSelect;
 export type Cheque = typeof chequesTable.$inferSelect;
 export type Expense = typeof expensesTable.$inferSelect;
+export type ChartOfAccount = typeof chartOfAccountsTable.$inferSelect;
+export type PaymentReceived = typeof paymentsReceivedTable.$inferSelect;
+export type PaymentMade = typeof paymentsMadeTable.$inferSelect;
+export type JournalEntry = typeof journalEntriesTable.$inferSelect;
+export type JournalEntryLine = typeof journalEntryLinesTable.$inferSelect;

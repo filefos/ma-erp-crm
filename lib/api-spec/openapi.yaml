@@ -38,6 +38,10 @@ tags:
   - name: notifications
   - name: audit-logs
   - name: dashboard
+  - name: chart-of-accounts
+  - name: payments-received
+  - name: payments-made
+  - name: journal-entries
 
 paths:
   /healthz:
@@ -2574,6 +2578,358 @@ paths:
               schema:
                 $ref: "#/components/schemas/Department"
 
+  /chart-of-accounts:
+    get:
+      operationId: listChartOfAccounts
+      tags: [chart-of-accounts]
+      summary: List chart of accounts
+      parameters:
+        - in: query
+          name: companyId
+          schema: { type: integer }
+        - in: query
+          name: accountType
+          schema: { type: string }
+      responses:
+        "200":
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChartOfAccount"
+    post:
+      operationId: createChartOfAccount
+      tags: [chart-of-accounts]
+      summary: Create account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChartOfAccountBody"
+      responses:
+        "201":
+          description: Created account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartOfAccount"
+
+  /chart-of-accounts/{id}:
+    put:
+      operationId: updateChartOfAccount
+      tags: [chart-of-accounts]
+      summary: Update account
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChartOfAccountBody"
+      responses:
+        "200":
+          description: Updated account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChartOfAccount"
+    delete:
+      operationId: deleteChartOfAccount
+      tags: [chart-of-accounts]
+      summary: Delete account
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /payments-received:
+    get:
+      operationId: listPaymentsReceived
+      tags: [payments-received]
+      summary: List payments received
+      parameters:
+        - in: query
+          name: companyId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentReceived"
+    post:
+      operationId: createPaymentReceived
+      tags: [payments-received]
+      summary: Create payment received
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentReceivedBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceived"
+
+  /payments-received/{id}:
+    put:
+      operationId: updatePaymentReceived
+      tags: [payments-received]
+      summary: Update payment received
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentReceivedBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceived"
+    delete:
+      operationId: deletePaymentReceived
+      tags: [payments-received]
+      summary: Delete payment received
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /payments-made:
+    get:
+      operationId: listPaymentsMade
+      tags: [payments-made]
+      summary: List payments made
+      parameters:
+        - in: query
+          name: companyId
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentMade"
+    post:
+      operationId: createPaymentMade
+      tags: [payments-made]
+      summary: Create payment made
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentMadeBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMade"
+
+  /payments-made/{id}:
+    put:
+      operationId: updatePaymentMade
+      tags: [payments-made]
+      summary: Update payment made
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentMadeBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMade"
+    delete:
+      operationId: deletePaymentMade
+      tags: [payments-made]
+      summary: Delete payment made
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /journal-entries:
+    get:
+      operationId: listJournalEntries
+      tags: [journal-entries]
+      summary: List journal entries
+      parameters:
+        - in: query
+          name: companyId
+          schema: { type: integer }
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JournalEntry"
+    post:
+      operationId: createJournalEntry
+      tags: [journal-entries]
+      summary: Create journal entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJournalEntryBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+
+  /journal-entries/{id}:
+    get:
+      operationId: getJournalEntry
+      tags: [journal-entries]
+      summary: Get journal entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Journal entry with lines
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+    put:
+      operationId: updateJournalEntry
+      tags: [journal-entries]
+      summary: Update journal entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJournalEntryBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+    delete:
+      operationId: deleteJournalEntry
+      tags: [journal-entries]
+      summary: Delete journal entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /journal-entries/{id}/approve:
+    post:
+      operationId: approveJournalEntry
+      tags: [journal-entries]
+      summary: Approve journal entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+
 components:
   schemas:
     HealthStatus:
@@ -4636,3 +4992,262 @@ components:
           items:
             $ref: "#/components/schemas/AdminCompanyCard"
       required: [totalCompanies, activeCompanies, totalUsers, activeUsers, totalDepartments, totalAuditLogs, logins24h, failedLogins24h, companyCards]
+
+    ChartOfAccount:
+      type: object
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        accountCode:
+          type: string
+        accountName:
+          type: string
+        accountType:
+          type: string
+        parentId:
+          type: integer
+        openingBalance:
+          type: number
+        currentBalance:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, companyId, accountCode, accountName, accountType, isActive]
+
+    CreateChartOfAccountBody:
+      type: object
+      properties:
+        companyId:
+          type: integer
+        accountCode:
+          type: string
+        accountName:
+          type: string
+        accountType:
+          type: string
+        parentId:
+          type: integer
+        openingBalance:
+          type: number
+        currentBalance:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+        isActive:
+          type: boolean
+      required: [companyId, accountCode, accountName, accountType]
+
+    PaymentReceived:
+      type: object
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        paymentNumber:
+          type: string
+        customerName:
+          type: string
+        invoiceRef:
+          type: string
+        taxInvoiceId:
+          type: integer
+        paymentDate:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        bankAccountId:
+          type: integer
+        bankAccountName:
+          type: string
+        referenceNumber:
+          type: string
+        notes:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+      required: [id, companyId, paymentNumber, customerName, paymentDate, amount, paymentMethod, status]
+
+    CreatePaymentReceivedBody:
+      type: object
+      properties:
+        companyId:
+          type: integer
+        customerName:
+          type: string
+        invoiceRef:
+          type: string
+        taxInvoiceId:
+          type: integer
+        paymentDate:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        bankAccountId:
+          type: integer
+        referenceNumber:
+          type: string
+        notes:
+          type: string
+        status:
+          type: string
+      required: [companyId, customerName, paymentDate, amount, paymentMethod]
+
+    PaymentMade:
+      type: object
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        paymentNumber:
+          type: string
+        payeeName:
+          type: string
+        expenseRef:
+          type: string
+        expenseId:
+          type: integer
+        paymentDate:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        bankAccountId:
+          type: integer
+        bankAccountName:
+          type: string
+        referenceNumber:
+          type: string
+        notes:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+      required: [id, companyId, paymentNumber, payeeName, paymentDate, amount, paymentMethod, status]
+
+    CreatePaymentMadeBody:
+      type: object
+      properties:
+        companyId:
+          type: integer
+        payeeName:
+          type: string
+        expenseRef:
+          type: string
+        expenseId:
+          type: integer
+        paymentDate:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        bankAccountId:
+          type: integer
+        referenceNumber:
+          type: string
+        notes:
+          type: string
+        status:
+          type: string
+      required: [companyId, payeeName, paymentDate, amount, paymentMethod]
+
+    JournalEntryLine:
+      type: object
+      properties:
+        id:
+          type: integer
+        journalId:
+          type: integer
+        accountId:
+          type: integer
+        accountName:
+          type: string
+        description:
+          type: string
+        debit:
+          type: number
+        credit:
+          type: number
+        sortOrder:
+          type: integer
+      required: [accountName]
+
+    JournalEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        journalNumber:
+          type: string
+        entryDate:
+          type: string
+        description:
+          type: string
+        reference:
+          type: string
+        status:
+          type: string
+        totalDebit:
+          type: number
+        totalCredit:
+          type: number
+        preparedById:
+          type: integer
+        preparedByName:
+          type: string
+        approvedById:
+          type: integer
+        approvedByName:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/JournalEntryLine"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, companyId, journalNumber, entryDate, description, status]
+
+    CreateJournalEntryBody:
+      type: object
+      properties:
+        companyId:
+          type: integer
+        entryDate:
+          type: string
+        description:
+          type: string
+        reference:
+          type: string
+        status:
+          type: string
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/JournalEntryLine"
+      required: [companyId, entryDate, description]

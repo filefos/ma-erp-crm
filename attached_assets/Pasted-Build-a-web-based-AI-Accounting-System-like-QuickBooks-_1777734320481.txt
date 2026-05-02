@@ -1,0 +1,490 @@
+Build a web-based AI Accounting System like QuickBooks for my companies:
+
+1. ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+2. PRIME MAX PREFAB HOUSES INDUSTRY LLC
+
+System name:
+Elite & Prime Max AI Accounting System
+
+GOAL:
+Create a professional QuickBooks-style web-based accounting system for UAE business accounting, invoices, expenses, VAT, bank accounts, cheques, payments, suppliers, clients, and AI accounting assistance.
+
+DESIGN:
+- Professional QuickBooks-style dashboard
+- Dark blue + light blue theme
+- Clean accounting layout
+- Sidebar navigation
+- Top search bar
+- KPI cards
+- Tables, filters, charts
+- Mobile responsive
+- Executive-level UI
+
+TECH STACK:
+- React + Tailwind CSS frontend
+- Node.js + Express backend
+- PostgreSQL database
+- JWT authentication
+- Password hashing
+- File upload support
+- PDF generation
+- Excel/CSV import/export
+- Replit compatible
+
+--------------------------------------------------
+1. MULTI-COMPANY ACCOUNTING
+--------------------------------------------------
+Support both companies:
+- Elite Prefab
+- Prime Max Prefab
+
+Each company must have:
+- Separate logo
+- Separate TRN/VAT number
+- Separate bank accounts
+- Separate invoices
+- Separate expenses
+- Separate suppliers
+- Separate customers
+- Separate reports
+- Separate chart of accounts
+
+Admin can switch company or view combined group reports.
+
+--------------------------------------------------
+2. DASHBOARD
+--------------------------------------------------
+Show:
+- Cash balance
+- Bank balance
+- Total receivables
+- Total payables
+- Monthly income
+- Monthly expenses
+- Profit/loss summary
+- VAT payable
+- Pending invoices
+- Overdue invoices
+- Pending bills
+- Cheques pending
+- AI accounting alerts
+
+--------------------------------------------------
+3. CHART OF ACCOUNTS
+--------------------------------------------------
+Create customizable chart of accounts.
+
+Account types:
+- Assets
+- Liabilities
+- Equity
+- Income
+- Cost of Goods Sold
+- Expenses
+- Bank
+- Cash
+- VAT input
+- VAT output
+
+Features:
+- Add/edit/deactivate accounts
+- Account code
+- Parent account
+- Opening balance
+- Company-wise accounts
+
+--------------------------------------------------
+4. CUSTOMERS
+--------------------------------------------------
+Fields:
+- Customer name
+- Company name
+- TRN
+- Phone
+- WhatsApp
+- Email
+- Address
+- Opening balance
+- Credit limit
+- Payment terms
+
+Features:
+- Customer ledger
+- Statement of account
+- Receivables tracking
+
+--------------------------------------------------
+5. SUPPLIERS
+--------------------------------------------------
+Fields:
+- Supplier name
+- Company name
+- TRN
+- Phone
+- WhatsApp
+- Email
+- Address
+- Bank details
+- Opening balance
+- Credit terms
+
+Features:
+- Supplier ledger
+- Payables tracking
+- Supplier statement
+
+--------------------------------------------------
+6. SALES INVOICES
+--------------------------------------------------
+Create UAE tax invoice system.
+
+Fields:
+- Invoice number
+- Company
+- Customer
+- Customer TRN
+- Invoice date
+- Due date
+- Items
+- Quantity
+- Rate
+- VAT %
+- VAT amount
+- Total
+- Payment status
+- Attachment placeholder
+
+Features:
+- Create invoice
+- PDF invoice
+- Email invoice placeholder
+- WhatsApp invoice placeholder
+- Partial payment
+- Invoice aging
+- Overdue alerts
+
+--------------------------------------------------
+7. EXPENSES & BILLS
+--------------------------------------------------
+Expense categories:
+- Material Purchase
+- Transport
+- Fuel
+- Vehicle Maintenance
+- Salary
+- Labor Wages
+- Rent
+- Utilities
+- Internet / Telephone
+- Office Supplies
+- Factory Expenses
+- Site Expenses
+- Accommodation
+- Food / Mess
+- Tools & Equipment
+- Subcontractor
+- Bank Charges
+- Government Fees
+- Miscellaneous
+
+Fields:
+- Expense category
+- Supplier/vendor
+- Bill number
+- Bill date
+- Due date
+- Amount before VAT
+- VAT
+- Total
+- Payment status
+- Payment method
+- Attachment upload
+- Notes
+
+Features:
+- Upload bill PDF/image
+- AI read bill placeholder
+- Expense approval
+- Supplier bill tracking
+- Payables aging
+
+--------------------------------------------------
+8. PAYMENTS RECEIVED
+--------------------------------------------------
+Fields:
+- Customer
+- Invoice
+- Date
+- Amount received
+- Payment method: Cash / Bank Transfer / Cheque
+- Bank account
+- Reference number
+- Attachment
+- Notes
+
+Features:
+- Partial payments
+- Auto-update invoice balance
+- Receipt voucher PDF
+- Customer ledger update
+
+--------------------------------------------------
+9. PAYMENTS MADE
+--------------------------------------------------
+Fields:
+- Supplier/vendor
+- Bill/expense
+- Date
+- Amount paid
+- Payment method
+- Bank account
+- Reference number
+- Attachment
+- Notes
+
+Features:
+- Payment voucher PDF
+- Auto-update bill balance
+- Supplier ledger update
+
+--------------------------------------------------
+10. BANK ACCOUNTS
+--------------------------------------------------
+Fields:
+- Bank name
+- Account name
+- Account number
+- IBAN
+- Opening balance
+- Current balance
+- Currency
+
+Features:
+- Bank transactions
+- Deposit
+- Withdrawal
+- Transfer
+- Bank reconciliation placeholder
+
+--------------------------------------------------
+11. CHEQUE MANAGEMENT
+--------------------------------------------------
+Support UAE banks especially:
+- ADCB
+- Emirates NBD
+- Mashreq
+
+Features:
+- Create cheque
+- Cheque register
+- Print cheque
+- Cheque template alignment
+- Amount in words
+- PDC cheques
+- Cheque status:
+  Draft, Printed, Issued, Cleared, Returned, Cancelled
+- Reprint only by Admin approval
+
+--------------------------------------------------
+12. UAE VAT REPORTING
+--------------------------------------------------
+VAT features:
+- Output VAT from sales invoices
+- Input VAT from expenses/bills
+- Net VAT payable
+- VAT return report
+- Date range filter
+- Company filter
+- Export PDF/Excel placeholder
+
+--------------------------------------------------
+13. AI ACCOUNTING ASSISTANT
+--------------------------------------------------
+Add AI assistant across the system.
+
+AI features:
+- AI expense categorization
+- AI invoice description writing
+- AI payment reminder generation
+- AI customer statement summary
+- AI supplier statement summary
+- AI profit/loss explanation
+- AI cash flow warning
+- AI overdue invoice follow-up message
+- AI duplicate bill detection
+- AI suspicious transaction alert
+- AI VAT check
+- AI bookkeeping suggestion
+
+AI buttons:
+- Categorize expense
+- Improve description
+- Generate payment reminder
+- Summarize ledger
+- Explain report
+- Detect duplicate
+- Check VAT
+- Suggest journal entry
+
+Use placeholder AI logic first, but structure code so OpenAI API can be added later using environment variable OPENAI_API_KEY.
+
+--------------------------------------------------
+14. JOURNAL ENTRIES
+--------------------------------------------------
+Create manual journal voucher system.
+
+Fields:
+- Journal number
+- Date
+- Description
+- Debit account
+- Credit account
+- Amount
+- Reference
+- Attachment
+- Prepared by
+- Approved by
+
+Features:
+- Balanced debit/credit validation
+- Approval workflow
+- Audit log
+
+--------------------------------------------------
+15. REPORTS
+--------------------------------------------------
+Reports:
+- Profit and Loss
+- Balance Sheet
+- Trial Balance
+- General Ledger
+- Customer Ledger
+- Supplier Ledger
+- Receivables Aging
+- Payables Aging
+- Cash Flow
+- VAT Report
+- Expense by Category
+- Sales by Customer
+- Bank Summary
+- Cheque Report
+
+Export:
+- PDF
+- Excel
+- CSV
+
+--------------------------------------------------
+16. APPROVAL WORKFLOW
+--------------------------------------------------
+Approvals required for:
+- Expenses
+- Bills
+- Payments made
+- Journal entries
+- Cheque printing
+- Large discounts/adjustments
+
+Roles:
+- Super Admin
+- Accounts Admin
+- Accounts User
+- Finance Manager
+- Viewer
+
+Rules:
+- Accounts User can create records
+- Accounts Admin can approve
+- Finance Manager can approve payments
+- Super Admin controls everything
+
+--------------------------------------------------
+17. SECURITY
+--------------------------------------------------
+Add:
+- Secure login
+- Role-based access
+- Company-wise data separation
+- Audit logs
+- Document locking
+- Version history
+- File upload validation
+- Fraud alerts
+- Duplicate invoice/bill detection
+- Sensitive data masking
+
+--------------------------------------------------
+18. DATABASE TABLES
+--------------------------------------------------
+Create tables:
+- companies
+- users
+- roles
+- permissions
+- chart_of_accounts
+- customers
+- suppliers
+- items
+- sales_invoices
+- sales_invoice_items
+- expenses
+- expense_categories
+- bills
+- payments_received
+- payments_made
+- bank_accounts
+- bank_transactions
+- cheques
+- cheque_templates
+- journal_entries
+- journal_entry_lines
+- vat_reports
+- audit_logs
+- documents
+- ai_requests
+- notifications
+
+--------------------------------------------------
+19. SEED DATA
+--------------------------------------------------
+Add sample:
+- Both companies
+- Admin user
+- Accounts user
+- Finance manager
+- Chart of accounts
+- Customers
+- Suppliers
+- Expense categories
+- Invoices
+- Expenses
+- Bills
+- Payments
+- Bank accounts
+- Cheques
+- Reports data
+
+--------------------------------------------------
+20. OUTPUT REQUIRED
+--------------------------------------------------
+- Working accounting dashboard
+- Multi-company accounting
+- Customers and suppliers
+- Chart of accounts
+- Sales invoices
+- Expenses and bills upload
+- Payments received
+- Payments made
+- Bank accounts
+- Cheque management
+- VAT report
+- Journal entries
+- AI accounting assistant
+- Reports
+- Permissions
+- Audit logs
+- Setup instructions
+- Sample login credentials
+- Must run successfully in Replit
+
+Build first as MVP, but keep structure scalable like QuickBooks.
