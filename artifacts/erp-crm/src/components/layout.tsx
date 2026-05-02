@@ -345,8 +345,8 @@ const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
   projects:    { label: "Projects",    href: "/projects/dashboard" },
   hr:          { label: "HR",          href: "/hr/dashboard" },
   assets:      { label: "Assets",      href: "/assets/dashboard" },
-  email:       { label: "Email",       href: "/email" },
-  reports:     { label: "Reports",     href: "/reports" },
+  email:       { label: "Email",       href: "/email/dashboard" },
+  reports:     { label: "Reports",     href: "/reports/dashboard" },
   admin:       { label: "Admin",       href: "/admin/companies" },
 };
 

@@ -308,6 +308,43 @@ export function AssetsDashboard() {
         )}
       </div>
 
+      {/* Recently added */}
+      <div className="bg-card border rounded-2xl p-4 shadow-sm" data-testid="panel-recent-assets">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold">Recently Added</div>
+            <div className="text-[11px] text-muted-foreground">Latest 8 assets registered</div>
+          </div>
+        </div>
+        {assets.length === 0 ? (
+          <Empty>No assets yet.</Empty>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {[...assets].sort((a: any, b: any) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")).slice(0, 8).map((a: any) => (
+              <Link key={a.id} href="/assets" className="block">
+                <div className="border rounded-xl p-3 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono text-primary">{a.assetId}</span>
+                    <Badge variant="secondary" className="text-[10px] capitalize">{(a.condition ?? "—").replace(/_/g, " ")}</Badge>
+                  </div>
+                  <div className="text-sm font-semibold truncate">{a.name}</div>
+                  <div className="text-[11px] text-muted-foreground truncate">{a.category} · {a.currentLocation ?? "—"}</div>
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(a.purchaseValue ?? 0))}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {a.createdAt ? new Date(a.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short" }) : "—"}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* High-value assets */}
       <div className="bg-card border rounded-2xl p-4 shadow-sm">
         <div className="flex items-center gap-2 mb-3">

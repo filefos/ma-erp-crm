@@ -12,7 +12,7 @@ import {
 import {
   Users, Briefcase, Flame, CheckCircle2, AlertTriangle, Clock, TrendingUp, FileText, Sparkles,
   Phone, MessageCircle, ArrowRight, Activity as ActivityIcon, Trophy, Target, Calendar, BarChart3,
-  Mail,
+  Mail, ShoppingBag,
 } from "lucide-react";
 import { suggestNextAction } from "@/lib/ai-crm";
 import {
@@ -73,6 +73,29 @@ export function CRMDashboard() {
     for (const l of leads) counts[l.source ?? "other"] = (counts[l.source ?? "other"] ?? 0) + 1;
     return Object.entries(counts).map(([name, value]) => ({ name: name.replace(/_/g, " "), value }));
   }, [leads]);
+
+  // --- Revenue contribution per lead source (won deals + quoted value) ---
+  const sourceRevenue = useMemo(() => {
+    const m: Record<string, { source: string; won: number; quoted: number }> = {};
+    const leadById = new Map(leads.map(l => [l.id, l]));
+    for (const l of leads) {
+      const k = (l.source ?? "other").replace(/_/g, " ");
+      if (!m[k]) m[k] = { source: k, won: 0, quoted: 0 };
+    }
+    for (const d of deals as any[]) {
+      const lead = d.leadId ? leadById.get(d.leadId) : undefined;
+      const src = ((lead?.source ?? "other") as string).replace(/_/g, " ");
+      if (!m[src]) m[src] = { source: src, won: 0, quoted: 0 };
+      if (d.stage === "won") m[src].won += Number(d.value ?? 0);
+    }
+    for (const q of quotations as any[]) {
+      const lead = q.leadId ? leadById.get(q.leadId) : undefined;
+      const src = ((lead?.source ?? "other") as string).replace(/_/g, " ");
+      if (!m[src]) m[src] = { source: src, won: 0, quoted: 0 };
+      m[src].quoted += Number(q.grandTotal ?? 0);
+    }
+    return Object.values(m).filter(e => e.won > 0 || e.quoted > 0).sort((a, b) => (b.won + b.quoted) - (a.won + a.quoted));
+  }, [leads, deals, quotations]);
 
   const pipelineData = useMemo(() => {
     const counts: Record<string, { count: number; value: number }> = {};
@@ -139,6 +162,9 @@ export function CRMDashboard() {
         <Button variant="secondary" size="sm" asChild className="bg-white/15 hover:bg-white/25 text-white border-0" data-testid="link-pipeline">
           <Link href="/crm/pipeline"><Briefcase className="w-4 h-4 mr-1.5" />Pipeline</Link>
         </Button>
+        <Button variant="secondary" size="sm" asChild className="bg-white/15 hover:bg-white/25 text-white border-0" data-testid="link-sales">
+          <Link href="/sales/dashboard"><ShoppingBag className="w-4 h-4 mr-1.5" />Sales Center</Link>
+        </Button>
         <Button size="sm" asChild className="bg-white text-[#0f2d5a] hover:bg-white/90" data-testid="link-leads">
           <Link href="/crm/leads"><TrendingUp className="w-4 h-4 mr-1.5" />Open Leads</Link>
         </Button>
@@ -196,7 +222,7 @@ export function CRMDashboard() {
           )}
         </Card>
 
-        <Card title="Deal Pipeline" subtitle="Deals + value by stage" icon={Briefcase} className="lg:col-span-2">
+        <Card title="Deal Pipeline" subtitle="Deals + value by stage" icon={Briefcase} className="lg:col-span-2" data-testid="card-deal-pipeline">
           {deals.length === 0 ? (
             <Empty>No deals yet — go to <Link href="/crm/pipeline" className="text-primary underline">Pipeline</Link></Empty>
           ) : (
@@ -215,6 +241,25 @@ export function CRMDashboard() {
           )}
         </Card>
       </div>
+
+      {/* Revenue per Lead Source */}
+      <Card title="Revenue per Lead Source" subtitle="Won-deal value + quoted value, grouped by acquisition channel" icon={Target}>
+        {sourceRevenue.length === 0 ? (
+          <Empty>No source-attributed revenue yet.</Empty>
+        ) : (
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart data={sourceRevenue} layout="vertical" margin={{ left: 30, right: 30 }} data-testid="chart-source-revenue">
+              <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
+              <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+              <YAxis dataKey="source" type="category" tick={{ fontSize: 11 }} width={100} />
+              <Tooltip formatter={(v: number) => `AED ${v.toLocaleString()}`} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="won"    stackId="rev" fill="#10b981" name="Won deals"   radius={[0, 0, 0, 0]} />
+              <Bar dataKey="quoted" stackId="rev" fill="#1e6ab0" name="Quoted value" radius={[0, 6, 6, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Card>
 
       {/* Lower row: AI suggestions, follow-ups, recent activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -371,12 +416,12 @@ export function CRMDashboard() {
 
 // ---- Sub-components ----
 
-function Card({ title, subtitle, icon: Icon, children, className = "" }: {
+function Card({ title, subtitle, icon: Icon, children, className = "", "data-testid": testId }: {
   title: string; subtitle?: string; icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode; className?: string;
+  children: React.ReactNode; className?: string; "data-testid"?: string;
 }) {
   return (
-    <div className={`bg-card border rounded-2xl p-4 space-y-3 shadow-sm ${className}`}>
+    <div className={`bg-card border rounded-2xl p-4 space-y-3 shadow-sm ${className}`} data-testid={testId}>
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
           <Icon className="w-4 h-4 text-blue-600" />

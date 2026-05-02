@@ -145,6 +145,25 @@ export function ProjectsDashboard() {
     [projects],
   );
 
+  // ---- Activity timeline (latest 8 created or recently-updated projects) ----
+  const activityFeed = useMemo(() => {
+    return [...projects]
+      .map((p: any) => {
+        const createdAt = p.createdAt ? new Date(p.createdAt).getTime() : 0;
+        const updatedAt = p.updatedAt ? new Date(p.updatedAt).getTime() : 0;
+        const isUpdate = updatedAt > createdAt;
+        return {
+          id: p.id,
+          when: Math.max(createdAt, updatedAt),
+          kind: isUpdate ? "update" as const : "create" as const,
+          project: p,
+        };
+      })
+      .filter(e => e.when > 0)
+      .sort((a, b) => b.when - a.when)
+      .slice(0, 8);
+  }, [projects]);
+
   // ---- Risks ----
   const risks = useMemo(() => {
     const out: { tone: "red" | "amber" | "blue"; text: string; href?: string }[] = [];
@@ -329,6 +348,39 @@ export function ProjectsDashboard() {
           )}
         </div>
       </div>
+
+      {/* Activity Timeline */}
+      <PanelCard title="Recent Project Activity" subtitle="Latest creations & stage updates" icon={TrendingUp}>
+        {activityFeed.length === 0 ? (
+          <Empty>No project activity yet.</Empty>
+        ) : (
+          <div className="relative pl-4 space-y-3" data-testid="timeline-projects">
+            <div className="absolute left-[7px] top-1 bottom-1 w-px bg-border" />
+            {activityFeed.map(e => {
+              const p = e.project;
+              const isUpdate = e.kind === "update";
+              return (
+                <Link key={`${e.kind}-${e.id}`} href={`/projects/${p.id}`} className="block relative">
+                  <div className={`absolute -left-4 top-2 w-3.5 h-3.5 rounded-full border-2 border-card ${isUpdate ? "bg-[#1e6ab0]" : "bg-emerald-500"}`} />
+                  <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[11px] font-mono text-primary">{p.projectNumber}</span>
+                      <Badge variant="secondary" className="text-[10px] capitalize">{STAGE_LABELS[p.stage] ?? p.stage}</Badge>
+                      <span className="text-[10px] text-muted-foreground ml-auto">
+                        {isUpdate ? "Updated" : "Created"} · {new Date(e.when).toLocaleDateString("en-AE", { day: "2-digit", month: "short" })}
+                      </span>
+                    </div>
+                    <div className="text-sm font-medium truncate">{p.projectName}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {p.clientName} · {p.projectManagerName ?? "Unassigned"} · {fmtAED(Number(p.projectValue ?? 0))}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </PanelCard>
 
       {/* Footer stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

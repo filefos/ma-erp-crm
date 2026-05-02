@@ -152,6 +152,42 @@ export function HrDashboard() {
     return Object.values(m).sort((a, b) => b.presentDays - a.presentDays).slice(0, 6);
   }, [myAttendance, employees]);
 
+  // ---- Birthdays & work anniversaries (next 30 days) ----
+  const upcomingDates = useMemo(() => {
+    const now = new Date();
+    const horizon = 30;
+    const out: { id: number; name: string; kind: "birthday" | "anniversary"; date: Date; days: number; years?: number }[] = [];
+    for (const e of employees as any[]) {
+      const push = (raw: string | null | undefined, kind: "birthday" | "anniversary") => {
+        if (!raw) return;
+        const d = new Date(raw);
+        if (isNaN(d.getTime())) return;
+        const next = new Date(now.getFullYear(), d.getMonth(), d.getDate());
+        if (next.getTime() < now.getTime() - 86_400_000) next.setFullYear(now.getFullYear() + 1);
+        const days = Math.ceil((next.getTime() - now.getTime()) / 86_400_000);
+        if (days < 0 || days > horizon) return;
+        const years = kind === "anniversary" ? next.getFullYear() - d.getFullYear() : undefined;
+        out.push({ id: e.id, name: e.name, kind, date: next, days, years });
+      };
+      push(e.dateOfBirth ?? e.dob, "birthday");
+      push(e.joiningDate, "anniversary");
+    }
+    return out.sort((a, b) => a.days - b.days).slice(0, 8);
+  }, [employees]);
+
+  // ---- Recent attendance feed (today + yesterday, latest first) ----
+  const recentAttendance = useMemo(() => {
+    const cutoff = Date.now() - 2 * 86_400_000;
+    return (myAttendance as any[])
+      .filter(a => a.date && new Date(a.date).getTime() >= cutoff)
+      .map(a => {
+        const e = employees.find((x: any) => x.id === a.employeeId);
+        return { ...a, name: e?.name ?? `Employee #${a.employeeId}`, designation: e?.designation };
+      })
+      .sort((a, b) => (b.checkInTime ?? b.date ?? "").localeCompare(a.checkInTime ?? a.date ?? ""))
+      .slice(0, 10);
+  }, [myAttendance, employees]);
+
   // ---- Insights ----
   const insights = useMemo(() => {
     const out: { tone: "red" | "amber" | "blue"; text: string }[] = [];
@@ -297,6 +333,70 @@ export function HrDashboard() {
                     </div>
                     <div className="text-xs font-semibold w-8 text-right">{s.value}</div>
                   </div>
+                );
+              })}
+            </div>
+          )}
+        </PanelCard>
+      </div>
+
+      {/* Birthdays + Recent Attendance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PanelCard title="Birthdays & Anniversaries" subtitle="Next 30 days · celebrate your team" icon={Award}>
+          {upcomingDates.length === 0 ? (
+            <Empty>No upcoming birthdays or anniversaries.</Empty>
+          ) : (
+            <div className="space-y-2 max-h-[280px] overflow-y-auto" data-testid="list-birthdays">
+              {upcomingDates.map(u => (
+                <div key={`${u.kind}-${u.id}`} className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${u.kind === "birthday" ? "bg-pink-100 text-pink-700" : "bg-emerald-100 text-emerald-700"}`}>
+                    {u.kind === "birthday" ? <Sparkles className="w-4 h-4" /> : <Award className="w-4 h-4" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{u.name}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {u.kind === "birthday" ? "Birthday" : `${u.years}-year work anniversary`} · {u.date.toLocaleDateString("en-AE", { day: "2-digit", month: "short" })}
+                    </div>
+                  </div>
+                  <Badge className={u.days === 0 ? "bg-emerald-100 text-emerald-700" : u.days <= 7 ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"}>
+                    {u.days === 0 ? "Today" : `in ${u.days}d`}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </PanelCard>
+
+        <PanelCard title="Recent Attendance" subtitle="Latest check-ins (last 48h)" icon={Clock}>
+          {recentAttendance.length === 0 ? (
+            <Empty>No attendance records in the last 48 hours.</Empty>
+          ) : (
+            <div className="space-y-1.5 max-h-[280px] overflow-y-auto" data-testid="list-recent-attendance">
+              {recentAttendance.map((a: any) => {
+                const status = (a.status ?? "").toLowerCase();
+                const tone = status === "present" || status === "checked_in" || status === "in" ? "emerald"
+                  : status === "late" ? "orange"
+                  : status === "absent" ? "red" : "blue";
+                const colorMap: Record<string, string> = {
+                  emerald: "bg-emerald-100 text-emerald-700",
+                  orange:  "bg-orange-100 text-orange-700",
+                  red:     "bg-red-100 text-red-700",
+                  blue:    "bg-blue-100 text-blue-700",
+                };
+                return (
+                  <Link key={a.id} href="/hr/attendance" className="block">
+                    <div className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
+                      <Avatar name={a.name} size={28} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{a.name}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          {a.date} {a.checkInTime ? `· in ${new Date(a.checkInTime).toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" })}` : ""}
+                          {a.checkOutTime ? ` · out ${new Date(a.checkOutTime).toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" })}` : ""}
+                        </div>
+                      </div>
+                      <Badge className={`text-[10px] capitalize ${colorMap[tone]}`}>{(a.status ?? "—").replace(/_/g, " ")}</Badge>
+                    </div>
+                  </Link>
                 );
               })}
             </div>

@@ -165,6 +165,33 @@ export function SalesDashboard() {
   const pendingPIs         = proformas.filter((p: any) => ["draft", "pending_approval"].includes((p.status ?? "").toLowerCase())).length;
   const openLpos           = lpos.filter((l: any) => !["completed", "delivered", "closed"].includes((l.status ?? "").toLowerCase())).length;
 
+  // ---- Quotes expiring within 7 days ----
+  const expiringQuotes = useMemo(() => {
+    const horizon = Date.now() + 7 * 86_400_000;
+    return (quotations as any[]).filter(q => {
+      const exp = q.expiryDate ?? q.validUntil;
+      if (!exp) return false;
+      const t = new Date(exp).getTime();
+      const status = (q.status ?? "").toLowerCase();
+      return t > Date.now() && t < horizon && !["accepted", "approved", "won", "rejected", "expired"].includes(status);
+    }).sort((a, b) => (a.expiryDate ?? a.validUntil ?? "").localeCompare(b.expiryDate ?? b.validUntil ?? ""));
+  }, [quotations]);
+
+  // ---- Recent PIs / LPOs ----
+  const recentPIs  = useMemo(() => [...proformas].sort((a: any, b: any) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")).slice(0, 5), [proformas]);
+  const recentLpos = useMemo(() => [...lpos].sort((a: any, b: any) => (b.createdAt ?? b.lpoDate ?? "").localeCompare(a.createdAt ?? a.lpoDate ?? "")).slice(0, 5), [lpos]);
+
+  // ---- Sales insights banner ----
+  const salesInsights = useMemo(() => {
+    const out: { tone: "red" | "amber" | "blue"; text: string }[] = [];
+    if (expiringQuotes.length > 0) out.push({ tone: "amber", text: `${expiringQuotes.length} quotation${expiringQuotes.length === 1 ? "" : "s"} expiring within 7 days — chase the client` });
+    if (pendingApprovalQ > 0)   out.push({ tone: "amber", text: `${pendingApprovalQ} quotation${pendingApprovalQ === 1 ? "" : "s"} pending internal approval` });
+    if (sentQuotations > 0)     out.push({ tone: "blue",  text: `${sentQuotations} quotation${sentQuotations === 1 ? "" : "s"} sent · awaiting client decision` });
+    if (pendingPIs > 0)         out.push({ tone: "amber", text: `${pendingPIs} proforma invoice${pendingPIs === 1 ? "" : "s"} need approval` });
+    if (out.length === 0 && quotations.length > 0) out.push({ tone: "blue", text: "Sales pipeline running smoothly — no urgent quotes." });
+    return out.slice(0, 4);
+  }, [expiringQuotes, pendingApprovalQ, sentQuotations, pendingPIs, quotations]);
+
   return (
     <div className="space-y-5">
       <ExecutiveHeader
@@ -182,6 +209,28 @@ export function SalesDashboard() {
           <Link href="/sales/quotations/new"><Sparkles className="w-4 h-4 mr-1.5" />New Quote</Link>
         </Button>
       </ExecutiveHeader>
+
+      {/* Sales insights banner */}
+      {salesInsights.length > 0 && (
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm" data-testid="banner-sales-insights">
+          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+          <div className="flex items-center gap-2 mb-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
+            <h3 className="text-sm font-semibold">Sales Insights</h3>
+            <Badge variant="secondary" className="text-[10px] bg-[#1e6ab0]/10 text-[#1e6ab0] border-0">live</Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {salesInsights.map((r, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-sm rounded-lg p-2 bg-muted/40">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${r.tone === "red" ? "bg-red-500" : r.tone === "amber" ? "bg-orange-500" : "bg-emerald-500"}`} />
+                <span className="text-foreground/85">{r.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -371,7 +420,7 @@ export function SalesDashboard() {
           )}
         </PanelCard>
 
-        <PanelCard title="Recent Quotations" subtitle="Latest 6 quotes created" icon={FileText}>
+        <PanelCard title="Recent Quotations" subtitle="Latest 6 quotes created" icon={FileText} data-testid="panel-recent-quotes">
           {recentQuotations.length === 0 ? (
             <Empty>No quotations yet — <Link href="/sales/quotations/new" className="text-primary underline">create one</Link></Empty>
           ) : (
@@ -398,16 +447,106 @@ export function SalesDashboard() {
           )}
         </PanelCard>
       </div>
+
+      {/* Recent PIs + LPOs */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PanelCard title="Recent Proforma Invoices" subtitle="Latest 5 PIs issued" icon={FileCheck} data-testid="panel-recent-pis">
+          {recentPIs.length === 0 ? (
+            <Empty>No proforma invoices yet — <Link href="/sales/proforma-invoices" className="text-primary underline">create one</Link></Empty>
+          ) : (
+            <div className="space-y-2">
+              {recentPIs.map((p: any) => (
+                <Link key={p.id} href={`/sales/proforma-invoices/${p.id}`} className="block">
+                  <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[11px] font-mono text-primary">{p.piNumber ?? p.proformaNumber ?? `PI-${p.id}`}</span>
+                        <StatusBadge status={p.status} />
+                      </div>
+                      <div className="text-sm font-medium truncate">{p.clientName ?? "—"}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">{p.projectName ?? "—"}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(p.total ?? p.grandTotal ?? 0))}</div>
+                      <div className="text-[10px] text-muted-foreground">{p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short" }) : "—"}</div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </PanelCard>
+
+        <PanelCard title="Recent LPOs" subtitle="Latest 5 client purchase orders" icon={ClipboardList} data-testid="panel-recent-lpos">
+          {recentLpos.length === 0 ? (
+            <Empty>No LPOs received yet.</Empty>
+          ) : (
+            <div className="space-y-2">
+              {recentLpos.map((l: any) => (
+                <Link key={l.id} href={`/sales/lpos`} className="block">
+                  <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[11px] font-mono text-primary">{l.lpoNumber ?? `LPO-${l.id}`}</span>
+                        <StatusBadge status={l.status} />
+                      </div>
+                      <div className="text-sm font-medium truncate">{l.clientName ?? "—"}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">{l.projectName ?? "—"}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(l.lpoValue ?? 0))}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {(l.lpoDate ?? l.createdAt) ? new Date(l.lpoDate ?? l.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short" }) : "—"}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </PanelCard>
+      </div>
+
+      {/* Expiring quotes strip */}
+      {expiringQuotes.length > 0 && (
+        <PanelCard title="Quotes Expiring Soon" subtitle="Within the next 7 days · take action" icon={Calendar} data-testid="panel-expiring-quotes">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {expiringQuotes.slice(0, 8).map((q: any) => {
+              const expDate = q.expiryDate ?? q.validUntil;
+              const daysLeft = Math.max(0, Math.ceil((new Date(expDate).getTime() - Date.now()) / 86_400_000));
+              return (
+                <Link key={q.id} href={`/sales/quotations/${q.id}`} className="block">
+                  <div className="border border-orange-300/60 rounded-xl p-3 hover:bg-muted/40 transition-all flex items-center gap-3">
+                    <div className="w-1.5 h-9 rounded-full shrink-0 bg-orange-500" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono text-primary">{q.quotationNumber}</span>
+                        <StatusBadge status={q.status} />
+                      </div>
+                      <div className="text-sm font-medium truncate">{q.clientName}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">Expires {new Date(expDate).toLocaleDateString("en-AE", { day: "2-digit", month: "short" })}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <Badge className="bg-orange-100 text-orange-700">{daysLeft}d left</Badge>
+                      <div className="text-sm font-bold text-[#0f2d5a] dark:text-white mt-0.5">{fmtAED(Number(q.grandTotal ?? 0))}</div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </PanelCard>
+      )}
     </div>
   );
 }
 
-function PanelCard({ title, subtitle, icon: Icon, children, className = "" }: {
+function PanelCard({ title, subtitle, icon: Icon, children, className = "", "data-testid": testId }: {
   title: string; subtitle?: string; icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode; className?: string;
+  children: React.ReactNode; className?: string; "data-testid"?: string;
 }) {
   return (
-    <div className={`bg-card border rounded-2xl p-4 space-y-3 shadow-sm ${className}`}>
+    <div className={`bg-card border rounded-2xl p-4 space-y-3 shadow-sm ${className}`} data-testid={testId}>
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
           <Icon className="w-4 h-4 text-blue-600" />

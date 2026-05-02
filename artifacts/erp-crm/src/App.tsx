@@ -366,9 +366,11 @@ function Router() {
 
       <Route path="/notifications" component={NotificationsList} />
       <Route path="/profile" component={MyProfile} />
-      {/* Email routes intentionally unguarded — "emails" is not yet in the backend MODULES list (see scripts/src/seed.ts MODULES). Add the module + run seed before wrapping with <ModuleGuard module="emails">. */}
-      <Route path="/email/dashboard"><EmailDashboard /></Route>
-      <Route path="/email" component={EmailPanel} />
+      {/* Email routes — guarded by the closest existing module key ("dashboard")
+          since there's no dedicated "emails" module yet (see scripts/src/seed.ts MODULES).
+          When that module is added + seeded, switch to <ModuleGuard module="emails">. */}
+      <Route path="/email/dashboard"><ModuleGuard module="dashboard"><EmailDashboard /></ModuleGuard></Route>
+      <Route path="/email"><ModuleGuard module="dashboard"><EmailPanel /></ModuleGuard></Route>
 
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />

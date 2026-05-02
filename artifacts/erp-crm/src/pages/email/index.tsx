@@ -163,7 +163,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
       toast({ title: "Email sent!" });
       setComposing(false);
       setAttachments([]);
-      setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
+      setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "" });
       qc.invalidateQueries({ queryKey: ["emails"] });
     },
     onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
@@ -175,7 +175,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
       toast({ title: "Draft saved." });
       setComposing(false);
       setAttachments([]);
-      setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
+      setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "" });
       qc.invalidateQueries({ queryKey: ["emails"] });
     },
   });

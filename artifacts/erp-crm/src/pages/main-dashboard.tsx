@@ -445,6 +445,57 @@ export function MainExecutiveDashboard() {
         </PanelCard>
       </div>
 
+      {/* Low-stock strip */}
+      {(() => {
+        const lowStockItems = (items as any[])
+          .filter(i => {
+            const qty = Number(i.quantity ?? i.currentStock ?? 0);
+            const min = Number(i.minStock ?? i.reorderLevel ?? 0);
+            return min > 0 && qty <= min;
+          })
+          .sort((a, b) => {
+            const ra = Number(a.minStock ?? a.reorderLevel ?? 0) - Number(a.quantity ?? a.currentStock ?? 0);
+            const rb = Number(b.minStock ?? b.reorderLevel ?? 0) - Number(b.quantity ?? b.currentStock ?? 0);
+            return rb - ra;
+          })
+          .slice(0, 6);
+        if (lowStockItems.length === 0) return null;
+        return (
+          <PanelCard
+            title={`Low-Stock Items · ${lowStockItems.length}`}
+            subtitle="Below reorder level — raise a purchase request"
+            icon={Package}
+            action={<Link href="/inventory/items" className="text-[11px] text-primary hover:underline flex items-center gap-1">View inventory <ArrowRight className="w-3 h-3" /></Link>}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2" data-testid="panel-low-stock">
+              {lowStockItems.map((i: any) => {
+                const qty = Number(i.quantity ?? i.currentStock ?? 0);
+                const min = Number(i.minStock ?? i.reorderLevel ?? 0);
+                const ratio = min > 0 ? Math.min(100, Math.max(0, (qty / min) * 100)) : 0;
+                return (
+                  <Link key={i.id} href="/inventory/items" className="block">
+                    <div className="border border-orange-300/60 rounded-xl p-3 hover:bg-muted/40 transition-all">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] font-mono text-primary">{i.itemCode ?? i.sku ?? `#${i.id}`}</span>
+                        <Badge className="bg-orange-100 text-orange-700 text-[10px] ml-auto">Low</Badge>
+                      </div>
+                      <div className="text-sm font-semibold truncate">{i.itemName ?? i.name ?? "—"}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-red-500 to-orange-500" style={{ width: `${ratio}%` }} />
+                        </div>
+                        <span className="text-[10px] font-mono text-muted-foreground">{qty}/{min}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 truncate">{i.category ?? "—"} · {i.location ?? i.warehouse ?? "—"}</div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </PanelCard>
+        );
+      })()}
+
       {/* Pipeline funnel + Top clients */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <PanelCard title="Business Funnel" subtitle="Lead → Deal → Quote → PI → LPO → Invoice" icon={Activity} className="lg:col-span-2">

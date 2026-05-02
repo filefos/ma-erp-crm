@@ -139,6 +139,28 @@ export function EmailDashboard() {
     return Object.values(m).sort((a, b) => b.count - a.count).slice(0, 6);
   }, [sentAll]);
 
+  // ---- Most-active threads (group by normalized subject across inbox + sent) ----
+  const activeThreads = useMemo(() => {
+    const norm = (s: string) => (s ?? "").trim().replace(/^(re|fw|fwd):\s*/gi, "").toLowerCase();
+    const m: Record<string, { subject: string; count: number; participants: Set<string>; latest: string; unread: number }> = {};
+    for (const e of [...inboxAll, ...sentAll]) {
+      const k = norm(e.subject) || "(no subject)";
+      const ent = m[k] ?? { subject: e.subject || "(no subject)", count: 0, participants: new Set<string>(), latest: e.sentAt ?? e.createdAt, unread: 0 };
+      ent.count++;
+      ent.participants.add(e.fromAddress);
+      ent.participants.add(e.toAddress);
+      const t = e.sentAt ?? e.createdAt;
+      if ((t ?? "") > ent.latest) ent.latest = t;
+      if (!e.isRead && e.folder === "inbox") ent.unread++;
+      m[k] = ent;
+    }
+    return Object.values(m)
+      .filter(t => t.count > 1)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+      .map(t => ({ ...t, participantCount: t.participants.size }));
+  }, [inboxAll, sentAll]);
+
   // ---- Recent activity ----
   const recentActivity = useMemo(() => {
     const all = [
@@ -304,6 +326,35 @@ export function EmailDashboard() {
           )}
         </PanelCard>
       </div>
+
+      {/* Most-active threads */}
+      <PanelCard title="Most-Active Threads" subtitle="Conversations with the most back-and-forth" icon={Reply}>
+        {activeThreads.length === 0 ? (
+          <Empty>No multi-message threads yet.</Empty>
+        ) : (
+          <div className="space-y-2" data-testid="list-active-threads">
+            {activeThreads.map(t => (
+              <Link key={t.subject} href="/email" className="block">
+                <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center text-white shrink-0">
+                    <Reply className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{t.subject}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {t.count} message{t.count === 1 ? "" : "s"} · {t.participantCount} participant{t.participantCount === 1 ? "" : "s"} · last {new Date(t.latest).toLocaleDateString("en-AE", { day: "2-digit", month: "short" })}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <Badge className="bg-[#1e6ab0]/10 text-[#1e6ab0] text-[10px]">{t.count}×</Badge>
+                    {t.unread > 0 && <Badge className="bg-blue-100 text-blue-700 text-[10px]">{t.unread} unread</Badge>}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </PanelCard>
 
       {/* Recent activity */}
       <div className="bg-card border rounded-2xl p-4 shadow-sm">
