@@ -1,0 +1,5764 @@
+Create the foundation for “Prime Max & Elite Prefab Smart ERP CRM Ecosystem”.
+
+IMPORTANT:
+Build only Step 1 now. Do not build sales, quotation, accounts, inventory, HR, email, AI, WhatsApp, or mobile apps yet. Prepare the structure so these modules can be added later.
+
+PLATFORMS TO SUPPORT LATER:
+1. Web-based Admin Panel
+2. Admin Mobile App
+3. User Mobile App
+
+STEP 1 GOAL:
+Create a secure web-based admin panel foundation with login, multi-company setup, departments, users, roles, permissions, and dashboards.
+
+TECH STACK:
+- Frontend: React + Tailwind CSS
+- Backend: Node.js + Express
+- Database: PostgreSQL
+- Authentication: JWT
+- Password hashing: bcrypt
+- Replit compatible
+
+DESIGN:
+- Premium Zoho CRM-style UI
+- Dark blue + light blue theme
+- Sidebar navigation
+- Top search bar
+- Modern dashboard cards
+- Clean tables
+- Mobile responsive
+- Professional, eye-catching SaaS design
+
+COMPANIES:
+Create multi-company setup for:
+1. ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+   Website: www.eliteprefab.com
+
+2. PRIME MAX PREFAB HOUSES INDUSTRY LLC
+   Website: www.primemaxprefab.com
+
+Each company must support:
+- Company name
+- Website
+- Logo upload placeholder
+- Address placeholder
+- TRN/VAT placeholder
+- Bank details placeholder
+- Company prefix:
+  - EP for Elite Prefab
+  - PM for Prime Max
+
+DEPARTMENTS:
+Create departments:
+- Main Admin
+- Sales
+- Accounts
+- Finance
+- Procurement
+- Store
+- Inventory
+- Assets
+- HR
+- Production
+- Management
+
+USER MANAGEMENT:
+Main Admin can:
+- Create users
+- Edit users
+- Activate/deactivate users
+- Assign department
+- Assign role
+- Assign company access
+- Assign permissions
+
+Each user must have:
+- User ID
+- Full name
+- Email
+- Password
+- Phone
+- Department
+- Role
+- Company access
+- Status
+- Created date
+
+ROLES:
+Create base roles:
+- Super Admin
+- Company Admin
+- Department Admin
+- Manager
+- User
+- Data Entry Operator
+- Viewer
+
+PERMISSIONS:
+Create permission structure for:
+- view
+- create
+- edit
+- approve
+- delete
+- export
+- print
+
+STRICT ACCESS RULES:
+- Super Admin sees everything
+- Admin panel visible only to Super Admin / authorized Admin
+- Every department sees only its own dashboard/menu
+- Every user sees only assigned company data
+- Every user sees only assigned records unless permission allows otherwise
+- Non-admin users cannot access admin settings
+- Hide unauthorized menus completely
+
+DASHBOARDS:
+Create separate dashboard layouts for:
+- Admin Dashboard
+- Sales Dashboard placeholder
+- Accounts Dashboard placeholder
+- Finance Dashboard placeholder
+- Procurement Dashboard placeholder
+- Store Dashboard placeholder
+- Inventory Dashboard placeholder
+- HR Dashboard placeholder
+- Production Dashboard placeholder
+- Management Dashboard placeholder
+
+Admin Dashboard must show:
+- Total companies
+- Total users
+- Active users
+- Departments count
+- Recent login/activity
+- Company-wise quick cards
+
+AUDIT LOG:
+Track:
+- User login
+- Failed login
+- User created
+- User updated
+- User deactivated
+- Permission changed
+- Company updated
+
+DATABASE TABLES:
+Create tables:
+- companies
+- departments
+- roles
+- permissions
+- users
+- user_company_access
+- user_permissions
+- audit_logs
+
+SEED DATA:
+Create seed records for:
+- Both companies
+- All departments
+- Base roles
+- Permission list
+- Sample users:
+  1. Super Admin
+  2. Sales User
+  3. Accounts User
+  4. Finance User
+  5. Procurement User
+  6. Store User
+  7. Inventory User
+  8. HR User
+  9. Production User
+
+SECURITY:
+- Secure password hashing
+- JWT protected routes
+- Role-based middleware
+- Permission-based middleware
+- Input validation
+- Basic error handling
+- No hardcoded passwords in frontend
+- Store secrets in environment variables
+
+OUTPUT REQUIRED:
+- Working Replit app
+- Clear folder structure
+- Setup instructions
+- Environment variable instructions
+- Seed login credentials for testing
+- Clean modular code
+- No broken pages
+
+AFTER BUILD:
+Show me how to run the app and test:
+1. Super Admin login
+2. Create user
+3. Assign department
+4. Confirm non-admin cannot see Admin Panel
+5. Confirm department dashboard loads correctly
+
+
+
+
+
+
+
+Continue from Step 1.
+
+Build Step 2 only: Client & Supplier Portal Foundation + Document Upload.
+
+Do not build sales CRM, quotation, accounts, inventory, HR, email, AI, WhatsApp, or mobile apps yet.
+
+STEP 2 GOAL:
+Add client registration, supplier registration, portal login, document upload, and admin document verification.
+
+PLATFORMS:
+1. Web Admin Panel
+2. Client Portal
+3. Supplier Portal
+
+DESIGN:
+- Same dark blue + light blue theme
+- Premium Zoho-style UI
+- Clean forms
+- Modern tables
+- Status badges
+- Mobile responsive
+
+--------------------------------------------------
+1. CLIENT PORTAL
+--------------------------------------------------
+
+Client registration fields:
+- Client company name
+- Contact person name
+- Email
+- Phone
+- WhatsApp
+- Address
+- TRN/VAT number
+- Website
+- Company: Elite Prefab or Prime Max
+- Password
+- Confirm password
+
+Client document uploads:
+- Trade license
+- VAT certificate
+- Client LPO
+- Contract
+- Payment receipt
+- Project document
+- Other document
+
+Client portal dashboard:
+- My profile
+- My uploaded documents
+- Document approval status
+- Notifications placeholder
+- Future sections placeholder:
+  - Quotations
+  - Proforma invoices
+  - Tax invoices
+  - Delivery notes
+  - Projects
+  - Complaints
+
+--------------------------------------------------
+2. SUPPLIER PORTAL
+--------------------------------------------------
+
+Supplier registration fields:
+- Supplier company name
+- Contact person name
+- Email
+- Phone
+- WhatsApp
+- Address
+- TRN/VAT number
+- Website
+- Product/service category
+- Credit terms
+- Bank name
+- Account name
+- Account number
+- IBAN
+- Company: Elite Prefab or Prime Max
+- Password
+- Confirm password
+
+Supplier document uploads:
+- Trade license
+- VAT certificate
+- Bank letter
+- Product catalog
+- Quotation
+- Delivery note
+- Invoice
+- Other document
+
+Supplier portal dashboard:
+- My profile
+- My uploaded documents
+- Document approval status
+- Notifications placeholder
+- Future sections placeholder:
+  - RFQs
+  - Purchase orders
+  - Payment status
+  - Delivery schedules
+
+--------------------------------------------------
+3. DOCUMENT UPLOAD MODULE
+--------------------------------------------------
+
+Create shared document upload system for:
+- Clients
+- Suppliers
+
+Document fields:
+- Document ID
+- Owner type: Client or Supplier
+- Owner ID
+- Company
+- Document type
+- File name
+- File path
+- File size
+- File type
+- Expiry date
+- Upload date
+- Uploaded by
+- Status: Pending, Approved, Rejected, Expired
+- Verified by
+- Verified date
+- Rejection reason
+- Notes
+
+Features:
+- Upload PDF/JPG/PNG files
+- Preview uploaded files
+- Download documents
+- Delete document only by Admin
+- Client/Supplier can only view their own documents
+- Admin can view all documents
+- Admin can approve/reject documents
+- Admin can add rejection reason
+- Expiry date alert placeholder
+
+--------------------------------------------------
+4. ADMIN PANEL ADDITIONS
+--------------------------------------------------
+
+Add new Admin menus:
+- Clients
+- Suppliers
+- Documents Verification
+
+Admin can:
+- View all registered clients
+- View all registered suppliers
+- View uploaded documents
+- Approve documents
+- Reject documents with reason
+- Filter documents by:
+  - Company
+  - Owner type
+  - Document type
+  - Status
+  - Expiry date
+
+--------------------------------------------------
+5. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Super Admin sees all clients, suppliers, and documents
+- Company Admin sees only assigned company clients/suppliers
+- Client user sees only own portal and own documents
+- Supplier user sees only own portal and own documents
+- Department users cannot access client/supplier admin menus unless permission is granted
+- No user can view another user’s private uploaded documents
+
+--------------------------------------------------
+6. NOTIFICATIONS PLACEHOLDER
+--------------------------------------------------
+
+Create basic notification records for:
+- New client registered
+- New supplier registered
+- New document uploaded
+- Document approved
+- Document rejected
+
+Show notification placeholder in:
+- Admin dashboard
+- Client dashboard
+- Supplier dashboard
+
+--------------------------------------------------
+7. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- clients
+- suppliers
+- client_users
+- supplier_users
+- documents
+- document_types
+- document_verifications
+- notifications
+
+Update audit_logs to track:
+- Client registered
+- Supplier registered
+- Document uploaded
+- Document approved
+- Document rejected
+- Document downloaded
+
+--------------------------------------------------
+8. SEED DATA
+--------------------------------------------------
+
+Create sample:
+- 2 clients
+- 2 suppliers
+- Sample document types
+- Sample uploaded document records
+- Sample pending/approved/rejected statuses
+
+--------------------------------------------------
+9. SECURITY
+--------------------------------------------------
+
+- Validate file type
+- Validate file size
+- Store files securely
+- Prevent unauthorized file access
+- Protected download route
+- Password hashing for client/supplier login
+- JWT/session authentication
+- Input validation
+- Error handling
+- Audit log for document actions
+
+--------------------------------------------------
+10. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working client registration
+- Working supplier registration
+- Client login
+- Supplier login
+- Client document upload
+- Supplier document upload
+- Admin document verification screen
+- Document approval/rejection workflow
+- Clear setup instructions
+- No broken pages
+- Keep code modular and scalable
+
+AFTER BUILD:
+Show me how to test:
+1. Register client
+2. Register supplier
+3. Login client portal
+4. Upload client document
+5. Login supplier portal
+6. Upload supplier document
+7. Admin approves/rejects document
+8. Confirm client/supplier can only see their own documents
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 and Step 2.
+
+Build Step 3 only: Sales CRM Module.
+
+Do not build quotation, accounts, inventory, HR, email, AI, WhatsApp, or mobile apps yet. Only create the Sales CRM foundation.
+
+STEP 3 GOAL:
+Add complete Sales CRM module like Zoho CRM with Leads, Contacts, Deals, Follow-ups, Activities, and Sales Pipeline.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho-style CRM layout
+- Kanban pipeline
+- Clean tables
+- Filters
+- Status badges
+- Dashboard cards
+- Mobile responsive
+
+--------------------------------------------------
+1. SALES DASHBOARD
+--------------------------------------------------
+
+Sales dashboard must show:
+- My total leads
+- New leads
+- Follow-ups due today
+- Overdue follow-ups
+- My active deals
+- My won deals
+- My lost deals
+- Recent activities
+
+Admin sales overview must show:
+- Total leads company-wise
+- Leads by salesperson
+- Deals by stage
+- Follow-up pending list
+
+--------------------------------------------------
+2. LEADS MODULE
+--------------------------------------------------
+
+Lead fields:
+- Lead ID
+- Company: Elite Prefab or Prime Max
+- Lead name
+- Client company name
+- Contact person
+- Phone
+- WhatsApp
+- Email
+- Location
+- Requirement type
+- Lead source
+- Budget
+- Estimated quantity
+- Lead status
+- Assigned salesperson
+- Notes
+- Next follow-up date
+- Created by
+- Created date
+- Updated date
+
+Requirement types:
+- Site office
+- Labor camp
+- Porta cabin
+- Container office
+- Prefab villa
+- Mosque
+- School
+- Warehouse
+- Guard room
+- Toilet block
+- Majlis
+- Custom prefab structure
+
+Lead sources:
+- Website
+- Phone call
+- WhatsApp
+- Email
+- Referral
+- Existing client
+- Social media
+- Walk-in
+- Tender
+- Other
+
+Lead status:
+- New
+- Contacted
+- Qualified
+- Site Visit
+- Quotation Required
+- Quotation Sent
+- Negotiation
+- Won
+- Lost
+
+Features:
+- Add lead
+- Edit lead
+- View lead
+- Search lead
+- Filter by company/status/source/salesperson/date
+- Assign/reassign salesperson
+- Add notes
+- Add follow-up date
+- Users cannot delete leads
+- Only Admin can archive leads
+- Sales users see only leads assigned to them
+- Sales manager can see leads of their team if permission is granted
+- Admin sees all leads
+
+--------------------------------------------------
+3. CONTACTS MODULE
+--------------------------------------------------
+
+Contact fields:
+- Contact ID
+- Company
+- Client company
+- Contact person name
+- Designation
+- Phone
+- WhatsApp
+- Email
+- Address
+- Linked leads
+- Linked deals
+- Notes
+
+Features:
+- Add/edit/view contacts
+- Search/filter contacts
+- Link contact to lead/deal/client
+- Prevent duplicate contacts by phone/email
+
+--------------------------------------------------
+4. DEALS / OPPORTUNITIES MODULE
+--------------------------------------------------
+
+Deal fields:
+- Deal ID
+- Company
+- Deal name
+- Client company
+- Contact person
+- Linked lead
+- Project location
+- Project type
+- Expected value
+- Expected closing date
+- Deal stage
+- Probability %
+- Assigned salesperson
+- Notes
+- Created date
+
+Deal stages:
+- Inquiry
+- Qualified
+- Site Visit
+- Quotation Required
+- Quotation Sent
+- Negotiation
+- Approved
+- Won
+- Lost
+
+Features:
+- Create deal from lead
+- Add/edit/view deal
+- Kanban pipeline view
+- Drag-and-drop deal stage
+- Deal value summary
+- Search/filter deals
+- Admin sees all deals
+- Sales user sees only assigned deals
+
+--------------------------------------------------
+5. FOLLOW-UP MODULE
+--------------------------------------------------
+
+Follow-up fields:
+- Follow-up ID
+- Company
+- Related type: Lead / Contact / Deal
+- Related record ID
+- Follow-up type: Call / WhatsApp / Email / Meeting / Site Visit
+- Follow-up date
+- Follow-up time
+- Assigned user
+- Status: Pending / Completed / Overdue / Cancelled
+- Notes
+- Outcome
+- Next follow-up date
+
+Features:
+- Create follow-up from lead/contact/deal
+- Mark follow-up completed
+- Create next follow-up
+- Dashboard reminder for today
+- Overdue follow-up warning
+- Filter by user/status/date/company
+
+--------------------------------------------------
+6. ACTIVITIES / NOTES MODULE
+--------------------------------------------------
+
+Activity fields:
+- Activity ID
+- Company
+- Related type
+- Related record ID
+- Activity type: Note / Call / Email / WhatsApp / Meeting / Site Visit / Status Change
+- Description
+- Created by
+- Created date
+
+Features:
+- Add activity to lead/contact/deal
+- Show timeline on each record
+- Track status changes automatically
+- Track assignment changes automatically
+
+--------------------------------------------------
+7. SALES PIPELINE
+--------------------------------------------------
+
+Create visual pipeline:
+- Kanban board by deal stage
+- Cards show:
+  - Deal name
+  - Client
+  - Value
+  - Stage
+  - Salesperson
+  - Follow-up date
+- Drag card to change stage
+- Log stage change in activity timeline
+
+--------------------------------------------------
+8. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all sales data
+- Sales users see only assigned leads/deals/follow-ups
+- Sales manager sees team data only if permission assigned
+- Accounts/Finance/Procurement/Store/HR cannot see sales data unless permission is granted
+- Users cannot delete leads
+- Only Admin can archive leads/deals
+- All actions must be logged
+
+--------------------------------------------------
+9. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- leads
+- contacts
+- deals
+- followups
+- activities
+- lead_sources
+- requirement_types
+- deal_stages
+
+Update:
+- users
+- permissions
+- audit_logs
+- notifications
+
+--------------------------------------------------
+10. NOTIFICATIONS
+--------------------------------------------------
+
+Create notification records for:
+- Lead assigned
+- Lead status changed
+- Follow-up due today
+- Follow-up overdue
+- Deal stage changed
+- Deal won
+- Deal lost
+
+--------------------------------------------------
+11. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- 10 leads
+- 5 contacts
+- 5 deals
+- 8 follow-ups
+- Sales activity timeline examples
+- Lead sources
+- Requirement types
+- Deal stages
+
+--------------------------------------------------
+12. SECURITY + VALIDATION
+--------------------------------------------------
+
+- Validate phone/email
+- Prevent duplicate contact by phone/email
+- Prevent unauthorized data access
+- Protected routes
+- Permission-based menus
+- Audit log for create/edit/status change/archive
+- Clear error messages
+
+--------------------------------------------------
+13. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Sales Dashboard
+- Working Leads module
+- Working Contacts module
+- Working Deals module
+- Working Follow-ups module
+- Working Activities timeline
+- Working Kanban sales pipeline
+- Proper permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Login as Sales User
+2. Add lead
+3. Confirm Sales User sees only own leads
+4. Assign lead to another salesperson as Admin
+5. Convert lead to deal
+6. Add follow-up
+7. Check follow-up reminder
+8. Move deal in pipeline
+9. Confirm unauthorized departments cannot view sales data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1, Step 2, and Step 3.
+
+Build Step 4 only: Item Master + Customized Quotation Module.
+
+Do not build proforma invoice, tax invoice, delivery note, accounts, inventory stock movement, HR, email, AI, WhatsApp, or mobile apps yet.
+
+STEP 4 GOAL:
+Create a professional customized quotation system for prefab business with item/material master, technical details, terms & conditions, VAT calculation, approval workflow, and PDF preview.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho CRM-style professional layout
+- Premium quotation form
+- Clean item tables
+- Modern cards
+- Status badges
+- Mobile responsive
+
+--------------------------------------------------
+1. ITEM / MATERIAL MASTER
+--------------------------------------------------
+
+Create Item Master module.
+
+Item fields:
+- Item ID
+- Company: Elite Prefab / Prime Max / Both
+- Item code
+- Item name
+- Category
+- Subcategory
+- Description
+- Unit
+- Cost price
+- Selling price
+- VAT %
+- Material type
+- Labor cost
+- Installation cost
+- Delivery cost
+- Active/inactive status
+- Created by
+- Created date
+
+Item categories:
+- Steel structure
+- Sandwich panels
+- Roofing
+- Flooring
+- Doors
+- Windows
+- Electrical
+- Plumbing
+- AC
+- Paint
+- Hardware
+- Toilet fittings
+- Kitchen fittings
+- Labor
+- Delivery
+- Installation
+- Custom prefab item
+
+Features:
+- Add item
+- Edit item
+- View item
+- Search/filter item
+- Filter by category/company/status
+- Deactivate item instead of delete
+- Import placeholder for Excel/CSV
+- Export placeholder
+
+Access:
+- Admin can manage all items
+- Sales can view active items for quotation
+- Sales cannot edit item pricing unless permission is granted
+
+--------------------------------------------------
+2. QUOTATION MODULE
+--------------------------------------------------
+
+Create customized quotation module.
+
+Quotation fields:
+- Quotation ID
+- Quotation number
+- Company: Elite Prefab or Prime Max
+- Linked lead
+- Linked deal
+- Client name
+- Client company
+- Contact person
+- Phone
+- Email
+- Project name
+- Project location
+- Project type
+- Quotation date
+- Validity date
+- Prepared by
+- Approved by
+- Status
+
+Quotation status:
+- Draft
+- Submitted for Approval
+- Approved
+- Sent
+- Revised
+- Rejected
+- Cancelled
+
+Quotation number format:
+- PM-QTN-YYYY-0001 for Prime Max
+- EP-QTN-YYYY-0001 for Elite Prefab
+
+--------------------------------------------------
+3. QUOTATION TECHNICAL DETAILS
+--------------------------------------------------
+
+Add technical details section.
+
+Technical detail fields:
+- Building type
+- Total area
+- Length
+- Width
+- Height
+- Number of rooms
+- Wall panel type
+- Roof type
+- Flooring type
+- Door type
+- Window type
+- Electrical scope
+- Plumbing scope
+- AC scope
+- Installation included: Yes/No
+- Delivery included: Yes/No
+- Special notes
+
+This section must appear in quotation view and PDF preview.
+
+--------------------------------------------------
+4. QUOTATION ITEM TABLE
+--------------------------------------------------
+
+Quotation items must support:
+- Select item from Item Master
+- Add custom manual item
+- Description
+- Quantity
+- Unit
+- Rate
+- Discount %
+- VAT %
+- Amount before VAT
+- VAT amount
+- Total amount
+
+Features:
+- Add multiple items
+- Remove item only while quotation is Draft
+- Auto-calculate subtotal
+- Auto-calculate discount
+- Auto-calculate VAT
+- Auto-calculate grand total
+- Manual price override only with permission
+- Show cost margin only to Admin/Management, not normal Sales users
+
+--------------------------------------------------
+5. TERMS & CONDITIONS
+--------------------------------------------------
+
+Add Terms & Conditions section.
+
+Default terms:
+- Payment terms
+- Delivery period
+- Validity period
+- Warranty terms
+- Scope exclusions
+- Installation terms
+- Site access responsibility
+- Civil foundation responsibility
+- Authority approval responsibility
+- Variation order terms
+
+Features:
+- Admin can edit default terms
+- User can customize terms per quotation
+- Terms appear in quotation PDF preview
+
+--------------------------------------------------
+6. PAYMENT TERMS
+--------------------------------------------------
+
+Add payment terms options:
+- 100% advance
+- 75% advance / 25% before delivery
+- 50% advance / 50% before delivery
+- 25% advance / 75% before delivery
+- 50% advance / 25% progress / 25% before delivery
+- Custom payment terms
+
+--------------------------------------------------
+7. APPROVAL WORKFLOW
+--------------------------------------------------
+
+Quotation approval rules:
+- Sales user creates Draft quotation
+- Sales user submits for approval
+- Sales Manager / Admin approves or rejects
+- Once approved, quotation becomes locked
+- Approved quotation cannot be edited
+- Revision creates new version
+- Rejection requires reason
+
+Features:
+- Submit for approval button
+- Approve button
+- Reject button with reason
+- Revision history
+- Approval status timeline
+- Audit log for every approval action
+
+--------------------------------------------------
+8. QUOTATION PDF PREVIEW
+--------------------------------------------------
+
+Create PDF preview placeholder.
+
+PDF must include:
+- Company logo placeholder
+- Company letterhead placeholder
+- Quotation number
+- Date
+- Client details
+- Project details
+- Technical details
+- Item/material table
+- Subtotal
+- VAT
+- Grand total
+- Amount in words
+- Terms & conditions
+- Prepared by
+- Approved by
+- Signature placeholder
+- Company stamp placeholder
+- QR code placeholder
+
+Important:
+Quotation format must be flexible because later I will upload my Word quotation format and system must follow that format.
+
+--------------------------------------------------
+9. QUOTATION ACTIONS
+--------------------------------------------------
+
+Add actions:
+- Save draft
+- Submit for approval
+- Approve
+- Reject
+- Revise
+- Preview PDF
+- Print placeholder
+- Download PDF placeholder
+- Send by Email placeholder
+- Send by WhatsApp placeholder
+
+Do not build actual email/WhatsApp sending yet, only placeholders.
+
+--------------------------------------------------
+10. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all quotations
+- Sales users see only quotations created by them or assigned to them
+- Sales Manager sees team quotations if permission granted
+- Accounts cannot see quotation unless permission granted
+- Cost/margin visible only to Admin/Management
+- Approved quotation locked for editing
+- Only Admin can cancel quotation
+- Users cannot delete quotation records
+
+--------------------------------------------------
+11. NOTIFICATIONS
+--------------------------------------------------
+
+Create notification records for:
+- Quotation created
+- Quotation submitted for approval
+- Quotation approved
+- Quotation rejected
+- Quotation revised
+
+--------------------------------------------------
+12. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- item_master
+- item_categories
+- quotations
+- quotation_items
+- quotation_technical_details
+- quotation_terms
+- quotation_approvals
+- quotation_revisions
+- payment_terms
+
+Update:
+- leads
+- deals
+- users
+- permissions
+- notifications
+- audit_logs
+
+--------------------------------------------------
+13. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- 30 item master records
+- Item categories
+- Default terms and conditions
+- Default payment terms
+- 5 sample quotations
+- Sample approved quotation
+- Sample rejected quotation
+- Sample revised quotation
+
+--------------------------------------------------
+14. SECURITY + VALIDATION
+--------------------------------------------------
+
+Validate:
+- Quotation cannot be submitted without client
+- Quotation cannot be submitted without items
+- Quotation cannot be submitted without technical details
+- VAT calculation must be correct
+- Negative quantity/rate not allowed
+- Unauthorized users cannot view/edit quotations
+- Approved quotation cannot be edited
+- Audit log all changes
+
+--------------------------------------------------
+15. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Item Master
+- Working quotation creation
+- Working technical details section
+- Working terms & conditions
+- Working quotation item table
+- Working VAT/grand total calculation
+- Working approval workflow
+- Working PDF preview placeholder
+- Working access control
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Login as Admin and add item
+2. Login as Sales User and create quotation
+3. Add technical details
+4. Add items/materials
+5. Confirm VAT/grand total calculation
+6. Submit quotation for approval
+7. Approve quotation as Admin
+8. Confirm approved quotation is locked
+9. Create quotation revision
+10. Confirm unauthorized users cannot access quotation data
+
+
+
+
+
+
+
+
+Continue from Step 1, Step 2, Step 3, and Step 4.
+
+Build Step 5 only: Accounts Documents Foundation.
+
+Do not build full accounts, finance, procurement, inventory, HR, email, AI, WhatsApp, or mobile apps yet.
+
+STEP 5 GOAL:
+Create Proforma Invoice, Tax Invoice, Delivery Note, Client LPO, and Sales Order modules linked with approved quotations.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho CRM-style layout
+- Professional document pages
+- Clean tables
+- Status badges
+- PDF preview placeholders
+- Mobile responsive
+
+--------------------------------------------------
+1. PROFORMA INVOICE MODULE
+--------------------------------------------------
+
+Important:
+- Proforma Invoice must be generated from approved quotation.
+- Proforma Invoice must follow the same quotation format.
+- Proforma Invoice must NOT be visible in Sales Department.
+- Visible only to Admin, Accounts, and Finance.
+
+Fields:
+- PI ID
+- PI number
+- Company: Elite Prefab or Prime Max
+- Linked quotation
+- Client name
+- Client company
+- Project name
+- Project location
+- Items copied from quotation
+- Technical details copied from quotation
+- Terms & conditions copied from quotation
+- Subtotal
+- Discount
+- VAT
+- Grand total
+- Bank details
+- Prepared by
+- Approved by
+- Status
+- Created date
+
+PI number format:
+- PM-PI-YYYY-0001
+- EP-PI-YYYY-0001
+
+Status:
+- Draft
+- Submitted for Approval
+- Approved
+- Sent
+- Cancelled
+
+Features:
+- Create PI from approved quotation
+- Edit PI only while Draft
+- Submit for approval
+- Approve/reject
+- Lock after approval
+- PDF preview placeholder
+- Print/download placeholder
+- Revision history
+
+--------------------------------------------------
+2. TAX INVOICE MODULE
+--------------------------------------------------
+
+Create UAE VAT tax invoice system.
+
+Fields:
+- Tax Invoice ID
+- Tax invoice number
+- Company
+- Company TRN
+- Client TRN
+- Linked quotation
+- Linked PI
+- Linked Sales Order
+- Client name
+- Client company
+- Project name
+- Invoice date
+- Supply date
+- Items
+- Amount before VAT
+- VAT %
+- VAT amount
+- Grand total
+- Paid amount
+- Balance amount
+- Payment status
+- Prepared by
+- Approved by
+- Status
+
+Tax invoice number format:
+- PM-TAX-INV-YYYY-0001
+- EP-TAX-INV-YYYY-0001
+
+Status:
+- Draft
+- Issued
+- Partially Paid
+- Paid
+- Overdue
+- Cancelled
+
+Payment status:
+- Unpaid
+- Partial
+- Paid
+- Overdue
+
+Features:
+- Generate tax invoice from approved PI or quotation
+- VAT calculation
+- Partial payment tracking placeholder
+- Invoice aging calculation
+- Due date
+- Overdue alert placeholder
+- PDF preview placeholder
+- Print/download placeholder
+- Lock after issued
+- Cancel only by Admin
+
+--------------------------------------------------
+3. DELIVERY NOTE MODULE
+--------------------------------------------------
+
+Fields:
+- Delivery Note ID
+- Delivery note number
+- Company
+- Linked quotation
+- Linked PI
+- Linked tax invoice
+- Linked project placeholder
+- Client name
+- Project name
+- Delivery location
+- Vehicle number
+- Driver name
+- Driver phone
+- Delivered items
+- Quantity
+- Receiver name
+- Receiver phone
+- Receiver signature placeholder
+- Delivery date
+- Delivery status
+- Proof attachment placeholder
+- Prepared by
+- Approved by
+
+Delivery note number format:
+- PM-DN-YYYY-0001
+- EP-DN-YYYY-0001
+
+Status:
+- Draft
+- Ready for Delivery
+- Delivered
+- Partially Delivered
+- Cancelled
+
+Features:
+- Create delivery note from quotation/invoice
+- Copy items from document
+- Allow delivered quantity
+- Mark delivered
+- Signature placeholder
+- PDF preview placeholder
+- Print/download placeholder
+- Attach proof placeholder
+
+--------------------------------------------------
+4. CLIENT LPO MODULE
+--------------------------------------------------
+
+Fields:
+- Client LPO ID
+- Company
+- Linked quotation
+- Client name
+- Client company
+- LPO number
+- LPO date
+- LPO value
+- LPO attachment upload
+- Scope
+- Payment terms
+- Delivery terms
+- Status
+- Verified by
+- Verified date
+
+Status:
+- Pending Verification
+- Verified
+- Rejected
+- Converted to Sales Order
+
+Features:
+- Upload client LPO
+- Link LPO with quotation
+- Admin/Accounts verification
+- Reject with reason
+- Convert verified LPO to Sales Order
+
+--------------------------------------------------
+5. SALES ORDER MODULE
+--------------------------------------------------
+
+Sales Order is created after client LPO verification.
+
+Fields:
+- Sales Order ID
+- Sales order number
+- Company
+- Linked quotation
+- Linked client LPO
+- Client name
+- Project name
+- Order value
+- Items
+- Delivery schedule
+- Payment terms
+- Status
+- Created by
+- Approved by
+
+Sales order number format:
+- PM-SO-YYYY-0001
+- EP-SO-YYYY-0001
+
+Status:
+- Draft
+- Approved
+- In Progress
+- Completed
+- Cancelled
+
+Features:
+- Convert verified Client LPO to Sales Order
+- Sales Order becomes future base for Project module
+- Lock approved Sales Order
+- PDF preview placeholder
+
+--------------------------------------------------
+6. DOCUMENT PDF PREVIEW
+--------------------------------------------------
+
+All documents must have PDF preview placeholder:
+- Proforma Invoice
+- Tax Invoice
+- Delivery Note
+- Client LPO summary
+- Sales Order
+
+PDF preview must show:
+- Company logo placeholder
+- Letterhead placeholder
+- Document number
+- Client details
+- Project details
+- Item table
+- VAT
+- Grand total
+- Amount in words
+- Terms
+- Prepared by
+- Approved by
+- Signature placeholder
+- Stamp placeholder
+- QR code placeholder
+
+--------------------------------------------------
+7. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all documents
+- Accounts sees PI, Tax Invoice, Delivery Note, Client LPO
+- Finance sees PI, Tax Invoice, payment status
+- Sales cannot see Proforma Invoice
+- Sales can see Client LPO status only if permission granted
+- Approved/issued documents are locked
+- Only Admin can cancel documents
+- Users cannot delete documents
+
+--------------------------------------------------
+8. NOTIFICATIONS
+--------------------------------------------------
+
+Create notifications for:
+- PI created
+- PI submitted for approval
+- PI approved/rejected
+- Tax invoice issued
+- Invoice overdue
+- Delivery note ready
+- Delivery marked completed
+- Client LPO uploaded
+- Client LPO verified/rejected
+- Sales Order created
+
+--------------------------------------------------
+9. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- proforma_invoices
+- proforma_invoice_items
+- tax_invoices
+- tax_invoice_items
+- delivery_notes
+- delivery_note_items
+- client_lpos
+- sales_orders
+- sales_order_items
+- document_approvals
+- document_revisions
+- payment_status_logs
+
+Update:
+- quotations
+- documents
+- notifications
+- audit_logs
+- permissions
+
+--------------------------------------------------
+10. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- 3 proforma invoices
+- 3 tax invoices
+- 3 delivery notes
+- 2 client LPOs
+- 2 sales orders
+- Mixed statuses for testing
+
+--------------------------------------------------
+11. VALIDATION
+--------------------------------------------------
+
+Rules:
+- PI cannot be created from unapproved quotation
+- Tax invoice cannot be issued without approved source document
+- Delivery note cannot be marked delivered without receiver name
+- Client LPO value must be entered
+- Sales Order cannot be created from unverified LPO
+- Approved documents cannot be edited
+- Cancel requires reason
+- All status changes must be logged
+
+--------------------------------------------------
+12. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- PI created/approved/rejected
+- Tax invoice issued/cancelled
+- Delivery note created/delivered
+- Client LPO uploaded/verified/rejected
+- Sales Order created/approved
+- Document printed/downloaded placeholder
+- Document cancelled
+
+--------------------------------------------------
+13. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Proforma Invoice module
+- Working Tax Invoice module
+- Working Delivery Note module
+- Working Client LPO module
+- Working Sales Order module
+- PDF preview placeholders
+- Approval/locking workflow
+- Correct access control
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Create PI from approved quotation
+2. Confirm Sales Department cannot see PI
+3. Approve PI
+4. Create Tax Invoice
+5. Track partial payment placeholder
+6. Create Delivery Note
+7. Upload Client LPO
+8. Verify LPO
+9. Convert LPO to Sales Order
+10. Confirm issued/approved documents are locked
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 5.
+
+Build Step 6 only: Accounts + Expenses + Finance + Payment Tracking.
+
+Do not build procurement, inventory, HR, email, AI, WhatsApp, cheque printing, or mobile apps yet.
+
+STEP 6 GOAL:
+Create Accounts and Finance modules for bills, expenses, expense categories, receipts, vouchers, ledgers, payment in/out, payment reminders, and finance dashboard.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho Books / Zoho CRM style
+- Clean financial dashboards
+- Tables with filters
+- Status badges
+- Upload cards
+- Mobile responsive
+
+--------------------------------------------------
+1. ACCOUNTS DASHBOARD
+--------------------------------------------------
+
+Show:
+- Total invoices
+- Total receivables
+- Total expenses
+- Pending expense approvals
+- Bills pending payment
+- VAT summary
+- Monthly expense chart placeholder
+- Recent bills/expenses
+- Overdue invoices
+
+--------------------------------------------------
+2. FINANCE DASHBOARD
+--------------------------------------------------
+
+Show:
+- Payment IN
+- Payment OUT
+- Cash flow summary
+- Pending receivables
+- Pending payables
+- Advance payment reminders
+- Progress payment reminders
+- Final payment reminders
+- Bank balance placeholder
+- Upcoming payment alerts
+
+--------------------------------------------------
+3. EXPENSE CATEGORY MODULE
+--------------------------------------------------
+
+Expense categories must be customizable.
+
+Default categories:
+- Material Purchase
+- Transport
+- Diesel / Fuel
+- Vehicle Maintenance
+- Staff Salary
+- Labor Wages
+- Office Rent
+- Utilities
+- Internet / Telephone
+- Office Supplies
+- Factory Expenses
+- Site Expenses
+- Accommodation
+- Food / Mess
+- Tools & Equipment
+- Subcontractor Payment
+- Bank Charges
+- Government Fees
+- Maintenance
+- Miscellaneous
+
+Fields:
+- Category ID
+- Company
+- Category name
+- Description
+- Parent category
+- Active/inactive status
+- Created by
+- Created date
+
+Features:
+- Add/edit/view categories
+- Deactivate category instead of delete
+- Admin and Accounts Admin can manage categories
+- Accounts User can select category only
+
+--------------------------------------------------
+4. EXPENSE MODULE
+--------------------------------------------------
+
+Expense fields:
+- Expense ID
+- Company
+- Expense category
+- Supplier/vendor
+- Bill number
+- Bill date
+- Expense date
+- Description
+- Amount before VAT
+- VAT %
+- VAT amount
+- Total amount
+- Payment mode: Cash / Bank Transfer / Cheque / Credit
+- Paid by
+- Payment status: Unpaid / Partial / Paid
+- Approval status: Draft / Submitted / Approved / Rejected / Paid
+- Attachment upload: PDF/JPG/PNG
+- Notes
+- Created by
+- Approved by
+
+Features:
+- Add expense
+- Edit expense while Draft
+- Submit for approval
+- Approve/reject expense
+- Upload bill/receipt
+- Preview attachment
+- Filter by category/company/date/status/vendor
+- Expense cannot be deleted by user
+- Admin can archive/cancel with reason
+- Approved expense locked
+
+--------------------------------------------------
+5. BILLS MODULE
+--------------------------------------------------
+
+Bill fields:
+- Bill ID
+- Company
+- Supplier/vendor
+- Bill number
+- Bill date
+- Due date
+- Category
+- Amount before VAT
+- VAT %
+- VAT amount
+- Total amount
+- Paid amount
+- Balance amount
+- Payment status
+- Approval status
+- Attachment upload
+- Notes
+
+Features:
+- Upload supplier bills
+- Track due date
+- Track partial payments
+- Mark paid
+- Overdue alert placeholder
+- Link bill to supplier placeholder
+- Link bill to purchase order placeholder for future phase
+
+--------------------------------------------------
+6. PAYMENT RECEIPTS MODULE
+--------------------------------------------------
+
+For payments received from clients.
+
+Fields:
+- Receipt ID
+- Company
+- Client
+- Linked tax invoice
+- Receipt number
+- Receipt date
+- Amount received
+- Payment mode: Cash / Bank Transfer / Cheque
+- Bank account
+- Reference number
+- Notes
+- Attachment upload
+- Created by
+
+Features:
+- Record client payment
+- Link to tax invoice
+- Update invoice paid/balance amount
+- Support partial payment
+- Generate receipt PDF preview placeholder
+
+--------------------------------------------------
+7. PAYMENT VOUCHERS MODULE
+--------------------------------------------------
+
+For payments made to suppliers/vendors.
+
+Fields:
+- Voucher ID
+- Company
+- Supplier/vendor
+- Linked bill/expense
+- Voucher number
+- Voucher date
+- Amount paid
+- Payment mode: Cash / Bank Transfer / Cheque
+- Bank account
+- Reference number
+- Notes
+- Attachment upload
+- Created by
+- Approved by
+
+Features:
+- Create payment voucher
+- Link to bill/expense
+- Update bill/expense payment status
+- Approval workflow
+- PDF preview placeholder
+
+--------------------------------------------------
+8. CUSTOMER LEDGER
+--------------------------------------------------
+
+Customer ledger must show:
+- Client name
+- Opening balance placeholder
+- Tax invoices
+- Payments received
+- Debit/credit entries
+- Balance
+- Date-wise transaction history
+- Company-wise filter
+
+Features:
+- View ledger
+- Export placeholder
+- Print placeholder
+
+--------------------------------------------------
+9. SUPPLIER LEDGER
+--------------------------------------------------
+
+Supplier ledger must show:
+- Supplier/vendor name
+- Opening balance placeholder
+- Bills
+- Expenses
+- Payments made
+- Debit/credit entries
+- Balance
+- Date-wise transaction history
+- Company-wise filter
+
+Features:
+- View ledger
+- Export placeholder
+- Print placeholder
+
+--------------------------------------------------
+10. PAYMENT REMINDERS
+--------------------------------------------------
+
+Create reminder types:
+- Advance payment reminder
+- Progress payment reminder
+- Final payment reminder
+- Invoice overdue reminder
+- Supplier payment due reminder
+
+Fields:
+- Reminder ID
+- Company
+- Related type: Invoice / Bill / Expense / Client / Supplier
+- Related ID
+- Reminder type
+- Reminder date
+- Assigned user
+- Status: Pending / Completed / Overdue / Cancelled
+- Notes
+
+Features:
+- Create reminder
+- Auto-create placeholder reminder based on due date
+- Show reminders on Finance dashboard
+- Mark completed
+- Overdue highlight
+
+--------------------------------------------------
+11. BANK ACCOUNTS MODULE
+--------------------------------------------------
+
+Bank account fields:
+- Bank Account ID
+- Company
+- Bank name
+- Account name
+- Account number
+- IBAN
+- Branch
+- Currency
+- Opening balance placeholder
+- Active/inactive status
+
+Features:
+- Add/edit/view bank accounts
+- Used in receipts and vouchers
+- Admin/Finance can manage
+- Accounts can view if permission granted
+
+--------------------------------------------------
+12. VAT REPORT PLACEHOLDER
+--------------------------------------------------
+
+VAT report must show:
+- Output VAT from tax invoices
+- Input VAT from expenses/bills
+- Net VAT payable
+- Date range filter
+- Company filter
+
+--------------------------------------------------
+13. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all accounts and finance data
+- Accounts Department sees expenses, bills, invoices, receipts, vouchers, ledgers
+- Finance Department sees payments, cash flow, reminders, bank accounts
+- Accounts User can create expenses/bills but cannot approve
+- Accounts Admin can approve expenses
+- Finance Manager can approve payments
+- Sales cannot see accounts/finance unless permission granted
+- Every user sees only assigned company data
+- Approved financial documents are locked
+
+--------------------------------------------------
+14. NOTIFICATIONS
+--------------------------------------------------
+
+Create notifications for:
+- Expense submitted
+- Expense approved/rejected
+- Bill uploaded
+- Bill due soon
+- Bill overdue
+- Payment received
+- Payment voucher submitted
+- Payment voucher approved
+- Invoice overdue
+- Payment reminder due
+
+--------------------------------------------------
+15. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- expense_categories
+- expenses
+- bills
+- payment_receipts
+- payment_vouchers
+- customer_ledgers
+- supplier_ledgers
+- payment_reminders
+- bank_accounts
+- vat_report_entries
+
+Update:
+- tax_invoices
+- suppliers placeholder
+- clients
+- documents
+- notifications
+- audit_logs
+- permissions
+
+--------------------------------------------------
+16. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- Expense categories
+- 10 expenses
+- 5 bills
+- 5 payment receipts
+- 5 payment vouchers
+- 3 bank accounts
+- Customer ledger sample
+- Supplier ledger sample
+- Payment reminders
+
+--------------------------------------------------
+17. VALIDATION
+--------------------------------------------------
+
+Rules:
+- Expense cannot be submitted without category
+- Bill cannot be submitted without bill number/vendor
+- VAT must calculate correctly
+- Payment cannot exceed outstanding balance
+- Approved expenses cannot be edited
+- Voucher approval required before marking payment final
+- Unauthorized users cannot view accounts/finance pages
+- Attachment file type and size must be validated
+
+--------------------------------------------------
+18. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- Expense created/submitted/approved/rejected
+- Bill uploaded
+- Receipt created
+- Voucher created/approved
+- Payment status changed
+- Bank account created/updated
+- Ledger viewed placeholder
+- VAT report generated placeholder
+
+--------------------------------------------------
+19. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Accounts dashboard
+- Working Finance dashboard
+- Expense category management
+- Expense entry with upload
+- Bills module with upload
+- Payment receipts
+- Payment vouchers
+- Customer ledger
+- Supplier ledger
+- Payment reminders
+- Bank accounts
+- VAT report placeholder
+- Correct permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Login as Accounts User and create expense
+2. Submit expense for approval
+3. Login as Accounts Admin/Admin and approve expense
+4. Upload supplier bill
+5. Create payment receipt against tax invoice
+6. Confirm invoice balance updates
+7. Create payment voucher against bill
+8. Confirm Finance dashboard updates
+9. Check customer/supplier ledger
+10. Confirm Sales cannot access Accounts/Finance pages
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 6.
+
+Build Step 7 only: Procurement + Supplier Management + Purchase Orders.
+
+Do not build inventory stock movement, store, HR, email, AI, WhatsApp, cheque printing, or mobile apps yet.
+
+STEP 7 GOAL:
+Create procurement system with suppliers, purchase requests, RFQs, supplier quotations, comparison, purchase orders, approval workflow, and payment terms.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho-style procurement dashboard
+- Clean tables
+- Status badges
+- Approval cards
+- Mobile responsive
+
+--------------------------------------------------
+1. PROCUREMENT DASHBOARD
+--------------------------------------------------
+
+Show:
+- Total purchase requests
+- Pending approvals
+- RFQs sent
+- Supplier quotations received
+- Purchase orders issued
+- Pending deliveries
+- Pending supplier payments
+- Low stock request placeholder
+- Recent procurement activities
+
+--------------------------------------------------
+2. SUPPLIER MANAGEMENT MODULE
+--------------------------------------------------
+
+Supplier fields:
+- Supplier ID
+- Company: Elite Prefab or Prime Max
+- Supplier company name
+- Contact person
+- Phone
+- WhatsApp
+- Email
+- Address
+- TRN/VAT number
+- Website
+- Product/service category
+- Credit terms
+- Bank name
+- Account name
+- Account number
+- IBAN
+- Status: Active / Inactive / Blacklisted
+- Created by
+- Created date
+
+Features:
+- Add supplier
+- Edit supplier
+- View supplier
+- Search/filter suppliers
+- Prevent duplicate supplier by TRN/email/phone
+- Upload supplier documents placeholder
+- Supplier ledger link placeholder
+- Supplier performance placeholder
+
+--------------------------------------------------
+3. PURCHASE REQUEST MODULE
+--------------------------------------------------
+
+Purchase request fields:
+- PR ID
+- PR number
+- Company
+- Requested by
+- Department
+- Project placeholder
+- Required date
+- Priority: Low / Medium / High / Urgent
+- Request reason
+- Items/materials
+- Quantity
+- Unit
+- Estimated cost
+- Status
+- Created date
+
+PR number format:
+- PM-PR-YYYY-0001
+- EP-PR-YYYY-0001
+
+Status:
+- Draft
+- Submitted
+- Under Review
+- Approved
+- Rejected
+- Converted to RFQ
+- Cancelled
+
+Features:
+- Create purchase request
+- Add multiple items
+- Submit for approval
+- Admin/GM approval
+- Reject with reason
+- Convert approved PR to RFQ
+- Users see only their own PRs unless permission granted
+
+--------------------------------------------------
+4. RFQ MODULE
+--------------------------------------------------
+
+RFQ fields:
+- RFQ ID
+- RFQ number
+- Company
+- Linked PR
+- Supplier list
+- Items
+- Quantity
+- Required delivery date
+- Payment terms requested
+- Notes
+- Status
+
+RFQ number format:
+- PM-RFQ-YYYY-0001
+- EP-RFQ-YYYY-0001
+
+Status:
+- Draft
+- Sent
+- Quotation Received
+- Closed
+- Cancelled
+
+Features:
+- Create RFQ from approved PR
+- Select multiple suppliers
+- Generate RFQ PDF preview placeholder
+- Send RFQ placeholder
+- Track supplier responses
+- Link supplier quotations
+
+--------------------------------------------------
+5. SUPPLIER QUOTATION MODULE
+--------------------------------------------------
+
+Supplier quotation fields:
+- Supplier quotation ID
+- Company
+- Linked RFQ
+- Supplier
+- Quotation number
+- Quotation date
+- Items
+- Unit price
+- VAT
+- Total
+- Delivery time
+- Payment terms
+- Attachment upload
+- Notes
+- Status
+
+Status:
+- Received
+- Under Review
+- Selected
+- Rejected
+
+Features:
+- Add supplier quotation manually
+- Upload supplier quotation attachment
+- Compare quotations
+- Select winning supplier quotation
+- Log reason for selection
+
+--------------------------------------------------
+6. QUOTATION COMPARISON MODULE
+--------------------------------------------------
+
+Comparison must show:
+- Supplier name
+- Unit price
+- VAT
+- Total price
+- Delivery time
+- Payment terms
+- Warranty/notes
+- Selection reason
+
+Features:
+- Side-by-side comparison
+- Highlight lowest price
+- Highlight fastest delivery
+- Mark selected supplier
+- Approval required before PO
+
+--------------------------------------------------
+7. PURCHASE ORDER MODULE
+--------------------------------------------------
+
+Purchase Order must look like quotation-style document.
+
+PO fields:
+- PO ID
+- PO number
+- Company
+- Linked PR
+- Linked RFQ
+- Selected supplier
+- Supplier details
+- Delivery location
+- Items
+- Quantity
+- Unit
+- Rate
+- VAT
+- Grand total
+- Payment terms
+- Delivery terms
+- Prepared by
+- Approved by
+- Status
+
+PO number format:
+- PM-PO-YYYY-0001
+- EP-PO-YYYY-0001
+
+Status:
+- Draft
+- Submitted for Approval
+- Approved
+- Issued
+- Partially Received
+- Received
+- Cancelled
+
+Features:
+- Create PO from selected supplier quotation
+- Add/edit items while Draft
+- Submit for approval
+- GM/Admin approval
+- Lock after approval
+- PDF preview placeholder
+- Print/download placeholder
+- Send to supplier placeholder
+- Link PO to future store receiving
+- Link PO to supplier bill/payment in accounts
+
+--------------------------------------------------
+8. PAYMENT TERMS
+--------------------------------------------------
+
+Payment terms options:
+Advance payment:
+- 25%
+- 50%
+- 75%
+- 100%
+
+After delivery:
+- 25%
+- 50%
+- 100%
+
+Credit:
+- Open Credit
+- 15 days
+- 30 days
+- 60 days
+- 90 days
+
+Payment mode:
+- Cash
+- Bank Transfer
+- Cheque
+
+Custom payment terms allowed.
+
+--------------------------------------------------
+9. APPROVAL WORKFLOW
+--------------------------------------------------
+
+Approval rules:
+- Purchase request requires Admin/GM approval
+- RFQ can be sent only after PR approval
+- Supplier selection requires approval
+- PO requires approval before issue
+- Approved PO becomes locked
+- Cancel PO requires Admin permission and reason
+
+--------------------------------------------------
+10. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all procurement data
+- Procurement users see only procurement module
+- Procurement users can create PR/RFQ/PO based on permission
+- Procurement can view inventory stock placeholder but cannot edit stock
+- Store cannot edit procurement documents
+- Accounts can view approved PO for supplier billing if permission granted
+- Other departments cannot access procurement unless allowed
+- Users cannot delete procurement documents
+
+--------------------------------------------------
+11. NOTIFICATIONS
+--------------------------------------------------
+
+Create notifications for:
+- Purchase request submitted
+- Purchase request approved/rejected
+- RFQ created
+- Supplier quotation received
+- Supplier selected
+- PO submitted for approval
+- PO approved/rejected
+- PO issued
+- PO delivery pending
+
+--------------------------------------------------
+12. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- suppliers
+- supplier_documents
+- purchase_requests
+- purchase_request_items
+- rfqs
+- rfq_suppliers
+- rfq_items
+- supplier_quotations
+- supplier_quotation_items
+- quotation_comparisons
+- purchase_orders
+- purchase_order_items
+- procurement_approvals
+- payment_terms_master
+
+Update:
+- users
+- permissions
+- documents
+- notifications
+- audit_logs
+
+--------------------------------------------------
+13. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- 10 suppliers
+- 5 purchase requests
+- 3 RFQs
+- 5 supplier quotations
+- 2 comparison examples
+- 3 purchase orders
+- Payment terms master data
+
+--------------------------------------------------
+14. VALIDATION
+--------------------------------------------------
+
+Rules:
+- PR cannot be submitted without items
+- RFQ cannot be created from unapproved PR
+- Supplier quotation cannot be added without linked RFQ
+- PO cannot be created without selected supplier quotation
+- PO cannot be issued without approval
+- Payment terms required before PO approval
+- Duplicate supplier check by TRN/email/phone
+- Approved PO cannot be edited
+- Unauthorized users cannot view procurement pages
+
+--------------------------------------------------
+15. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- Supplier created/updated
+- PR created/submitted/approved/rejected
+- RFQ created/sent
+- Supplier quotation uploaded
+- Supplier selected
+- PO created/submitted/approved/issued/cancelled
+- Payment terms changed
+
+--------------------------------------------------
+16. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Procurement dashboard
+- Working Supplier management
+- Working Purchase Request module
+- Working RFQ module
+- Working Supplier Quotation module
+- Working Comparison module
+- Working Purchase Order module
+- Approval workflow
+- Correct permissions
+- PDF preview placeholders
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Login as Procurement User
+2. Create supplier
+3. Create purchase request
+4. Submit PR for approval
+5. Approve PR as Admin/GM
+6. Convert PR to RFQ
+7. Add supplier quotations
+8. Compare supplier quotations
+9. Select supplier
+10. Create PO
+11. Approve PO
+12. Confirm approved PO is locked
+13. Confirm Procurement can view stock placeholder but cannot edit stock
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 7.
+
+Build Step 8 only: Inventory + Store + Stock Take.
+
+Do not build projects, production, HR, email, AI, WhatsApp, cheque printing, or mobile apps yet.
+
+STEP 8 GOAL:
+Create inventory management, separate store login, stock in/out, material issue/return, stock transfer, damage entry, stock adjustments, and stock take system.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho Inventory-style UI
+- Clean stock tables
+- Status badges
+- Stock cards
+- Mobile responsive
+
+--------------------------------------------------
+1. INVENTORY DASHBOARD
+--------------------------------------------------
+
+Show:
+- Total inventory items
+- Current stock value
+- Low stock items
+- Out of stock items
+- Stock in today
+- Stock out today
+- Pending stock adjustments
+- Recent stock movements
+
+--------------------------------------------------
+2. INVENTORY ITEM MASTER
+--------------------------------------------------
+
+Inventory item fields:
+- Item ID
+- Company: Elite Prefab / Prime Max / Both
+- Item code / SKU
+- Item name
+- Category
+- Subcategory
+- Description
+- Unit
+- Opening stock
+- Current stock
+- Minimum stock level
+- Maximum stock level
+- Average cost
+- Selling price
+- Warehouse/location
+- Rack/bin location
+- Status: Active / Inactive
+- Created by
+- Created date
+
+Categories:
+- Steel
+- Sandwich panels
+- Roofing
+- Flooring
+- Doors
+- Windows
+- Electrical
+- Plumbing
+- AC
+- Paint
+- Hardware
+- Toilet fittings
+- Kitchen fittings
+- Tools
+- Consumables
+- Finished cabins
+- Raw materials
+- Custom items
+
+Features:
+- Add inventory item
+- Edit inventory item
+- View inventory item
+- Search/filter items
+- Filter by company/category/location/status
+- Low stock alert
+- Out of stock alert
+- Deactivate item instead of delete
+- Import/export placeholder
+
+--------------------------------------------------
+3. WAREHOUSE / LOCATION MODULE
+--------------------------------------------------
+
+Fields:
+- Warehouse ID
+- Company
+- Warehouse name
+- Location/address
+- Store manager
+- Status
+
+Features:
+- Add/edit/view warehouses
+- Link stock to warehouse/location
+- Location-wise stock report
+
+--------------------------------------------------
+4. STORE MODULE — SEPARATE LOGIN
+--------------------------------------------------
+
+Store users:
+- Store Manager
+- Storekeeper
+- Data Entry Operator
+
+Rules:
+- Store Manager can manage stock entries and pricing if permission granted
+- Storekeeper can create stock in/out entries
+- Data Entry Operator can only add data and quantity
+- Procurement can view stock but cannot edit
+- Admin can access everything
+
+--------------------------------------------------
+5. STOCK ENTRY MODULE
+--------------------------------------------------
+
+Stock entry types:
+- Stock In
+- Stock Out
+- Material Issue
+- Material Return
+- Stock Transfer
+- Damage Entry
+- Adjustment Entry
+
+Common fields:
+- Entry ID
+- Entry number
+- Company
+- Entry type
+- Item
+- Quantity
+- Unit
+- Warehouse/location
+- Reference document
+- Reference number
+- Related PO placeholder
+- Related project placeholder
+- Notes
+- Created by
+- Approved by
+- Status
+- Created date
+
+Entry number format:
+- PM-STK-YYYY-0001
+- EP-STK-YYYY-0001
+
+Status:
+- Draft
+- Submitted
+- Approved
+- Rejected
+- Posted
+- Cancelled
+
+--------------------------------------------------
+6. STOCK IN
+--------------------------------------------------
+
+Fields:
+- Supplier
+- Linked PO placeholder
+- Delivery note number
+- Received quantity
+- Received by
+- Received date
+- Attachment upload placeholder
+
+Rules:
+- Stock increases only after approval/posting
+- Can be linked to approved PO from procurement
+
+--------------------------------------------------
+7. STOCK OUT
+--------------------------------------------------
+
+Fields:
+- Issued to
+- Department
+- Project placeholder
+- Purpose
+- Issued quantity
+- Issued by
+- Received by
+
+Rules:
+- Stock decreases only after approval/posting
+- Cannot issue more than available stock
+- Negative stock not allowed
+
+--------------------------------------------------
+8. MATERIAL ISSUE / RETURN
+--------------------------------------------------
+
+Material Issue:
+- Issue material to project/production/department
+
+Material Return:
+- Return unused material to store
+
+Rules:
+- Issue decreases stock
+- Return increases stock
+- Must maintain full activity history
+
+--------------------------------------------------
+9. STOCK TRANSFER
+--------------------------------------------------
+
+Fields:
+- From warehouse
+- To warehouse
+- Item
+- Quantity
+- Transfer date
+- Transfer status
+
+Rules:
+- Decrease from source warehouse
+- Increase destination warehouse
+- Transfer requires approval if enabled
+
+--------------------------------------------------
+10. DAMAGE ENTRY
+--------------------------------------------------
+
+Fields:
+- Item
+- Quantity damaged
+- Damage reason
+- Photo upload placeholder
+- Responsible person
+- Approved by
+
+Rules:
+- Damage reduces usable stock only after approval
+- Audit log required
+
+--------------------------------------------------
+11. STOCK ADJUSTMENT
+--------------------------------------------------
+
+Fields:
+- Item
+- System quantity
+- Physical quantity
+- Difference
+- Reason
+- Approved by Admin
+
+Rules:
+- Only Admin/Inventory Manager can approve adjustment
+- Adjustment cannot be posted without approval
+- Full audit log required
+
+--------------------------------------------------
+12. STOCK TAKE MODULE
+--------------------------------------------------
+
+Stock take fields:
+- Stock Take ID
+- Company
+- Warehouse/location
+- Date
+- Counted by
+- Verified by
+- Status
+
+Status:
+- Draft
+- In Progress
+- Submitted
+- Verified
+- Adjustment Pending
+- Completed
+
+Features:
+- Create stock take session
+- Add counted items
+- Compare system stock vs physical stock
+- Show shortage/excess
+- Generate adjustment request
+- Admin approval required for adjustment
+- Stock take report placeholder
+
+--------------------------------------------------
+13. STOCK MOVEMENT HISTORY
+--------------------------------------------------
+
+Every item must show full movement timeline:
+- Opening stock
+- Stock in
+- Stock out
+- Material issue
+- Material return
+- Transfer
+- Damage
+- Adjustment
+- Current balance
+
+--------------------------------------------------
+14. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all inventory/store data
+- Inventory Department manages item master and stock reports
+- Store Department creates stock entries
+- Store Manager can approve entries if permission granted
+- Procurement can view inventory stock only
+- Procurement cannot edit stock
+- Sales/Accounts/Finance/HR cannot access inventory unless permission granted
+- Data Entry Operator cannot approve or edit pricing
+- Users cannot delete stock records
+
+--------------------------------------------------
+15. NOTIFICATIONS
+--------------------------------------------------
+
+Create notifications for:
+- Low stock
+- Out of stock
+- Stock entry submitted
+- Stock entry approved/rejected
+- Stock adjustment requested
+- Stock adjustment approved/rejected
+- Stock take submitted
+- Damage entry submitted
+
+--------------------------------------------------
+16. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- inventory_items
+- inventory_categories
+- warehouses
+- stock_entries
+- stock_entry_items
+- stock_movements
+- stock_transfers
+- damage_entries
+- stock_adjustments
+- stock_take_sessions
+- stock_take_items
+- stock_take_adjustments
+
+Update:
+- purchase_orders
+- users
+- permissions
+- notifications
+- audit_logs
+
+--------------------------------------------------
+17. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- 50 inventory items
+- Inventory categories
+- 2 warehouses
+- 10 stock entries
+- 5 stock movements
+- 2 stock take sessions
+- Low stock sample items
+- Out of stock sample items
+
+--------------------------------------------------
+18. VALIDATION
+--------------------------------------------------
+
+Rules:
+- Item code/SKU must be unique
+- Stock out cannot exceed available stock
+- Negative stock not allowed
+- Adjustment requires reason
+- Damage entry requires reason
+- Stock take adjustment requires Admin approval
+- Posted stock entries cannot be edited
+- Unauthorized users cannot view/edit inventory
+- File uploads must validate type and size
+
+--------------------------------------------------
+19. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- Inventory item created/updated
+- Stock in created/posted
+- Stock out created/posted
+- Material issued/returned
+- Stock transferred
+- Damage entry posted
+- Stock adjustment approved
+- Stock take completed
+- Low stock alert generated
+
+--------------------------------------------------
+20. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Inventory dashboard
+- Working Inventory Item Master
+- Working Warehouse module
+- Working Store module
+- Working Stock In
+- Working Stock Out
+- Working Material Issue/Return
+- Working Stock Transfer
+- Working Damage Entry
+- Working Stock Adjustment
+- Working Stock Take
+- Working stock movement history
+- Correct permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Login as Inventory Manager and add item
+2. Login as Storekeeper and create Stock In
+3. Approve/post Stock In
+4. Confirm stock increases
+5. Create Stock Out
+6. Confirm stock cannot go negative
+7. Create Material Issue
+8. Create Material Return
+9. Create Stock Take
+10. Compare physical vs system stock
+11. Request adjustment
+12. Approve adjustment as Admin
+13. Confirm Procurement can only view stock and cannot edit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 8.
+
+Build Step 9 only: Projects + Production + Work Orders + QC.
+
+Do not build HR, attendance, email, AI, WhatsApp, cheque printing, or mobile apps yet.
+
+STEP 9 GOAL:
+Create project management and production system. Approved Sales Orders should convert into projects. Projects must track production, procurement, material requests, work orders, job cards, QC, delivery readiness, and handover.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho Projects-style layout
+- Project cards
+- Kanban status board
+- Timeline view placeholder
+- Clean tables
+- Status badges
+- Mobile responsive
+
+--------------------------------------------------
+1. PROJECT DASHBOARD
+--------------------------------------------------
+
+Show:
+- Total projects
+- Running projects
+- On-site work projects
+- Finished projects
+- Delivered projects
+- Handover projects
+- Delayed projects
+- Projects by company
+- Projects by status
+- Recent project activities
+
+--------------------------------------------------
+2. PROJECT CREATION
+--------------------------------------------------
+
+Projects must be created from approved Sales Order.
+
+Project fields:
+- Project ID
+- Project number
+- Company: Elite Prefab or Prime Max
+- Linked lead
+- Linked deal
+- Linked quotation
+- Linked client LPO
+- Linked sales order
+- Client name
+- Client company
+- Project name
+- Project location
+- Scope of work
+- Project value
+- Project manager
+- Start date
+- Expected completion date
+- Actual completion date
+- Project status
+- Payment status
+- Delivery status
+- Installation status
+- Created by
+- Created date
+
+Project number format:
+- PM-PRJ-YYYY-0001
+- EP-PRJ-YYYY-0001
+
+Project status:
+- New Project
+- Running
+- On Site Work
+- Finished
+- Delivered
+- Handover
+- Completed
+- On Hold
+- Cancelled
+
+Rules:
+- Project cannot be created without approved Sales Order
+- Project value must come from Sales Order
+- Project must be linked to company and client
+- Admin/Management can manually create project only with special permission
+
+--------------------------------------------------
+3. PROJECT DETAILS PAGE
+--------------------------------------------------
+
+Each project detail page must show:
+- Project overview
+- Client details
+- Linked quotation
+- Linked LPO
+- Linked sales order
+- Project timeline
+- Production status
+- Procurement status
+- Material status
+- Delivery status
+- Installation status
+- Payment summary placeholder
+- Documents placeholder
+- Activity timeline
+
+--------------------------------------------------
+4. PROJECT STATUS BOARD
+--------------------------------------------------
+
+Create Kanban board by project status:
+- New Project
+- Running
+- On Site Work
+- Finished
+- Delivered
+- Handover
+- Completed
+
+Features:
+- Drag project between stages if permission granted
+- Log status change in activity timeline
+- Show project value and due date on card
+- Highlight delayed projects
+
+--------------------------------------------------
+5. PRODUCTION MODULE
+--------------------------------------------------
+
+Production fields:
+- Production ID
+- Project
+- Company
+- Production manager
+- Production start date
+- Expected finish date
+- Actual finish date
+- Production status
+- Notes
+
+Production status:
+- Not Started
+- Material Pending
+- In Production
+- QC Pending
+- Ready for Delivery
+- Delivered to Site
+- Completed
+
+Features:
+- Create production record from project
+- Update production status
+- Track production notes
+- Show production progress percentage
+- Link production to work orders and job cards
+
+--------------------------------------------------
+6. WORK ORDER MODULE
+--------------------------------------------------
+
+Work Order fields:
+- Work Order ID
+- Work order number
+- Company
+- Project
+- Production record
+- Work order title
+- Scope
+- Assigned department/team
+- Start date
+- Due date
+- Priority
+- Status
+- Created by
+- Approved by
+
+Work order number format:
+- PM-WO-YYYY-0001
+- EP-WO-YYYY-0001
+
+Priority:
+- Low
+- Medium
+- High
+- Urgent
+
+Status:
+- Draft
+- Approved
+- In Progress
+- Completed
+- Cancelled
+
+Features:
+- Create work order from project/production
+- Assign to production team
+- Add materials required
+- Add labor/team notes
+- Approval required before work starts
+- Lock approved work order
+- PDF preview placeholder
+
+--------------------------------------------------
+7. JOB CARD MODULE
+--------------------------------------------------
+
+Job Card fields:
+- Job Card ID
+- Job card number
+- Company
+- Project
+- Work order
+- Job title
+- Assigned worker/team
+- Task description
+- Materials used
+- Start time/date
+- End time/date
+- Status
+- Supervisor remarks
+
+Job card number format:
+- PM-JC-YYYY-0001
+- EP-JC-YYYY-0001
+
+Status:
+- Pending
+- In Progress
+- Completed
+- On Hold
+- Cancelled
+
+Features:
+- Create job cards under work order
+- Assign workers/teams placeholder
+- Track task completion
+- Add remarks
+- Link materials used placeholder
+- Show job card progress
+
+--------------------------------------------------
+8. MATERIAL REQUEST FROM PRODUCTION
+--------------------------------------------------
+
+Production can request material from store.
+
+Material request fields:
+- Material Request ID
+- MR number
+- Company
+- Project
+- Work order
+- Requested by
+- Required date
+- Items
+- Quantity
+- Unit
+- Reason
+- Status
+
+MR number format:
+- PM-MR-YYYY-0001
+- EP-MR-YYYY-0001
+
+Status:
+- Draft
+- Submitted
+- Approved
+- Issued by Store
+- Partially Issued
+- Rejected
+- Cancelled
+
+Features:
+- Create material request from project/work order
+- Submit for approval
+- Store can view approved requests
+- Store can issue material from stock
+- Link material issue to stock entry
+- Prevent issue if stock unavailable
+- Update material request status after issue
+
+--------------------------------------------------
+9. QUALITY CHECK / QC MODULE
+--------------------------------------------------
+
+QC fields:
+- QC ID
+- QC number
+- Company
+- Project
+- Work order
+- Production record
+- QC checklist
+- Inspector
+- Inspection date
+- Result
+- Remarks
+- Attachment/photo placeholder
+- Status
+
+QC number format:
+- PM-QC-YYYY-0001
+- EP-QC-YYYY-0001
+
+QC result:
+- Passed
+- Failed
+- Rework Required
+
+QC status:
+- Pending
+- In Inspection
+- Passed
+- Failed
+- Rework
+- Closed
+
+Default QC checklist:
+- Structure checked
+- Panel installation checked
+- Door/window checked
+- Electrical checked
+- Plumbing checked
+- Flooring checked
+- Paint/finishing checked
+- Safety checked
+- Client specification checked
+
+Features:
+- Create QC checklist
+- Mark checklist items pass/fail
+- Add remarks
+- Upload photo placeholder
+- If failed, create rework task/job card
+- Project cannot move to Ready for Delivery without QC passed
+
+--------------------------------------------------
+10. DELIVERY READINESS MODULE
+--------------------------------------------------
+
+Delivery readiness fields:
+- Readiness ID
+- Project
+- Production
+- QC status
+- Packing status
+- Loading status
+- Delivery date
+- Vehicle number
+- Driver name
+- Status
+
+Status:
+- Not Ready
+- QC Pending
+- Ready for Delivery
+- Loaded
+- Dispatched
+- Delivered
+
+Rules:
+- Cannot mark ready if QC not passed
+- Can link to Delivery Note from Step 5
+- Delivery status updates project status
+
+--------------------------------------------------
+11. HANDOVER MODULE
+--------------------------------------------------
+
+Handover fields:
+- Handover ID
+- Project
+- Client
+- Handover date
+- Handover checklist
+- Client representative
+- Signature placeholder
+- Remarks
+- Status
+
+Status:
+- Pending
+- Completed
+- Rejected
+
+Default handover checklist:
+- Project completed as per scope
+- Delivery completed
+- Installation completed
+- Client inspection done
+- Documents handed over
+- Warranty terms explained
+
+Features:
+- Create handover record
+- Checklist completion
+- Signature placeholder
+- PDF preview placeholder
+- Mark project completed after handover
+
+--------------------------------------------------
+12. PROJECT DOCUMENTS
+--------------------------------------------------
+
+Allow project document uploads placeholder:
+- Approved quotation
+- Client LPO
+- Sales order
+- Drawings
+- Work order
+- Job card
+- QC photos
+- Delivery proof
+- Handover certificate
+- Site photos
+- Other documents
+
+Use existing document upload structure where possible.
+
+--------------------------------------------------
+13. PROJECT ACTIVITY TIMELINE
+--------------------------------------------------
+
+Track:
+- Project created
+- Status changed
+- Production started
+- Work order created
+- Job card created/completed
+- Material request submitted/issued
+- QC passed/failed
+- Delivery ready
+- Delivered
+- Handover completed
+
+--------------------------------------------------
+14. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all projects and production records
+- Management sees all project summaries
+- Sales can view projects linked to their deals if permission granted
+- Production can view and update production/work orders/job cards
+- Store can view approved material requests and issue stock
+- Procurement can view material requirements if permission granted
+- Accounts/Finance can view payment/project value summary if permission granted
+- HR cannot access projects unless permission granted
+- Users cannot delete project records
+- Approved work orders are locked
+
+--------------------------------------------------
+15. NOTIFICATIONS
+--------------------------------------------------
+
+Create notifications for:
+- Project created
+- Project delayed
+- Project status changed
+- Production started
+- Work order approved
+- Job card assigned
+- Material request submitted
+- Material request approved/rejected
+- Material issued by store
+- QC failed
+- QC passed
+- Project ready for delivery
+- Project delivered
+- Handover completed
+
+--------------------------------------------------
+16. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- projects
+- project_status_logs
+- production_records
+- work_orders
+- work_order_items
+- job_cards
+- job_card_materials
+- material_requests
+- material_request_items
+- qc_records
+- qc_checklist_items
+- delivery_readiness
+- project_handovers
+- project_documents
+- project_activities
+
+Update:
+- sales_orders
+- delivery_notes
+- stock_entries
+- stock_movements
+- users
+- permissions
+- notifications
+- audit_logs
+
+--------------------------------------------------
+17. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- 5 projects
+- 3 production records
+- 5 work orders
+- 8 job cards
+- 5 material requests
+- 3 QC records
+- 2 delivery readiness records
+- 2 handover records
+- Sample project activities
+
+--------------------------------------------------
+18. VALIDATION
+--------------------------------------------------
+
+Rules:
+- Project cannot be created without approved Sales Order
+- Work order cannot start without approval
+- Material request cannot be issued without approved request
+- Store issue cannot exceed available stock
+- QC cannot pass without checklist completion
+- Delivery readiness cannot be marked ready unless QC passed
+- Handover cannot complete unless delivery/install status complete
+- Unauthorized users cannot view/edit project data
+- Important records cannot be deleted by users
+
+--------------------------------------------------
+19. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- Project created/status changed
+- Production status changed
+- Work order created/approved/cancelled
+- Job card created/completed
+- Material request submitted/approved/issued
+- QC passed/failed
+- Delivery readiness changed
+- Handover completed
+
+--------------------------------------------------
+20. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Project dashboard
+- Working Project creation from Sales Order
+- Working Project details page
+- Working Project Kanban board
+- Working Production module
+- Working Work Order module
+- Working Job Card module
+- Working Material Request module
+- Store issue link placeholder/working if stock module exists
+- Working QC checklist
+- Working Delivery Readiness
+- Working Handover module
+- Project document upload placeholder
+- Project activity timeline
+- Correct permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Convert approved Sales Order to Project
+2. Open Project details page
+3. Create Production record
+4. Create Work Order
+5. Approve Work Order
+6. Create Job Card
+7. Create Material Request
+8. Approve Material Request
+9. Issue material from Store
+10. Create QC checklist
+11. Fail QC and create rework job card
+12. Pass QC
+13. Mark Ready for Delivery
+14. Complete Handover
+15. Confirm unauthorized departments cannot access project data
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 9.
+
+Build Step 10 only: HR + Staff/Labor Attendance + GPS Camera Check-in.
+
+Do not build email, AI, WhatsApp, cheque printing, advanced reports, or mobile apps yet.
+
+STEP 10 GOAL:
+Create HR module for staff and labor records, documents, wages, salary, leave, attendance, overtime, GPS location, and camera selfie check-in.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho People-style HR dashboard
+- Clean employee tables
+- Attendance calendar placeholder
+- Status badges
+- Mobile responsive
+
+--------------------------------------------------
+1. HR DASHBOARD
+--------------------------------------------------
+
+Show:
+- Total employees
+- Total labor
+- Present today
+- Absent today
+- Late check-ins
+- Overtime hours
+- Leave requests pending
+- GPS attendance pending review
+- Monthly wages summary placeholder
+
+--------------------------------------------------
+2. EMPLOYEE MASTER
+--------------------------------------------------
+
+Employee fields:
+- Employee ID
+- Company: Elite Prefab or Prime Max
+- Full name
+- Phone
+- Email
+- Department
+- Designation
+- Joining date
+- Employment type: Staff / Labor / Temporary / Contract
+- Salary type: Monthly / Daily / Hourly
+- Basic salary
+- Allowance
+- Overtime rate
+- Site/location
+- Status: Active / Inactive / Resigned / Terminated
+- Created by
+- Created date
+
+Features:
+- Add employee
+- Edit employee
+- View employee
+- Search/filter employee
+- Filter by company/department/status/site
+- Deactivate instead of delete
+- Upload employee documents placeholder
+
+--------------------------------------------------
+3. LABOR MASTER
+--------------------------------------------------
+
+Labor fields:
+- Labor ID
+- Company
+- Full name
+- Phone
+- Nationality placeholder
+- Trade/category
+- Daily wage
+- Overtime rate
+- Assigned site
+- Joining date
+- Status
+- Created by
+
+Labor categories:
+- Fabricator
+- Welder
+- Electrician
+- Plumber
+- Carpenter
+- Painter
+- Helper
+- Driver
+- Supervisor
+- Installer
+- Other
+
+Features:
+- Add labor
+- Edit labor
+- View labor
+- Search/filter labor
+- Assign site/project
+- Track wage type
+
+--------------------------------------------------
+4. EMPLOYEE DOCUMENTS
+--------------------------------------------------
+
+Document types:
+- Emirates ID placeholder
+- Passport placeholder
+- Visa placeholder
+- Labor card placeholder
+- Contract
+- Salary agreement
+- Certificate
+- Other document
+
+Fields:
+- Employee/Labor
+- Document type
+- File upload
+- Issue date
+- Expiry date
+- Status: Valid / Expired / Pending Verification
+- Verified by
+- Notes
+
+Features:
+- Upload document
+- Expiry alert placeholder
+- Admin/HR verification
+- Secure document access
+
+--------------------------------------------------
+5. ATTENDANCE MODULE
+--------------------------------------------------
+
+Attendance fields:
+- Attendance ID
+- Company
+- Employee/Labor
+- Date
+- Check-in time
+- Check-out time
+- Total hours
+- Overtime hours
+- Attendance status
+- Site/location
+- Marked by
+- Notes
+
+Attendance status:
+- Present
+- Absent
+- Late
+- Half Day
+- Leave
+- Holiday
+- Overtime
+
+Features:
+- Manual attendance by HR/Admin
+- Daily attendance sheet
+- Monthly attendance view
+- Filter by company/site/employee/date
+- Edit attendance only by HR Admin/Admin
+- Audit log for edits
+
+--------------------------------------------------
+6. GPS + CAMERA CHECK-IN
+--------------------------------------------------
+
+Create mobile-friendly attendance check-in page.
+
+Requirements:
+- Employee can check in from mobile browser
+- Capture GPS latitude and longitude
+- Capture camera selfie
+- Store check-in date/time
+- Store check-out date/time
+- Store device/browser info placeholder
+- Show map placeholder
+- Prevent check-in without GPS permission
+- Prevent check-in without camera permission
+- HR/Admin can view selfie and GPS location
+- HR/Admin can approve/reject suspicious attendance
+
+GPS attendance fields:
+- GPS Attendance ID
+- Employee/Labor
+- Company
+- Date
+- Check-in time
+- Check-out time
+- Latitude
+- Longitude
+- Selfie image path
+- Device info
+- Location accuracy placeholder
+- Status: Pending Review / Approved / Rejected
+- Reviewed by
+- Rejection reason
+
+Use browser Geolocation API and Camera API placeholders.
+
+--------------------------------------------------
+7. LEAVE MANAGEMENT
+--------------------------------------------------
+
+Leave fields:
+- Leave ID
+- Employee
+- Company
+- Leave type
+- From date
+- To date
+- Total days
+- Reason
+- Status
+- Approved by
+- Notes
+
+Leave types:
+- Annual Leave
+- Sick Leave
+- Emergency Leave
+- Unpaid Leave
+- Other
+
+Status:
+- Pending
+- Approved
+- Rejected
+- Cancelled
+
+Features:
+- Employee leave request placeholder
+- HR/Admin approval
+- Leave shows in attendance
+
+--------------------------------------------------
+8. WAGES + SALARY MODULE
+--------------------------------------------------
+
+Salary/wage fields:
+- Payroll ID
+- Company
+- Employee/Labor
+- Month
+- Basic salary/daily wage
+- Present days
+- Absent days
+- Overtime hours
+- Overtime amount
+- Allowances
+- Deductions
+- Net salary
+- Status
+
+Status:
+- Draft
+- Reviewed
+- Approved
+- Paid
+
+Features:
+- Calculate monthly wage from attendance
+- Calculate overtime
+- Manual adjustment by HR/Admin
+- Salary sheet preview
+- Export placeholder
+- Approval workflow placeholder
+
+--------------------------------------------------
+9. SITE / LOCATION MASTER
+--------------------------------------------------
+
+Fields:
+- Site ID
+- Company
+- Site name
+- Address/location
+- Project linked placeholder
+- Allowed GPS radius placeholder
+- Status
+
+Features:
+- Add/edit/view sites
+- Assign employee/labor to site
+- Future GPS validation placeholder
+
+--------------------------------------------------
+10. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all HR and attendance data
+- HR Department sees employee/labor/attendance/payroll
+- HR User can create attendance but cannot approve payroll unless permission granted
+- Department managers can view their team attendance if permission granted
+- Employees can view only their own attendance placeholder
+- Other departments cannot access HR data unless allowed
+- Salary/wage data visible only to Admin, HR Admin, authorized Management
+- Users cannot delete employee/payroll records
+
+--------------------------------------------------
+11. NOTIFICATIONS
+--------------------------------------------------
+
+Create notifications for:
+- Employee created
+- Document expiring soon
+- Leave request submitted
+- Leave approved/rejected
+- Attendance missing
+- Late check-in
+- GPS attendance pending review
+- Payroll ready for review
+- Payroll approved
+
+--------------------------------------------------
+12. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- employees
+- labor
+- employee_documents
+- attendance
+- gps_attendance
+- leave_requests
+- payroll
+- payroll_items
+- sites
+- attendance_logs
+
+Update:
+- users
+- departments
+- projects
+- notifications
+- audit_logs
+- permissions
+- documents
+
+--------------------------------------------------
+13. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- 10 employees
+- 15 labor records
+- 3 sites
+- Attendance records for current month
+- 5 GPS attendance samples
+- 3 leave requests
+- 2 payroll samples
+- Employee document samples
+
+--------------------------------------------------
+14. VALIDATION
+--------------------------------------------------
+
+Rules:
+- Employee ID must be unique
+- Check-out cannot be before check-in
+- Same employee cannot check in twice without checkout
+- GPS check-in requires location
+- Camera check-in requires selfie
+- Salary cannot be viewed by unauthorized users
+- Payroll cannot be approved without attendance data
+- Attendance edit requires reason
+- Deleted records should be archived, not removed
+
+--------------------------------------------------
+15. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- Employee created/updated
+- Labor created/updated
+- Attendance marked/edited
+- GPS check-in/check-out
+- GPS attendance approved/rejected
+- Leave approved/rejected
+- Payroll generated/approved/paid
+- Employee document uploaded/verified
+
+--------------------------------------------------
+16. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working HR dashboard
+- Working Employee Master
+- Working Labor Master
+- Working employee document upload
+- Working attendance module
+- Working GPS + camera check-in page placeholder
+- Working leave management
+- Working wages/salary calculation placeholder
+- Working site/location master
+- Correct permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Login as HR User and add employee
+2. Add labor record
+3. Upload employee document
+4. Mark manual attendance
+5. Open mobile check-in page
+6. Test GPS permission
+7. Test camera permission
+8. Check in with selfie
+9. Review GPS attendance as HR/Admin
+10. Create leave request
+11. Generate salary/wage preview
+12. Confirm unauthorized users cannot see salary data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 10.
+
+Build Step 11 only: Email Panel + WhatsApp + AI Assistant.
+
+Do not build cheque printing, advanced reports, final mobile apps, or deployment yet.
+
+STEP 11 GOAL:
+Create internal email panel, XMART Hosting email setup, WhatsApp action buttons/templates, and AI assistant tools for writing, auto-replies, lead scoring, and smart suggestions.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho Mail / Zoho CRM-style interface
+- Clean email inbox layout
+- WhatsApp quick-action buttons
+- AI assistant sidebar/modal
+- Mobile responsive
+
+--------------------------------------------------
+1. EMAIL PANEL MODULE
+--------------------------------------------------
+
+Create internal email panel inside CRM.
+
+Email folders:
+- Inbox
+- Sent
+- Drafts
+- Trash
+- Starred
+- Archived placeholder
+
+Features:
+- Add email account
+- Connect IMAP/SMTP settings
+- Send email
+- Receive email placeholder
+- Save draft
+- Delete/move to trash
+- Search emails
+- Filter emails
+- Attach files
+- Link email to lead/contact/deal/project/client/supplier
+- Email activity timeline
+- Company-wise email accounts
+- User-wise email accounts
+
+Supported domains:
+- eliteprefab.com
+- primemaxprefab.com
+
+Hosting provider:
+- XMART HOSTING
+
+Email setup fields:
+- Email address
+- Display name
+- IMAP host
+- IMAP port
+- IMAP SSL/TLS
+- SMTP host
+- SMTP port
+- SMTP SSL/TLS
+- Username
+- Password / app password
+- Company
+- Assigned user
+- Status
+
+Important:
+- Do not expose email passwords in frontend
+- Store encrypted credentials placeholder
+- Add test connection button placeholder
+- Add setup instructions for IMAP/SMTP
+
+--------------------------------------------------
+2. EMAIL COMPOSER
+--------------------------------------------------
+
+Composer fields:
+- From account
+- To
+- CC
+- BCC
+- Subject
+- Body
+- Attachments
+- Related record: Lead / Contact / Deal / Project / Client / Supplier
+- Signature
+
+Features:
+- Save draft
+- Send email placeholder/working if SMTP configured
+- Use email template
+- AI improve button
+- AI grammar correction button
+- AI professional rewrite button
+- AI generate follow-up button
+
+--------------------------------------------------
+3. EMAIL TEMPLATES
+--------------------------------------------------
+
+Create email template module.
+
+Template categories:
+- Company introduction
+- New inquiry reply
+- Quotation submission
+- Quotation follow-up
+- Proforma invoice follow-up
+- Payment reminder
+- Delivery update
+- Project update
+- Complaint response
+- Supplier RFQ
+- Purchase order email
+- HR notice
+- Admin announcement
+
+Template fields:
+- Template ID
+- Company
+- Category
+- Template name
+- Subject
+- Body
+- Variables
+- Active/inactive
+- Created by
+
+Variables:
+- {{client_name}}
+- {{company_name}}
+- {{quotation_number}}
+- {{invoice_number}}
+- {{project_name}}
+- {{amount}}
+- {{due_date}}
+- {{salesperson_name}}
+
+--------------------------------------------------
+4. AUTOMATIC EMAIL REPLY TO NEW INQUIRIES
+--------------------------------------------------
+
+Create auto-reply system placeholder.
+
+Rules:
+- When new inquiry email is received, create lead placeholder if enabled
+- Send AI-generated auto reply placeholder
+- Assign inquiry to salesperson
+- Log email in activity timeline
+
+Auto-reply settings:
+- Enable/disable auto reply
+- Company-wise auto reply template
+- Working hours reply
+- After-hours reply
+- AI-generated reply mode
+- Manual approval before sending option
+
+--------------------------------------------------
+5. WHATSAPP MODULE
+--------------------------------------------------
+
+Create WhatsApp quick actions.
+
+Features:
+- WhatsApp button in:
+  - Lead
+  - Contact
+  - Deal
+  - Quotation
+  - Invoice
+  - Project
+  - Client
+  - Supplier
+- Open WhatsApp chat using phone number
+- Pre-filled message templates
+- Save WhatsApp note in activity timeline
+- Send quotation via WhatsApp placeholder
+- Payment follow-up WhatsApp placeholder
+
+WhatsApp templates:
+- Introduction
+- Lead follow-up
+- Quotation sent
+- Quotation follow-up
+- Payment reminder
+- Delivery update
+- Project update
+- Meeting confirmation
+- Complaint response
+
+Template variables:
+- {{client_name}}
+- {{quotation_number}}
+- {{amount}}
+- {{project_name}}
+- {{due_date}}
+
+--------------------------------------------------
+6. AI ASSISTANT MODULE
+--------------------------------------------------
+
+Create AI Assistant system with placeholder logic first.
+
+AI buttons must appear in:
+- Email composer
+- Lead notes
+- Quotation technical details
+- Terms & conditions
+- Project notes
+- Complaint response
+- Supplier RFQ notes
+- Admin notification text
+
+AI actions:
+- Improve text
+- Correct grammar
+- Make professional
+- Make shorter
+- Make detailed
+- Generate reply
+- Generate follow-up
+- Generate quotation description
+- Generate payment reminder
+- Generate complaint response
+
+Important:
+- Use placeholder AI function now
+- Structure code so OpenAI API can be added later through environment variable
+- Do not hardcode API key
+
+--------------------------------------------------
+7. AI LEAD SCORING
+--------------------------------------------------
+
+Add AI-ready lead scoring to Sales CRM.
+
+Lead score based on:
+- Budget
+- Quantity
+- Requirement urgency
+- Lead source
+- Company type
+- Follow-up activity
+- Deal stage
+- Response behavior placeholder
+
+Lead categories:
+- Hot Lead
+- Warm Lead
+- Cold Lead
+
+Features:
+- Show lead score badge
+- AI recommendation text
+- Suggested next action
+- Recalculate score button
+- Log scoring history
+
+--------------------------------------------------
+8. AI BUSINESS ASSISTANT DASHBOARD
+--------------------------------------------------
+
+Create AI insights placeholder dashboard.
+
+Show:
+- Hot leads needing action
+- Overdue follow-ups
+- Delayed projects
+- Pending payments
+- Low stock risks
+- High expense categories
+- Weak sales performance
+- Best clients placeholder
+- Suggested actions
+
+--------------------------------------------------
+9. ACTIVITY TIMELINE INTEGRATION
+--------------------------------------------------
+
+Log:
+- Email sent
+- Email received
+- Email draft created
+- WhatsApp opened
+- WhatsApp note added
+- AI text generated
+- Lead score updated
+- Auto reply generated
+
+--------------------------------------------------
+10. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin can manage all email accounts
+- Users can access only assigned email accounts
+- Users cannot view other users’ inbox unless permission granted
+- Company Admin can manage company email accounts
+- AI tools available based on permission
+- WhatsApp buttons available based on module access
+- Email credentials visible only as masked values
+- Email settings only accessible to Admin/authorized users
+
+--------------------------------------------------
+11. NOTIFICATIONS
+--------------------------------------------------
+
+Create notifications for:
+- New email received placeholder
+- Email send failed
+- Auto-reply generated
+- Lead created from email
+- AI lead score updated
+- WhatsApp follow-up due
+- Email account connection issue
+
+--------------------------------------------------
+12. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- email_accounts
+- emails
+- email_folders
+- email_attachments
+- email_templates
+- email_signatures
+- email_settings
+- auto_reply_rules
+- whatsapp_templates
+- whatsapp_logs
+- ai_requests
+- ai_lead_scores
+- ai_insights
+
+Update:
+- leads
+- contacts
+- deals
+- projects
+- clients
+- suppliers
+- activities
+- notifications
+- audit_logs
+- permissions
+
+--------------------------------------------------
+13. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- Email templates
+- WhatsApp templates
+- Email folders
+- Email signatures
+- Auto-reply rules
+- AI insight examples
+- Lead scoring examples
+
+--------------------------------------------------
+14. SECURITY + VALIDATION
+--------------------------------------------------
+
+Rules:
+- Validate email addresses
+- Validate SMTP/IMAP fields
+- Do not expose passwords
+- Mask credentials
+- Prevent unauthorized inbox access
+- Validate attachments
+- Audit log email account changes
+- Rate limit placeholder for auto replies
+- Permission required for mass email actions
+
+--------------------------------------------------
+15. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- Email account created/updated
+- Email sent
+- Draft saved
+- Email deleted
+- Template created/updated
+- Auto-reply setting changed
+- WhatsApp opened/logged
+- AI request generated
+- Lead score recalculated
+
+--------------------------------------------------
+16. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Email Panel UI
+- Email account setup screen
+- Email composer
+- Email templates
+- Auto-reply settings placeholder
+- WhatsApp quick actions
+- WhatsApp templates
+- AI assistant buttons
+- AI lead scoring
+- AI business assistant dashboard
+- Activity timeline integration
+- Correct permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Add email account for eliteprefab.com
+2. Add email account for primemaxprefab.com
+3. Open inbox panel
+4. Compose email
+5. Use AI improve button
+6. Save draft
+7. Send email placeholder
+8. Open WhatsApp from lead
+9. Use WhatsApp template
+10. Recalculate lead score
+11. Confirm user cannot access another user’s email account
+12. Confirm email credentials are masked
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 11.
+
+Build Step 12 only: Cheque Printing + Automation + Admin Notifications + Advanced Reports.
+
+Do not build final mobile apps or deployment yet.
+
+STEP 12 GOAL:
+Add UAE cheque printing, smart automation reminders, admin notification system, advanced reports, export options, audit strengthening, and document locking.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Zoho-style dashboards
+- Professional report pages
+- Clean charts/cards/tables
+- Status badges
+- Print preview screens
+- Mobile responsive
+
+--------------------------------------------------
+1. CHEQUE PRINTING MODULE — UAE BANKS
+--------------------------------------------------
+
+Supported banks:
+- ADCB
+- Emirates NBD
+- Mashreq Bank
+- FAB
+- Dubai Islamic Bank
+- Abu Dhabi Islamic Bank
+- RAKBANK
+- HSBC UAE
+- Standard Chartered UAE
+- CBD
+- Custom UAE Bank Template
+
+Cheque fields:
+- Cheque ID
+- Company
+- Bank account
+- Bank name
+- Cheque number
+- Cheque date
+- Beneficiary/payee name
+- Amount
+- Amount in words
+- Currency
+- Voucher reference
+- Related supplier/client/project/bill/expense
+- Payment mode
+- Prepared by
+- Approved by
+- Printed by
+- Printed date
+- Status
+- Notes
+
+Cheque status:
+- Draft
+- Submitted for Approval
+- Approved
+- Printed
+- Issued
+- Cleared
+- Returned
+- Cancelled
+
+Features:
+- Create cheque
+- Submit cheque for approval
+- Approve/reject cheque
+- Print cheque only after approval
+- Reprint only with Super Admin approval
+- Cancel cheque with reason
+- Cheque issue register
+- Cheque status tracking
+- Link cheque to payment voucher
+- Link cheque to supplier/client/project
+- Audit log for every cheque action
+
+Security:
+- Accounts User can prepare cheque
+- Accounts Admin / Finance Manager can approve cheque
+- Super Admin can override/reprint
+- Normal users cannot print cheques
+- Reprint requires reason and Super Admin approval
+
+--------------------------------------------------
+2. CHEQUE TEMPLATE / ALIGNMENT SETUP
+--------------------------------------------------
+
+Create bank-wise cheque template setup.
+
+Template fields:
+- Template ID
+- Bank name
+- Company
+- Cheque width
+- Cheque height
+- Date position X/Y
+- Payee position X/Y
+- Amount number position X/Y
+- Amount words position X/Y
+- A/C payee position X/Y
+- Signature placeholder position X/Y
+- Font size
+- Date format
+- Active/inactive
+
+Features:
+- Drag-adjust field positions placeholder
+- Manual X/Y alignment fields
+- Test print preview
+- Save template per bank
+- Save template per company
+- Custom bank template support
+
+Important:
+Cheque printing must support:
+- ADCB
+- Emirates NBD
+- Mashreq Bank
+
+--------------------------------------------------
+3. AUTOMATION ENGINE
+--------------------------------------------------
+
+Create automation rules module.
+
+Automation rule fields:
+- Rule ID
+- Company
+- Rule name
+- Module
+- Trigger event
+- Condition
+- Action
+- Assigned user/department
+- Active/inactive
+- Created by
+
+Default automation rules:
+- New lead not contacted in 24 hours → remind salesperson
+- Follow-up overdue → notify salesperson and manager
+- Quotation sent and no reply in 3 days → create follow-up task
+- Invoice overdue → notify accounts/finance
+- Payment due soon → notify finance
+- Cheque due/clearing date → notify finance
+- Stock below minimum → notify procurement/store
+- Project delivery date near → notify production/management
+- Employee missing attendance → notify HR
+- Document expiring soon → notify responsible user
+- Supplier bill due → notify accounts
+
+Actions:
+- Create notification
+- Create task/reminder
+- Send email placeholder
+- Send WhatsApp placeholder
+- Escalate to manager placeholder
+
+--------------------------------------------------
+4. ADMIN NOTIFICATION SYSTEM
+--------------------------------------------------
+
+Admin can send notifications to:
+- One user
+- Multiple selected users
+- One department
+- Multiple departments
+- One company
+- Both companies
+- Clients
+- Suppliers
+- All users
+
+Notification fields:
+- Notification ID
+- Company
+- Title
+- Message
+- Type
+- Priority
+- Recipient type
+- Recipients
+- Created by
+- Created date
+- Read/unread status
+
+Notification types:
+- General announcement
+- Urgent alert
+- Task reminder
+- Approval request
+- Payment reminder
+- HR notice
+- Stock alert
+- Project alert
+- System alert
+
+Priority:
+- Low
+- Medium
+- High
+- Critical
+
+Features:
+- Notification bell
+- Read/unread tracking
+- Admin broadcast message
+- Department notification
+- Client/supplier notification placeholder
+- Mobile push placeholder
+
+--------------------------------------------------
+5. ADVANCED REPORTS MODULE
+--------------------------------------------------
+
+Create Reports dashboard with filters:
+- Company
+- Date range
+- Department
+- User
+- Status
+- Export type
+
+Reports required:
+Sales Reports:
+- Leads by source
+- Leads by salesperson
+- Deals by stage
+- Won/lost deals
+- Quotation report
+- Sales performance
+
+Accounts Reports:
+- Expense report
+- Expense by category
+- Bills report
+- Payment receipts report
+- Payment vouchers report
+- Customer ledger report
+- Supplier ledger report
+- VAT report
+- Outstanding invoices
+
+Finance Reports:
+- Payment IN/OUT
+- Cash flow summary
+- Receivables
+- Payables
+- Payment reminders
+- Bank account summary
+
+Procurement Reports:
+- Purchase request report
+- RFQ report
+- Supplier quotation comparison
+- Purchase order report
+- Supplier performance placeholder
+
+Inventory/Store Reports:
+- Stock report
+- Stock movement report
+- Low stock report
+- Out of stock report
+- Stock take report
+- Damage report
+
+Project/Production Reports:
+- Project status report
+- Delayed projects
+- Production progress
+- Work order report
+- Job card report
+- QC report
+- Handover report
+
+HR Reports:
+- Employee report
+- Labor report
+- Attendance report
+- GPS attendance report
+- Leave report
+- Payroll/wages report
+
+Cheque Reports:
+- Issued cheques
+- Pending cheques
+- Cleared cheques
+- Returned cheques
+- Cancelled cheques
+- Supplier-wise cheque report
+- Company-wise cheque report
+
+System Reports:
+- Audit log report
+- User activity report
+- Permission report
+- Login history
+- Security alerts placeholder
+
+--------------------------------------------------
+6. EXPORT / PRINT OPTIONS
+--------------------------------------------------
+
+Add export options:
+- PDF export placeholder
+- Excel export placeholder
+- CSV export
+- Print preview
+- Email report placeholder
+
+Rules:
+- Export permission required
+- Sensitive reports export only for Admin/authorized users
+- Log every export in audit log
+
+--------------------------------------------------
+7. DOCUMENT LOCKING + VERSION HISTORY
+--------------------------------------------------
+
+Apply document locking to:
+- Quotations
+- Proforma invoices
+- Tax invoices
+- Delivery notes
+- Purchase orders
+- Sales orders
+- Cheques
+- Work orders
+- Payment vouchers
+
+Rules:
+- Approved/issued documents are locked
+- Normal users cannot edit locked documents
+- Admin can unlock only with reason
+- Revision creates new version
+- Cancel requires reason
+
+Version history fields:
+- Document type
+- Document ID
+- Version number
+- Changed by
+- Changed date
+- Change summary
+- Previous values placeholder
+
+--------------------------------------------------
+8. FRAUD DETECTION ALERTS
+--------------------------------------------------
+
+Create fraud/security alert placeholders.
+
+Alert triggers:
+- Duplicate invoice number
+- Duplicate supplier bill
+- Duplicate cheque number
+- Cheque reprint request
+- Unusual expense amount
+- High quotation discount
+- Stock adjustment without proper reason
+- Payment mismatch
+- Unauthorized access attempt
+- Multiple failed logins
+- Editing sensitive data
+- Exporting sensitive report
+
+Alert status:
+- New
+- Under Review
+- Resolved
+- Ignored
+
+Admin can review and close alert.
+
+--------------------------------------------------
+9. SMART VALIDATION RULES
+--------------------------------------------------
+
+Add validation across modules:
+- No duplicate cheque number per bank account
+- No duplicate supplier bill number for same supplier
+- No duplicate invoice number
+- No negative stock
+- No payment over outstanding balance
+- No quotation submission without items
+- No invoice issuing without approval
+- No stock adjustment without reason
+- No document cancellation without reason
+- No unauthorized export
+
+--------------------------------------------------
+10. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Admin sees all reports, notifications, automation, cheque templates
+- Accounts can prepare cheques
+- Finance can approve/track cheques if permission granted
+- Only Super Admin can reprint cheques
+- Only Admin can create automation rules
+- Department users see reports only for their own department
+- Export requires permission
+- Security/fraud alerts visible only to Admin/Management
+- Users cannot delete reports, alerts, or audit logs
+
+--------------------------------------------------
+11. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- cheques
+- cheque_templates
+- cheque_print_logs
+- cheque_reprint_requests
+- automation_rules
+- automation_logs
+- admin_notifications
+- notification_recipients
+- reports
+- report_exports
+- document_locks
+- document_versions
+- fraud_alerts
+- security_alerts
+
+Update:
+- bank_accounts
+- payment_vouchers
+- expenses
+- bills
+- tax_invoices
+- purchase_orders
+- quotations
+- users
+- permissions
+- audit_logs
+- notifications
+
+--------------------------------------------------
+12. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- Cheque templates for ADCB, Emirates NBD, Mashreq
+- 10 cheque records
+- Automation rules
+- Notification examples
+- Report sample data
+- Document lock examples
+- Fraud alert examples
+
+--------------------------------------------------
+13. AUDIT LOG
+--------------------------------------------------
+
+Track:
+- Cheque created/approved/printed/reprinted/cancelled
+- Cheque template changed
+- Automation rule created/updated
+- Admin notification sent
+- Report viewed/exported
+- Document locked/unlocked/revised
+- Fraud alert created/resolved
+- Sensitive report exported
+- Unauthorized access attempt
+
+--------------------------------------------------
+14. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Working Cheque module
+- Working bank cheque template setup
+- Working cheque approval/print preview
+- Working automation rules UI
+- Working admin notification system
+- Working reports dashboard
+- Report filters
+- Export placeholders
+- Document locking/version history
+- Fraud alert dashboard
+- Correct permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Create cheque as Accounts User
+2. Submit cheque for approval
+3. Approve cheque as Finance/Admin
+4. Print cheque using ADCB template
+5. Request cheque reprint
+6. Confirm reprint requires Super Admin approval
+7. Create automation rule
+8. Trigger sample notification
+9. Send admin notification to one user
+10. Send admin notification to all users
+11. View reports dashboard
+12. Export sample report
+13. Lock approved document
+14. Create fraud alert from duplicate cheque number
+15. Confirm unauthorized user cannot view cheque/security reports
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 12.
+
+Build Step 13 only: Advanced Client/Supplier Portal + Final Security Hardening + Backup/Restore.
+
+Do not build final mobile apps yet.
+
+STEP 13 GOAL:
+Upgrade client portal and supplier portal with full document access, project visibility, communication, complaints, RFQs, POs, payment status, and add enterprise-level security, backup, restore, and system health features.
+
+DESIGN:
+- Same dark blue + light blue theme
+- Premium portal design
+- Clean dashboard cards
+- Modern document tables
+- Status badges
+- Mobile responsive
+
+--------------------------------------------------
+1. ADVANCED CLIENT PORTAL
+--------------------------------------------------
+
+Client dashboard must show:
+- Active quotations
+- Approved quotations
+- Proforma invoices
+- Tax invoices
+- Delivery notes
+- Project status
+- Payment status
+- Complaints
+- Notifications
+- Uploaded documents
+
+Client can:
+- View own quotations
+- View own proforma invoices
+- View own tax invoices
+- View own delivery notes
+- View own project status
+- View payment status
+- Upload documents
+- Raise complaint
+- Reply to messages/notifications placeholder
+- Download approved documents if permission allowed
+
+Client cannot:
+- View internal cost
+- View other clients
+- Edit approved documents
+- Access admin/staff modules
+
+--------------------------------------------------
+2. CLIENT COMPLAINT PORTAL
+--------------------------------------------------
+
+Complaint fields:
+- Complaint ID
+- Company
+- Client
+- Project
+- Complaint title
+- Complaint description
+- Priority
+- Attachment upload
+- Status
+- Assigned department
+- Assigned user
+- Created date
+- Closed date
+- Client feedback
+
+Priority:
+- Low
+- Medium
+- High
+- Urgent
+
+Status:
+- Open
+- Under Review
+- In Progress
+- Waiting for Client
+- Resolved
+- Closed
+
+Features:
+- Client raises complaint
+- Admin/After-Sales assigns complaint
+- Staff updates action taken
+- Client can view status
+- Client can give feedback
+- Closure proof upload placeholder
+
+--------------------------------------------------
+3. ADVANCED SUPPLIER PORTAL
+--------------------------------------------------
+
+Supplier dashboard must show:
+- RFQs received
+- Quotations submitted
+- Purchase orders
+- Delivery schedules
+- Payment status
+- Documents
+- Notifications
+
+Supplier can:
+- View RFQs assigned to them
+- Upload supplier quotation
+- View PO issued to them
+- View payment status
+- Upload invoices/delivery notes
+- Update delivery status placeholder
+- Download PO if permission allowed
+
+Supplier cannot:
+- View other suppliers
+- View internal comparison
+- View internal approval notes
+- Access admin/staff modules
+
+--------------------------------------------------
+4. PORTAL DOCUMENT CENTER
+--------------------------------------------------
+
+Create document center for clients and suppliers.
+
+Features:
+- Upload documents
+- View document status
+- Download allowed documents
+- Expiry date alerts
+- Admin verification
+- Rejection reason
+- Document history
+
+Document categories:
+Client:
+- Trade license
+- VAT certificate
+- LPO
+- Contract
+- Payment receipt
+- Project document
+- Complaint attachment
+- Other
+
+Supplier:
+- Trade license
+- VAT certificate
+- Bank letter
+- Product catalog
+- Supplier quotation
+- Supplier invoice
+- Delivery note
+- Other
+
+--------------------------------------------------
+5. PORTAL MESSAGING PLACEHOLDER
+--------------------------------------------------
+
+Add secure messaging placeholder.
+
+Features:
+- Client/Supplier sends message
+- Staff/Admin replies
+- Link message to project/RFQ/PO/complaint
+- Message status: New / Replied / Closed
+- Attachment placeholder
+
+--------------------------------------------------
+6. FINAL SECURITY HARDENING
+--------------------------------------------------
+
+Add enterprise security rules:
+- Strong password policy
+- Password reset placeholder
+- Account lock after multiple failed logins
+- Session timeout
+- Refresh token structure placeholder
+- Permission-based API protection
+- CSRF protection placeholder if applicable
+- Rate limiting placeholder
+- Input sanitization
+- File upload security validation
+- Secure download routes
+- Encrypted sensitive fields placeholder
+- Mask bank/email credentials
+- Audit every sensitive action
+
+--------------------------------------------------
+7. DATA PRIVACY + ACCESS ISOLATION
+--------------------------------------------------
+
+Strictly enforce:
+- Client sees only own data
+- Supplier sees only own data
+- Department users see only their department data
+- Company users see only assigned company data
+- Sales users see only assigned records
+- Admin sees all data
+- Sensitive salary/bank/security data restricted
+
+--------------------------------------------------
+8. BACKUP + RESTORE MODULE
+--------------------------------------------------
+
+Create backup/restore admin module.
+
+Features:
+- Manual database backup placeholder
+- Daily backup schedule placeholder
+- Download backup placeholder
+- Restore backup placeholder
+- Backup history
+- Backup status
+- Backup file size
+- Created by
+- Created date
+
+Backup status:
+- Pending
+- Completed
+- Failed
+- Restored
+
+Important:
+Only Super Admin can create/download/restore backups.
+
+--------------------------------------------------
+9. SYSTEM HEALTH DASHBOARD
+--------------------------------------------------
+
+Show:
+- Database status placeholder
+- Storage usage placeholder
+- Active users
+- Failed login attempts
+- Latest backup status
+- Pending security alerts
+- Email connection status placeholder
+- Automation status placeholder
+
+--------------------------------------------------
+10. FINAL AUDIT LOG IMPROVEMENT
+--------------------------------------------------
+
+Audit log must support:
+- Advanced filters
+- User filter
+- Company filter
+- Module filter
+- Date range
+- Action type
+- Export placeholder
+
+Track:
+- Portal login
+- Portal document upload/download
+- Complaint created/updated
+- Supplier quotation uploaded
+- PO downloaded
+- Backup created/restored
+- Failed login
+- Locked account
+- Permission denied
+- Sensitive data viewed
+
+--------------------------------------------------
+11. SECURITY ALERTS
+--------------------------------------------------
+
+Create security alerts for:
+- Multiple failed logins
+- Permission denied attempts
+- Suspicious file upload
+- Backup download
+- Sensitive report export
+- Bank account data viewed
+- Email credentials changed
+- Cheque reprint request
+
+Status:
+- New
+- Under Review
+- Resolved
+- Ignored
+
+--------------------------------------------------
+12. ACCESS CONTROL
+--------------------------------------------------
+
+Rules:
+- Super Admin controls backup/restore/security
+- Admin can view portal users and documents
+- Client can only access own records
+- Supplier can only access own records
+- Staff users cannot access portal accounts unless permission granted
+- Backup/restore hidden from all non-Super Admin users
+- Security alerts visible only to Admin/Management
+
+--------------------------------------------------
+13. DATABASE TABLES
+--------------------------------------------------
+
+Add tables:
+- client_portal_access
+- supplier_portal_access
+- portal_messages
+- portal_message_attachments
+- client_complaints
+- complaint_actions
+- complaint_attachments
+- backup_logs
+- system_health_logs
+- security_settings
+- login_attempts
+- account_locks
+- security_alerts
+
+Update:
+- clients
+- suppliers
+- documents
+- projects
+- quotations
+- proforma_invoices
+- tax_invoices
+- delivery_notes
+- rfqs
+- purchase_orders
+- audit_logs
+- notifications
+- permissions
+
+--------------------------------------------------
+14. SEED DATA
+--------------------------------------------------
+
+Add sample:
+- Client portal records
+- Supplier portal records
+- Client complaints
+- Portal messages
+- Backup logs
+- Security alerts
+- Failed login examples
+
+--------------------------------------------------
+15. VALIDATION
+--------------------------------------------------
+
+Rules:
+- Client cannot access other client records
+- Supplier cannot access other supplier records
+- File uploads must validate file type and size
+- Backup restore requires Super Admin
+- Password policy required
+- Account lock after failed attempts
+- Document download must check permission
+- Complaint cannot close without resolution note
+- Security alert cannot be deleted by normal user
+
+--------------------------------------------------
+16. OUTPUT REQUIRED
+--------------------------------------------------
+
+- Advanced Client Portal
+- Client complaint system
+- Advanced Supplier Portal
+- Portal document center
+- Portal messaging placeholder
+- Final security hardening
+- Backup/restore module
+- System health dashboard
+- Improved audit log
+- Security alerts
+- Correct permissions
+- No broken pages
+- Clean modular code
+- Setup/testing instructions
+
+AFTER BUILD:
+Show me how to test:
+1. Login as client
+2. View only own quotation/invoice/project data
+3. Upload client document
+4. Raise complaint
+5. Login as supplier
+6. View assigned RFQ only
+7. Upload supplier quotation
+8. View issued PO
+9. Confirm supplier cannot see other supplier data
+10. Trigger failed login lock
+11. View security alert
+12. Create manual backup as Super Admin
+13. Confirm non-admin cannot access backup module
+14. Check audit log filters
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Continue from Step 1 to Step 13.
+
+Build Step 14: Final system polish + mobile app planning + deployment preparation.
+
+STEP 14 GOAL:
+Finalize the web admin panel, prepare Admin Mobile App and User Mobile App structure, improve UI/UX, optimize system, and prepare for deployment on real domains.
+
+--------------------------------------------------
+1. FINAL WEB ADMIN PANEL POLISH
+--------------------------------------------------
+
+Improve full web admin panel UI.
+
+Requirements:
+- Premium dark blue + light blue theme
+- Modern SaaS dashboard
+- Better sidebar icons
+- Smooth hover effects
+- Clean buttons
+- Professional tables
+- Better status badges
+- Loading states
+- Empty states
+- Error states
+- Mobile responsive pages
+- Consistent spacing
+- Consistent typography
+
+--------------------------------------------------
+2. ADMIN MOBILE APP STRUCTURE
+--------------------------------------------------
+
+Prepare Admin Mobile App structure.
+
+Admin App features:
+- Secure admin login
+- Dashboard summary
+- Company-wise overview
+- Pending approvals
+- Leads overview
+- Quotation approval
+- Invoice approval
+- Payment alerts
+- Cheque approval
+- Stock alerts
+- Project status
+- Attendance GPS view
+- Security alerts
+- Admin notifications
+- Reports summary
+
+Recommended stack:
+- React Native / Expo
+- Same backend API
+- JWT authentication
+- Role-based access
+
+Create folder structure placeholder:
+- mobile-admin-app
+- screens
+- components
+- services
+- navigation
+- auth
+
+--------------------------------------------------
+3. USER MOBILE APP STRUCTURE
+--------------------------------------------------
+
+Prepare User Mobile App structure.
+
+User App roles:
+- Sales user
+- Store user
+- HR user
+- Production user
+- Client
+- Supplier
+
+User App features:
+- Login
+- Role-based dashboard
+- Lead entry
+- Follow-up update
+- WhatsApp/email quick action
+- GPS + camera attendance
+- Store stock in/out
+- Material request
+- Project update
+- Complaint update
+- Client document upload
+- Supplier RFQ/PO view
+- Notifications
+
+Recommended stack:
+- React Native / Expo
+- Same backend API
+- JWT authentication
+- Role-based access
+
+Create folder structure placeholder:
+- mobile-user-app
+- screens
+- components
+- services
+- navigation
+- auth
+
+--------------------------------------------------
+4. PWA FINAL SETUP
+--------------------------------------------------
+
+Make web app PWA-ready.
+
+Add:
+- Manifest file
+- App icons placeholder
+- Service worker placeholder
+- Installable app structure
+- Offline placeholder screen
+- Mobile-friendly navigation
+
+--------------------------------------------------
+5. API DOCUMENTATION
+--------------------------------------------------
+
+Create API documentation file.
+
+Include:
+- Auth endpoints
+- User endpoints
+- Company endpoints
+- CRM endpoints
+- Quotation endpoints
+- Accounts endpoints
+- Inventory endpoints
+- Project endpoints
+- HR endpoints
+- Portal endpoints
+- Reports endpoints
+
+For each endpoint show:
+- Method
+- URL
+- Required role/permission
+- Request body example
+- Response example
+
+--------------------------------------------------
+6. DATABASE DOCUMENTATION
+--------------------------------------------------
+
+Create database documentation.
+
+Include:
+- Table list
+- Main fields
+- Relationships
+- Primary keys
+- Foreign keys
+- Important indexes
+- Permission-related tables
+- Audit-related tables
+
+--------------------------------------------------
+7. ENVIRONMENT CONFIGURATION
+--------------------------------------------------
+
+Create `.env.example`.
+
+Include:
+- DATABASE_URL
+- JWT_SECRET
+- JWT_REFRESH_SECRET placeholder
+- EMAIL_ENCRYPTION_KEY
+- SMTP_HOST placeholder
+- SMTP_PORT placeholder
+- IMAP_HOST placeholder
+- IMAP_PORT placeholder
+- OPENAI_API_KEY placeholder
+- FILE_UPLOAD_PATH
+- APP_URL
+- ADMIN_URL
+- CLIENT_PORTAL_URL
+- SUPPLIER_PORTAL_URL
+
+--------------------------------------------------
+8. DEPLOYMENT PLAN
+--------------------------------------------------
+
+Create deployment guide for:
+
+Domains:
+- www.eliteprefab.com
+- www.primemaxprefab.com
+
+Deployment targets:
+- Replit deployment first
+- Later VPS/cloud server option
+
+Deployment guide must include:
+- Environment variables
+- Database setup
+- File storage setup
+- Email setup
+- SSL setup
+- Domain connection
+- Backup plan
+- Admin user setup
+- Testing checklist
+
+--------------------------------------------------
+9. FINAL TESTING CHECKLIST
+--------------------------------------------------
+
+Create a full testing checklist.
+
+Must test:
+- Login
+- Roles
+- Permissions
+- Company separation
+- Department separation
+- Client portal
+- Supplier portal
+- Sales CRM
+- Quotation
+- PI
+- Tax invoice
+- Delivery note
+- Accounts
+- Finance
+- Procurement
+- Inventory
+- Store
+- Stock take
+- Projects
+- HR
+- GPS attendance
+- Email panel
+- WhatsApp
+- AI assistant
+- Cheque printing
+- Reports
+- Notifications
+- Backup
+- Security alerts
+
+--------------------------------------------------
+10. PERFORMANCE OPTIMIZATION
+--------------------------------------------------
+
+Improve:
+- API response handling
+- Loading states
+- Pagination
+- Table search/filter
+- Error boundaries
+- Reusable components
+- Lazy loading placeholder
+- Database indexes placeholder
+
+--------------------------------------------------
+11. FINAL SECURITY REVIEW
+--------------------------------------------------
+
+Ensure:
+- Passwords hashed
+- JWT protected routes
+- Permissions enforced
+- File uploads validated
+- Sensitive fields masked
+- Department access isolated
+- Company access isolated
+- Audit logs active
+- Backups admin-only
+- Email credentials protected
+- Cheque reprint protected
+- Salary data restricted
+
+--------------------------------------------------
+12. FINAL OUTPUT REQUIRED
+--------------------------------------------------
+
+- Final polished web admin panel
+- PWA-ready setup
+- Admin mobile app folder structure
+- User mobile app folder structure
+- API documentation
+- Database documentation
+- Deployment guide
+- Testing checklist
+- .env.example
+- No broken pages
+- Clean modular code
+- Ready for next real development/testing phase
+
+AFTER BUILD:
+Show me:
+1. How to run the final web app
+2. How to login as Super Admin
+3. How to test permissions
+4. How to connect domains later
+5. How to prepare mobile app development
+6. How to deploy safely
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
