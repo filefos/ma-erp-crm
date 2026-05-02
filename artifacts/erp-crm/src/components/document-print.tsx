@@ -74,6 +74,7 @@ interface CompanyInfo {
   phone: string;
   email: string;
   contact: string;
+  website?: string;
   bank?: {
     bankName: string;
     accountTitle: string;
@@ -89,9 +90,10 @@ const COMPANIES: Record<number, CompanyInfo> = {
     name: "PRIME MAX PREFAB HOUSES IND. LLC",
     address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
     trn: "105383255400003",
-    phone: "+971 50 2940 131",
-    email: "info@primemaxprefab.com",
+    phone: "056 616 3555",
+    email: "sales@primemaxprefab.com",
     contact: "ASIF LATIF",
+    website: "www.primemaxprefab.com",
     bank: {
       bankName: "Abu Dhabi Commercial Bank (ADCB)",
       accountTitle: "PRIME MAX PREFAB HOUSES IND LLC",
@@ -337,7 +339,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
               <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
               <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
-              <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}</div>
+              <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
             </div>
           </div>
           <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
@@ -673,7 +675,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
                   <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
                   <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
-                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}</div>
+                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
               <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
@@ -734,7 +736,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
                   <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
                   <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
-                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}</div>
+                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
               <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>

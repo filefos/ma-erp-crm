@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Printer, Check, FileText, Receipt, Package, ChevronDown } from "lucide-react";
+import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown } from "lucide-react";
+import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import {
@@ -216,9 +217,7 @@ export function QuotationDetail({ id }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button size="sm" variant="outline" onClick={() => window.print()}>
-            <Printer className="w-4 h-4 mr-1" />Print / PDF
-          </Button>
+          <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} />
         </div>
       </div>
 

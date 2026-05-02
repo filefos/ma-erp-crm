@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Printer, Receipt } from "lucide-react";
+import { ArrowLeft, Receipt } from "lucide-react";
+import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { useToast } from "@/hooks/use-toast";
@@ -129,9 +130,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
           >
             <Receipt className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Convert to Tax Invoice"}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => window.print()}>
-            <Printer className="w-4 h-4 mr-1" />Print / PDF
-          </Button>
+          <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} />
         </div>
       </div>
       <DocumentPrint data={docData} />

@@ -4,7 +4,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 
@@ -57,10 +58,8 @@ export function DeliveryNoteDetail({ id }: Props) {
           <Link href="/accounts/delivery-notes"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[dn.status] ?? "bg-gray-100"}`}>{dn.status}</Badge>
-        <div className="ml-auto">
-          <Button size="sm" variant="outline" onClick={() => window.print()}>
-            <Printer className="w-4 h-4 mr-1" />Print / PDF
-          </Button>
+        <div className="ml-auto flex gap-2">
+          <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} />
         </div>
       </div>
       <DocumentPrint data={docData} />

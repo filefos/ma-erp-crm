@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
-import { ArrowLeft, Plus, Trash2, Pencil, Check, X, Printer } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { ExportButtons } from "@/components/export-buttons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { DocumentPrint } from "@/components/document-print";
@@ -252,9 +253,7 @@ export function PurchaseOrderDetail({ id }: Props) {
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
             <Pencil className="w-3.5 h-3.5 mr-1" />Edit
           </Button>
-          <Button size="sm" variant="outline" onClick={() => window.print()}>
-            <Printer className="w-4 h-4 mr-1" />Print / PDF
-          </Button>
+          <ExportButtons docNumber={(po as any).poNumber ?? po.id?.toString() ?? "PO"} />
         </div>
       </div>
 
