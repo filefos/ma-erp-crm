@@ -267,6 +267,13 @@ function SidebarContent() {
             </p>
           </div>
         </div>
+        <Button variant="ghost" size="sm" asChild
+          className="w-full justify-start h-8 text-white/50 hover:text-white hover:bg-white/10 text-xs">
+          <Link href="/profile">
+            <UserCog className="w-3.5 h-3.5 mr-2" />
+            My Profile
+          </Link>
+        </Button>
         <Button variant="ghost" size="sm"
           className="w-full justify-start h-8 text-white/50 hover:text-white hover:bg-white/10 text-xs"
           onClick={() => logout()}>

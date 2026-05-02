@@ -1,16 +1,13 @@
 import { Router } from "express";
-import { db, leadsTable, usersTable } from "@workspace/db";
-import { eq, like, and, or, sql } from "drizzle-orm";
+import { db, leadsTable, usersTable, notificationsTable } from "@workspace/db";
+import { eq, and, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
-// Module-level RBAC: every leads route is gated through requirePermission so
-// a user without `leads.view` (e.g., a viewer in another department) gets 403.
 
 async function enrichLead(lead: typeof leadsTable.$inferSelect) {
   let assignedToName: string | undefined;
-  let companyRef: string | undefined;
   if (lead.assignedToId) {
     const [u] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, lead.assignedToId));
     assignedToName = u?.name;
@@ -30,7 +27,6 @@ router.get("/leads", requirePermission("leads", "view"), async (req, res): Promi
     const s = (search as string).toLowerCase();
     rows = rows.filter(r => r.leadName.toLowerCase().includes(s) || r.companyName?.toLowerCase().includes(s) || r.email?.toLowerCase().includes(s));
   }
-
   const enriched = await Promise.all(rows.map(enrichLead));
   res.json(enriched);
 });
@@ -40,9 +36,7 @@ router.get("/leads/pipeline", requirePermission("leads", "view"), async (req, re
   rows = scopeFilter(req, rows);
   const { companyId } = req.query;
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
-  
   const enriched = await Promise.all(rows.map(enrichLead));
-  const stages = ["new","contacted","qualified","site_visit","quotation_required","quotation_sent","negotiation","won","lost"];
   const pipeline: Record<string, typeof enriched> = {
     new: [], contacted: [], qualified: [], siteVisit: [], quotationRequired: [], quotationSent: [], negotiation: [], won: [], lost: []
   };
@@ -58,14 +52,57 @@ router.get("/leads/pipeline", requirePermission("leads", "view"), async (req, re
   res.json(pipeline);
 });
 
+// Follow-up reminders check — creates notifications for due/overdue follow-ups
+router.post("/leads/follow-up-check", requirePermission("leads", "view"), async (req, res): Promise<void> => {
+  const me = req.user!;
+  const today = new Date().toISOString().split("T")[0];
+
+  let dueLeads = await db.select().from(leadsTable)
+    .where(and(eq(leadsTable.isActive, true), sql`${leadsTable.nextFollowUp} IS NOT NULL AND ${leadsTable.nextFollowUp} <= ${today}`));
+  dueLeads = scopeFilter(req, dueLeads);
+  dueLeads = dueLeads.filter(l => !["won", "lost"].includes(l.status));
+
+  let created = 0;
+  for (const lead of dueLeads) {
+    const notifyUsers: number[] = [];
+    if (lead.assignedToId) notifyUsers.push(lead.assignedToId);
+    if (!notifyUsers.includes(me.id)) notifyUsers.push(me.id);
+
+    for (const uid of notifyUsers) {
+      // Check if notification already created today for this lead+user
+      const [existing] = await db.select({ count: sql<number>`count(*)::int` })
+        .from(notificationsTable)
+        .where(and(
+          eq(notificationsTable.userId, uid),
+          eq(notificationsTable.entityType, "lead"),
+          eq(notificationsTable.entityId, lead.id),
+          sql`DATE(${notificationsTable.createdAt}) = CURRENT_DATE`,
+        ));
+      if ((existing?.count ?? 0) === 0) {
+        const isOverdue = lead.nextFollowUp! < today;
+        await db.insert(notificationsTable).values({
+          title: isOverdue ? "Overdue Follow-up!" : "Follow-up Due Today",
+          message: `${isOverdue ? "OVERDUE: " : ""}Follow-up required for lead "${lead.leadName}" (${lead.companyName ?? "Unknown"}) — ${lead.requirementType ?? lead.status}`,
+          type: isOverdue ? "warning" : "info",
+          userId: uid,
+          entityType: "lead",
+          entityId: lead.id,
+          isRead: false,
+        });
+        created++;
+      }
+    }
+  }
+
+  res.json({ dueCount: dueLeads.length, notificationsCreated: created });
+});
+
 router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
-  // Generate lead number
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(leadsTable);
   const num = (count[0]?.count ?? 0) + 1;
   const year = new Date().getFullYear();
   const leadNumber = `LEAD-${year}-${String(num).padStart(4, "0")}`;
-
   const [lead] = await db.insert(leadsTable).values({
     leadNumber,
     leadName: data.leadName,
@@ -102,8 +139,7 @@ router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyA
   const [existing] = await db.select().from(leadsTable).where(eq(leadsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  const data = req.body;
-  const [lead] = await db.update(leadsTable).set({ ...data, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
+  const [lead] = await db.update(leadsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
   res.json(await enrichLead(lead));
 });
 

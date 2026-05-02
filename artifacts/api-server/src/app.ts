@@ -3,6 +3,25 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { db } from "@workspace/db";
+import { sql } from "drizzle-orm";
+
+async function runMigrations() {
+  try {
+    await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS items TEXT DEFAULT '[]'`);
+    await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS client_email TEXT`);
+    await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS client_phone TEXT`);
+    await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS project_location TEXT`);
+    await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS vat_percent DOUBLE PRECISION DEFAULT 5`);
+    await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS notes TEXT`);
+    await db.execute(sql`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS tech_specs TEXT`);
+    logger.info("Schema migrations applied");
+  } catch (err) {
+    logger.warn({ err }, "Migration warning (non-fatal)");
+  }
+}
+
+runMigrations();
 
 const app: Express = express();
 

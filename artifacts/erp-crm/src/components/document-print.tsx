@@ -1,3 +1,4 @@
+import React from "react";
 import { numberToWords, formatAED } from "@/lib/number-to-words";
 
 export interface DocumentItem {
@@ -36,6 +37,7 @@ export interface DocumentData {
   paymentTerms?: string;
   deliveryTerms?: string;
   termsConditions?: string;
+  techSpecs?: string;
   items: DocumentItem[];
   preparedByName?: string;
   approvedByName?: string;
@@ -445,27 +447,33 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <div className="bg-[#0f2d5a] text-white px-3 py-1.5 font-black text-[13px] uppercase tracking-wide mb-0">
               Technical Specifications
             </div>
-            <table className="w-full border-collapse border border-gray-400 mb-3">
-              <tbody>
-                {TECH_SPECS.map((section, si) => (
-                  <>
-                    <tr key={`h-${si}`} className="bg-gray-200">
-                      <td className="border border-gray-400 px-2 py-1 font-bold text-xs uppercase" colSpan={2}>
-                        {String.fromCharCode(65 + si) ?? si + 1}. {section.title}
-                      </td>
-                    </tr>
-                    {section.points.map((pt, pi) => (
-                      <tr key={`p-${si}-${pi}`}>
-                        <td className="border border-gray-400 px-2 py-1 text-xs w-6 text-center align-top font-semibold">
-                          {String.fromCharCode(97 + pi)}.
+            {data.techSpecs ? (
+              <div className="border border-gray-400 p-3 text-[11px] whitespace-pre-line bg-gray-50">
+                {data.techSpecs}
+              </div>
+            ) : (
+              <table className="w-full border-collapse border border-gray-400 mb-3">
+                <tbody>
+                  {TECH_SPECS.map((section, si) => (
+                    <React.Fragment key={si}>
+                      <tr className="bg-gray-200">
+                        <td className="border border-gray-400 px-2 py-1 font-bold text-xs uppercase" colSpan={2}>
+                          {String.fromCharCode(65 + si)}. {section.title}
                         </td>
-                        <td className="border border-gray-400 px-2 py-1 text-xs">{pt}</td>
                       </tr>
-                    ))}
-                  </>
-                ))}
-              </tbody>
-            </table>
+                      {section.points.map((pt, pi) => (
+                        <tr key={pi}>
+                          <td className="border border-gray-400 px-2 py-1 text-xs w-6 text-center align-top font-semibold">
+                            {String.fromCharCode(97 + pi)}.
+                          </td>
+                          <td className="border border-gray-400 px-2 py-1 text-xs">{pt}</td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 

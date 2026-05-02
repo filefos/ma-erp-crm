@@ -50,6 +50,7 @@ import { RolesAdmin } from "@/pages/admin/roles";
 import { AdminGuard } from "@/components/AdminGuard";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { NotificationsList } from "@/pages/notifications/index";
+import { MyProfile } from "@/pages/profile/index";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -226,6 +227,7 @@ function Router() {
       </Route>
 
       <Route path="/notifications" component={NotificationsList} />
+      <Route path="/profile" component={MyProfile} />
 
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />

@@ -1,14 +1,52 @@
 import { Router } from "express";
-import { db, notificationsTable, auditLogsTable } from "@workspace/db";
+import { db, notificationsTable, auditLogsTable, leadsTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { requireAuth, requirePermissionLevel } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
 
+async function autoCheckFollowUps(userId: number) {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const dueLeads = await db.select().from(leadsTable)
+      .where(and(eq(leadsTable.isActive, true), sql`${leadsTable.nextFollowUp} IS NOT NULL AND ${leadsTable.nextFollowUp} <= ${today}`));
+    const active = dueLeads.filter(l => !["won", "lost"].includes(l.status));
+    for (const lead of active) {
+      const notifyUsers = new Set<number>();
+      if (lead.assignedToId) notifyUsers.add(lead.assignedToId);
+      notifyUsers.add(userId);
+      for (const uid of notifyUsers) {
+        const [existing] = await db.select({ count: sql<number>`count(*)::int` })
+          .from(notificationsTable)
+          .where(and(
+            eq(notificationsTable.userId, uid),
+            eq(notificationsTable.entityType, "lead"),
+            eq(notificationsTable.entityId, lead.id),
+            sql`DATE(${notificationsTable.createdAt}) = CURRENT_DATE`,
+          ));
+        if ((existing?.count ?? 0) === 0) {
+          const isOverdue = lead.nextFollowUp! < today;
+          await db.insert(notificationsTable).values({
+            title: isOverdue ? "Overdue Follow-up!" : "Follow-up Due Today",
+            message: `${isOverdue ? "OVERDUE: " : ""}Follow-up for "${lead.leadName}" (${lead.companyName ?? "Unknown"})${lead.requirementType ? ` — ${lead.requirementType}` : ""}`,
+            type: isOverdue ? "warning" : "info",
+            userId: uid,
+            entityType: "lead",
+            entityId: lead.id,
+            isRead: false,
+          });
+        }
+      }
+    }
+  } catch { /* non-critical */ }
+}
+
 // Notifications
 router.get("/notifications", async (req, res): Promise<void> => {
   const userId = req.user!.id;
+  // Background: auto-create follow-up notifications for due leads
+  autoCheckFollowUps(userId);
   let rows = await db.select().from(notificationsTable)
     .where(eq(notificationsTable.userId, userId))
     .orderBy(sql`${notificationsTable.createdAt} desc`)

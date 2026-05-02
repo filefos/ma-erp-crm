@@ -104,6 +104,7 @@ export function QuotationDetail({ id }: Props) {
     grandTotal: q.grandTotal,
     paymentTerms: q.paymentTerms,
     termsConditions: q.termsConditions,
+    techSpecs: (q as any).techSpecs,
     items: items.map(i => ({
       description: i.description,
       sizeStatus: i.unit,

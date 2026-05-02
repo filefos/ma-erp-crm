@@ -15,6 +15,12 @@ async function genDocNumber(companyId: number, type: string, table: any) {
   return `${prefix}-${type}-${year}-${String(num).padStart(4, "0")}`;
 }
 
+function parsePiItems(pi: typeof proformaInvoicesTable.$inferSelect) {
+  let items = [];
+  try { items = JSON.parse((pi as any).items ?? "[]"); } catch {}
+  return { ...pi, items };
+}
+
 // Proforma Invoices
 router.get("/proforma-invoices", requirePermission("proforma_invoices", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(proformaInvoicesTable).orderBy(sql`${proformaInvoicesTable.createdAt} desc`);
@@ -24,7 +30,7 @@ router.get("/proforma-invoices", requirePermission("proforma_invoices", "view"),
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
   const enriched = await Promise.all(rows.map(async (pi) => {
     const [co] = pi.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, pi.companyId)) : [undefined];
-    return { ...pi, companyRef: co?.name };
+    return { ...parsePiItems(pi), companyRef: co?.name };
   }));
   res.json(enriched);
 });
@@ -32,8 +38,12 @@ router.get("/proforma-invoices", requirePermission("proforma_invoices", "view"),
 router.post("/proforma-invoices", requirePermission("proforma_invoices", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const piNumber = await genDocNumber(data.companyId, "PI", proformaInvoicesTable);
-  const [pi] = await db.insert(proformaInvoicesTable).values({ ...data, piNumber, preparedById: req.user?.id }).returning();
-  res.status(201).json(pi);
+  const itemsStr = JSON.stringify(data.items ?? []);
+  const { items: _items, ...rest } = data;
+  const [pi] = await db.insert(proformaInvoicesTable).values({
+    ...rest, piNumber, preparedById: req.user?.id, items: itemsStr,
+  }).returning();
+  res.status(201).json(parsePiItems(pi));
 });
 
 router.get("/proforma-invoices/:id", requirePermission("proforma_invoices", "view"), async (req, res): Promise<void> => {
@@ -41,7 +51,7 @@ router.get("/proforma-invoices/:id", requirePermission("proforma_invoices", "vie
   const [pi] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
   if (!pi) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [pi]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  res.json(pi);
+  res.json(parsePiItems(pi));
 });
 
 router.put("/proforma-invoices/:id", requirePermission("proforma_invoices", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
@@ -49,8 +59,11 @@ router.put("/proforma-invoices/:id", requirePermission("proforma_invoices", "edi
   const [existing] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [pi] = await db.update(proformaInvoicesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(proformaInvoicesTable.id, id)).returning();
-  res.json(pi);
+  const { items: _items, ...rest } = req.body;
+  const updateData: Record<string, unknown> = { ...rest, updatedAt: new Date() };
+  if (_items !== undefined) updateData.items = JSON.stringify(_items);
+  const [pi] = await db.update(proformaInvoicesTable).set(updateData).where(eq(proformaInvoicesTable.id, id)).returning();
+  res.json(parsePiItems(pi));
 });
 
 // Tax Invoices

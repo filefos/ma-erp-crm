@@ -50,11 +50,19 @@ export function ProformaInvoiceDetail({ id }: Props) {
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading…</div>;
   if (!pi) return <div className="text-muted-foreground p-8">Proforma Invoice not found.</div>;
 
+  // Use PI's own items first; fall back to quotation items if PI has none
+  const piRawItems = (pi as any)?.items ?? [];
+  const piItems = Array.isArray(piRawItems) ? piRawItems : [];
+  
   const qItems = ((quotation as any)?.items ?? []) as {
     description: string; unit?: string; rate?: number; quantity: number; amount?: number;
   }[];
 
-  const subtotal = pi.subtotal ?? (pi.total - (pi.vatAmount ?? 0));
+  const sourceItems = piItems.length > 0 ? piItems : qItems;
+
+  const subtotal = (pi as any).subtotal ?? sourceItems.reduce((s: number, i: any) => s + (i.amount ?? (i.rate ?? 0) * (i.quantity ?? 1)), 0);
+  const vatPercent = (pi as any).vatPercent ?? 5;
+  const vatAmount = (pi as any).vatAmount ?? (subtotal * vatPercent / 100);
 
   const docData: DocumentData = {
     type: "proforma",
@@ -62,20 +70,24 @@ export function ProformaInvoiceDetail({ id }: Props) {
     companyId: pi.companyId,
     companyRef: (pi as any).companyRef,
     clientName: pi.clientName,
+    clientEmail: (pi as any).clientEmail,
+    clientPhone: (pi as any).clientPhone,
     projectName: pi.projectName,
+    projectLocation: (pi as any).projectLocation,
     date: pi.createdAt ? new Date(pi.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
     validity: pi.validityDate,
     subtotal,
-    vatPercent: 5,
-    vatAmount: pi.vatAmount,
+    vatPercent,
+    vatAmount,
     grandTotal: pi.total,
     paymentTerms: pi.paymentTerms,
-    items: qItems.map(i => ({
+    notes: (pi as any).notes,
+    items: sourceItems.map((i: any) => ({
       description: i.description,
       sizeStatus: i.unit,
-      unitPrice: i.rate,
+      unitPrice: i.rate ?? i.unitPrice,
       quantity: i.quantity,
-      total: i.amount,
+      total: i.amount ?? i.total,
     })),
     preparedByName: (pi as any).preparedByName,
   };
@@ -87,12 +99,15 @@ export function ProformaInvoiceDetail({ id }: Props) {
     createTax.mutate({ data: {
       companyId: pi.companyId,
       clientName: pi.clientName,
+      clientEmail: (pi as any).clientEmail,
+      clientPhone: (pi as any).clientPhone,
+      projectName: pi.projectName,
       quotationId: qid,
       invoiceDate: today,
       supplyDate: today,
       subtotal,
-      vatPercent: 5,
-      vatAmount: pi.vatAmount,
+      vatPercent,
+      vatAmount,
       grandTotal: pi.total,
       paymentStatus: "unpaid",
     } });
