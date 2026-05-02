@@ -186,10 +186,10 @@ export function PaymentsMadeList() {
             </div>
             <div className="space-y-1 col-span-2">
               <Label>Bank Account</Label>
-              <Select value={form.bankAccountId} onValueChange={v => setForm(p => ({ ...p, bankAccountId: v }))}>
+              <Select value={form.bankAccountId || "__none__"} onValueChange={v => setForm(p => ({ ...p, bankAccountId: v === "__none__" ? "" : v }))}>
                 <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— None —</SelectItem>
+                  <SelectItem value="__none__">— None —</SelectItem>
                   {bankAccounts.map(b => <SelectItem key={b.id} value={String(b.id)}>{b.bankName} — {b.accountNumber}</SelectItem>)}
                 </SelectContent>
               </Select>
