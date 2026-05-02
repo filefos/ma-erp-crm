@@ -15,6 +15,12 @@ import { Link, useLocation } from "wouter";
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import {
+  SPEC_TYPE_OPTIONS,
+  DEFAULT_SPEC_TYPE,
+  getSpecTemplate,
+  type SpecTypeKey,
+} from "@/lib/tech-spec-templates";
 
 const BANK_DETAILS: Record<number, {
   bankName: string; accountTitle: string; accountNumber: string;
@@ -113,9 +119,15 @@ export function QuotationEdit({ id }: Props) {
   });
   const [items, setItems] = useState<Item[]>([emptyItem()]);
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>(DEFAULT_ADDITIONAL_ITEMS);
+  const [specType, setSpecType] = useState<SpecTypeKey>(DEFAULT_SPEC_TYPE);
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
   const [bumpRev, setBumpRev] = useState(false);
+
+  const handleSpecTypeChange = (key: SpecTypeKey) => {
+    setSpecType(key);
+    setForm(p => ({ ...p, techSpecs: getSpecTemplate(key) }));
+  };
 
   useEffect(() => {
     if (!q || initialised) return;
@@ -559,7 +571,24 @@ export function QuotationEdit({ id }: Props) {
         </CardHeader>
         {showTechSpecs && (
           <CardContent>
-            <p className="text-xs text-muted-foreground mb-2">Edit the technical spec text below. Printed on a separate page 2.</p>
+            <div className="space-y-2 mb-3">
+              <Label className="text-xs font-medium">Specification Type</Label>
+              <Select value={specType} onValueChange={(v) => handleSpecTypeChange(v as SpecTypeKey)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPEC_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Switching the type replaces the editor content with that template. You can edit the text afterwards. Printed as page 2.
+              </p>
+            </div>
             <Textarea
               value={form.techSpecs}
               onChange={e => setForm(p => ({ ...p, techSpecs: e.target.value }))}

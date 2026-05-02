@@ -11,6 +11,12 @@ import { Link, useLocation } from "wouter";
 import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListQuotationsQueryKey } from "@workspace/api-client-react";
+import {
+  SPEC_TYPE_OPTIONS,
+  DEFAULT_SPEC_TYPE,
+  getSpecTemplate,
+  type SpecTypeKey,
+} from "@/lib/tech-spec-templates";
 
 const BANK_DETAILS: Record<number, { bankName: string; accountTitle: string; accountNumber: string; iban: string; swift: string; currency: string }> = {
   1: {
@@ -50,44 +56,7 @@ const DEFAULT_ADDITIONAL_ITEMS: AdditionalItem[] = [
   { description: "Additional Commercial Item", status: "Excluded", price: 0, quantity: 1, amount: 0 },
 ];
 
-const DEFAULT_TECH_SPECS = `BASE FRAME
-a. The steel base & top frame shall be constructed from MS I-BEAM 120X64, full perimeter beams with central runner and cross members.
-b. Lifting eyes are provided at intermediate points at the base of the cabin welded and painted in 01 coat of red oxide primer and 01 coat with matt enamel paint.
-c. Base frame shall be painted with 02 coat paint, one with red oxide, one with rust free enamel paint.
-
-FLOOR SYSTEM
-a. Floor Frame: The floor frame shall be constructed from MS angle 50X50X2.7MM welded into the base & top frame (400mm joists spacing). Grit blasted SA2.5 and painted with 02 coat system of epoxy paint.
-b. Floor Decking: One layer of 18mm thick cement board, fixed to the base frame and floor frame. Bottom of the cement board is painted with bitumen paint.
-c. Floor Finish - Dry Area: 1.5mm PVC vinyl sheet from a good brand.
-d. Floor Finish - Wet Area: PVC vinyl sheet 1.5mm thick.
-
-WALL SYSTEM
-a. External Finish: 06mm thick cement board finish with heavy texture paint (approved color). External wall joints covered by 6mm thick CFB joint strips.
-b. Internal Finish - Dry Area: 12.5mm thick gypsum board finish with emulsion paint. Floor skirting MDF 50mm / PVC 75MM SKIRTING.
-c. Internal Finish - Wet Area: 12mm thick MR GYPSUM board fixed to cold formed steel wall framing. Joints covered with MDF 5cm skirting.
-d. Wall Framing: LGS profile framing GI studs 70x35x0.45 fixed together by screws at spacing of 610mm vertically & 1200mm horizontally.
-e. Wall Insulation: 50mm thick glass-wool insulation 12kg/m3 density.
-f. Dry Area: Emulsion paint (off-white color) applied to gypsum board. (National). Wet Area: Enamel paint (white color) applied to cement fiber board. (National).
-
-ROOFING
-a. Roof Covering: 0.5mm thick GI Corrugated steel fixed on furry channel 0.5mm purlins as per drawing.
-b. Trusses: Truss made of MS Angle 40x40x2.7mm.
-
-CEILING
-a. Ceiling - Dry Area: 12mm gypsum board finish with fine texture paint.
-b. Ceiling - Wet Areas: 12mm gypsum board finish with fine texture paint.
-
-DOORS
-a. External Door: Supply and installation of Aluminum/PVC Door 900x2100mm. Door Lock: Mortice lockset with cylinder and SS door handles for all internal doors; Single cylinder with thumb turn latch for internal toilet doors.
-b. Internal/Toilet Door: 900/700x2100mm PVC DOOR. Door Lock: Mortice lockset with cylinder and SS door handles for internal doors; Single cylinder with thumb turn latch for toilet doors.
-
-WINDOWS
-a. External Windows: Powder coated aluminum frame (non-thermal break), 6mm thick clear glass, externally Hinged window (One shutter hinged & other fixed). 900x900mm.
-b. Exhaust Window: Powder coated aluminum frame (non-thermal break), fixed Exhaust window with 6mm thick Single obscure glass. Size: 400x400mm.
-
-ELECTRICAL
-a. Electrical Supply: Conduits and wiring by National/Du-cab/RR.
-b. Tube light 36W ceiling light by MAX.`;
+const DEFAULT_TECH_SPECS = getSpecTemplate(DEFAULT_SPEC_TYPE);
 
 const DEFAULT_TC = `1. COMMERCIAL BASIS
 
@@ -166,8 +135,14 @@ export function QuotationNew() {
   });
   const [items, setItems] = useState<Item[]>([emptyItem()]);
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>(DEFAULT_ADDITIONAL_ITEMS);
+  const [specType, setSpecType] = useState<SpecTypeKey>(DEFAULT_SPEC_TYPE);
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
+
+  const handleSpecTypeChange = (key: SpecTypeKey) => {
+    setSpecType(key);
+    setForm(p => ({ ...p, techSpecs: getSpecTemplate(key) }));
+  };
 
   const updateItem = (i: number, field: keyof Item, val: string | number) => {
     setItems(prev => {
@@ -532,9 +507,24 @@ export function QuotationNew() {
         </CardHeader>
         {showTechSpecs && (
           <CardContent>
-            <p className="text-xs text-muted-foreground mb-2">
-              This will print as a separate page 2 in the quotation document.
-            </p>
+            <div className="space-y-2 mb-3">
+              <Label className="text-xs font-medium">Specification Type</Label>
+              <Select value={specType} onValueChange={(v) => handleSpecTypeChange(v as SpecTypeKey)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPEC_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.key} value={opt.key}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Choosing a type loads the matching template into the editor below — you can still edit it before saving. This prints as page 2 of the quotation.
+              </p>
+            </div>
             <Textarea
               value={form.techSpecs}
               onChange={e => setForm(p => ({ ...p, techSpecs: e.target.value }))}
