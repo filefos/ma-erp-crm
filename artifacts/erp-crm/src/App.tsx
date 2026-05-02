@@ -96,6 +96,10 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      {/* The executive dashboard renders permission-gated sections per user;
+          it does not require a specific module guard (which would create a
+          redirect loop, since ModuleGuard redirects to /dashboard on deny).
+          Authentication itself is enforced by useAuth in the page. */}
       <Route path="/dashboard" component={Dashboard} />
 
       {/* CRM */}

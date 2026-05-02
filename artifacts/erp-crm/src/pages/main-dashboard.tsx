@@ -6,9 +6,18 @@ import {
   useListPurchaseOrders, useListPurchaseRequests, useListSuppliers,
   useListInventoryItems, useListEmployees, useListAttendance, useListProjects,
   useListAssets, useListCheques, useListNotifications,
+  getListLeadsQueryKey, getListDealsQueryKey, getListQuotationsQueryKey,
+  getListProformaInvoicesQueryKey, getListLposQueryKey, getListTaxInvoicesQueryKey,
+  getListPaymentsReceivedQueryKey, getListExpensesQueryKey,
+  getListPurchaseOrdersQueryKey, getListPurchaseRequestsQueryKey,
+  getListSuppliersQueryKey, getListInventoryItemsQueryKey,
+  getListEmployeesQueryKey, getListAttendanceQueryKey, getListProjectsQueryKey,
+  getListAssetsQueryKey, getListChequesQueryKey,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
+import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,25 +74,50 @@ function Empty({ children }: { children: React.ReactNode }) {
 export function MainExecutiveDashboard() {
   const { user } = useAuth();
   const { filterByCompany, companyShort } = useActiveCompany();
+  const { can, ready: permsReady } = usePermissions();
   const now = new Date();
 
-  const { data: leadsRaw }       = useListLeads({});
-  const { data: dealsRaw }       = useListDeals();
-  const { data: quotationsRaw }  = useListQuotations();
-  const { data: proformaRaw }    = useListProformaInvoices();
-  const { data: lposRaw }        = useListLpos();
-  const { data: invoicesRaw }    = useListTaxInvoices();
-  const { data: paymentsRaw }    = useListPaymentsReceived();
-  const { data: expensesRaw }    = useListExpenses();
-  const { data: posRaw }         = useListPurchaseOrders();
-  const { data: prsRaw }         = useListPurchaseRequests();
-  const { data: suppliersRaw }   = useListSuppliers();
-  const { data: itemsRaw }       = useListInventoryItems();
-  const { data: employeesRaw }   = useListEmployees();
-  const { data: attendanceRaw }  = useListAttendance();
-  const { data: projectsRaw }    = useListProjects();
-  const { data: assetsRaw }      = useListAssets();
-  const { data: chequesRaw }     = useListCheques();
+  // Permission flags — drive both query enablement and conditional rendering
+  // so we never fetch or expose data the current user cannot view.
+  const canLeads      = can("leads");
+  const canDeals      = can("deals");
+  const canQuotes     = can("quotations");
+  const canProforma   = can("proforma_invoices");
+  const canLpos       = can("lpos");
+  const canInvoices   = can("tax_invoices");
+  const canPayments   = can("tax_invoices");        // payments received are part of accounts/invoices module
+  const canExpenses   = can("expenses");
+  const canPos        = can("purchase_orders");
+  const canPrs        = can("purchase_requests");
+  const canSuppliers  = can("suppliers");
+  const canItems      = can("inventory_items");
+  const canEmployees  = can("employees");
+  const canAttendance = can("attendance");
+  const canProjects   = can("projects");
+  const canAssets     = can("assets");
+  const canCheques    = can("cheques");
+  const canCrm        = canLeads || canDeals;
+  const canSales      = canQuotes || canProforma || canLpos;
+  const canAccounts   = canInvoices || canPayments || canExpenses || canCheques;
+  const canProcurement = canPos || canPrs || canSuppliers;
+
+  const { data: leadsRaw }       = useListLeads({},              { query: { queryKey: getListLeadsQueryKey({}),                  enabled: canLeads      } });
+  const { data: dealsRaw }       = useListDeals(undefined,       { query: { queryKey: getListDealsQueryKey(),                    enabled: canDeals      } });
+  const { data: quotationsRaw }  = useListQuotations(undefined,  { query: { queryKey: getListQuotationsQueryKey(),               enabled: canQuotes     } });
+  const { data: proformaRaw }    = useListProformaInvoices(undefined, { query: { queryKey: getListProformaInvoicesQueryKey(),    enabled: canProforma   } });
+  const { data: lposRaw }        = useListLpos(undefined,        { query: { queryKey: getListLposQueryKey(),                     enabled: canLpos       } });
+  const { data: invoicesRaw }    = useListTaxInvoices(undefined, { query: { queryKey: getListTaxInvoicesQueryKey(),              enabled: canInvoices   } });
+  const { data: paymentsRaw }    = useListPaymentsReceived(undefined, { query: { queryKey: getListPaymentsReceivedQueryKey(),    enabled: canPayments   } });
+  const { data: expensesRaw }    = useListExpenses(undefined,    { query: { queryKey: getListExpensesQueryKey(),                 enabled: canExpenses   } });
+  const { data: posRaw }         = useListPurchaseOrders(undefined,    { query: { queryKey: getListPurchaseOrdersQueryKey(),     enabled: canPos        } });
+  const { data: prsRaw }         = useListPurchaseRequests(undefined,  { query: { queryKey: getListPurchaseRequestsQueryKey(),   enabled: canPrs        } });
+  const { data: suppliersRaw }   = useListSuppliers(undefined,   { query: { queryKey: getListSuppliersQueryKey(),                enabled: canSuppliers  } });
+  const { data: itemsRaw }       = useListInventoryItems(undefined,    { query: { queryKey: getListInventoryItemsQueryKey(),     enabled: canItems      } });
+  const { data: employeesRaw }   = useListEmployees(undefined,   { query: { queryKey: getListEmployeesQueryKey(),                enabled: canEmployees  } });
+  const { data: attendanceRaw }  = useListAttendance(undefined,  { query: { queryKey: getListAttendanceQueryKey(),               enabled: canAttendance } });
+  const { data: projectsRaw }    = useListProjects(undefined,    { query: { queryKey: getListProjectsQueryKey(),                 enabled: canProjects   } });
+  const { data: assetsRaw }      = useListAssets(undefined,      { query: { queryKey: getListAssetsQueryKey(),                   enabled: canAssets     } });
+  const { data: chequesRaw }     = useListCheques(undefined,     { query: { queryKey: getListChequesQueryKey(),                  enabled: canCheques    } });
   const { data: notifsRaw }      = useListNotifications();
 
   const leads      = useMemo(() => filterByCompany(leadsRaw      ?? []), [leadsRaw,      filterByCompany]);
@@ -294,19 +328,19 @@ export function MainExecutiveDashboard() {
     return list;
   }, [cheques, deals, lowStock, quotations, pendingPRs, notifs, now]);
 
-  // ---- Segment shortcuts ----
-  const segments: { label: string; href: string; icon: React.ComponentType<{ className?: string }>; tone: string; sub: string }[] = [
-    { label: "CRM",         href: "/crm",                  icon: Users,         tone: "from-purple-500 to-purple-700",  sub: `${leads.length} leads · ${deals.length} deals` },
-    { label: "Sales",       href: "/sales",                icon: FileText,      tone: "from-blue-500 to-blue-700",      sub: `${quotations.length} quotes · ${lpos.length} LPOs` },
-    { label: "Accounts",    href: "/accounts",             icon: Receipt,       tone: "from-emerald-500 to-emerald-700",sub: `${invoices.length} invoices` },
-    { label: "Procurement", href: "/procurement/dashboard",icon: ShoppingCart,  tone: "from-orange-500 to-orange-700",  sub: `${pos.length} POs · ${suppliers.length} suppliers` },
-    { label: "Inventory",   href: "/inventory",            icon: Package,       tone: "from-teal-500 to-teal-700",      sub: `${items.length} items` },
-    { label: "Projects",    href: "/projects/dashboard",   icon: Folders,       tone: "from-indigo-500 to-indigo-700",  sub: `${activeProjects} active` },
-    { label: "HR",          href: "/hr",                   icon: HardHat,       tone: "from-slate-600 to-slate-800",    sub: `${activeEmployees} active` },
-    { label: "Assets",      href: "/assets/dashboard",     icon: Wrench,        tone: "from-cyan-500 to-cyan-700",      sub: `${totalAssets} assets` },
-    { label: "Email",       href: "/email/dashboard",      icon: Mail,          tone: "from-pink-500 to-pink-700",      sub: "Inbox & threads" },
-    { label: "Reports",     href: "/reports/dashboard",    icon: BarChart3,     tone: "from-rose-500 to-rose-700",      sub: "Cross-module analytics" },
-  ];
+  // ---- Segment shortcuts (permission-filtered) ----
+  const segments: { label: string; href: string; icon: React.ComponentType<{ className?: string }>; tone: string; sub: string; allowed: boolean }[] = [
+    { label: "CRM",         href: "/crm",                  icon: Users,         tone: "from-purple-500 to-purple-700",  sub: `${leads.length} leads · ${deals.length} deals`,        allowed: canCrm },
+    { label: "Sales",       href: "/sales",                icon: FileText,      tone: "from-blue-500 to-blue-700",      sub: `${quotations.length} quotes · ${lpos.length} LPOs`,    allowed: canSales },
+    { label: "Accounts",    href: "/accounts",             icon: Receipt,       tone: "from-emerald-500 to-emerald-700",sub: `${invoices.length} invoices`,                          allowed: canAccounts },
+    { label: "Procurement", href: "/procurement/dashboard",icon: ShoppingCart,  tone: "from-orange-500 to-orange-700",  sub: `${pos.length} POs · ${suppliers.length} suppliers`,    allowed: canProcurement },
+    { label: "Inventory",   href: "/inventory",            icon: Package,       tone: "from-teal-500 to-teal-700",      sub: `${items.length} items`,                                allowed: canItems },
+    { label: "Projects",    href: "/projects/dashboard",   icon: Folders,       tone: "from-indigo-500 to-indigo-700",  sub: `${activeProjects} active`,                             allowed: canProjects },
+    { label: "HR",          href: "/hr",                   icon: HardHat,       tone: "from-slate-600 to-slate-800",    sub: `${activeEmployees} active`,                            allowed: canEmployees || canAttendance },
+    { label: "Assets",      href: "/assets/dashboard",     icon: Wrench,        tone: "from-cyan-500 to-cyan-700",      sub: `${totalAssets} assets`,                                allowed: canAssets },
+    { label: "Email",       href: "/email/dashboard",      icon: Mail,          tone: "from-pink-500 to-pink-700",      sub: "Inbox & threads",                                      allowed: true },
+    { label: "Reports",     href: "/reports/dashboard",    icon: BarChart3,     tone: "from-rose-500 to-rose-700",      sub: "Cross-module analytics",                               allowed: true },
+  ].filter(s => s.allowed);
 
   const u = user as { name?: string; permissionLevel?: string } | undefined;
   const greeting = (() => {
@@ -315,6 +349,17 @@ export function MainExecutiveDashboard() {
     if (h < 18) return "Good afternoon";
     return "Good evening";
   })();
+
+  // Wait for permissions to load before rendering anything that depends on
+  // them — prevents a brief flash of empty/wrong content and avoids leaking
+  // sections to users who shouldn't see them.
+  if (!permsReady) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]" data-testid="dashboard-loading">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -354,17 +399,35 @@ export function MainExecutiveDashboard() {
         </div>
       )}
 
-      {/* Top KPI strip — cross-module */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPIWidget icon={Receipt}      tone="green"  label="Revenue · MTD"    value={fmtAED(paymentsReceivedMtd)} sub={`${fmtAED(paymentsReceivedAll)} all-time`} sparkline={revenueSpark} trend={trendPct(revenueSpark)} href="/accounts/payments-received" testId="kpi-revenue" />
-        <KPIWidget icon={ArrowDownCircle} tone="red"   label="Expenses · MTD"   value={fmtAED(expensesMtd)}         sub={`${fmtAED(outstandingAR)} A/R outstanding`} sparkline={expenseSpark} trend={trendPct(expenseSpark)} href="/accounts/expenses" testId="kpi-expenses" />
-        <KPIWidget icon={FileText}     tone="blue"   label="Quotations Value" value={fmtAED(quotationValue)}      sub={`${quotations.length} quotes · ${openQuotations} open`} sparkline={quoteSpark} trend={trendPct(quoteSpark)} href="/sales" testId="kpi-quotes" />
-        <KPIWidget icon={Briefcase}    tone="purple" label="Open Pipeline"    value={fmtAED(openDealsValue)}      sub={`${deals.filter((d: any) => !["won", "lost"].includes(d.stage)).length} open deals · MTD won ${fmtAED(wonDealsMtd)}`} sparkline={dealSpark} trend={trendPct(dealSpark)} href="/crm/pipeline" testId="kpi-pipeline" />
-        <KPIWidget icon={Users}        tone="indigo" label="Leads · 30d"      value={newLeads30}                  sub={`${leads.length} total leads`}                            sparkline={leadSpark}    trend={trendPct(leadSpark)}    href="/crm/leads" testId="kpi-leads" />
-        <KPIWidget icon={ShoppingCart} tone="amber"  label="Open POs"         value={openPos}                     sub={`${pos.length} total · ${pendingPRs} PRs pending`}        sparkline={poSpark}      trend={trendPct(poSpark)}      href="/procurement/dashboard" testId="kpi-pos" />
-        <KPIWidget icon={Folders}      tone="teal"   label="Active Projects"  value={activeProjects}              sub={`${fmtAED(projectValue)} total project value`}            sparkline={projectSpark} trend={trendPct(projectSpark)} href="/projects/dashboard" testId="kpi-projects" />
-        <KPIWidget icon={HardHat}      tone="navy"   label="Active Workforce" value={activeEmployees}             sub={`${presentToday} present today · ${totalAssets} assets · ${fmtAED(totalAssetValue)}`} href="/hr" testId="kpi-workforce" />
+      {/* Top KPI strip — cross-module, permission-gated. Each widget renders
+          only if the user can view its underlying module so we never expose
+          aggregates the user is not allowed to see. */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="executive-kpi-strip">
+        {canPayments  && <KPIWidget icon={Receipt}        tone="green"  label="Revenue · MTD"    value={fmtAED(paymentsReceivedMtd)} sub={`${fmtAED(paymentsReceivedAll)} all-time`} sparkline={revenueSpark} trend={trendPct(revenueSpark)} href="/accounts/payments-received" testId="kpi-revenue" />}
+        {canExpenses  && <KPIWidget icon={ArrowDownCircle} tone="red"   label="Expenses · MTD"   value={fmtAED(expensesMtd)}         sub={canPayments ? `${fmtAED(outstandingAR)} A/R outstanding` : `${expenses.length} expense entries`} sparkline={expenseSpark} trend={trendPct(expenseSpark)} href="/accounts/expenses" testId="kpi-expenses" />}
+        {canQuotes    && <KPIWidget icon={FileText}       tone="blue"   label="Quotations Value" value={fmtAED(quotationValue)}      sub={`${quotations.length} quotes · ${openQuotations} open`} sparkline={quoteSpark} trend={trendPct(quoteSpark)} href="/sales" testId="kpi-quotes" />}
+        {canDeals     && <KPIWidget icon={Briefcase}      tone="purple" label="Open Pipeline"    value={fmtAED(openDealsValue)}      sub={`${deals.filter((d: any) => !["won", "lost"].includes(d.stage)).length} open deals · MTD won ${fmtAED(wonDealsMtd)}`} sparkline={dealSpark} trend={trendPct(dealSpark)} href="/crm/pipeline" testId="kpi-pipeline" />}
+        {canLeads     && <KPIWidget icon={Users}          tone="indigo" label="Leads · 30d"      value={newLeads30}                  sub={`${leads.length} total leads`}                            sparkline={leadSpark}    trend={trendPct(leadSpark)}    href="/crm/leads" testId="kpi-leads" />}
+        {canPos       && <KPIWidget icon={ShoppingCart}   tone="amber"  label="Open POs"         value={openPos}                     sub={`${pos.length} total · ${canPrs ? `${pendingPRs} PRs pending` : "all approved"}`}        sparkline={poSpark}      trend={trendPct(poSpark)}      href="/procurement/dashboard" testId="kpi-pos" />}
+        {canProjects  && <KPIWidget icon={Folders}        tone="teal"   label="Active Projects"  value={activeProjects}              sub={`${fmtAED(projectValue)} total project value`}            sparkline={projectSpark} trend={trendPct(projectSpark)} href="/projects/dashboard" testId="kpi-projects" />}
+        {canEmployees && <KPIWidget icon={HardHat}        tone="navy"   label="Active Workforce" value={activeEmployees}             sub={`${canAttendance ? `${presentToday} present today` : `${employees.length} on roster`}${canAssets ? ` · ${totalAssets} assets · ${fmtAED(totalAssetValue)}` : ""}`} href="/hr" testId="kpi-workforce" />}
       </div>
+
+      {/* If the user has zero module access, surface a clear empty state so
+          the dashboard never appears blank-but-broken. */}
+      {!canLeads && !canDeals && !canQuotes && !canProforma && !canLpos &&
+        !canInvoices && !canPayments && !canExpenses && !canPos && !canPrs &&
+        !canSuppliers && !canItems && !canEmployees && !canAttendance &&
+        !canProjects && !canAssets && !canCheques && (
+        <div className="rounded-2xl border bg-card p-8 text-center" data-testid="dashboard-empty-state">
+          <ShieldCheck className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="text-base font-semibold mb-1">No modules assigned yet</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Your account does not have access to any module yet. Please contact your administrator
+            to request the permissions you need.
+          </p>
+        </div>
+      )}
 
       {/* Segment shortcuts — quick jump to every module dashboard */}
       <div>
@@ -400,7 +463,8 @@ export function MainExecutiveDashboard() {
         </div>
       </div>
 
-      {/* Revenue trend + cash split */}
+      {/* Revenue trend + cash split — only when user can see accounts data */}
+      {(canPayments || canExpenses || canQuotes) && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <PanelCard title="Revenue · Expenses · Profit" subtitle="Last 12 months · all currencies in AED" icon={TrendingUp} className="lg:col-span-2">
           {monthlyTrend.every(m => m.revenue === 0 && m.expenses === 0) ? (
@@ -469,8 +533,10 @@ export function MainExecutiveDashboard() {
           )}
         </PanelCard>
       </div>
+      )}
 
-      {/* 30-day cash flow strip + Top Payees mini cards */}
+      {/* 30-day cash flow strip + Top Payees mini cards — accounts only */}
+      {(canPayments || canExpenses) && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <PanelCard
           title="Cash Flow · Last 30 days"
@@ -519,9 +585,10 @@ export function MainExecutiveDashboard() {
           )}
         </PanelCard>
       </div>
+      )}
 
-      {/* Low-stock strip */}
-      {(() => {
+      {/* Low-stock strip — inventory only */}
+      {canItems && (() => {
         const lowStockItems = (items as any[])
           .filter(i => {
             const qty = Number(i.quantity ?? i.currentStock ?? 0);
@@ -571,7 +638,8 @@ export function MainExecutiveDashboard() {
         );
       })()}
 
-      {/* Pipeline funnel + Top clients */}
+      {/* Pipeline funnel + Top clients — sales/CRM/accounts data */}
+      {(canCrm || canSales || canPayments) && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <PanelCard title="Business Funnel" subtitle="Lead → Deal → Quote → PI → LPO → Invoice" icon={Activity} className="lg:col-span-2">
           {funnel.every(f => f.count === 0) ? (
@@ -615,6 +683,7 @@ export function MainExecutiveDashboard() {
           )}
         </PanelCard>
       </div>
+      )}
 
     </div>
   );

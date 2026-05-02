@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListAssets, useCreateAsset } from "@workspace/api-client-react";
+import type { CreateAssetBody } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -41,7 +42,7 @@ export function AssetsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={filtered as unknown as Record<string, unknown>[]}
+            data={filtered}
             columns={[
               { header: "Asset Name", key: "name" },
               { header: "Category", key: "category" },
@@ -83,7 +84,24 @@ export function AssetsList() {
                 </Select>
               </div>
             </div>
-            <Button className="mt-4" onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId,10), purchaseValue: parseFloat(form.purchaseValue)||0 } as any })} disabled={!form.name || !form.companyId || create.isPending}>
+            <Button
+              className="mt-4"
+              onClick={() => {
+                const body: CreateAssetBody = {
+                  name: form.name,
+                  category: form.category,
+                  purchaseDate: form.purchaseDate || undefined,
+                  purchaseValue: parseFloat(form.purchaseValue) || 0,
+                  currentLocation: form.currentLocation || undefined,
+                  assignedTo: form.assignedTo || undefined,
+                  condition: form.condition || undefined,
+                  companyId: parseInt(form.companyId, 10),
+                  notes: form.notes || undefined,
+                };
+                create.mutate({ data: body });
+              }}
+              disabled={!form.name || !form.companyId || create.isPending}
+            >
               {create.isPending ? "Saving..." : "Add Asset"}
             </Button>
           </DialogContent>

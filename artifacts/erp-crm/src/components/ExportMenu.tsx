@@ -17,7 +17,12 @@ export interface ExportColumn {
 }
 
 interface ExportMenuProps {
-  data: Record<string, unknown>[];
+  // Accept any object array so callers can pass typed API rows without
+  // unsafe casts. Interfaces (e.g. generated `Asset`) lack an index
+  // signature, so we use `readonly object[]` and access keys via the
+  // generic Record cast inside buildRows — this is safe because columns
+  // are string keys read defensively.
+  data: readonly object[];
   columns: ExportColumn[];
   filename: string;
   title?: string;
@@ -26,17 +31,18 @@ interface ExportMenuProps {
 }
 
 function buildRows(
-  data: Record<string, unknown>[],
+  data: readonly object[],
   columns: ExportColumn[]
 ): (string | number | null | undefined)[][] {
   const header = columns.map(c => c.header);
-  const rows = data.map(row =>
-    columns.map(c => {
-      const v = row[c.key];
+  const rows = data.map(row => {
+    const r = row as Record<string, unknown>;
+    return columns.map(c => {
+      const v = r[c.key];
       if (v == null) return "";
       return c.format ? c.format(v) : (v as string | number);
-    })
-  );
+    });
+  });
   return [header, ...rows];
 }
 
