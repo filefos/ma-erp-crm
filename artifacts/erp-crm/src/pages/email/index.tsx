@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -10,8 +9,11 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Mail, Send, Inbox, Star, Trash2, FileText, Plus, X, Reply,
   ChevronLeft, Search, RefreshCw, Eye, EyeOff, Settings,
-  RotateCcw, Loader2, Paperclip, FileIcon, LogOut,
+  RotateCcw, Loader2, Paperclip, FileIcon, ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmailSettingsModal } from "./settings-modal";
 
 type Folder = "inbox" | "sent" | "draft" | "trash" | "starred";
@@ -46,6 +48,7 @@ interface ComposeData {
   toAddress: string;
   toName: string;
   ccAddress: string;
+  bccAddress: string;
   subject: string;
   body: string;
   replyToId?: number;
@@ -105,8 +108,10 @@ export function EmailPanel() {
   const [search, setSearch] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
   const [compose, setCompose] = useState<ComposeData>({
-    toAddress: "", toName: "", ccAddress: "", subject: "", body: "",
+    toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "",
   });
 
   const { data: settings } = useQuery({
@@ -206,11 +211,14 @@ export function EmailPanel() {
       toAddress: email.fromAddress,
       toName: email.fromName ?? "",
       ccAddress: "",
+      bccAddress: "",
       subject: email.subject.startsWith("Re:") ? email.subject : `Re: ${email.subject}`,
       body: `\n\n---\nOn ${formatDate(email.createdAt)}, ${email.fromName ?? email.fromAddress} wrote:\n${email.body.substring(0, 500)}`,
       replyToId: email.id,
     });
     setAttachments([]);
+    setShowCc(false);
+    setShowBcc(false);
     setComposing(true);
     setSelectedId(null);
   };
@@ -406,115 +414,190 @@ export function EmailPanel() {
         {/* ── Main Panel ── */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {composing ? (
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50">
-                <span className="font-semibold text-[#0f2d5a]">
-                  {compose.replyToId ? "Reply" : "New Email"}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => saveDraftMutation.mutate({ ...compose, folder: "draft", companyId })}>
-                    Save Draft
-                  </Button>
-                  <Button
-                    size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
-                    onClick={handleSend} disabled={sendMutation.isPending}
+            /* ── Outlook-style Compose ── */
+            <div className="flex flex-col h-full bg-white">
+
+              {/* ── Top action bar ── */}
+              <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-200">
+                {/* Send split-button */}
+                <div className="flex items-center rounded overflow-hidden border border-[#1e6ab0] shadow-sm">
+                  <button
+                    className="flex items-center gap-1.5 bg-[#1e6ab0] hover:bg-[#0f2d5a] text-white text-sm font-semibold px-4 py-1.5 transition-colors disabled:opacity-60"
+                    onClick={handleSend}
+                    disabled={sendMutation.isPending}
                   >
-                    {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
-                    {sendMutation.isPending ? "Sending…" : "Send"}
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setComposing(false); setAttachments([]); }}>
-                    <X className="w-4 h-4" />
-                  </Button>
+                    {sendMutation.isPending
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Send className="w-3.5 h-3.5" />}
+                    <span>{sendMutation.isPending ? "Sending…" : "Send"}</span>
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="bg-[#1e6ab0] hover:bg-[#0f2d5a] text-white border-l border-[#1558a0] px-2 py-1.5 transition-colors">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-[150px]">
+                      <DropdownMenuItem onClick={() => saveDraftMutation.mutate({ ...compose, folder: "draft", companyId })}>
+                        Save as Draft
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
+
+                {/* From address */}
+                <div className="flex items-center gap-1 text-sm text-gray-600">
+                  <span className="text-gray-400 text-xs">From:</span>
+                  <span className="font-medium text-gray-700">
+                    {settings?.smtpUser ?? "Not connected"}
+                  </span>
+                  {settings?.smtpUser && <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+                </div>
+
+                <div className="flex-1" />
+
+                {/* Right actions */}
+                <button
+                  className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                  title="Discard"
+                  onClick={() => { setComposing(false); setAttachments([]); setShowCc(false); setShowBcc(false); }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  className="p-1.5 rounded hover:bg-gray-100 text-gray-500 transition-colors"
+                  title="Close"
+                  onClick={() => { setComposing(false); setAttachments([]); setShowCc(false); setShowBcc(false); }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-5 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">To *</Label>
-                    <Input
-                      value={compose.toAddress}
-                      onChange={e => setCompose(p => ({ ...p, toAddress: e.target.value }))}
-                      placeholder="recipient@email.com" className="h-8 text-sm"
-                    />
+              {/* ── Fields ── */}
+              <div className="flex-1 flex flex-col overflow-y-auto">
+
+                {/* To */}
+                <div className="flex items-center border-b border-gray-100 px-4">
+                  <span className="text-sm text-gray-500 w-10 flex-shrink-0 py-3">To</span>
+                  <input
+                    type="text"
+                    className="flex-1 text-sm text-gray-800 py-3 outline-none bg-transparent placeholder:text-gray-400"
+                    placeholder="Add recipients"
+                    value={compose.toAddress}
+                    onChange={e => setCompose(p => ({ ...p, toAddress: e.target.value }))}
+                  />
+                  <div className="flex items-center gap-2 flex-shrink-0 pl-2">
+                    {!showCc && (
+                      <button
+                        className="text-xs text-gray-500 hover:text-[#1e6ab0] font-medium py-3 px-1"
+                        onClick={() => setShowCc(true)}
+                      >Cc</button>
+                    )}
+                    {!showBcc && (
+                      <button
+                        className="text-xs text-gray-500 hover:text-[#1e6ab0] font-medium py-3 px-1"
+                        onClick={() => setShowBcc(true)}
+                      >Bcc</button>
+                    )}
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-gray-500">CC</Label>
-                    <Input
+                </div>
+
+                {/* Cc */}
+                {showCc && (
+                  <div className="flex items-center border-b border-gray-100 px-4">
+                    <span className="text-sm text-gray-500 w-10 flex-shrink-0 py-3">Cc</span>
+                    <input
+                      type="text"
+                      className="flex-1 text-sm text-gray-800 py-3 outline-none bg-transparent placeholder:text-gray-400"
+                      placeholder="Add Cc recipients"
                       value={compose.ccAddress}
                       onChange={e => setCompose(p => ({ ...p, ccAddress: e.target.value }))}
-                      placeholder="cc@email.com" className="h-8 text-sm"
+                      autoFocus
                     />
+                    <button className="p-1.5 text-gray-400 hover:text-gray-600" onClick={() => { setShowCc(false); setCompose(p => ({ ...p, ccAddress: "" })); }}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                </div>
+                )}
 
-                <div className="space-y-1">
-                  <Label className="text-xs text-gray-500">Subject *</Label>
-                  <Input
+                {/* Bcc */}
+                {showBcc && (
+                  <div className="flex items-center border-b border-gray-100 px-4">
+                    <span className="text-sm text-gray-500 w-10 flex-shrink-0 py-3">Bcc</span>
+                    <input
+                      type="text"
+                      className="flex-1 text-sm text-gray-800 py-3 outline-none bg-transparent placeholder:text-gray-400"
+                      placeholder="Add Bcc recipients"
+                      value={compose.bccAddress}
+                      onChange={e => setCompose(p => ({ ...p, bccAddress: e.target.value }))}
+                      autoFocus
+                    />
+                    <button className="p-1.5 text-gray-400 hover:text-gray-600" onClick={() => { setShowBcc(false); setCompose(p => ({ ...p, bccAddress: "" })); }}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Subject */}
+                <div className="border-b border-gray-100 px-4">
+                  <input
+                    type="text"
+                    className="w-full text-sm text-gray-800 py-3 outline-none bg-transparent placeholder:text-gray-400"
+                    placeholder="Add a subject"
                     value={compose.subject}
                     onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))}
-                    placeholder="Email subject" className="h-8 text-sm"
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <Label className="text-xs text-gray-500">Message</Label>
-                  <Textarea
+                {/* Body */}
+                <div className="flex-1 px-4 pt-3">
+                  <textarea
+                    className="w-full h-full min-h-[220px] text-sm text-gray-800 outline-none bg-transparent resize-none placeholder:text-gray-400 font-sans"
+                    placeholder="Write your message…"
                     value={compose.body}
                     onChange={e => setCompose(p => ({ ...p, body: e.target.value }))}
-                    placeholder="Write your message here…"
-                    className="min-h-[260px] text-sm font-sans resize-y"
                   />
                 </div>
 
-                {/* Attachments */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button" variant="outline" size="sm" className="text-xs"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Paperclip className="w-3.5 h-3.5 mr-1.5" /> Attach File
-                    </Button>
-                    <span className="text-[11px] text-gray-400">Max {MAX_ATTACH_MB}MB per file</span>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      className="hidden"
-                      onChange={handleFileSelect}
-                    />
+                {/* Attachment chips */}
+                {attachments.length > 0 && (
+                  <div className="px-4 pt-1 pb-2 flex flex-wrap gap-2">
+                    {attachments.map((att, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-full pl-2.5 pr-1.5 py-1">
+                        <FileIcon className="w-3.5 h-3.5 text-[#1e6ab0] flex-shrink-0" />
+                        <span className="text-xs text-gray-700 max-w-[120px] truncate">{att.filename}</span>
+                        <span className="text-[10px] text-gray-400 flex-shrink-0">{formatBytes(att.size)}</span>
+                        <button
+                          className="ml-0.5 p-0.5 rounded-full hover:bg-gray-300 text-gray-500 flex-shrink-0"
+                          onClick={() => removeAttachment(idx)}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
+                )}
 
-                  {attachments.length > 0 && (
-                    <div className="space-y-1.5">
-                      {attachments.map((att, idx) => (
-                        <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
-                          <FileIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-gray-700 truncate">{att.filename}</div>
-                            <div className="text-[10px] text-gray-400">{formatBytes(att.size)}</div>
-                          </div>
-                          <Button
-                            type="button" variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0"
-                            onClick={() => removeAttachment(idx)}
-                          >
-                            <X className="w-3.5 h-3.5 text-gray-400" />
-                          </Button>
-                        </div>
-                      ))}
+                {/* Bottom toolbar */}
+                <div className="flex items-center gap-1 px-4 py-2.5 border-t border-gray-100">
+                  <button
+                    className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#1e6ab0] px-3 py-1.5 rounded hover:bg-gray-100 transition-colors font-medium"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip className="w-4 h-4" /> Attach
+                  </button>
+                  <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />
+                  <span className="text-[11px] text-gray-400 ml-1">Max {MAX_ATTACH_MB}MB per file</span>
+
+                  {!isConnected && (
+                    <div className="ml-auto flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-1">
+                      <span>SMTP not configured</span>
+                      <button className="underline font-medium hover:text-amber-900" onClick={() => setShowSettings(true)}>
+                        Connect
+                      </button>
                     </div>
                   )}
                 </div>
-
-                {!isConnected && (
-                  <div className="flex items-center gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-                    SMTP not configured — email will be saved but not sent.
-                    <Button variant="link" size="sm" className="text-xs p-0 h-auto" onClick={() => setShowSettings(true)}>
-                      Connect account
-                    </Button>
-                  </div>
-                )}
               </div>
             </div>
 
