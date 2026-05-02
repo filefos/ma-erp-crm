@@ -264,7 +264,7 @@ export function MainExecutiveDashboard() {
     { stage: "Invoiced",    count: invoices.length },
   ]), [leads, deals, quotations, proformas, lpos, invoices]);
 
-  // ---- Top payees (clients ranked by total payments received) ----
+  // ---- Top clients (ranked by total payments received) ----
   const topClients = useMemo(() => {
     const m: Record<string, number> = {};
     for (const p of payments as any[]) {
@@ -274,6 +274,17 @@ export function MainExecutiveDashboard() {
     return Object.entries(m).map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value).slice(0, 5);
   }, [payments]);
+
+  // ---- Top payees (vendors ranked by total spend = expenses outflow) ----
+  const topPayees = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const e of expenses as any[]) {
+      const key = e.payeeName ?? e.vendorName ?? e.supplierName ?? e.category ?? "Unknown";
+      m[key] = (m[key] ?? 0) + Number(e.amount ?? 0);
+    }
+    return Object.entries(m).map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value).slice(0, 5);
+  }, [expenses]);
 
   // ---- 30-day daily cash flow strip ----
   const cash30d = useMemo(() => {
@@ -428,6 +439,7 @@ export function MainExecutiveDashboard() {
         {canPos       && <KPIWidget icon={ShoppingCart}   tone="amber"  label="Open POs"         value={openPos}                     sub={`${pos.length} total · ${canPrs ? `${pendingPRs} PRs pending` : "all approved"}`}        sparkline={poSpark}      trend={trendPct(poSpark)}      href="/procurement/dashboard" testId="kpi-pos" />}
         {canProjects  && <KPIWidget icon={Folders}        tone="teal"   label="Active Projects"  value={activeProjects}              sub={`${fmtAED(projectValue)} total project value`}            sparkline={projectSpark} trend={trendPct(projectSpark)} href="/projects/dashboard" testId="kpi-projects" />}
         {canEmployees && <KPIWidget icon={HardHat}        tone="navy"   label="Active Workforce" value={activeEmployees}             sub={`${canAttendance ? `${presentToday} present today` : `${employees.length} on roster`}${canAssets ? ` · ${totalAssets} assets · ${fmtAED(totalAssetValue)}` : ""}`} href="/hr" testId="kpi-workforce" />}
+        {canItems     && <KPIWidget icon={Package}        tone="amber"  label="Low Stock"        value={lowStock}                    sub={lowStock > 0 ? "items below reorder level" : `${items.length} items in stock`} href="/inventory/items" testId="kpi-low-stock" />}
       </div>
 
       {/* If the user has zero module access, surface a clear empty state so
@@ -579,7 +591,7 @@ export function MainExecutiveDashboard() {
           )}
         </PanelCard>
 
-        <PanelCard title="Top Payees · 5 best customers" subtitle="Quick links to the highest-paying clients" icon={Crown} data-testid="panel-top-payees-cards">
+        <PanelCard title="Top Clients · 5 highest-paying" subtitle="Cumulative payments received · ranked" icon={Crown} data-testid="panel-top-clients-cards">
           {topClients.length === 0 ? (
             <Empty>No payments received yet.</Empty>
           ) : (
@@ -592,7 +604,7 @@ export function MainExecutiveDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold truncate text-[#0f2d5a] dark:text-white">{c.name}</div>
-                      <div className="text-[10px] text-muted-foreground">Top payee</div>
+                      <div className="text-[10px] text-muted-foreground">Top client</div>
                     </div>
                     <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400 shrink-0">{fmtAED(c.value)}</div>
                   </div>
@@ -676,22 +688,22 @@ export function MainExecutiveDashboard() {
           )}
         </PanelCard>
 
-        <PanelCard title="Top Payees · Paid" subtitle="Cumulative payments received · ranked" icon={Crown}>
-          {topClients.length === 0 ? (
-            <Empty>No payments yet.</Empty>
+        <PanelCard title="Top Payees · Outflow" subtitle="Cumulative spend by vendor · ranked" icon={Crown}>
+          {topPayees.length === 0 ? (
+            <Empty>No vendor spend recorded yet.</Empty>
           ) : (
             <div className="space-y-2">
-              {topClients.map((c, i) => (
+              {topPayees.map((c, i) => (
                 <div key={c.name} className="flex items-center gap-3">
                   <Avatar name={c.name} size={32} />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{c.name}</div>
                     <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mt-1">
-                      <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${Math.min(100, (c.value / topClients[0].value) * 100)}%` }} />
+                      <div className="h-full bg-gradient-to-r from-orange-500 to-red-500" style={{ width: `${Math.min(100, (c.value / topPayees[0].value) * 100)}%` }} />
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(c.value)}</div>
+                    <div className="text-sm font-bold text-orange-700 dark:text-orange-400">{fmtAED(c.value)}</div>
                     <div className="text-[10px] text-muted-foreground">#{i + 1}</div>
                   </div>
                 </div>

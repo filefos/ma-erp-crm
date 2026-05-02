@@ -255,9 +255,9 @@ export function SalesDashboard() {
         const topCust = topClients[0];
         return (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="primary-sales-kpi-strip">
-            <KPIWidget icon={FileText}      tone="blue"   label="Open Quotations" value={openQuotations}      sub={`${sentQuotations} sent · ${pendingApprovalQ} pending`}                              href="/sales/quotations"        testId="kpi-open-quotations" />
+            <KPIWidget icon={FileText}      tone="blue"   label="Quotation Value"  value={fmtAED(quotationValue)} sub={`${quotations.length} total · ${openQuotations} open`}                            href="/sales/quotations"        testId="kpi-quotation-value" />
             <KPIWidget icon={FileCheck}     tone="amber"  label="Proforma Pending" value={pendingPIs}          sub={`${proformas.length} total proforma`}                                                href="/sales/proforma-invoices" testId="kpi-proforma-pending" />
-            <KPIWidget icon={Target}        tone="teal"   label="Conversion Rate"  value={`${winRate}%`}        sub={`${acceptedQuotes} of ${quotations.length} quotes won`}                              href="/sales/quotations"        testId="kpi-conversion-rate" />
+            <KPIWidget icon={Trophy}        tone="green"  label="Win Rate"         value={`${winRate}%`}        sub={`${acceptedQuotes} of ${quotations.length} quotes won`}                              href="/sales/quotations"        testId="kpi-win-rate" />
             <KPIWidget icon={ClipboardList} tone="purple" label="LPOs This Month"  value={lpoMtd.length}        sub={lpoMtd.length > 0 ? `${fmtAED(lpoMtdVal)} value` : "No LPOs this month"}             href="/sales/lpos"              testId="kpi-lpos-mtd" />
             <Link href="/crm/leaderboard" className="block group" data-testid="kpi-top-salesperson">
               <div className="h-full rounded-2xl border bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white p-3 shadow-sm group-hover:shadow-lg transition-all">
@@ -285,7 +285,7 @@ export function SalesDashboard() {
 
       {/* Secondary value KPIs — totals, trends, sparklines */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPIWidget icon={FileText}   tone="blue"   label="Quotations Value"   value={fmtAED(quotationValue)} sub={`${quotations.length} total · ${fmtAED(quotationValueMtd)} MTD`} sparkline={quoteSpark} trend={trendPct(quoteSpark)} href="/sales/quotations" testId="kpi-quote-value" />
+        <KPIWidget icon={FileText}   tone="blue"   label="Quotations · MTD"   value={fmtAED(quotationValueMtd)} sub={`${quotations.length} total quotations`} sparkline={quoteSpark} trend={trendPct(quoteSpark)} href="/sales/quotations" testId="kpi-quote-value" />
         <KPIWidget icon={FileCheck}  tone="amber"  label="Proforma Value"     value={fmtAED(piValue)}        sub={`${proformas.length} issued`}                                  sparkline={piSpark}    trend={trendPct(piSpark)}    href="/sales/proforma-invoices" testId="kpi-pi-value" />
         <KPIWidget icon={ClipboardList} tone="purple" label="LPOs Received"   value={fmtAED(lpoValue)}       sub={`${lpos.length} LPOs · ${openLpos} open`}                       sparkline={lpoSpark}   trend={trendPct(lpoSpark)}   href="/sales/lpos" testId="kpi-lpo-value" />
         <KPIWidget icon={Trophy}     tone="green"  label="Won Deals"          value={fmtAED(wonDealsValue)}  sub={`${deals.filter((d: any) => d.stage === "won").length} closed`} sparkline={wonSpark}   trend={trendPct(wonSpark)}   href="/crm/deals" testId="kpi-won-value" />
