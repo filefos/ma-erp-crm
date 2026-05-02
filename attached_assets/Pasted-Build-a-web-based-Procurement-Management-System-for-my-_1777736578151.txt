@@ -1,0 +1,554 @@
+Build a web-based Procurement Management System for my companies:
+
+1. ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+2. PRIME MAX PREFAB HOUSES INDUSTRY LLC
+
+System name:
+Elite & Prime Max Procurement System
+
+GOAL:
+Create a professional Zoho-style procurement system for prefab construction business, including suppliers, purchase requests, RFQs, supplier quotations, comparison, purchase orders, approvals, payment terms, and stock visibility.
+
+DESIGN:
+- Dark blue + light blue theme
+- Executive professional UI
+- Sidebar navigation
+- Top search bar
+- Dashboard cards
+- Clean tables
+- Status badges
+- Filters
+- Mobile responsive
+
+TECH STACK:
+- React + Tailwind CSS frontend
+- Node.js + Express backend
+- PostgreSQL database
+- JWT authentication
+- Password hashing
+- PDF generation
+- File upload support
+- Excel/CSV import/export
+- Replit compatible
+
+--------------------------------------------------
+1. MULTI-COMPANY PROCUREMENT
+--------------------------------------------------
+Support both companies:
+- Elite Prefab
+- Prime Max Prefab
+
+Each company must have separate:
+- Suppliers
+- Purchase requests
+- RFQs
+- Supplier quotations
+- Purchase orders
+- Reports
+- Approval workflow
+- Document numbering
+
+Company prefixes:
+- EP
+- PM
+
+--------------------------------------------------
+2. PROCUREMENT DASHBOARD
+--------------------------------------------------
+Show:
+- Total suppliers
+- Active suppliers
+- Purchase requests pending
+- RFQs sent
+- Supplier quotations received
+- Purchase orders issued
+- Pending approvals
+- Pending deliveries
+- Low stock items placeholder
+- Supplier payment pending placeholder
+
+--------------------------------------------------
+3. SUPPLIER MANAGEMENT
+--------------------------------------------------
+Supplier fields:
+- Supplier ID
+- Company
+- Supplier company name
+- Contact person
+- Phone
+- WhatsApp
+- Email
+- Address
+- TRN/VAT number
+- Website
+- Product/service category
+- Credit terms
+- Bank name
+- Account name
+- Account number
+- IBAN
+- Status: Active, Inactive, Blacklisted
+- Notes
+- Created by
+- Created date
+
+Features:
+- Add supplier
+- Edit supplier
+- View supplier
+- Search/filter suppliers
+- Prevent duplicate supplier by TRN/email/phone
+- Upload supplier documents
+- Supplier performance placeholder
+- Supplier ledger placeholder
+
+Supplier documents:
+- Trade license
+- VAT certificate
+- Bank letter
+- Product catalog
+- Supplier quotation
+- Delivery note
+- Invoice
+- Other
+
+--------------------------------------------------
+4. PURCHASE REQUEST MODULE
+--------------------------------------------------
+Purchase Request fields:
+- PR ID
+- PR number
+- Company
+- Requested by
+- Department
+- Project reference placeholder
+- Required date
+- Priority: Low, Medium, High, Urgent
+- Request reason
+- Items/materials
+- Quantity
+- Unit
+- Estimated cost
+- Status
+- Created date
+
+PR number format:
+- PM-PR-YYYY-0001
+- EP-PR-YYYY-0001
+
+Status:
+- Draft
+- Submitted
+- Under Review
+- Approved
+- Rejected
+- Converted to RFQ
+- Cancelled
+
+Features:
+- Create purchase request
+- Add multiple items
+- Submit for approval
+- Admin/GM approval
+- Reject with reason
+- Convert approved PR to RFQ
+- Users see only their own PR unless permission allows more
+
+--------------------------------------------------
+5. RFQ MODULE
+--------------------------------------------------
+RFQ fields:
+- RFQ ID
+- RFQ number
+- Company
+- Linked PR
+- Supplier list
+- Items
+- Quantity
+- Required delivery date
+- Payment terms requested
+- Notes
+- Status
+
+RFQ number format:
+- PM-RFQ-YYYY-0001
+- EP-RFQ-YYYY-0001
+
+Status:
+- Draft
+- Sent
+- Quotation Received
+- Closed
+- Cancelled
+
+Features:
+- Create RFQ from approved PR
+- Select multiple suppliers
+- Generate RFQ PDF
+- Send RFQ placeholder
+- Track supplier responses
+- Link supplier quotations
+- Upload RFQ attachments
+
+--------------------------------------------------
+6. SUPPLIER QUOTATION MODULE
+--------------------------------------------------
+Supplier quotation fields:
+- Supplier quotation ID
+- Company
+- Linked RFQ
+- Supplier
+- Supplier quotation number
+- Quotation date
+- Items
+- Unit price
+- VAT
+- Total
+- Delivery time
+- Payment terms
+- Warranty/notes
+- Attachment upload
+- Status
+
+Status:
+- Received
+- Under Review
+- Selected
+- Rejected
+
+Features:
+- Add supplier quotation manually
+- Upload supplier quotation PDF/image
+- Compare quotations
+- Select winning supplier quotation
+- Log reason for selection
+
+--------------------------------------------------
+7. QUOTATION COMPARISON MODULE
+--------------------------------------------------
+Comparison should show:
+- Supplier name
+- Unit price
+- VAT
+- Total price
+- Delivery time
+- Payment terms
+- Warranty
+- Notes
+- Selection reason
+
+Features:
+- Side-by-side supplier comparison
+- Highlight lowest price
+- Highlight fastest delivery
+- Highlight best payment terms
+- Mark selected supplier
+- Approval required before PO creation
+
+--------------------------------------------------
+8. PURCHASE ORDER MODULE
+--------------------------------------------------
+Purchase Order must look like quotation-style document.
+
+PO fields:
+- PO ID
+- PO number
+- Company
+- Linked PR
+- Linked RFQ
+- Selected supplier
+- Supplier details
+- Delivery location
+- Items
+- Quantity
+- Unit
+- Rate
+- VAT
+- Grand total
+- Payment terms
+- Delivery terms
+- Prepared by
+- Approved by
+- Status
+
+PO number format:
+- PM-PO-YYYY-0001
+- EP-PO-YYYY-0001
+
+Status:
+- Draft
+- Submitted for Approval
+- Approved
+- Issued
+- Partially Received
+- Received
+- Cancelled
+
+Features:
+- Create PO from selected supplier quotation
+- Add/edit items while Draft
+- Submit for approval
+- GM/Admin approval
+- Lock after approval
+- PDF preview
+- Print/download PDF
+- Send to supplier placeholder
+- Link PO to future store receiving
+- Link PO to supplier bill/payment in accounts
+
+--------------------------------------------------
+9. PAYMENT TERMS
+--------------------------------------------------
+Payment terms options:
+
+Advance payment:
+- 25%
+- 50%
+- 75%
+- 100%
+
+After delivery:
+- 25%
+- 50%
+- 100%
+
+Credit:
+- Open Credit
+- 15 days
+- 30 days
+- 60 days
+- 90 days
+
+Payment mode:
+- Cash
+- Bank Transfer
+- Cheque
+- PDC Cheque
+
+Custom payment terms allowed.
+
+--------------------------------------------------
+10. APPROVAL WORKFLOW
+--------------------------------------------------
+Approval rules:
+- Purchase Request requires Admin/GM approval
+- RFQ can be sent only after PR approval
+- Supplier selection requires approval
+- Purchase Order requires approval before issue
+- Approved PO becomes locked
+- Cancel PO requires Admin permission and reason
+
+Approval statuses:
+- Pending
+- Approved
+- Rejected
+- Cancelled
+
+--------------------------------------------------
+11. INVENTORY VISIBILITY
+--------------------------------------------------
+Procurement can view inventory stock but cannot edit stock.
+
+Show:
+- Item name
+- SKU
+- Current stock
+- Minimum stock level
+- Low stock alert
+- Warehouse/location
+
+Rules:
+- Procurement can view stock only
+- Stock editing only by Store/Inventory users
+- Procurement cannot modify stock entries
+
+--------------------------------------------------
+12. SUPPLIER PORTAL PLACEHOLDER
+--------------------------------------------------
+Create placeholder for supplier portal.
+
+Future supplier can:
+- View RFQs
+- Upload quotations
+- View POs
+- View payment status
+- Upload delivery notes/invoices
+
+--------------------------------------------------
+13. AI PROCUREMENT ASSISTANT
+--------------------------------------------------
+Add AI-ready procurement features with placeholder logic.
+
+AI features:
+- Suggest best supplier
+- Detect duplicate supplier quotation
+- Compare supplier pricing
+- Suggest payment terms
+- Highlight high-cost items
+- Generate RFQ text
+- Generate PO notes
+- Summarize supplier quotation
+- Recommend reorder based on low stock
+
+AI buttons:
+- Compare suppliers
+- Suggest best supplier
+- Generate RFQ message
+- Improve PO notes
+- Check pricing risk
+
+Use placeholder AI logic first, but structure code so OpenAI API can be added later.
+
+--------------------------------------------------
+14. REPORTS
+--------------------------------------------------
+Reports:
+- Supplier report
+- Purchase request report
+- RFQ report
+- Supplier quotation report
+- Supplier comparison report
+- Purchase order report
+- Pending approval report
+- Pending delivery report
+- Company-wise procurement report
+- Supplier-wise purchase report
+- Payment terms report
+
+Export:
+- PDF
+- Excel
+- CSV
+
+--------------------------------------------------
+15. ACCESS CONTROL
+--------------------------------------------------
+Roles:
+- Super Admin
+- Procurement Admin
+- Procurement User
+- GM / Approval Manager
+- Viewer
+
+Rules:
+- Super Admin sees everything
+- Procurement Admin manages procurement
+- Procurement User can create PR/RFQ/PO based on permission
+- GM/Admin approves PR, supplier selection, and PO
+- Procurement can view stock but cannot edit
+- Accounts can view approved PO if permission granted
+- Store can view approved PO for receiving if permission granted
+- Users cannot delete procurement documents
+- Approved documents are locked
+
+--------------------------------------------------
+16. NOTIFICATIONS
+--------------------------------------------------
+Create notifications for:
+- Purchase request submitted
+- PR approved/rejected
+- RFQ created
+- RFQ sent
+- Supplier quotation received
+- Supplier selected
+- PO submitted for approval
+- PO approved/rejected
+- PO issued
+- PO delivery pending
+- Low stock procurement alert
+
+--------------------------------------------------
+17. AUDIT LOG
+--------------------------------------------------
+Track:
+- Supplier created/updated
+- Supplier document uploaded
+- PR created/submitted/approved/rejected
+- RFQ created/sent
+- Supplier quotation uploaded
+- Supplier selected
+- PO created/submitted/approved/issued/cancelled
+- Payment terms changed
+- Report exported
+
+--------------------------------------------------
+18. DATABASE TABLES
+--------------------------------------------------
+Create tables:
+- companies
+- users
+- roles
+- permissions
+- suppliers
+- supplier_documents
+- purchase_requests
+- purchase_request_items
+- rfqs
+- rfq_suppliers
+- rfq_items
+- supplier_quotations
+- supplier_quotation_items
+- quotation_comparisons
+- purchase_orders
+- purchase_order_items
+- procurement_approvals
+- payment_terms_master
+- procurement_notifications
+- procurement_audit_logs
+- inventory_stock_view_placeholder
+- ai_procurement_requests
+
+--------------------------------------------------
+19. SEED DATA
+--------------------------------------------------
+Add sample data:
+- Both companies
+- Admin user
+- Procurement user
+- GM approval user
+- 10 suppliers
+- Supplier documents
+- 5 purchase requests
+- 3 RFQs
+- 5 supplier quotations
+- 2 comparison examples
+- 3 purchase orders
+- Payment terms master data
+
+--------------------------------------------------
+20. VALIDATION
+--------------------------------------------------
+Rules:
+- Supplier duplicate check by TRN/email/phone
+- PR cannot be submitted without items
+- RFQ cannot be created from unapproved PR
+- Supplier quotation cannot be added without linked RFQ
+- PO cannot be created without selected supplier quotation
+- PO cannot be issued without approval
+- Payment terms required before PO approval
+- Approved PO cannot be edited
+- Cancel requires reason
+- Unauthorized users cannot view procurement pages
+
+--------------------------------------------------
+21. OUTPUT REQUIRED
+--------------------------------------------------
+- Working procurement dashboard
+- Supplier management
+- Supplier document upload
+- Purchase request module
+- RFQ module
+- Supplier quotation module
+- Comparison module
+- Purchase order module
+- Payment terms
+- Approval workflow
+- Inventory stock view-only placeholder
+- AI procurement assistant placeholder
+- Reports
+- Notifications
+- Audit logs
+- Correct permissions
+- Setup instructions
+- Sample login credentials
+- Must run successfully in Replit

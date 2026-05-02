@@ -26,6 +26,9 @@ tags:
   - name: suppliers
   - name: purchase-requests
   - name: purchase-orders
+  - name: rfqs
+  - name: supplier-quotations
+  - name: procurement-dashboard
   - name: inventory-items
   - name: stock-entries
   - name: assets
@@ -1596,6 +1599,484 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PurchaseOrder"
+
+  /suppliers/{id}:
+    delete:
+      operationId: deleteSupplier
+      tags: [suppliers]
+      summary: Delete supplier
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /purchase-requests/{id}/submit:
+    post:
+      operationId: submitPurchaseRequest
+      tags: [purchase-requests]
+      summary: Submit PR for approval
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseRequest"
+
+  /purchase-requests/{id}/approve:
+    post:
+      operationId: approvePurchaseRequest
+      tags: [purchase-requests]
+      summary: Approve purchase request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseRequest"
+
+  /purchase-requests/{id}/reject:
+    post:
+      operationId: rejectPurchaseRequest
+      tags: [purchase-requests]
+      summary: Reject purchase request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseRequest"
+
+  /purchase-orders/{id}/submit:
+    post:
+      operationId: submitPurchaseOrder
+      tags: [purchase-orders]
+      summary: Submit PO for approval
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+
+  /purchase-orders/{id}/approve:
+    post:
+      operationId: approvePurchaseOrder
+      tags: [purchase-orders]
+      summary: Approve purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+
+  /purchase-orders/{id}/reject:
+    post:
+      operationId: rejectPurchaseOrder
+      tags: [purchase-orders]
+      summary: Reject purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+
+  /purchase-orders/{id}/issue:
+    post:
+      operationId: issuePurchaseOrder
+      tags: [purchase-orders]
+      summary: Issue approved PO
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+
+  /purchase-orders/{id}/cancel:
+    post:
+      operationId: cancelPurchaseOrder
+      tags: [purchase-orders]
+      summary: Cancel purchase order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseOrder"
+
+  /rfqs:
+    get:
+      operationId: listRfqs
+      tags: [rfqs]
+      summary: List RFQs
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: companyId
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rfq"
+    post:
+      operationId: createRfq
+      tags: [rfqs]
+      summary: Create RFQ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRfqBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rfq"
+
+  /rfqs/{id}:
+    get:
+      operationId: getRfq
+      tags: [rfqs]
+      summary: Get RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: RFQ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rfq"
+    put:
+      operationId: updateRfq
+      tags: [rfqs]
+      summary: Update RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRfqBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rfq"
+    delete:
+      operationId: deleteRfq
+      tags: [rfqs]
+      summary: Delete RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /rfqs/{id}/send:
+    post:
+      operationId: sendRfq
+      tags: [rfqs]
+      summary: Mark RFQ as sent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rfq"
+
+  /rfqs/{id}/close:
+    post:
+      operationId: closeRfq
+      tags: [rfqs]
+      summary: Close RFQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rfq"
+
+  /supplier-quotations:
+    get:
+      operationId: listSupplierQuotations
+      tags: [supplier-quotations]
+      summary: List supplier quotations
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: companyId
+          in: query
+          schema: { type: integer }
+        - name: rfqId
+          in: query
+          schema: { type: integer }
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupplierQuotation"
+    post:
+      operationId: createSupplierQuotation
+      tags: [supplier-quotations]
+      summary: Create supplier quotation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplierQuotationBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierQuotation"
+
+  /supplier-quotations/{id}:
+    get:
+      operationId: getSupplierQuotation
+      tags: [supplier-quotations]
+      summary: Get supplier quotation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Supplier quotation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierQuotation"
+    put:
+      operationId: updateSupplierQuotation
+      tags: [supplier-quotations]
+      summary: Update supplier quotation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplierQuotationBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierQuotation"
+    delete:
+      operationId: deleteSupplierQuotation
+      tags: [supplier-quotations]
+      summary: Delete supplier quotation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+
+  /supplier-quotations/{id}/select:
+    post:
+      operationId: selectSupplierQuotation
+      tags: [supplier-quotations]
+      summary: Select winning supplier quotation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: Selected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierQuotation"
+
+  /supplier-quotations/{id}/reject:
+    post:
+      operationId: rejectSupplierQuotation
+      tags: [supplier-quotations]
+      summary: Reject supplier quotation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierQuotation"
+
+  /procurement/dashboard:
+    get:
+      operationId: getProcurementDashboard
+      tags: [procurement-dashboard]
+      summary: Get procurement dashboard stats
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcurementDashboard"
 
   # INVENTORY ITEMS
   /inventory-items:
@@ -4131,122 +4612,101 @@ components:
     Supplier:
       type: object
       properties:
-        id:
-          type: integer
-        name:
-          type: string
-        contactPerson:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        address:
-          type: string
-        trn:
-          type: string
-        category:
-          type: string
-        paymentTerms:
-          type: string
-        isActive:
-          type: boolean
-        createdAt:
-          type: string
-      required: [id, name, isActive, createdAt]
+        id: { type: integer }
+        companyId: { type: integer }
+        name: { type: string }
+        contactPerson: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        address: { type: string }
+        trn: { type: string }
+        website: { type: string }
+        category: { type: string }
+        paymentTerms: { type: string }
+        bankName: { type: string }
+        bankAccountName: { type: string }
+        bankAccountNumber: { type: string }
+        iban: { type: string }
+        status: { type: string }
+        notes: { type: string }
+        isActive: { type: boolean }
+        createdAt: { type: string }
+      required: [id, name, status, isActive, createdAt]
 
     CreateSupplierBody:
       type: object
       properties:
-        name:
-          type: string
-        contactPerson:
-          type: string
-        email:
-          type: string
-        phone:
-          type: string
-        address:
-          type: string
-        trn:
-          type: string
-        category:
-          type: string
-        paymentTerms:
-          type: string
+        companyId: { type: integer }
+        name: { type: string }
+        contactPerson: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        address: { type: string }
+        trn: { type: string }
+        website: { type: string }
+        category: { type: string }
+        paymentTerms: { type: string }
+        bankName: { type: string }
+        bankAccountName: { type: string }
+        bankAccountNumber: { type: string }
+        iban: { type: string }
+        status: { type: string }
+        notes: { type: string }
       required: [name]
 
     PurchaseRequest:
       type: object
       properties:
-        id:
-          type: integer
-        prNumber:
-          type: string
-        companyId:
-          type: integer
-        projectId:
-          type: integer
-        description:
-          type: string
-        priority:
-          type: string
-        status:
-          type: string
-        requestedById:
-          type: integer
-        requestedByName:
-          type: string
-        approvedById:
-          type: integer
-        requiredDate:
-          type: string
+        id: { type: integer }
+        prNumber: { type: string }
+        companyId: { type: integer }
+        projectId: { type: integer }
+        projectRef: { type: string }
+        department: { type: string }
+        description: { type: string }
+        priority: { type: string }
+        status: { type: string }
+        requestedById: { type: integer }
+        requestedByName: { type: string }
+        approvedById: { type: integer }
+        approvedByName: { type: string }
+        rejectionReason: { type: string }
+        requiredDate: { type: string }
         items:
           type: array
           items:
             type: object
             properties:
-              itemName:
-                type: string
-              quantity:
-                type: number
-              unit:
-                type: string
-              estimatedCost:
-                type: number
+              itemName: { type: string }
+              quantity: { type: number }
+              unit: { type: string }
+              estimatedCost: { type: number }
             required: [itemName, quantity, unit]
-        createdAt:
-          type: string
+        createdAt: { type: string }
       required: [id, prNumber, companyId, status, createdAt]
 
     CreatePurchaseRequestBody:
       type: object
       properties:
-        companyId:
-          type: integer
-        projectId:
-          type: integer
-        description:
-          type: string
-        priority:
-          type: string
-        status:
-          type: string
-        requiredDate:
-          type: string
+        companyId: { type: integer }
+        projectId: { type: integer }
+        projectRef: { type: string }
+        department: { type: string }
+        description: { type: string }
+        priority: { type: string }
+        status: { type: string }
+        requiredDate: { type: string }
         items:
           type: array
           items:
             type: object
             properties:
-              itemName:
-                type: string
-              quantity:
-                type: number
-              unit:
-                type: string
-              estimatedCost:
-                type: number
+              itemName: { type: string }
+              quantity: { type: number }
+              unit: { type: string }
+              estimatedCost: { type: number }
             required: [itemName, quantity, unit]
       required: [companyId, description]
 
@@ -4337,6 +4797,140 @@ components:
                 type: number
             required: [itemName, quantity, unit, unitPrice, amount]
       required: [supplierId, companyId, total]
+
+    Rfq:
+      type: object
+      properties:
+        id: { type: integer }
+        rfqNumber: { type: string }
+        companyId: { type: integer }
+        purchaseRequestId: { type: integer }
+        prNumber: { type: string }
+        status: { type: string }
+        requiredDeliveryDate: { type: string }
+        paymentTerms: { type: string }
+        notes: { type: string }
+        supplierIds:
+          type: array
+          items: { type: integer }
+        suppliers:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              name: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName: { type: string }
+              quantity: { type: number }
+              unit: { type: string }
+              specifications: { type: string }
+        createdById: { type: integer }
+        createdByName: { type: string }
+        createdAt: { type: string }
+      required: [id, rfqNumber, companyId, status, createdAt]
+
+    CreateRfqBody:
+      type: object
+      properties:
+        companyId: { type: integer }
+        purchaseRequestId: { type: integer }
+        requiredDeliveryDate: { type: string }
+        paymentTerms: { type: string }
+        notes: { type: string }
+        supplierIds:
+          type: array
+          items: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName: { type: string }
+              quantity: { type: number }
+              unit: { type: string }
+              specifications: { type: string }
+      required: [companyId]
+
+    SupplierQuotation:
+      type: object
+      properties:
+        id: { type: integer }
+        sqNumber: { type: string }
+        companyId: { type: integer }
+        rfqId: { type: integer }
+        rfqNumber: { type: string }
+        supplierId: { type: integer }
+        supplierName: { type: string }
+        supplierQuotationRef: { type: string }
+        quotationDate: { type: string }
+        subtotal: { type: number }
+        vatAmount: { type: number }
+        total: { type: number }
+        deliveryTime: { type: string }
+        paymentTerms: { type: string }
+        warranty: { type: string }
+        notes: { type: string }
+        attachmentUrl: { type: string }
+        status: { type: string }
+        selectionReason: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName: { type: string }
+              quantity: { type: number }
+              unit: { type: string }
+              unitPrice: { type: number }
+              vat: { type: number }
+              total: { type: number }
+        createdAt: { type: string }
+      required: [id, sqNumber, companyId, supplierId, status, total, createdAt]
+
+    CreateSupplierQuotationBody:
+      type: object
+      properties:
+        companyId: { type: integer }
+        rfqId: { type: integer }
+        supplierId: { type: integer }
+        supplierQuotationRef: { type: string }
+        quotationDate: { type: string }
+        deliveryTime: { type: string }
+        paymentTerms: { type: string }
+        warranty: { type: string }
+        notes: { type: string }
+        attachmentUrl: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              itemName: { type: string }
+              quantity: { type: number }
+              unit: { type: string }
+              unitPrice: { type: number }
+              vat: { type: number }
+              total: { type: number }
+      required: [companyId, supplierId]
+
+    ProcurementDashboard:
+      type: object
+      properties:
+        totalSuppliers: { type: integer }
+        activeSuppliers: { type: integer }
+        prPending: { type: integer }
+        prApproved: { type: integer }
+        rfqSent: { type: integer }
+        sqReceived: { type: integer }
+        poIssued: { type: integer }
+        poPending: { type: integer }
+        totalPoValue: { type: number }
+      required: [totalSuppliers, activeSuppliers, prPending, prApproved, rfqSent, sqReceived, poIssued, poPending, totalPoValue]
 
     InventoryItem:
       type: object
