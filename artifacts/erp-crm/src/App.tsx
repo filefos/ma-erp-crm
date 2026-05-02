@@ -17,9 +17,11 @@ import { QuotationNew } from "@/pages/sales/quotation-new";
 import { QuotationEdit } from "@/pages/sales/quotation-edit";
 import { ProformaInvoicesList } from "@/pages/sales/proforma-invoices";
 import { ProformaInvoiceDetail } from "@/pages/sales/proforma-invoice-detail";
+import { ProformaInvoiceEdit } from "@/pages/sales/proforma-invoice-edit";
 import { LposList } from "@/pages/sales/lpos";
 import { TaxInvoicesList } from "@/pages/accounts/invoices";
 import { InvoiceDetail } from "@/pages/accounts/invoice-detail";
+import { InvoiceEdit } from "@/pages/accounts/invoice-edit";
 import { DeliveryNotesList } from "@/pages/accounts/delivery-notes";
 import { DeliveryNoteDetail } from "@/pages/accounts/delivery-note-detail";
 import { ExpensesList } from "@/pages/accounts/expenses";
@@ -122,6 +124,11 @@ function Router() {
       <Route path="/sales/quotations">
         <ModuleGuard module="quotations"><QuotationsList /></ModuleGuard>
       </Route>
+      <Route path="/sales/proforma-invoices/:id/edit">
+        {(params) => (
+          <ModuleGuard module="proforma_invoices" action="canCreate"><ProformaInvoiceEdit id={params.id} /></ModuleGuard>
+        )}
+      </Route>
       <Route path="/sales/proforma-invoices/:id">
         {(params) => (
           <ModuleGuard module="proforma_invoices"><ProformaInvoiceDetail id={params.id} /></ModuleGuard>
@@ -135,6 +142,11 @@ function Router() {
       </Route>
 
       {/* Accounts */}
+      <Route path="/accounts/invoices/:id/edit">
+        {(params) => (
+          <ModuleGuard module="tax_invoices" action="canCreate"><InvoiceEdit id={params.id} /></ModuleGuard>
+        )}
+      </Route>
       <Route path="/accounts/invoices/:id">
         {(params) => (
           <ModuleGuard module="tax_invoices"><InvoiceDetail id={params.id} /></ModuleGuard>

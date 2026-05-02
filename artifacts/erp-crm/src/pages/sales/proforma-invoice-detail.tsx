@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Receipt } from "lucide-react";
+import { ArrowLeft, Receipt, Pencil } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -124,6 +124,11 @@ export function ProformaInvoiceDetail({ id }: Props) {
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[pi.status] ?? "bg-gray-100"}`}>{pi.status}</Badge>
         <div className="ml-auto flex gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/sales/proforma-invoices/${pid}/edit`}>
+              <Pencil className="w-4 h-4 mr-1" />Edit
+            </Link>
+          </Button>
           <Button
             size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
             onClick={handleConvertToTax} disabled={converting}

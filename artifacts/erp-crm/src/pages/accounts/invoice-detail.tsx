@@ -6,7 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, Package, Pencil } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -101,6 +101,11 @@ export function InvoiceDetail({ id }: Props) {
           {inv.paymentStatus}
         </Badge>
         <div className="ml-auto flex gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/accounts/invoices/${invId}/edit`}>
+              <Pencil className="w-4 h-4 mr-1" />Edit
+            </Link>
+          </Button>
           <Button
             size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
             onClick={handleCreateDN} disabled={converting}

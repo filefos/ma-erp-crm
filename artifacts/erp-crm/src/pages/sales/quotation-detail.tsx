@@ -1,21 +1,35 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
   useCreateTaxInvoice, useCreateDeliveryNote,
   getGetQuotationQueryKey, useListCompanies,
+  getListProformaInvoicesQueryKey, getListTaxInvoicesQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil } from "lucide-react";
+import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import {
+  parsePaymentTerms,
+  calculateInstallments,
+  totalPercent,
+  installmentToTermsText,
+  type Installment,
+} from "@/lib/payment-terms";
 
 interface Props { id: string }
 
@@ -26,12 +40,17 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: "bg-red-100 text-red-800",
 };
 
+type ConvertTarget = "pi" | "tax";
+
 export function QuotationDetail({ id }: Props) {
   const qid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [converting, setConverting] = useState<string | null>(null);
+  const [convertOpen, setConvertOpen] = useState<ConvertTarget | null>(null);
+  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [selected, setSelected] = useState<boolean[]>([]);
 
   const { data: q, isLoading } = useGetQuotation(qid, {
     query: { queryKey: getGetQuotationQueryKey(qid), enabled: !!qid },
@@ -47,27 +66,8 @@ export function QuotationDetail({ id }: Props) {
     },
   });
 
-  const createPI = useCreateProformaInvoice({
-    mutation: {
-      onSuccess: (pi) => {
-        toast({ title: "Proforma Invoice created!", description: `${pi.piNumber}` });
-        navigate("/sales/proforma-invoices/" + pi.id);
-      },
-      onError: () => toast({ title: "Failed to create Proforma Invoice.", variant: "destructive" }),
-      onSettled: () => setConverting(null),
-    },
-  });
-
-  const createTax = useCreateTaxInvoice({
-    mutation: {
-      onSuccess: (inv) => {
-        toast({ title: "Tax Invoice created!", description: `${inv.invoiceNumber}` });
-        navigate("/accounts/invoices/" + inv.id);
-      },
-      onError: () => toast({ title: "Failed to create Tax Invoice.", variant: "destructive" }),
-      onSettled: () => setConverting(null),
-    },
-  });
+  const createPI = useCreateProformaInvoice();
+  const createTax = useCreateTaxInvoice();
 
   const createDN = useCreateDeliveryNote({
     mutation: {
@@ -79,6 +79,26 @@ export function QuotationDetail({ id }: Props) {
       onSettled: () => setConverting(null),
     },
   });
+
+  // When opening the dialog, prime installments from quotation's payment terms
+  useEffect(() => {
+    if (!convertOpen || !q) return;
+    const parsed = parsePaymentTerms(q.paymentTerms ?? "");
+    const initial: Installment[] = parsed.length > 0
+      ? parsed
+      : [{ label: "Full Payment", percent: 100 }];
+    setInstallments(initial);
+    setSelected(initial.map(() => true));
+  }, [convertOpen, q]);
+
+  const baseSubtotal = q?.subtotal ?? 0;
+  const vatPercent = q?.vatPercent ?? 5;
+
+  // Hook must run on every render — keep it above early returns to satisfy Rules of Hooks.
+  const computedInstallments = useMemo(
+    () => calculateInstallments(installments, baseSubtotal, vatPercent),
+    [installments, baseSubtotal, vatPercent]
+  );
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading…</div>;
   if (!q) return <div className="text-muted-foreground p-8">Quotation not found.</div>;
@@ -127,40 +147,6 @@ export function QuotationDetail({ id }: Props) {
     preparedByName: (q as any).preparedByName,
   };
 
-  const handleConvertToPI = () => {
-    if (converting) return;
-    setConverting("pi");
-    createPI.mutate({ data: {
-      companyId: q.companyId,
-      clientName: q.clientName,
-      projectName: q.projectName,
-      quotationId: q.id,
-      subtotal: q.subtotal,
-      vatAmount: q.vatAmount,
-      total: q.grandTotal,
-      paymentTerms: q.paymentTerms,
-      validityDate: q.validity,
-    } });
-  };
-
-  const handleConvertToTax = () => {
-    if (converting) return;
-    setConverting("tax");
-    const today = new Date().toISOString().split("T")[0];
-    createTax.mutate({ data: {
-      companyId: q.companyId,
-      clientName: q.clientName,
-      quotationId: q.id,
-      invoiceDate: today,
-      supplyDate: today,
-      subtotal: q.subtotal,
-      vatPercent: q.vatPercent ?? 5,
-      vatAmount: q.vatAmount,
-      grandTotal: q.grandTotal,
-      paymentStatus: "unpaid",
-    } });
-  };
-
   const handleConvertToDN = () => {
     if (converting) return;
     setConverting("dn");
@@ -176,6 +162,119 @@ export function QuotationDetail({ id }: Props) {
       })),
     } });
   };
+
+  const handleConfirmConvert = async () => {
+    if (!convertOpen || converting) return;
+    const target = convertOpen;
+    const chosen = installments
+      .map((inst, i) => ({ inst, i }))
+      .filter(({ i }) => selected[i] && installments[i].percent > 0);
+
+    if (chosen.length === 0) {
+      toast({ title: "Pick at least one installment.", variant: "destructive" });
+      return;
+    }
+
+    setConverting(target);
+    const computed = calculateInstallments(installments, baseSubtotal, vatPercent);
+    const today = new Date().toISOString().split("T")[0];
+
+    const created: { name: string; id: number }[] = [];
+    let failures = 0;
+
+    for (const { i } of chosen) {
+      const ci = computed[i];
+      const termsText = installmentToTermsText(installments[i], i, installments.length);
+
+      try {
+        if (target === "pi") {
+          const res = await createPI.mutateAsync({ data: {
+            companyId: q.companyId,
+            clientName: q.clientName,
+            projectName: q.projectName,
+            quotationId: q.id,
+            subtotal: ci.subtotal,
+            vatAmount: ci.vatAmount,
+            total: ci.total,
+            paymentTerms: termsText,
+            validityDate: q.validity,
+            ...({ vatPercent, clientEmail: q.clientEmail, clientPhone: q.clientPhone } as Record<string, unknown>),
+          } });
+          created.push({ name: res.piNumber, id: res.id });
+        } else {
+          const res = await createTax.mutateAsync({ data: {
+            companyId: q.companyId,
+            clientName: q.clientName,
+            quotationId: q.id,
+            invoiceDate: today,
+            supplyDate: today,
+            subtotal: ci.subtotal,
+            vatPercent,
+            vatAmount: ci.vatAmount,
+            grandTotal: ci.total,
+            paymentStatus: "unpaid",
+          } });
+          created.push({ name: res.invoiceNumber, id: res.id });
+        }
+      } catch {
+        failures += 1;
+      }
+    }
+
+    setConverting(null);
+    setConvertOpen(null);
+
+    // Refresh list caches so newly created invoices show up immediately
+    if (target === "pi") {
+      queryClient.invalidateQueries({ queryKey: getListProformaInvoicesQueryKey() });
+    } else {
+      queryClient.invalidateQueries({ queryKey: getListTaxInvoicesQueryKey() });
+    }
+
+    if (created.length === 0) {
+      toast({ title: "Failed to create invoices.", variant: "destructive" });
+      return;
+    }
+
+    toast({
+      title: `${created.length} ${target === "pi" ? "Proforma Invoice" : "Tax Invoice"}${created.length > 1 ? "s" : ""} created`,
+      description: created.map(c => c.name).join(", "),
+    });
+
+    if (failures > 0) {
+      toast({
+        title: `${failures} installment${failures > 1 ? "s" : ""} failed`,
+        description: "Other installments were created successfully.",
+        variant: "destructive",
+      });
+    }
+
+    if (created.length === 1) {
+      navigate(target === "pi"
+        ? "/sales/proforma-invoices/" + created[0].id
+        : "/accounts/invoices/" + created[0].id);
+    } else {
+      navigate(target === "pi" ? "/sales/proforma-invoices" : "/accounts/invoices");
+    }
+  };
+
+  const updateInst = (i: number, patch: Partial<Installment>) => {
+    setInstallments(prev => prev.map((it, idx) => idx === i ? { ...it, ...patch } : it));
+  };
+
+  const addInstallment = () => {
+    const used = totalPercent(installments);
+    const remaining = Math.max(0, 100 - used);
+    setInstallments(prev => [...prev, { label: "Payment", percent: remaining }]);
+    setSelected(prev => [...prev, true]);
+  };
+
+  const removeInstallment = (i: number) => {
+    setInstallments(prev => prev.filter((_, idx) => idx !== i));
+    setSelected(prev => prev.filter((_, idx) => idx !== i));
+  };
+
+  const sumPercent = totalPercent(installments);
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
@@ -211,10 +310,10 @@ export function QuotationDetail({ id }: Props) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleConvertToPI}>
+              <DropdownMenuItem onClick={() => setConvertOpen("pi")}>
                 <FileText className="w-4 h-4 mr-2 text-blue-600" />Proforma Invoice
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleConvertToTax}>
+              <DropdownMenuItem onClick={() => setConvertOpen("tax")}>
                 <Receipt className="w-4 h-4 mr-2 text-green-600" />Tax Invoice
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleConvertToDN}>
@@ -229,6 +328,123 @@ export function QuotationDetail({ id }: Props) {
 
       {/* Document */}
       <DocumentPrint data={docData} />
+
+      {/* Convert Dialog */}
+      <Dialog open={convertOpen !== null} onOpenChange={(o) => { if (!o) setConvertOpen(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Create {convertOpen === "pi" ? "Proforma Invoice(s)" : "Tax Invoice(s)"} from Quotation
+            </DialogTitle>
+            <DialogDescription>
+              Payment terms split into installments. Tick the ones you want to issue now —
+              one invoice will be created per selected installment.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="text-xs text-muted-foreground">
+              Quote subtotal: <span className="font-medium text-foreground">AED {baseSubtotal.toLocaleString()}</span>
+              {" · "}VAT: <span className="font-medium text-foreground">{vatPercent}%</span>
+              {q.paymentTerms ? <> {" · "}Source terms: <span className="italic">"{q.paymentTerms}"</span></> : null}
+            </div>
+
+            <div className="rounded border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-xs">
+                  <tr>
+                    <th className="p-2 text-left w-10"></th>
+                    <th className="p-2 text-left">Stage Label</th>
+                    <th className="p-2 text-right w-20">%</th>
+                    <th className="p-2 text-right">Subtotal</th>
+                    <th className="p-2 text-right">VAT</th>
+                    <th className="p-2 text-right">Total</th>
+                    <th className="p-2 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {installments.map((inst, i) => {
+                    const c = computedInstallments[i];
+                    return (
+                      <tr key={i} className="border-t">
+                        <td className="p-2">
+                          <Checkbox
+                            checked={selected[i] ?? false}
+                            onCheckedChange={(v) => {
+                              setSelected(prev => prev.map((s, idx) => idx === i ? !!v : s));
+                            }}
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            className="h-8 text-xs"
+                            value={inst.label}
+                            onChange={(e) => updateInst(i, { label: e.target.value })}
+                          />
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            className="h-8 text-xs text-right"
+                            value={inst.percent}
+                            onChange={(e) => updateInst(i, { percent: parseFloat(e.target.value) || 0 })}
+                          />
+                        </td>
+                        <td className="p-2 text-right tabular-nums">{c.subtotal.toLocaleString()}</td>
+                        <td className="p-2 text-right tabular-nums">{c.vatAmount.toLocaleString()}</td>
+                        <td className="p-2 text-right font-medium tabular-nums">{c.total.toLocaleString()}</td>
+                        <td className="p-2">
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-7 w-7 p-0 text-red-600"
+                            onClick={() => removeInstallment(i)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-t bg-muted/40 text-xs">
+                    <td className="p-2"></td>
+                    <td className="p-2 font-medium">Total</td>
+                    <td className={`p-2 text-right font-medium ${Math.abs(sumPercent - 100) > 0.01 ? "text-amber-600" : ""}`}>
+                      {sumPercent}%
+                    </td>
+                    <td colSpan={4}></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Button size="sm" variant="outline" onClick={addInstallment}>
+                <Plus className="w-3.5 h-3.5 mr-1" />Add Installment
+              </Button>
+              {Math.abs(sumPercent - 100) > 0.01 && (
+                <p className="text-xs text-amber-600">
+                  Installments add up to {sumPercent}% (not 100%). Continue only if intentional.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConvertOpen(null)} disabled={!!converting}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmConvert}
+              disabled={!!converting}
+              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            >
+              {converting
+                ? "Creating…"
+                : `Create ${selected.filter(Boolean).length} Invoice${selected.filter(Boolean).length === 1 ? "" : "s"}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

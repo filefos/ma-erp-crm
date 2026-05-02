@@ -21,6 +21,7 @@ import {
   getSpecTemplate,
   type SpecTypeKey,
 } from "@/lib/tech-spec-templates";
+import { PAYMENT_TERMS_PRESETS, getPresetByKey } from "@/lib/payment-terms";
 
 const BANK_DETAILS: Record<number, {
   bankName: string; accountTitle: string; accountNumber: string;
@@ -302,7 +303,22 @@ export function QuotationEdit({ id }: Props) {
           </div>
           <div className="space-y-1">
             <Label>Payment Terms</Label>
-            <Input value={form.paymentTerms} onChange={e => setForm(p => ({ ...p, paymentTerms: e.target.value }))} placeholder="e.g. 75% advance, 25% before delivery" />
+            <Select
+              onValueChange={(key) => {
+                const preset = getPresetByKey(key);
+                if (preset) setForm(p => ({ ...p, paymentTerms: preset.text }));
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Pick a standard preset…" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_TERMS_PRESETS.map(p => (
+                  <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input value={form.paymentTerms} onChange={e => setForm(p => ({ ...p, paymentTerms: e.target.value }))} placeholder="e.g. 75% Advance upon LPO, 25% Before Delivery" />
           </div>
           <div className="space-y-1">
             <Label>Prepared By</Label>
