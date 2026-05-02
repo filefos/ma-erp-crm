@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { useListCheques, useListBankAccounts } from "@workspace/api-client-react";
+import { useListCheques, useCreateCheque, useListBankAccounts, useListCompanies } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Plus, Printer } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -19,8 +23,33 @@ const statusColors: Record<string, string> = {
 export function ChequesList() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    payeeName: "", chequeNumber: "", chequeDate: "", amount: "",
+    bankAccountId: "", memo: "", companyId: "",
+  });
+  const queryClient = useQueryClient();
   const { data: cheques, isLoading } = useListCheques({ status: status === "all" ? undefined : status });
-  const filtered = cheques?.filter(c => !search || c.chequeNumber.toLowerCase().includes(search.toLowerCase()) || c.payeeName.toLowerCase().includes(search.toLowerCase()));
+  const { data: bankAccounts } = useListBankAccounts();
+  const { data: companies } = useListCompanies();
+  const create = useCreateCheque({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/cheques"] });
+        setOpen(false);
+        setForm({ payeeName: "", chequeNumber: "", chequeDate: "", amount: "", bankAccountId: "", memo: "", companyId: "" });
+      },
+    },
+  });
+
+  const filtered = cheques?.filter(c =>
+    !search ||
+    c.chequeNumber.toLowerCase().includes(search.toLowerCase()) ||
+    c.payeeName.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalIssued = filtered?.filter(c => c.status === "issued").reduce((s, c) => s + (c.amount ?? 0), 0) ?? 0;
+  const totalCleared = filtered?.filter(c => c.status === "cleared").reduce((s, c) => s + (c.amount ?? 0), 0) ?? 0;
 
   return (
     <div className="space-y-4">
@@ -29,7 +58,55 @@ export function ChequesList() {
           <h1 className="text-2xl font-bold tracking-tight">Cheque Management</h1>
           <p className="text-muted-foreground">Track and manage company cheques.</p>
         </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+              <Plus className="w-4 h-4 mr-2" />New Cheque
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>Create Cheque</DialogTitle></DialogHeader>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="space-y-1 col-span-2"><Label>Payee Name *</Label><Input value={form.payeeName} onChange={e => setForm(p => ({...p, payeeName: e.target.value}))} placeholder="Person or company name" /></div>
+              <div className="space-y-1"><Label>Cheque Number *</Label><Input value={form.chequeNumber} onChange={e => setForm(p => ({...p, chequeNumber: e.target.value}))} placeholder="123456" /></div>
+              <div className="space-y-1"><Label>Cheque Date *</Label><Input type="date" value={form.chequeDate} onChange={e => setForm(p => ({...p, chequeDate: e.target.value}))} /></div>
+              <div className="space-y-1"><Label>Amount (AED) *</Label><Input type="number" value={form.amount} onChange={e => setForm(p => ({...p, amount: e.target.value}))} /></div>
+              <div className="space-y-1"><Label>Company</Label>
+                <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 col-span-2"><Label>Bank Account</Label>
+                <Select value={form.bankAccountId} onValueChange={v => setForm(p => ({...p, bankAccountId: v}))}>
+                  <SelectTrigger><SelectValue placeholder="Select bank account" /></SelectTrigger>
+                  <SelectContent>{bankAccounts?.map(b => <SelectItem key={b.id} value={String(b.id)}>{b.bankName} — {b.accountNumber}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 col-span-2"><Label>Memo / Purpose</Label><Input value={form.memo} onChange={e => setForm(p => ({...p, memo: e.target.value}))} placeholder="Payment for invoice #..." /></div>
+            </div>
+            <Button
+              className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              onClick={() => create.mutate({ data: { ...form, amount: parseFloat(form.amount) || 0, bankAccountId: form.bankAccountId ? parseInt(form.bankAccountId, 10) : undefined, companyId: form.companyId ? parseInt(form.companyId, 10) : undefined } as any })}
+              disabled={!form.payeeName || !form.chequeNumber || !form.amount || create.isPending}
+            >
+              {create.isPending ? "Creating..." : "Create Cheque"}
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-card border rounded-lg p-4">
+          <div className="text-xs text-muted-foreground">Total Issued</div>
+          <div className="text-xl font-bold text-amber-600">AED {totalIssued.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div className="bg-card border rounded-lg p-4">
+          <div className="text-xs text-muted-foreground">Total Cleared</div>
+          <div className="text-xl font-bold text-green-600">AED {totalCleared.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+        </div>
+      </div>
+
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -43,6 +120,7 @@ export function ChequesList() {
           </SelectContent>
         </Select>
       </div>
+
       <div className="border rounded-lg bg-card">
         <Table>
           <TableHeader>
@@ -51,21 +129,29 @@ export function ChequesList() {
               <TableHead>Bank</TableHead>
               <TableHead>Payee</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Memo</TableHead>
               <TableHead className="text-right">Amount (AED)</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No cheques found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No cheques found.</TableCell></TableRow> :
             filtered?.map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium font-mono">{c.chequeNumber}</TableCell>
                 <TableCell>{(c as any).bankName || "-"}</TableCell>
-                <TableCell>{c.payeeName}</TableCell>
+                <TableCell className="font-medium">{c.payeeName}</TableCell>
                 <TableCell>{c.chequeDate}</TableCell>
+                <TableCell className="max-w-[160px] truncate text-muted-foreground text-sm">{(c as any).memo || "-"}</TableCell>
                 <TableCell className="text-right font-medium">AED {c.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                 <TableCell><Badge variant="secondary" className={statusColors[c.status] ?? ""}>{c.status}</Badge></TableCell>
+                <TableCell>
+                  {["approved","printed"].includes(c.status) && (
+                    <Button variant="ghost" size="icon" title="Print Cheque"><Printer className="w-4 h-4 text-muted-foreground" /></Button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

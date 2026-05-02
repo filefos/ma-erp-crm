@@ -1,24 +1,87 @@
-import { useListBankAccounts, useListCompanies } from "@workspace/api-client-react";
+import { useState } from "react";
+import { useListBankAccounts, useCreateBankAccount, useListCompanies } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Landmark } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Landmark, Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+
+const CURRENCIES = ["AED","USD","EUR","GBP","SAR","INR"];
 
 export function BankAccountsList() {
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    bankName: "", accountName: "", accountNumber: "", iban: "",
+    swiftCode: "", currency: "AED", companyId: "", branch: "",
+  });
+  const queryClient = useQueryClient();
   const { data: accounts, isLoading } = useListBankAccounts();
   const { data: companies } = useListCompanies();
+  const create = useCreateBankAccount({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/bank-accounts"] });
+        setOpen(false);
+        setForm({ bankName: "", accountName: "", accountNumber: "", iban: "", swiftCode: "", currency: "AED", companyId: "", branch: "" });
+      },
+    },
+  });
 
   const getCompanyName = (companyId: number | null) => companies?.find(c => c.id === companyId)?.name ?? "-";
+  const getCompanyShortName = (companyId: number | null) => companies?.find(c => c.id === companyId)?.shortName ?? "-";
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Bank Accounts</h1>
-        <p className="text-muted-foreground">Company bank account details for both entities.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Bank Accounts</h1>
+          <p className="text-muted-foreground">Company bank account details for both entities.</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Bank Account</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>Add Bank Account</DialogTitle></DialogHeader>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="space-y-1 col-span-2"><Label>Bank Name *</Label><Input value={form.bankName} onChange={e => setForm(p => ({...p, bankName: e.target.value}))} placeholder="Emirates NBD, Mashreq, ADCB..." /></div>
+              <div className="space-y-1 col-span-2"><Label>Account Name *</Label><Input value={form.accountName} onChange={e => setForm(p => ({...p, accountName: e.target.value}))} placeholder="Prime Max Prefab Houses Industry LLC" /></div>
+              <div className="space-y-1"><Label>Account Number *</Label><Input value={form.accountNumber} onChange={e => setForm(p => ({...p, accountNumber: e.target.value}))} /></div>
+              <div className="space-y-1"><Label>Currency</Label>
+                <Select value={form.currency} onValueChange={v => setForm(p => ({...p, currency: v}))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CURRENCIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 col-span-2"><Label>IBAN</Label><Input value={form.iban} onChange={e => setForm(p => ({...p, iban: e.target.value}))} placeholder="AE070331234567890123456" /></div>
+              <div className="space-y-1"><Label>SWIFT Code</Label><Input value={form.swiftCode} onChange={e => setForm(p => ({...p, swiftCode: e.target.value}))} placeholder="EBILAEAD" /></div>
+              <div className="space-y-1"><Label>Branch</Label><Input value={form.branch} onChange={e => setForm(p => ({...p, branch: e.target.value}))} placeholder="Main Branch" /></div>
+              <div className="space-y-1 col-span-2"><Label>Company *</Label>
+                <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
+                  <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
+                  <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button
+              className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId, 10) } as any })}
+              disabled={!form.bankName || !form.accountName || !form.accountNumber || !form.companyId || create.isPending}
+            >
+              {create.isPending ? "Saving..." : "Add Bank Account"}
+            </Button>
+          </DialogContent>
+        </Dialog>
       </div>
+
       {isLoading ? <div className="text-muted-foreground">Loading...</div> :
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {accounts?.map(acc => (
-          <Card key={acc.id} className="relative overflow-hidden">
+          <Card key={acc.id} className="relative overflow-hidden hover:shadow-md transition-shadow">
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
               <div className="flex items-center gap-3">
@@ -27,12 +90,14 @@ export function BankAccountsList() {
                 </div>
                 <div>
                   <CardTitle className="text-base">{acc.bankName}</CardTitle>
-                  <p className="text-xs text-muted-foreground">{getCompanyName(acc.companyId)}</p>
+                  <p className="text-xs text-muted-foreground">{getCompanyShortName(acc.companyId)}</p>
                 </div>
               </div>
-              <Badge variant="secondary" className={acc.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>{acc.isActive ? "Active" : "Inactive"}</Badge>
+              <Badge variant="secondary" className={acc.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}>
+                {acc.isActive ? "Active" : "Inactive"}
+              </Badge>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2.5">
               <div>
                 <div className="text-xs text-muted-foreground">Account Name</div>
                 <div className="text-sm font-medium">{acc.accountName}</div>
@@ -43,7 +108,7 @@ export function BankAccountsList() {
               </div>
               {acc.iban && <div>
                 <div className="text-xs text-muted-foreground">IBAN</div>
-                <div className="text-sm font-mono break-all">{acc.iban}</div>
+                <div className="text-xs font-mono break-all text-muted-foreground">{acc.iban}</div>
               </div>}
               {acc.swiftCode && <div>
                 <div className="text-xs text-muted-foreground">SWIFT</div>
@@ -51,12 +116,17 @@ export function BankAccountsList() {
               </div>}
               <div className="flex items-center justify-between pt-1">
                 <span className="text-xs text-muted-foreground">Currency</span>
-                <Badge variant="outline">{acc.currency}</Badge>
+                <Badge variant="outline" className="font-mono">{acc.currency}</Badge>
               </div>
             </CardContent>
           </Card>
         ))}
-        {accounts?.length === 0 && <div className="col-span-3 text-center py-16 text-muted-foreground">No bank accounts found.</div>}
+        {accounts?.length === 0 && (
+          <div className="col-span-3 text-center py-16 text-muted-foreground">
+            <Landmark className="w-12 h-12 mx-auto mb-3 opacity-20" />
+            No bank accounts found. Add your first account.
+          </div>
+        )}
       </div>}
     </div>
   );

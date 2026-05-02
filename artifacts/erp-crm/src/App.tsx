@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/layout";
 import { Login } from "@/pages/login";
 import { Dashboard } from "@/pages/dashboard";
 import { LeadsList } from "@/pages/crm/leads";
+import { LeadDetail } from "@/pages/crm/lead-detail";
 import { ContactsList } from "@/pages/crm/contacts";
 import { DealsList } from "@/pages/crm/deals";
 import { ActivitiesList } from "@/pages/crm/activities";
@@ -30,6 +31,14 @@ import { EmployeesList } from "@/pages/hr/employees";
 import { AttendanceList } from "@/pages/hr/attendance";
 import { AssetsList } from "@/pages/assets/index";
 import { ReportsHub } from "@/pages/reports/index";
+import { SalesPipelineReport } from "@/pages/reports/sales-pipeline";
+import { QuotationsReport } from "@/pages/reports/quotations-report";
+import { RevenueReport } from "@/pages/reports/revenue-report";
+import { ExpensesReport } from "@/pages/reports/expenses-report";
+import { InventoryReport } from "@/pages/reports/inventory-report";
+import { ProjectsReport } from "@/pages/reports/projects-report";
+import { AttendanceReport } from "@/pages/reports/attendance-report";
+import { ProcurementReport } from "@/pages/reports/procurement-report";
 import { UsersList } from "@/pages/admin/users";
 import { AuditLogsList } from "@/pages/admin/audit-logs";
 import { CompaniesAdmin } from "@/pages/admin/companies";
@@ -55,6 +64,12 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/dashboard" component={Dashboard} />
 
+      {/* CRM */}
+      <Route path="/crm/leads/:id">
+        {(params) => (
+          <ModuleGuard module="leads"><LeadDetail id={params.id} /></ModuleGuard>
+        )}
+      </Route>
       <Route path="/crm/leads">
         <ModuleGuard module="leads"><LeadsList /></ModuleGuard>
       </Route>
@@ -68,6 +83,7 @@ function Router() {
         <ModuleGuard module="activities"><ActivitiesList /></ModuleGuard>
       </Route>
 
+      {/* Sales */}
       <Route path="/sales/quotations/new">
         <ModuleGuard module="quotations" action="canCreate"><QuotationNew /></ModuleGuard>
       </Route>
@@ -86,6 +102,7 @@ function Router() {
         <ModuleGuard module="lpos"><LposList /></ModuleGuard>
       </Route>
 
+      {/* Accounts */}
       <Route path="/accounts/invoices">
         <ModuleGuard module="tax_invoices"><TaxInvoicesList /></ModuleGuard>
       </Route>
@@ -102,6 +119,7 @@ function Router() {
         <ModuleGuard module="bank_accounts"><BankAccountsList /></ModuleGuard>
       </Route>
 
+      {/* Procurement */}
       <Route path="/procurement/suppliers">
         <ModuleGuard module="suppliers"><SuppliersList /></ModuleGuard>
       </Route>
@@ -112,6 +130,7 @@ function Router() {
         <ModuleGuard module="purchase_orders"><PurchaseOrdersList /></ModuleGuard>
       </Route>
 
+      {/* Inventory */}
       <Route path="/inventory/items">
         <ModuleGuard module="inventory_items"><InventoryItemsList /></ModuleGuard>
       </Route>
@@ -119,6 +138,7 @@ function Router() {
         <ModuleGuard module="stock_entries"><StockEntriesList /></ModuleGuard>
       </Route>
 
+      {/* Projects */}
       <Route path="/projects/:id">
         {(params) => (
           <ModuleGuard module="projects"><ProjectDetail id={params.id} /></ModuleGuard>
@@ -128,6 +148,7 @@ function Router() {
         <ModuleGuard module="projects"><ProjectsList /></ModuleGuard>
       </Route>
 
+      {/* HR */}
       <Route path="/hr/employees">
         <ModuleGuard module="employees"><EmployeesList /></ModuleGuard>
       </Route>
@@ -135,14 +156,41 @@ function Router() {
         <ModuleGuard module="attendance"><AttendanceList /></ModuleGuard>
       </Route>
 
+      {/* Assets */}
       <Route path="/assets">
         <ModuleGuard module="assets"><AssetsList /></ModuleGuard>
       </Route>
 
+      {/* Reports hub + sub-pages */}
+      <Route path="/reports/sales-pipeline">
+        <ModuleGuard module="dashboard"><SalesPipelineReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/quotations">
+        <ModuleGuard module="dashboard"><QuotationsReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/revenue">
+        <ModuleGuard module="dashboard"><RevenueReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/expenses">
+        <ModuleGuard module="dashboard"><ExpensesReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/inventory">
+        <ModuleGuard module="dashboard"><InventoryReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/projects">
+        <ModuleGuard module="dashboard"><ProjectsReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/attendance">
+        <ModuleGuard module="dashboard"><AttendanceReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/procurement">
+        <ModuleGuard module="dashboard"><ProcurementReport /></ModuleGuard>
+      </Route>
       <Route path="/reports">
         <ModuleGuard module="dashboard"><ReportsHub /></ModuleGuard>
       </Route>
 
+      {/* Admin */}
       <Route path="/admin/companies">
         <AdminGuard><CompaniesAdmin /></AdminGuard>
       </Route>
