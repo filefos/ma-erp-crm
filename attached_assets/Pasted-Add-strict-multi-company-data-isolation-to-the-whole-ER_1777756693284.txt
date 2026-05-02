@@ -1,0 +1,72 @@
+Add strict multi-company data isolation to the whole ERP/CRM system.
+
+VERY IMPORTANT RULE:
+Never intermix data between companies.
+
+Companies:
+1. PRIME MAX PREFAB HOUSES INDUSTRY LLC
+2. ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+
+RULES:
+- If user logs in under Prime Max, show only Prime Max data.
+- If user logs in under Elite Prefab, show only Elite Prefab data.
+- No Prime Max data should appear in Elite.
+- No Elite data should appear in Prime Max.
+- Company separation must apply to every module.
+
+Apply this to:
+- Dashboard
+- Leads
+- Deals
+- Quotations
+- Proforma invoices
+- Tax invoices
+- Delivery notes
+- Accounts
+- Expenses
+- Bills
+- Payments
+- Bank accounts
+- Cheques
+- Procurement
+- Suppliers
+- Purchase orders
+- Inventory
+- Store
+- Stock entries
+- Projects
+- HR
+- Attendance
+- Documents
+- Email
+- WhatsApp
+- Reports
+- Audit logs
+- Notifications
+
+Technical requirements:
+- Every table must include company_id.
+- Every API query must filter by company_id.
+- Every create/update must save company_id.
+- Every frontend page must use active company context.
+- User login must load assigned company only.
+- If user has access to both companies, allow company switcher.
+- If user has access to one company, hide company switcher.
+- Reports must only show active company data.
+- Group reports only visible to Super Admin.
+- Prevent API access to other company data even if user changes URL or record ID manually.
+
+Security:
+- Add backend middleware to enforce company_id filtering.
+- Add permission check before every record access.
+- Add audit log if user tries to access another company’s data.
+- Return “Access denied” for cross-company access.
+- Never rely only on frontend filtering.
+
+Test cases:
+1. Login as Prime Max user → show only Prime Max records.
+2. Login as Elite user → show only Elite records.
+3. Prime Max user cannot open Elite record by URL.
+4. Elite user cannot open Prime Max invoice by ID.
+5. Reports show only selected company.
+6. Super Admin can switch companies and view group report only with permission.

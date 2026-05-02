@@ -85,8 +85,13 @@ export function MainExecutiveDashboard() {
   const canProforma   = can("proforma_invoices");
   const canLpos       = can("lpos");
   const canInvoices   = can("tax_invoices");
-  const canPayments   = can("tax_invoices");        // payments received are part of accounts/invoices module
+  // NOTE on module mapping: payments-received and payments-made routes are
+  // both guarded by the `expenses` module in App.tsx, so the dashboard MUST
+  // gate payments queries/aggregates by the same key — otherwise a user with
+  // tax_invoices but not expenses could see payment totals here that they
+  // cannot see anywhere else (broken access control).
   const canExpenses   = can("expenses");
+  const canPayments   = canExpenses;
   const canPos        = can("purchase_orders");
   const canPrs        = can("purchase_requests");
   const canSuppliers  = can("suppliers");
