@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useListNotifications } from "@workspace/api-client-react";
@@ -179,21 +180,24 @@ const ROLE_GROUPS: Record<string, string[]> = {
   management:  ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
 };
 
-function visibleGroupsFor(user: { permissionLevel?: string; role?: string; departmentName?: string } | undefined): NavGroup[] {
+function visibleGroupsFor(
+  user: { permissionLevel?: string; role?: string; departmentName?: string } | undefined,
+  canEmails: boolean,
+): NavGroup[] {
   const level = user?.permissionLevel ?? "user";
   if (ADMIN_LEVELS.has(level)) {
-    // Admins see everything including the Admin group.
     return NAV;
   }
-  // Non-admin: never show admin group.
   const nonAdminNav = NAV.filter(g => !g.adminOnly);
   const dept = user?.departmentName ?? "";
   const role = (user?.role ?? "").toLowerCase();
   const allowedLabels = new Set<string>(DEPT_GROUPS[dept] ?? ROLE_GROUPS[role] ?? []);
   if (allowedLabels.size === 0) {
-    // Conservative default — at minimum let them see CRM if no mapping.
     allowedLabels.add("CRM");
   }
+  // Gate Email nav by the actual `emails` module permission so it stays
+  // consistent with the route guard in App.tsx.
+  if (!canEmails) allowedLabels.delete("Email");
   return nonAdminNav.filter(g => allowedLabels.has(g.label));
 }
 
@@ -266,9 +270,10 @@ function NotificationBell() {
 function SidebarContent() {
   const { user, logout } = useAuth();
   const { companyShort, poweredBy } = useActiveCompany();
+  const { can } = usePermissions();
   const u = user as { name?: string; permissionLevel?: string; role?: string; departmentName?: string } | undefined;
   const level = u?.permissionLevel ?? "user";
-  const visibleGroups = visibleGroupsFor(u);
+  const visibleGroups = visibleGroupsFor(u, can("emails"));
 
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">

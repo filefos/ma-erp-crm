@@ -364,10 +364,10 @@ export function MainExecutiveDashboard() {
     { label: "Procurement", href: "/procurement/dashboard",icon: ShoppingCart,  tone: "from-orange-500 to-orange-700",  sub: `${pos.length} POs · ${suppliers.length} suppliers`,    allowed: canProcurement },
     { label: "Inventory",   href: "/inventory",            icon: Package,       tone: "from-teal-500 to-teal-700",      sub: `${items.length} items`,                                allowed: canItems },
     { label: "Projects",    href: "/projects/dashboard",   icon: Folders,       tone: "from-indigo-500 to-indigo-700",  sub: `${activeProjects} active`,                             allowed: canProjects },
-    { label: "HR",          href: "/hr",                   icon: HardHat,       tone: "from-slate-600 to-slate-800",    sub: `${activeEmployees} active`,                            allowed: canEmployees || canAttendance },
+    { label: "HR",          href: "/hr",                   icon: HardHat,       tone: "from-slate-600 to-slate-800",    sub: `${activeEmployees} active`,                            allowed: canEmployees },
     { label: "Assets",      href: "/assets/dashboard",     icon: Wrench,        tone: "from-cyan-500 to-cyan-700",      sub: `${totalAssets} assets`,                                allowed: canAssets },
-    { label: "Email",       href: "/email/dashboard",      icon: Mail,          tone: "from-pink-500 to-pink-700",      sub: "Inbox & threads",                                      allowed: true },
-    { label: "Reports",     href: "/reports/dashboard",    icon: BarChart3,     tone: "from-rose-500 to-rose-700",      sub: "Cross-module analytics",                               allowed: true },
+    { label: "Email",       href: "/email/dashboard",      icon: Mail,          tone: "from-pink-500 to-pink-700",      sub: "Inbox & threads",                                      allowed: can("emails") },
+    { label: "Reports",     href: "/reports/dashboard",    icon: BarChart3,     tone: "from-rose-500 to-rose-700",      sub: "Cross-module analytics",                               allowed: can("dashboard") },
   ].filter(s => s.allowed);
 
   const u = user as { name?: string; permissionLevel?: string } | undefined;
