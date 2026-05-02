@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useListExpenses, useListPaymentsReceived, useListPaymentsMade, useListJournalEntries } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
-  Bot, Sparkles, TrendingUp, AlertTriangle, FileText, Tag, Bell,
+  Bot, Sparkles, TrendingUp, TrendingDown, AlertTriangle, FileText, Tag, Bell,
   CheckCircle, Search, BarChart3, Lightbulb, DollarSign, Send,
 } from "lucide-react";
 
