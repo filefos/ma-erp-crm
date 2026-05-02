@@ -12,6 +12,17 @@ import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListQuotationsQueryKey } from "@workspace/api-client-react";
 
+const BANK_DETAILS: Record<number, { bankName: string; accountTitle: string; accountNumber: string; iban: string; swift: string; currency: string }> = {
+  1: {
+    bankName: "Abu Dhabi Commercial Bank (ADCB)",
+    accountTitle: "PRIME MAX PREFAB HOUSES IND LLC",
+    accountNumber: "14498851920002",
+    iban: "AE300030014498851920002",
+    swift: "ADCBAEAA",
+    currency: "AED",
+  },
+};
+
 interface Item {
   description: string;
   quantity: number;
@@ -447,8 +458,33 @@ export function QuotationNew() {
       <Card>
         <CardHeader><CardTitle>Totals</CardTitle></CardHeader>
         <CardContent>
-          <div className="flex justify-end">
-            <div className="w-80 space-y-3">
+          <div className="flex gap-6 items-start">
+            {/* Bank Details */}
+            {BANK_DETAILS[Number(form.companyId)] && (
+              <div className="flex-1 border rounded-lg p-4 bg-muted/40">
+                <div className="text-xs font-bold uppercase tracking-wide text-[#0f2d5a] mb-2">Bank Details</div>
+                <table className="text-xs w-full">
+                  <tbody>
+                    {[
+                      ["Bank Name", BANK_DETAILS[Number(form.companyId)].bankName],
+                      ["Account Title", BANK_DETAILS[Number(form.companyId)].accountTitle],
+                      ["Account Number", BANK_DETAILS[Number(form.companyId)].accountNumber],
+                      ["IBAN", BANK_DETAILS[Number(form.companyId)].iban],
+                      ["Swift Code", BANK_DETAILS[Number(form.companyId)].swift],
+                      ["Currency", BANK_DETAILS[Number(form.companyId)].currency],
+                    ].map(([label, value]) => (
+                      <tr key={label}>
+                        <td className="text-muted-foreground pr-3 py-0.5 whitespace-nowrap">{label}</td>
+                        <td className="font-medium">{value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Totals */}
+            <div className="w-80 flex-shrink-0 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal (Project Items)</span>
                 <span>AED {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
