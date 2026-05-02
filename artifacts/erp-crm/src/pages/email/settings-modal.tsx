@@ -56,7 +56,7 @@ const DEFAULT: Settings = {
 };
 
 const COMMON_PRESETS = [
-  { label: "Custom", value: "" },
+  { label: "Custom / Manual", value: "custom" },
   { label: "Gmail", value: "gmail", smtp: { host: "smtp.gmail.com", port: "587", secure: "starttls" }, imap: { host: "imap.gmail.com", port: "993", secure: "ssl" } },
   { label: "Yahoo Mail", value: "yahoo", smtp: { host: "smtp.mail.yahoo.com", port: "587", secure: "starttls" }, imap: { host: "imap.mail.yahoo.com", port: "993", secure: "ssl" } },
   { label: "Outlook / Hotmail", value: "outlook", smtp: { host: "smtp-mail.outlook.com", port: "587", secure: "starttls" }, imap: { host: "imap-mail.outlook.com", port: "993", secure: "ssl" } },
