@@ -74,6 +74,14 @@ interface CompanyInfo {
   phone: string;
   email: string;
   contact: string;
+  bank?: {
+    bankName: string;
+    accountTitle: string;
+    accountNumber: string;
+    iban: string;
+    swift: string;
+    currency: string;
+  };
 }
 
 const COMPANIES: Record<number, CompanyInfo> = {
@@ -84,6 +92,14 @@ const COMPANIES: Record<number, CompanyInfo> = {
     phone: "+971 50 2940 131",
     email: "info@primemaxprefab.com",
     contact: "ASIF LATIF",
+    bank: {
+      bankName: "Abu Dhabi Commercial Bank (ADCB)",
+      accountTitle: "PRIME MAX PREFAB HOUSES IND LLC",
+      accountNumber: "14498851920002",
+      iban: "AE300030014498851920002",
+      swift: "ADCBAEAA",
+      currency: "AED",
+    },
   },
   2: {
     name: "ELITE PREFAB INDUSTRIES LLC",
@@ -547,9 +563,9 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             )}
 
             {/* Grand Total block */}
-            <table className="w-full border-collapse border border-gray-400 mb-3 mt-0">
+            <table className="w-full border-collapse border border-gray-400 mt-0" style={{ marginBottom: 0 }}>
               <tbody>
-                <tr className="bg-gray-50">
+                <tr className="bg-gray-50" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                   <Td bold colSpan={4}>TOTAL AMOUNT IN WORDS = EXCLUDING VAT</Td>
                   <Td right bold>{formatAED(subtotal)}</Td>
                 </tr>
@@ -559,20 +575,58 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                     <span className="italic">{numberToWords(subtotal)}</span>
                   </Td>
                 </tr>
-                {(data.discount ?? 0) > 0 && (
-                  <tr>
-                    <Td colSpan={4}>Discount ({data.discount}%)</Td>
-                    <Td right>— {formatAED((subtotal * (data.discount ?? 0)) / 100)}</Td>
-                  </tr>
+              </tbody>
+            </table>
+
+            {/* Bank Details (left) + Totals (right) side-by-side */}
+            <div className="flex border-l border-r border-b border-gray-400 mb-0">
+              {/* Bank Details */}
+              <div className="flex-1 border-r border-gray-400 p-2 bg-gray-50" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                {co.bank ? (
+                  <>
+                    <div className="font-black text-[11px] uppercase mb-1 text-[#0f2d5a]">Bank Details</div>
+                    <table className="text-[10px] w-full">
+                      <tbody>
+                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Bank Name</td><td className="font-semibold">{co.bank.bankName}</td></tr>
+                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Title</td><td className="font-semibold">{co.bank.accountTitle}</td></tr>
+                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Number</td><td className="font-semibold">{co.bank.accountNumber}</td></tr>
+                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">IBAN</td><td className="font-semibold">{co.bank.iban}</td></tr>
+                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Swift Code</td><td className="font-semibold">{co.bank.swift}</td></tr>
+                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Currency</td><td className="font-semibold">{co.bank.currency}</td></tr>
+                      </tbody>
+                    </table>
+                  </>
+                ) : (
+                  <div className="text-[10px] text-gray-400 italic">No bank details configured</div>
                 )}
-                <tr>
-                  <Td colSpan={4}>VAT {vat}%</Td>
-                  <Td right>{formatAED(vatAmt)}</Td>
-                </tr>
-                <tr className="bg-[#0f2d5a] text-white" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                  <td colSpan={4} className="border border-gray-400 px-2 py-2 text-sm font-black">GRAND TOTAL (AED)</td>
-                  <td className="border border-gray-400 px-2 py-2 text-sm font-black text-right">{formatAED(grand)}</td>
-                </tr>
+              </div>
+
+              {/* Totals */}
+              <div className="w-72 flex-shrink-0">
+                <table className="w-full border-collapse text-[12px]">
+                  <tbody>
+                    {(data.discount ?? 0) > 0 && (
+                      <tr>
+                        <td className="border-b border-gray-300 px-2 py-1">Discount ({data.discount}%)</td>
+                        <td className="border-b border-gray-300 px-2 py-1 text-right">— {formatAED((subtotal * (data.discount ?? 0)) / 100)}</td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td className="border-b border-gray-300 px-2 py-1">VAT {vat}%</td>
+                      <td className="border-b border-gray-300 px-2 py-1 text-right">{formatAED(vatAmt)}</td>
+                    </tr>
+                    <tr className="bg-[#0f2d5a] text-white" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <td className="px-2 py-2 font-black">GRAND TOTAL (AED)</td>
+                      <td className="px-2 py-2 font-black text-right">{formatAED(grand)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Grand Total in Words */}
+            <table className="w-full border-collapse border border-gray-400 mb-3 mt-0">
+              <tbody>
                 <tr>
                   <Td colSpan={5}>
                     <span className="font-semibold">Grand Total in Words: </span>
