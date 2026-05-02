@@ -87,7 +87,7 @@ interface CompanyInfo {
 
 const COMPANIES: Record<number, CompanyInfo> = {
   1: {
-    name: "PRIME MAX PREFAB HOUSES IND. LLC",
+    name: "PRIME MAX PREFAB HOUSES INDUSTRY LLC",
     address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
     trn: "105383255400003",
     phone: "056 616 3555",
@@ -365,8 +365,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
             </div>
           </div>
-          <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-            <span className="text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
+          <div className="bg-[#1e6ab0] text-white py-2 px-4 flex items-center" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <span className="text-[11px] font-medium opacity-75 w-20">Page 1 of {isQuotation ? "3" : "1"}</span>
+            <span className="flex-1 text-center text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
+            <span className="text-[11px] font-medium opacity-75 w-20 text-right">{data.docNumber}</span>
           </div>
         </div>
 
@@ -701,8 +703,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                <span className="text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
+              <div className="bg-[#1e6ab0] text-white py-2 px-4 flex items-center" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[11px] font-medium opacity-75 w-20">Page 2 of 3</span>
+                <span className="flex-1 text-center text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
+                <span className="text-[11px] font-medium opacity-75 w-20 text-right">{data.docNumber}</span>
               </div>
             </div>
 
@@ -762,8 +766,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                <span className="text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
+              <div className="bg-[#1e6ab0] text-white py-2 px-4 flex items-center" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[11px] font-medium opacity-75 w-20">Page 3 of 3</span>
+                <span className="flex-1 text-center text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
+                <span className="text-[11px] font-medium opacity-75 w-20 text-right">{data.docNumber}</span>
               </div>
             </div>
 
