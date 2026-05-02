@@ -1,0 +1,69 @@
+import {
+  useGetDeliveryNote, getGetDeliveryNoteQueryKey,
+} from "@workspace/api-client-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
+import { ArrowLeft, Printer } from "lucide-react";
+import { DocumentPrint } from "@/components/document-print";
+import type { DocumentData } from "@/components/document-print";
+
+interface Props { id: string }
+
+const STATUS_COLORS: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-700",
+  dispatched: "bg-blue-100 text-blue-800",
+  delivered: "bg-green-100 text-green-800",
+};
+
+export function DeliveryNoteDetail({ id }: Props) {
+  const dnId = parseInt(id, 10);
+
+  const { data: dn, isLoading } = useGetDeliveryNote(dnId, {
+    query: { queryKey: getGetDeliveryNoteQueryKey(dnId), enabled: !!dnId },
+  });
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading…</div>;
+  if (!dn) return <div className="text-muted-foreground p-8">Delivery Note not found.</div>;
+
+  const items = ((dn as any).items ?? []) as { description: string; quantity: number; unit?: string }[];
+
+  const docData: DocumentData = {
+    type: "delivery_note",
+    docNumber: dn.dnNumber,
+    companyId: dn.companyId,
+    companyRef: (dn as any).companyRef,
+    clientName: dn.clientName,
+    projectName: dn.projectName,
+    deliveryLocation: dn.deliveryLocation,
+    vehicleNumber: dn.vehicleNumber,
+    driverName: dn.driverName,
+    receiverName: dn.receiverName,
+    deliveryDate: dn.deliveryDate
+      ? new Date(dn.deliveryDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      : undefined,
+    grandTotal: 0,
+    items: items.map(i => ({
+      description: i.description,
+      quantity: i.quantity,
+      unit: i.unit,
+    })),
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-4">
+      <div className="no-print flex items-center gap-2">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/accounts/delivery-notes"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
+        </Button>
+        <Badge className={`capitalize ${STATUS_COLORS[dn.status] ?? "bg-gray-100"}`}>{dn.status}</Badge>
+        <div className="ml-auto">
+          <Button size="sm" variant="outline" onClick={() => window.print()}>
+            <Printer className="w-4 h-4 mr-1" />Print / PDF
+          </Button>
+        </div>
+      </div>
+      <DocumentPrint data={docData} />
+    </div>
+  );
+}

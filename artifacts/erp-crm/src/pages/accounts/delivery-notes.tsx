@@ -111,7 +111,9 @@ export function DeliveryNotesList() {
             filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No delivery notes found.</TableCell></TableRow> :
             filtered?.map(n => (
               <TableRow key={n.id}>
-                <TableCell className="font-medium text-primary font-mono text-sm">{n.dnNumber}</TableCell>
+                <TableCell className="font-medium font-mono text-sm">
+                  <Link href={`/accounts/delivery-notes/${n.id}`} className="text-primary hover:underline">{n.dnNumber}</Link>
+                </TableCell>
                 <TableCell className="font-medium">{n.clientName}</TableCell>
                 <TableCell>{n.projectName || "-"}</TableCell>
                 <TableCell className="max-w-[160px] truncate">{n.deliveryLocation || "-"}</TableCell>

@@ -1,110 +1,217 @@
-import { useGetQuotation, useApproveQuotation } from "@workspace/api-client-react";
+import { useState } from "react";
+import {
+  useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
+  useCreateTaxInvoice, useCreateDeliveryNote,
+  getGetQuotationQueryKey,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
-import { ArrowLeft, Printer, Check, X } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { getGetQuotationQueryKey } from "@workspace/api-client-react";
-import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, Printer, Check, FileText, Receipt, Package, ChevronDown } from "lucide-react";
+import { DocumentPrint } from "@/components/document-print";
+import type { DocumentData } from "@/components/document-print";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface Props { id: string }
 
+const STATUS_COLORS: Record<string, string> = {
+  draft: "bg-gray-100 text-gray-700",
+  sent: "bg-blue-100 text-blue-800",
+  approved: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+};
+
 export function QuotationDetail({ id }: Props) {
   const qid = parseInt(id, 10);
+  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
-  const { data: q, isLoading } = useGetQuotation(qid, { query: { queryKey: getGetQuotationQueryKey(qid), enabled: !!qid } });
-  const approve = useApproveQuotation({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(qid) }) } });
+  const { toast } = useToast();
+  const [converting, setConverting] = useState<string | null>(null);
 
-  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading...</div>;
+  const { data: q, isLoading } = useGetQuotation(qid, {
+    query: { queryKey: getGetQuotationQueryKey(qid), enabled: !!qid },
+  });
+
+  const approve = useApproveQuotation({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(qid) });
+        toast({ title: "Quotation approved." });
+      },
+    },
+  });
+
+  const createPI = useCreateProformaInvoice({
+    mutation: {
+      onSuccess: (pi) => {
+        toast({ title: "Proforma Invoice created!", description: `${pi.piNumber}` });
+        navigate("/sales/proforma-invoices/" + pi.id);
+      },
+      onError: () => toast({ title: "Failed to create Proforma Invoice.", variant: "destructive" }),
+      onSettled: () => setConverting(null),
+    },
+  });
+
+  const createTax = useCreateTaxInvoice({
+    mutation: {
+      onSuccess: (inv) => {
+        toast({ title: "Tax Invoice created!", description: `${inv.invoiceNumber}` });
+        navigate("/accounts/invoices/" + inv.id);
+      },
+      onError: () => toast({ title: "Failed to create Tax Invoice.", variant: "destructive" }),
+      onSettled: () => setConverting(null),
+    },
+  });
+
+  const createDN = useCreateDeliveryNote({
+    mutation: {
+      onSuccess: (dn) => {
+        toast({ title: "Delivery Note created!", description: `${dn.dnNumber}` });
+        navigate("/accounts/delivery-notes/" + dn.id);
+      },
+      onError: () => toast({ title: "Failed to create Delivery Note.", variant: "destructive" }),
+      onSettled: () => setConverting(null),
+    },
+  });
+
+  if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading…</div>;
   if (!q) return <div className="text-muted-foreground p-8">Quotation not found.</div>;
 
-  const items = (q as any).items ?? [];
+  const items = ((q as any).items ?? []) as {
+    description: string; unit?: string; rate?: number; quantity: number; amount?: number;
+  }[];
+
+  const docData: DocumentData = {
+    type: "quotation",
+    docNumber: q.quotationNumber,
+    companyId: q.companyId,
+    companyRef: (q as any).companyRef,
+    clientName: q.clientName,
+    clientPhone: q.clientPhone,
+    clientEmail: q.clientEmail,
+    projectName: q.projectName,
+    projectLocation: q.projectLocation,
+    date: q.createdAt ? new Date(q.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
+    validity: q.validity,
+    vatPercent: q.vatPercent ?? 5,
+    subtotal: q.subtotal,
+    discount: q.discount,
+    vatAmount: q.vatAmount,
+    grandTotal: q.grandTotal,
+    paymentTerms: q.paymentTerms,
+    termsConditions: q.termsConditions,
+    items: items.map(i => ({
+      description: i.description,
+      sizeStatus: i.unit,
+      unitPrice: i.rate,
+      quantity: i.quantity,
+      total: i.amount,
+    })),
+    preparedByName: (q as any).preparedByName,
+  };
+
+  const handleConvertToPI = () => {
+    if (converting) return;
+    setConverting("pi");
+    createPI.mutate({ data: {
+      companyId: q.companyId,
+      clientName: q.clientName,
+      projectName: q.projectName,
+      quotationId: q.id,
+      subtotal: q.subtotal,
+      vatAmount: q.vatAmount,
+      total: q.grandTotal,
+      paymentTerms: q.paymentTerms,
+      validityDate: q.validity,
+    } });
+  };
+
+  const handleConvertToTax = () => {
+    if (converting) return;
+    setConverting("tax");
+    const today = new Date().toISOString().split("T")[0];
+    createTax.mutate({ data: {
+      companyId: q.companyId,
+      clientName: q.clientName,
+      quotationId: q.id,
+      invoiceDate: today,
+      supplyDate: today,
+      subtotal: q.subtotal,
+      vatPercent: q.vatPercent ?? 5,
+      vatAmount: q.vatAmount,
+      grandTotal: q.grandTotal,
+      paymentStatus: "unpaid",
+    } });
+  };
+
+  const handleConvertToDN = () => {
+    if (converting) return;
+    setConverting("dn");
+    createDN.mutate({ data: {
+      companyId: q.companyId,
+      clientName: q.clientName,
+      projectName: q.projectName,
+      deliveryDate: new Date().toISOString().split("T")[0],
+      items: items.map(i => ({
+        description: i.description,
+        quantity: i.quantity,
+        unit: i.unit ?? "nos",
+      })),
+    } });
+  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4 no-print">
-        <Button variant="ghost" size="sm" asChild><Link href="/sales/quotations"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link></Button>
-        <div className="ml-auto flex gap-2">
-          {q.status === "sent" && <>
-            <Button variant="outline" className="text-green-600 border-green-600" onClick={() => approve.mutate({ id: qid })}><Check className="w-4 h-4 mr-1" />Approve</Button>
-          </>}
-          <Button variant="outline" onClick={() => window.print()}><Printer className="w-4 h-4 mr-1" />Print</Button>
+    <div className="max-w-4xl mx-auto space-y-4">
+      {/* Action Bar */}
+      <div className="no-print flex items-center gap-2 flex-wrap">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/sales/quotations"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
+        </Button>
+        <Badge className={`capitalize ${STATUS_COLORS[q.status] ?? "bg-gray-100"}`}>{q.status}</Badge>
+        <div className="ml-auto flex items-center gap-2 flex-wrap">
+          {q.status === "sent" && (
+            <Button
+              size="sm" variant="outline"
+              className="text-green-600 border-green-600"
+              onClick={() => approve.mutate({ id: qid })}
+              disabled={approve.isPending}
+            >
+              <Check className="w-4 h-4 mr-1" />{approve.isPending ? "Approving…" : "Approve"}
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" disabled={!!converting}>
+                {converting ? "Creating…" : "Convert To"}
+                <ChevronDown className="w-3.5 h-3.5 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleConvertToPI}>
+                <FileText className="w-4 h-4 mr-2 text-blue-600" />Proforma Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConvertToTax}>
+                <Receipt className="w-4 h-4 mr-2 text-green-600" />Tax Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConvertToDN}>
+                <Package className="w-4 h-4 mr-2 text-purple-600" />Delivery Note
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button size="sm" variant="outline" onClick={() => window.print()}>
+            <Printer className="w-4 h-4 mr-1" />Print / PDF
+          </Button>
         </div>
       </div>
 
-      <div className="bg-card border rounded-xl p-8 print:shadow-none print:border-none">
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-primary">{(q as any).companyRef ?? "Prime Max Prefab Houses Industry LLC"}</h1>
-            <p className="text-sm text-muted-foreground">Industrial Area 12, Sharjah, UAE | TRN: 100234567890001</p>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-bold">QUOTATION</div>
-            <div className="text-2xl font-mono font-bold text-primary">{q.quotationNumber}</div>
-            <Badge variant="secondary" className="mt-1 capitalize">{q.status}</Badge>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-8 mb-8">
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Bill To</h3>
-            <div className="font-semibold">{q.clientName}</div>
-            {q.clientEmail && <div className="text-sm text-muted-foreground">{q.clientEmail}</div>}
-            {q.clientPhone && <div className="text-sm text-muted-foreground">{q.clientPhone}</div>}
-          </div>
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Project Details</h3>
-            {q.projectName && <div className="font-medium">{q.projectName}</div>}
-            {q.projectLocation && <div className="text-sm text-muted-foreground">{q.projectLocation}</div>}
-            {q.validity && <div className="text-sm mt-1">Validity: <span className="font-medium">{q.validity}</span></div>}
-          </div>
-        </div>
-
-        <div className="border rounded-lg overflow-hidden mb-6">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left p-3 font-semibold">#</th>
-                <th className="text-left p-3 font-semibold">Description</th>
-                <th className="text-right p-3 font-semibold">Qty</th>
-                <th className="text-left p-3 font-semibold">Unit</th>
-                <th className="text-right p-3 font-semibold">Rate (AED)</th>
-                <th className="text-right p-3 font-semibold">Amount (AED)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item: any, i: number) => (
-                <tr key={item.id ?? i} className="border-t">
-                  <td className="p-3 text-muted-foreground">{i + 1}</td>
-                  <td className="p-3">{item.description}</td>
-                  <td className="p-3 text-right">{item.quantity}</td>
-                  <td className="p-3">{item.unit}</td>
-                  <td className="p-3 text-right">{item.rate?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  <td className="p-3 text-right font-medium">{item.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="flex justify-end">
-          <div className="w-72 space-y-2">
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>AED {q.subtotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-            {(q.discount ?? 0) > 0 && <div className="flex justify-between text-sm"><span className="text-muted-foreground">Discount ({q.discount}%)</span><span className="text-red-500">-AED {((q.subtotal ?? 0) * (q.discount ?? 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>}
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">VAT ({q.vatPercent}%)</span><span>AED {q.vatAmount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-            <Separator />
-            <div className="flex justify-between font-bold text-lg"><span>Grand Total</span><span className="text-primary">AED {q.grandTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></div>
-          </div>
-        </div>
-
-        {q.paymentTerms && <div className="mt-6 p-4 bg-muted/30 rounded-lg text-sm"><strong>Payment Terms: </strong>{q.paymentTerms}</div>}
-        {q.termsConditions && <div className="mt-3 p-4 bg-muted/30 rounded-lg text-sm"><strong>Terms & Conditions: </strong>{q.termsConditions}</div>}
-
-        <div className="mt-10 pt-6 border-t flex justify-between text-sm text-muted-foreground">
-          <div>Prepared by: <strong>{(q as any).preparedByName ?? "-"}</strong></div>
-          <div>{q.approvedById && <>Approved by: <strong>{(q as any).approvedByName ?? "-"}</strong></>}</div>
-        </div>
-      </div>
+      {/* Document */}
+      <DocumentPrint data={docData} />
     </div>
   );
 }

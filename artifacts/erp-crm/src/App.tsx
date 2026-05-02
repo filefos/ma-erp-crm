@@ -14,9 +14,12 @@ import { QuotationsList } from "@/pages/sales/quotations";
 import { QuotationDetail } from "@/pages/sales/quotation-detail";
 import { QuotationNew } from "@/pages/sales/quotation-new";
 import { ProformaInvoicesList } from "@/pages/sales/proforma-invoices";
+import { ProformaInvoiceDetail } from "@/pages/sales/proforma-invoice-detail";
 import { LposList } from "@/pages/sales/lpos";
 import { TaxInvoicesList } from "@/pages/accounts/invoices";
+import { InvoiceDetail } from "@/pages/accounts/invoice-detail";
 import { DeliveryNotesList } from "@/pages/accounts/delivery-notes";
+import { DeliveryNoteDetail } from "@/pages/accounts/delivery-note-detail";
 import { ExpensesList } from "@/pages/accounts/expenses";
 import { ChequesList } from "@/pages/accounts/cheques";
 import { BankAccountsList } from "@/pages/accounts/bank-accounts";
@@ -95,6 +98,11 @@ function Router() {
       <Route path="/sales/quotations">
         <ModuleGuard module="quotations"><QuotationsList /></ModuleGuard>
       </Route>
+      <Route path="/sales/proforma-invoices/:id">
+        {(params) => (
+          <ModuleGuard module="proforma_invoices"><ProformaInvoiceDetail id={params.id} /></ModuleGuard>
+        )}
+      </Route>
       <Route path="/sales/proforma-invoices">
         <ModuleGuard module="proforma_invoices"><ProformaInvoicesList /></ModuleGuard>
       </Route>
@@ -103,8 +111,18 @@ function Router() {
       </Route>
 
       {/* Accounts */}
+      <Route path="/accounts/invoices/:id">
+        {(params) => (
+          <ModuleGuard module="tax_invoices"><InvoiceDetail id={params.id} /></ModuleGuard>
+        )}
+      </Route>
       <Route path="/accounts/invoices">
         <ModuleGuard module="tax_invoices"><TaxInvoicesList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/delivery-notes/:id">
+        {(params) => (
+          <ModuleGuard module="delivery_notes"><DeliveryNoteDetail id={params.id} /></ModuleGuard>
+        )}
       </Route>
       <Route path="/accounts/delivery-notes">
         <ModuleGuard module="delivery_notes"><DeliveryNotesList /></ModuleGuard>

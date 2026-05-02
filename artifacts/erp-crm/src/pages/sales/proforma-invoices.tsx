@@ -122,7 +122,9 @@ export function ProformaInvoicesList() {
             filtered?.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No proforma invoices found.</TableCell></TableRow> :
             filtered?.map(inv => (
               <TableRow key={inv.id}>
-                <TableCell className="font-medium text-primary font-mono text-sm">{inv.piNumber}</TableCell>
+                <TableCell className="font-medium font-mono text-sm">
+                  <Link href={`/sales/proforma-invoices/${inv.id}`} className="text-primary hover:underline">{inv.piNumber}</Link>
+                </TableCell>
                 <TableCell className="font-medium">{inv.clientName}</TableCell>
                 <TableCell>{inv.projectName || "-"}</TableCell>
                 <TableCell className="text-right font-medium">AED {(inv.total ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
