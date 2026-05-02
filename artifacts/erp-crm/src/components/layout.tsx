@@ -194,8 +194,6 @@ function visibleGroupsFor(user: { permissionLevel?: string; role?: string; depar
     // Conservative default — at minimum let them see CRM if no mapping.
     allowedLabels.add("CRM");
   }
-  // Email is universally available to non-admin users regardless of mapping.
-  allowedLabels.add("Email");
   return nonAdminNav.filter(g => allowedLabels.has(g.label));
 }
 

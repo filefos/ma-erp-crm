@@ -16,7 +16,7 @@ import {
   TrendingUp, Sparkles, ShoppingBag, Receipt, Briefcase, Crown, Calendar,
 } from "lucide-react";
 import {
-  ExecutiveHeader, KPIWidget, StatusBadge, Avatar, PremiumCard,
+  ExecutiveHeader, KPIWidget, StatusBadge, Avatar, PremiumCard, Sparkline,
   weeklyCounts, weeklyValues, trendPct,
 } from "@/components/crm/premium";
 
@@ -142,11 +142,13 @@ export function SalesDashboard() {
   }), [users]);
 
   const leaderboard = useMemo(() => {
+    const now = new Date();
     return salesUsers
       .map((u: any) => {
+        const userDeals = deals.filter((d: any) => d.assignedToId === u.id || d.assignedToName === u.name);
         const quoted = quotations.filter((q: any) => q.preparedById === u.id || q.preparedByName === u.name)
           .reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
-        const won = deals.filter((d: any) => d.stage === "won" && (d.assignedToId === u.id || d.assignedToName === u.name))
+        const won = userDeals.filter((d: any) => d.stage === "won")
           .reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
         const userTargets = targets.filter((t: any) => t.userId === u.id && t.year === year);
         const target = userTargets.reduce((s: number, t: any) => {
@@ -155,7 +157,20 @@ export function SalesDashboard() {
           if (t.period === "monthly")   return s + Number(t.targetAmount ?? 0) * 12;
           return s;
         }, 0);
-        return { id: u.id, name: u.name, quoted, won, target, attainment: target > 0 ? Math.round((won / target) * 100) : null };
+        const sparkline: number[] = [];
+        for (let i = 5; i >= 0; i--) {
+          const ms = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const me = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+          const v = userDeals.filter((d: any) => {
+            if (d.stage !== "won") return false;
+            const dt = d.closedAt ?? d.updatedAt ?? d.createdAt;
+            if (!dt) return false;
+            const t = new Date(dt).getTime();
+            return t >= ms.getTime() && t < me.getTime();
+          }).reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+          sparkline.push(v);
+        }
+        return { id: u.id, name: u.name, quoted, won, target, sparkline, attainment: target > 0 ? Math.round((won / target) * 100) : null };
       })
       .filter((r: any) => r.quoted > 0 || r.won > 0 || r.target > 0)
       .sort((a: any, b: any) => b.won - a.won)
@@ -242,8 +257,6 @@ export function SalesDashboard() {
         </div>
       )}
 
-      {/* PRIMARY KPI STRIP — required: Open Quotations · Proforma Pending ·
-          Conversion Rate · LPOs This Month · Top Salesperson · Top Customer */}
       {(() => {
         const openQuotations = quotations.filter((q: any) => !["accepted", "approved", "won", "rejected", "expired", "lost"].includes((q.status ?? "").toLowerCase())).length;
         const lpoMtd = lpos.filter((l: any) => {
@@ -251,12 +264,15 @@ export function SalesDashboard() {
           return d && new Date(d) >= monthStart;
         });
         const lpoMtdVal = lpoMtd.reduce((s: number, l: any) => s + Number(l.lpoValue ?? 0), 0);
+        const conversionRate = quotations.length > 0 ? Math.round((lpos.length / quotations.length) * 100) : 0;
         const topSP = leaderboard[0];
         const topCust = topClients[0];
         return (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="primary-sales-kpi-strip">
-            <KPIWidget icon={FileText}      tone="blue"   label="Quotation Value"  value={fmtAED(quotationValue)} sub={`${quotations.length} total · ${openQuotations} open`}                            href="/sales/quotations"        testId="kpi-quotation-value" />
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3" data-testid="primary-sales-kpi-strip">
+            <KPIWidget icon={FileText}      tone="blue"   label="Open Quotations"  value={openQuotations}      sub={`${sentQuotations} sent · ${pendingApprovalQ} pending`}                              href="/sales/quotations"        testId="kpi-open-quotations" />
+            <KPIWidget icon={FileText}      tone="indigo" label="Quotation Value"  value={fmtAED(quotationValue)} sub={`${quotations.length} total quotations`}                                          href="/sales/quotations"        testId="kpi-quotation-value" />
             <KPIWidget icon={FileCheck}     tone="amber"  label="Proforma Pending" value={pendingPIs}          sub={`${proformas.length} total proforma`}                                                href="/sales/proforma-invoices" testId="kpi-proforma-pending" />
+            <KPIWidget icon={Target}        tone="teal"   label="Conversion Rate"  value={`${conversionRate}%`} sub={`${lpos.length} LPOs from ${quotations.length} quotes`}                              href="/sales/lpos"              testId="kpi-conversion-rate" />
             <KPIWidget icon={Trophy}        tone="green"  label="Win Rate"         value={`${winRate}%`}        sub={`${acceptedQuotes} of ${quotations.length} quotes won`}                              href="/sales/quotations"        testId="kpi-win-rate" />
             <KPIWidget icon={ClipboardList} tone="purple" label="LPOs This Month"  value={lpoMtd.length}        sub={lpoMtd.length > 0 ? `${fmtAED(lpoMtdVal)} value` : "No LPOs this month"}             href="/sales/lpos"              testId="kpi-lpos-mtd" />
             <Link href="/crm/leaderboard" className="block group" data-testid="kpi-top-salesperson">
@@ -398,6 +414,9 @@ export function SalesDashboard() {
                       Won {fmtAED(row.won)} · Quoted {fmtAED(row.quoted)}
                       {row.target > 0 && ` · Target ${fmtAED(row.target)}`}
                     </div>
+                  </div>
+                  <div className="hidden md:block w-24 shrink-0">
+                    <Sparkline data={row.sparkline} color="#1e6ab0" />
                   </div>
                   {row.attainment != null && (
                     <Badge className={`text-[10px] ${row.attainment >= 100 ? "bg-emerald-100 text-emerald-700" : row.attainment >= 75 ? "bg-blue-100 text-blue-700" : row.attainment >= 50 ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>

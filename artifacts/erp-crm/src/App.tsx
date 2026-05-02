@@ -370,13 +370,12 @@ function Router() {
 
       <Route path="/notifications" component={NotificationsList} />
       <Route path="/profile" component={MyProfile} />
-      {/* Email routes — guarded by the closest existing module key ("dashboard")
-          since there's no dedicated "emails" module yet (see scripts/src/seed.ts MODULES).
-          When that module is added + seeded, switch to <ModuleGuard module="emails">. */}
-      {/* Email is a personal productivity surface — available to every
-          authenticated user regardless of module permissions. */}
-      <Route path="/email/dashboard"><EmailDashboard /></Route>
-      <Route path="/email"><EmailPanel /></Route>
+      <Route path="/email/dashboard">
+        <ModuleGuard module="emails"><EmailDashboard /></ModuleGuard>
+      </Route>
+      <Route path="/email">
+        <ModuleGuard module="emails"><EmailPanel /></ModuleGuard>
+      </Route>
 
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
