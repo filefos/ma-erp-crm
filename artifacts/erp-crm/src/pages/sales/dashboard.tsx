@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "wouter";
 import {
   useListQuotations, useListProformaInvoices, useListLpos, useListDeals, useListLeads,
-  useListUsers, useListSalesTargets,
+  useListUsers, useListSalesTargets, useListTaxInvoices, useListPaymentsReceived,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,8 @@ export function SalesDashboard() {
   const { data: leadsRaw }      = useListLeads({});
   const { data: usersRaw }      = useListUsers();
   const { data: targetsRaw }    = useListSalesTargets({ year });
+  const { data: invoicesRaw }   = useListTaxInvoices();
+  const { data: paymentsRaw }   = useListPaymentsReceived();
 
   const quotations = useMemo(() => filterByCompany(quotationsRaw ?? []), [quotationsRaw, filterByCompany]);
   const proformas  = useMemo(() => filterByCompany(proformaRaw  ?? []), [proformaRaw,  filterByCompany]);
@@ -47,6 +49,8 @@ export function SalesDashboard() {
   const deals      = useMemo(() => filterByCompany(dealsRaw     ?? []), [dealsRaw,     filterByCompany]);
   const leads      = useMemo(() => filterByCompany(leadsRaw     ?? []), [leadsRaw,     filterByCompany]);
   const targets    = useMemo(() => filterByCompany(targetsRaw   ?? []), [targetsRaw,   filterByCompany]);
+  const invoices   = useMemo(() => filterByCompany(invoicesRaw  ?? []), [invoicesRaw,  filterByCompany]);
+  const payments   = useMemo(() => filterByCompany(paymentsRaw  ?? []), [paymentsRaw,  filterByCompany]);
   const users      = usersRaw ?? [];
 
   // ---- KPIs ----
@@ -69,14 +73,20 @@ export function SalesDashboard() {
     [deals],
   );
 
-  // ---- Funnel: Leads → Quotations → PIs → LPOs → Won Deals ----
+  // ---- Sales-cycle funnel: Quotation → Proforma → Invoice → Paid ----
+  const invoiceTotal = invoices.reduce((s: number, i: any) => s + Number(i.grandTotal ?? i.total ?? 0), 0);
+  const paidTotal    = payments.reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
+  const paidCount    = (() => {
+    const paid = new Set<number>();
+    for (const p of payments as any[]) if (p.invoiceId != null) paid.add(p.invoiceId);
+    return paid.size;
+  })();
   const funnelData = useMemo(() => ([
-    { stage: "Leads",        count: leads.length,                                                                                        value: leads.reduce((s: number, l: any) => s + Number(l.budget ?? 0), 0) },
-    { stage: "Quotations",   count: quotations.length,                                                                                   value: quotationValue },
-    { stage: "Proforma Inv", count: proformas.length,                                                                                    value: piValue },
-    { stage: "LPOs",         count: lpos.length,                                                                                         value: lpoValue },
-    { stage: "Won Deals",    count: deals.filter((d: any) => d.stage === "won").length,                                                  value: wonDealsValue },
-  ]), [leads, quotations, proformas, lpos, deals, quotationValue, piValue, lpoValue, wonDealsValue]);
+    { stage: "Quotation",    count: quotations.length,                  value: quotationValue },
+    { stage: "Proforma Inv", count: proformas.length,                   value: piValue },
+    { stage: "Tax Invoice",  count: invoices.length,                    value: invoiceTotal },
+    { stage: "Paid",         count: paidCount,                          value: paidTotal },
+  ]), [quotations, proformas, invoices, payments, quotationValue, piValue, invoiceTotal, paidTotal, paidCount]);
 
   // ---- Monthly revenue trend (12 months: quotations vs LPOs) ----
   const monthlyTrend = useMemo(() => {
@@ -242,6 +252,53 @@ export function SalesDashboard() {
         <KPIWidget icon={FileText}   tone="slate"  label="Drafts"             value={draftQuotations}        sub={`${pendingApprovalQ} pending approval`}                          href="/sales/quotations" testId="kpi-drafts" />
         <KPIWidget icon={Receipt}    tone="indigo" label="Sent Quotations"    value={sentQuotations}         sub="Awaiting client response"                                        href="/sales/quotations" testId="kpi-sent" />
         <KPIWidget icon={Briefcase}  tone="navy"   label="Active Pipeline"    value={fmtAED(deals.filter((d: any) => !["won", "lost"].includes(d.stage)).reduce((s: number, d: any) => s + Number(d.value ?? 0), 0))} sub={`${deals.filter((d: any) => !["won", "lost"].includes(d.stage)).length} open deals`} href="/crm/pipeline" testId="kpi-pipeline" />
+      </div>
+
+      {/* Hero KPIs: Top Salesperson · Top Customer · LPOs This Month */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3" data-testid="hero-sales-kpis">
+        {(() => {
+          const lpoMtd = lpos.filter((l: any) => {
+            const d = l.lpoDate ?? l.createdAt;
+            return d && new Date(d) >= monthStart;
+          });
+          const lpoMtdVal = lpoMtd.reduce((s: number, l: any) => s + Number(l.lpoValue ?? 0), 0);
+          const topSP = leaderboard[0];
+          const topCust = topClients[0];
+          return (
+            <>
+              <Link href="/crm/leaderboard" className="block group" data-testid="hero-top-salesperson">
+                <div className="rounded-2xl border bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white p-4 shadow-sm group-hover:shadow-lg transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crown className="w-4 h-4 text-orange-300" />
+                    <span className="text-[11px] uppercase tracking-wide opacity-80">Top Salesperson</span>
+                  </div>
+                  <div className="text-xl font-bold truncate">{topSP?.name ?? "—"}</div>
+                  <div className="text-xs opacity-90 mt-1">{topSP ? `${fmtAED(topSP.won)} won · ${fmtAED(topSP.quoted)} quoted` : "No leaderboard data yet"}</div>
+                </div>
+              </Link>
+              <Link href="/crm/leads" className="block group" data-testid="hero-top-customer">
+                <div className="rounded-2xl border bg-card p-4 shadow-sm group-hover:shadow-lg group-hover:border-[#1e6ab0]/40 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-[#1e6ab0]" />
+                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Top Customer</span>
+                  </div>
+                  <div className="text-xl font-bold text-[#0f2d5a] dark:text-white truncate">{topCust?.name ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{topCust ? `${fmtAED(topCust.value)} quoted across ${topCust.count} quote${topCust.count === 1 ? "" : "s"}` : "No quotations yet"}</div>
+                </div>
+              </Link>
+              <Link href="/sales/lpos" className="block group" data-testid="hero-lpos-mtd">
+                <div className="rounded-2xl border bg-card p-4 shadow-sm group-hover:shadow-lg group-hover:border-[#1e6ab0]/40 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ClipboardList className="w-4 h-4 text-orange-600" />
+                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground">LPOs This Month</span>
+                  </div>
+                  <div className="text-xl font-bold text-[#0f2d5a] dark:text-white">{fmtAED(lpoMtdVal)}</div>
+                  <div className="text-xs text-muted-foreground mt-1">{lpoMtd.length} LPO{lpoMtd.length === 1 ? "" : "s"} received MTD</div>
+                </div>
+              </Link>
+            </>
+          );
+        })()}
       </div>
 
       {/* Funnel + Status Mix */}

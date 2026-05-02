@@ -242,6 +242,54 @@ export function CRMDashboard() {
         </Card>
       </div>
 
+      {/* Cross-sell: Leads with open quotations */}
+      {(() => {
+        const openStatuses = ["draft", "sent", "pending_approval"];
+        const quotesByLead = new Map<number, any[]>();
+        for (const q of quotations as any[]) {
+          if (!q.leadId) continue;
+          if (!openStatuses.includes((q.status ?? "").toLowerCase())) continue;
+          const arr = quotesByLead.get(q.leadId) ?? [];
+          arr.push(q);
+          quotesByLead.set(q.leadId, arr);
+        }
+        const crossSell = leads
+          .map((l: any) => {
+            const qs = quotesByLead.get(l.id) ?? [];
+            return { lead: l, openQuotes: qs.length, openValue: qs.reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0) };
+          })
+          .filter(x => x.openQuotes > 0)
+          .sort((a, b) => b.openValue - a.openValue)
+          .slice(0, 6);
+        return (
+          <Card title="Cross-Sell · Leads with Open Quotations" subtitle="Active opportunities awaiting client decision" icon={Sparkles} data-testid="card-cross-sell">
+            {crossSell.length === 0 ? (
+              <Empty>No leads have open quotations right now.</Empty>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {crossSell.map(x => (
+                  <Link key={x.lead.id} href={`/crm/leads/${x.lead.id}`} className="block">
+                    <div className="border rounded-xl p-3 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Avatar name={x.lead.leadName ?? x.lead.companyName ?? "?"} size={28} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold truncate">{x.lead.leadName ?? x.lead.companyName}</div>
+                          <div className="text-[10px] text-muted-foreground truncate">{x.lead.contactPerson ?? x.lead.companyName ?? "—"}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <Badge className="bg-[#1e6ab0]/10 text-[#1e6ab0] text-[10px]">{x.openQuotes} open quote{x.openQuotes === 1 ? "" : "s"}</Badge>
+                        <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">AED {(x.openValue / 1000).toFixed(0)}k</div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </Card>
+        );
+      })()}
+
       {/* Revenue per Lead Source */}
       <Card title="Revenue per Lead Source" subtitle="Won-deal value + quoted value, grouped by acquisition channel" icon={Target}>
         {sourceRevenue.length === 0 ? (

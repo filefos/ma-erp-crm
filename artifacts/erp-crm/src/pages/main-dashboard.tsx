@@ -103,7 +103,7 @@ export function MainExecutiveDashboard() {
   const projects   = useMemo(() => filterByCompany(projectsRaw   ?? []), [projectsRaw,   filterByCompany]);
   const assets     = useMemo(() => filterByCompany(assetsRaw     ?? []), [assetsRaw,     filterByCompany]);
   const cheques    = useMemo(() => filterByCompany(chequesRaw    ?? []), [chequesRaw,    filterByCompany]);
-  const notifs     = notifsRaw ?? [];
+  const notifs     = useMemo(() => filterByCompany(notifsRaw ?? []), [notifsRaw, filterByCompany]);
 
   // ---- KPI calculations ----
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -213,7 +213,7 @@ export function MainExecutiveDashboard() {
     { stage: "Invoiced",    count: invoices.length },
   ]), [leads, deals, quotations, proformas, lpos, invoices]);
 
-  // ---- Top clients (by paid amount) ----
+  // ---- Top payees (clients ranked by total payments received) ----
   const topClients = useMemo(() => {
     const m: Record<string, number> = {};
     for (const p of payments as any[]) {
@@ -223,6 +223,31 @@ export function MainExecutiveDashboard() {
     return Object.entries(m).map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value).slice(0, 5);
   }, [payments]);
+
+  // ---- 30-day daily cash flow strip ----
+  const cash30d = useMemo(() => {
+    const days: { day: string; inflow: number; outflow: number; net: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const start = new Date(d); start.setHours(0, 0, 0, 0);
+      const end   = new Date(d); end.setHours(23, 59, 59, 999);
+      const inRange = (raw?: string) => {
+        if (!raw) return false;
+        const t = new Date(raw).getTime();
+        return t >= start.getTime() && t <= end.getTime();
+      };
+      const inflow  = payments.filter((p: any) => inRange(p.paymentDate)).reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
+      const outflow = expenses.filter((e: any) => inRange(e.expenseDate)).reduce((s: number, e: any) => s + Number(e.amount ?? 0), 0);
+      days.push({
+        day: d.toLocaleDateString("en-AE", { day: "2-digit", month: "short" }),
+        inflow,
+        outflow,
+        net: inflow - outflow,
+      });
+    }
+    return days;
+  }, [payments, expenses, now]);
 
   // ---- Cash flow split ----
   const cashSplit = useMemo(() => {
@@ -445,6 +470,56 @@ export function MainExecutiveDashboard() {
         </PanelCard>
       </div>
 
+      {/* 30-day cash flow strip + Top Payees mini cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <PanelCard
+          title="Cash Flow · Last 30 days"
+          subtitle="Daily inflow vs outflow · running net"
+          icon={ArrowUpCircle}
+          className="lg:col-span-2"
+          action={<Link href="/accounts" className="text-[11px] text-primary hover:underline flex items-center gap-1">Accounts <ArrowRight className="w-3 h-3" /></Link>}
+        >
+          {cash30d.every(d => d.inflow === 0 && d.outflow === 0) ? (
+            <Empty>No cash movement in the last 30 days.</Empty>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={cash30d} margin={{ top: 5, right: 10, left: 0, bottom: 0 }} data-testid="chart-cash-30d">
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
+                <XAxis dataKey="day" tick={{ fontSize: 9 }} interval={3} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(v: number) => fmtAED(v)} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="inflow"  stackId="a" fill="#10b981" name="Inflow"  radius={[3, 3, 0, 0]} />
+                <Bar dataKey="outflow" stackId="b" fill="#ef4444" name="Outflow" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </PanelCard>
+
+        <PanelCard title="Top Payees · 5 best customers" subtitle="Quick links to the highest-paying clients" icon={Crown} data-testid="panel-top-payees-cards">
+          {topClients.length === 0 ? (
+            <Empty>No payments received yet.</Empty>
+          ) : (
+            <div className="grid grid-cols-1 gap-2">
+              {topClients.map((c, i) => (
+                <Link key={c.name} href="/accounts/payments-received" className="block">
+                  <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      #{i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold truncate text-[#0f2d5a] dark:text-white">{c.name}</div>
+                      <div className="text-[10px] text-muted-foreground">Top payee</div>
+                    </div>
+                    <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400 shrink-0">{fmtAED(c.value)}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </PanelCard>
+      </div>
+
       {/* Low-stock strip */}
       {(() => {
         const lowStockItems = (items as any[])
@@ -516,7 +591,7 @@ export function MainExecutiveDashboard() {
           )}
         </PanelCard>
 
-        <PanelCard title="Top Clients · Paid" subtitle="Cumulative payments received" icon={Crown}>
+        <PanelCard title="Top Payees · Paid" subtitle="Cumulative payments received · ranked" icon={Crown}>
           {topClients.length === 0 ? (
             <Empty>No payments yet.</Empty>
           ) : (

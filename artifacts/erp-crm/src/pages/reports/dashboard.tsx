@@ -56,7 +56,7 @@ export function ReportsDashboard() {
   const items      = useMemo(() => filterByCompany(itemsRaw      ?? []), [itemsRaw,      filterByCompany]);
   const leads      = useMemo(() => filterByCompany(leadsRaw      ?? []), [leadsRaw,      filterByCompany]);
   const deals      = useMemo(() => filterByCompany(dealsRaw      ?? []), [dealsRaw,      filterByCompany]);
-  const attendance = attendanceRaw ?? [];
+  const attendance = useMemo(() => filterByCompany(attendanceRaw ?? []), [attendanceRaw, filterByCompany]);
 
   // ---- KPIs ----
   const totalRevenue   = invoices.reduce((s: number, i: any) => s + Number(i.grandTotal ?? 0), 0);

@@ -17,8 +17,8 @@ export function ReportsHub() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
-        <p className="text-muted-foreground">Business intelligence and analytics for Prime Max & Elite Prefab.</p>
+        <h1 className="text-2xl font-bold tracking-tight">All Reports</h1>
+        <p className="text-muted-foreground">Browse every detailed module report — for the executive overview see <Link href="/reports/dashboard" className="text-primary underline">Reports Dashboard</Link>.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {REPORTS.map(report => {

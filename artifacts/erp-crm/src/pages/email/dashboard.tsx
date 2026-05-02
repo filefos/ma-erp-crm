@@ -85,11 +85,11 @@ export function EmailDashboard() {
   const inboxSpark  = useMemo(() => weeklyValues(inboxAll, "createdAt", () => 1, 8), [inboxAll]);
   const sentSpark   = useMemo(() => weeklyValues(sentAll,  "sentAt",   () => 1, 8), [sentAll]);
 
-  // ---- Volume trend (last 14 days) ----
+  // ---- Volume trend (last 7 days) ----
   const volumeTrend = useMemo(() => {
     const days: { day: string; received: number; sent: number }[] = [];
     const now = new Date();
-    for (let i = 13; i >= 0; i--) {
+    for (let i = 6; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(now.getDate() - i);
       const start = new Date(d); start.setHours(0, 0, 0, 0);
