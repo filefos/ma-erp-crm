@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, ArrowLeft, Pencil } from "lucide-react";
+import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -182,9 +183,20 @@ export function DealsList() {
                 <TableCell>{d.probability}%</TableCell>
                 <TableCell>{d.expectedCloseDate || "-"}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); openEdit(d); }}>
-                    <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                  </Button>
+                  <div className="flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                    <WhatsAppQuickIcon
+                      phone={undefined}
+                      context="deal"
+                      dealId={d.id}
+                      defaultTemplateId="quote_followup"
+                      vars={{ name: d.clientName ?? undefined, number: d.dealNumber, amount: d.value ? Number(d.value).toLocaleString() : undefined }}
+                      className="h-7 w-7"
+                      testId={`button-wa-deal-${d.id}`}
+                    />
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); openEdit(d); }}>
+                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

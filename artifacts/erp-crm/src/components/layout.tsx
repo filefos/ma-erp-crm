@@ -46,6 +46,7 @@ const NAV: NavGroup[] = [
     label: "Sales",
     icon: FileText,
     items: [
+      { href: "/sales/dashboard", label: "Sales Dashboard", icon: LayoutDashboard },
       { href: "/sales/quotations", label: "Quotations", icon: FileText },
       { href: "/sales/proforma-invoices", label: "Proforma Invoices", icon: FileCheck },
       { href: "/sales/lpos", label: "LPOs", icon: ClipboardList },
@@ -94,6 +95,7 @@ const NAV: NavGroup[] = [
     label: "Projects",
     icon: Folders,
     items: [
+      { href: "/projects/dashboard", label: "Projects Dashboard", icon: LayoutDashboard },
       { href: "/projects", label: "All Projects", icon: Folders },
       { href: "/projects/sales-performance", label: "Sales Performance", icon: TrendingUp },
     ],
@@ -102,6 +104,7 @@ const NAV: NavGroup[] = [
     label: "HR",
     icon: HardHat,
     items: [
+      { href: "/hr/dashboard", label: "HR Dashboard", icon: LayoutDashboard },
       { href: "/hr/employees", label: "Employees", icon: HardHat },
       { href: "/hr/attendance", label: "Attendance", icon: Clock },
     ],
@@ -110,6 +113,7 @@ const NAV: NavGroup[] = [
     label: "Assets",
     icon: Wrench,
     items: [
+      { href: "/assets/dashboard", label: "Assets Dashboard", icon: LayoutDashboard },
       { href: "/assets", label: "Asset Register", icon: Wrench },
     ],
   },
@@ -117,6 +121,7 @@ const NAV: NavGroup[] = [
     label: "Email",
     icon: Mail,
     items: [
+      { href: "/email/dashboard", label: "Email Dashboard", icon: LayoutDashboard },
       { href: "/email", label: "Email Panel", icon: Mail },
     ],
   },
@@ -124,6 +129,7 @@ const NAV: NavGroup[] = [
     label: "Reports",
     icon: BarChart,
     items: [
+      { href: "/reports/dashboard", label: "Reports Dashboard", icon: LayoutDashboard },
       { href: "/reports", label: "Reports Hub", icon: BarChart },
     ],
   },
@@ -332,13 +338,13 @@ const ROUTE_LABELS: Record<string, string> = {
 // "Back to <Category>" button that appears on every sub-page.
 const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
   crm:         { label: "CRM",         href: "/crm" },
-  sales:       { label: "Sales",       href: "/sales/quotations" },
+  sales:       { label: "Sales",       href: "/sales/dashboard" },
   accounts:    { label: "Accounts",    href: "/accounts" },
   procurement: { label: "Procurement", href: "/procurement/dashboard" },
   inventory:   { label: "Inventory",   href: "/inventory" },
-  projects:    { label: "Projects",    href: "/projects" },
-  hr:          { label: "HR",          href: "/hr/employees" },
-  assets:      { label: "Assets",      href: "/assets" },
+  projects:    { label: "Projects",    href: "/projects/dashboard" },
+  hr:          { label: "HR",          href: "/hr/dashboard" },
+  assets:      { label: "Assets",      href: "/assets/dashboard" },
   email:       { label: "Email",       href: "/email" },
   reports:     { label: "Reports",     href: "/reports" },
   admin:       { label: "Admin",       href: "/admin/companies" },

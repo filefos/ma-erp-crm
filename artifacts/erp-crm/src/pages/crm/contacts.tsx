@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, MessageCircle, Trash2, ArrowLeft } from "lucide-react";
+import { Search, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListContactsQueryKey } from "@workspace/api-client-react";
@@ -107,7 +108,16 @@ export function ContactsList() {
                 <TableCell>{c.email || "-"}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    {c.whatsapp && <Button variant="ghost" size="icon" asChild><a href={`https://wa.me/${c.whatsapp.replace(/[^0-9]/g,"")}`} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 text-green-600" /></a></Button>}
+                    {(c.whatsapp || c.phone) && (
+                      <WhatsAppQuickIcon
+                        phone={c.whatsapp || c.phone}
+                        context="contact"
+                        contactId={c.id}
+                        defaultTemplateId="lead_intro"
+                        vars={{ name: c.name, companyName: c.companyName }}
+                        testId={`button-wa-contact-${c.id}`}
+                      />
+                    )}
                     <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => del.mutate({ id: c.id })}><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </TableCell>

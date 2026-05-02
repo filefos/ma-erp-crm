@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useMemo } from "react";
 import {
   useGetDashboardSummary, useListQuotations, useListTaxInvoices, useListProjects,
-  useListExpenses, useListPurchaseOrders, useListAttendances, useListInventoryItems,
+  useListExpenses, useListPurchaseOrders, useListAttendance, useListInventoryItems,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export function ReportsDashboard() {
   const { data: projectsRaw }   = useListProjects({});
   const { data: expensesRaw }   = useListExpenses();
   const { data: posRaw }        = useListPurchaseOrders();
-  const { data: attendanceRaw } = useListAttendances({});
+  const { data: attendanceRaw } = useListAttendance({});
   const { data: itemsRaw }      = useListInventoryItems({});
 
   const quotations = useMemo(() => filterByCompany(quotationsRaw ?? []), [quotationsRaw, filterByCompany]);
@@ -127,16 +127,16 @@ export function ReportsDashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <div className="rounded-lg p-3 bg-muted/40">
-            <div className="text-[11px] text-muted-foreground">Cash position (latest)</div>
-            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.bankBalance ?? 0) + Number(summary?.cashBalance ?? 0))}</div>
+            <div className="text-[11px] text-muted-foreground">Deals value (open + won)</div>
+            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.dealsValue ?? 0))}</div>
           </div>
           <div className="rounded-lg p-3 bg-muted/40">
             <div className="text-[11px] text-muted-foreground">Outstanding receivables</div>
-            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.totalReceivables ?? 0))}</div>
+            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.outstandingReceivables ?? 0))}</div>
           </div>
           <div className="rounded-lg p-3 bg-muted/40">
-            <div className="text-[11px] text-muted-foreground">Outstanding payables</div>
-            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.totalPayables ?? 0))}</div>
+            <div className="text-[11px] text-muted-foreground">Won deals · this month</div>
+            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.wonDealsValue ?? 0))}</div>
           </div>
         </div>
       </div>

@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, MessageCircle, Filter, X, CheckSquare, Upload, UserPlus, Phone, Mail, Calendar as CalendarIcon, Users, Flame } from "lucide-react";
+import { Search, Plus, Filter, X, CheckSquare, Upload, UserPlus, Phone, Mail, Calendar as CalendarIcon, Users, Flame } from "lucide-react";
+import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { ExportMenu } from "@/components/ExportMenu";
 import { LeadCsvImport } from "@/components/crm/LeadCsvImport";
 import { Link } from "wouter";
@@ -301,12 +302,16 @@ export function LeadsList() {
                           </a>
                         </Button>
                       )}
-                      {lead.whatsapp && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                          <a href={`https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" title="WhatsApp" aria-label={`WhatsApp ${lead.leadName}`} onClick={e => e.stopPropagation()}>
-                            <MessageCircle className="w-3.5 h-3.5 text-green-600" />
-                          </a>
-                        </Button>
+                      {(lead.whatsapp || lead.phone) && (
+                        <WhatsAppQuickIcon
+                          phone={lead.whatsapp || lead.phone}
+                          context="lead"
+                          leadId={lead.id}
+                          defaultTemplateId={lead.status === "new" ? "lead_intro" : "lead_followup"}
+                          vars={{ name: lead.contactPerson || lead.leadName, companyName: lead.companyName }}
+                          className="h-8 w-8"
+                          testId={`button-wa-lead-${lead.id}`}
+                        />
                       )}
                       {lead.email && (
                         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>

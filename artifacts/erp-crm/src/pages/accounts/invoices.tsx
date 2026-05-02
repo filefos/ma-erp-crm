@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link } from "wouter";
 import { Search } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 
 const paymentStatusColors: Record<string, string> = {
   paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -78,24 +79,51 @@ export function TaxInvoicesList() {
               <TableHead className="text-right">Paid</TableHead>
               <TableHead className="text-right">Balance</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No invoices found.</TableCell></TableRow> :
-            filtered?.map(inv => (
-              <TableRow key={inv.id}>
-                <TableCell className="font-medium">
-                  <Link href={`/accounts/invoices/${inv.id}`} className="text-primary hover:underline">{inv.invoiceNumber}</Link>
-                </TableCell>
-                <TableCell>{inv.clientName}</TableCell>
-                <TableCell>{inv.invoiceDate || "-"}</TableCell>
-                <TableCell className="text-right font-medium">AED {inv.grandTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
-                <TableCell className="text-right text-green-600">AED {inv.amountPaid?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
-                <TableCell className="text-right font-medium text-red-600">AED {inv.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
-                <TableCell><Badge variant="secondary" className={paymentStatusColors[inv.paymentStatus] ?? ""}>{inv.paymentStatus}</Badge></TableCell>
-              </TableRow>
-            ))}
+            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No invoices found.</TableCell></TableRow> :
+            filtered?.map(inv => {
+              const anyInv = inv as unknown as { clientPhone?: string; dueDate?: string };
+              const today = new Date().toISOString().slice(0, 10);
+              const hasBalance = inv.paymentStatus !== "paid" && Number(inv.balance ?? 0) > 0;
+              const isOverdue = hasBalance && Boolean(anyInv.dueDate && anyInv.dueDate < today);
+              return (
+                <TableRow key={inv.id}>
+                  <TableCell className="font-medium">
+                    <Link href={`/accounts/invoices/${inv.id}`} className="text-primary hover:underline">{inv.invoiceNumber}</Link>
+                  </TableCell>
+                  <TableCell>{inv.clientName}</TableCell>
+                  <TableCell>{inv.invoiceDate || "-"}</TableCell>
+                  <TableCell className="text-right font-medium">AED {inv.grandTotal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right text-green-600">AED {inv.amountPaid?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className="text-right font-medium text-red-600">AED {inv.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell><Badge variant="secondary" className={paymentStatusColors[inv.paymentStatus] ?? ""}>{inv.paymentStatus}</Badge></TableCell>
+                  <TableCell>
+                    {anyInv.clientPhone && (
+                      <WhatsAppQuickIcon
+                        phone={anyInv.clientPhone}
+                        context="invoice"
+                        defaultTemplateId={isOverdue ? "payment_reminder" : "invoice_sent"}
+                        vars={{
+                          name: inv.clientName,
+                          companyName: inv.clientName,
+                          number: inv.invoiceNumber,
+                          amount: isOverdue
+                            ? Number(inv.balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                            : Number(inv.grandTotal ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 }),
+                          dueDate: anyInv.dueDate,
+                        }}
+                        className="h-7 w-7"
+                        testId={`button-wa-invoice-${inv.id}`}
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

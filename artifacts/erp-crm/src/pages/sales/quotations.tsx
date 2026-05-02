@@ -11,6 +11,7 @@ import { Search, Plus, Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListQuotationsQueryKey } from "@workspace/api-client-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -96,12 +97,29 @@ export function QuotationsList() {
                 <TableCell>AED {q.vatAmount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                 <TableCell><Badge variant="secondary" className={statusColors[q.status] ?? ""}>{q.status}</Badge></TableCell>
                 <TableCell>
-                  {q.status === "sent" && (
-                    <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50"
-                      onClick={() => approve.mutate({ id: q.id })}>
-                      <Check className="w-3 h-3 mr-1" />Approve
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {q.clientPhone && (
+                      <WhatsAppQuickIcon
+                        phone={q.clientPhone}
+                        context="quotation"
+                        defaultTemplateId={q.status === "sent" ? "quote_followup" : "quote_sent"}
+                        vars={{
+                          name: q.clientContactPerson || q.clientName,
+                          companyName: q.clientName,
+                          number: q.quotationNumber,
+                          amount: q.grandTotal ? Number(q.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2 }) : undefined,
+                        }}
+                        className="h-7 w-7"
+                        testId={`button-wa-quote-${q.id}`}
+                      />
+                    )}
+                    {q.status === "sent" && (
+                      <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50"
+                        onClick={() => approve.mutate({ id: q.id })}>
+                        <Check className="w-3 h-3 mr-1" />Approve
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

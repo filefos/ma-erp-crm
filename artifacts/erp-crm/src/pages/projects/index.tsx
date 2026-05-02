@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Search, Target } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const stageColors: Record<string, string> = {
@@ -93,13 +94,15 @@ export function ProjectsList() {
               <TableHead>Start</TableHead>
               <TableHead>Finish</TableHead>
               <TableHead>Delivery</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered.length === 0 ? <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No projects found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered.length === 0 ? <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">No projects found.</TableCell></TableRow> :
             filtered.map(p => {
               const progress = getProgress(p);
+              const anyP = p as unknown as { clientPhone?: string; deliveryDate?: string; salespersonName?: string };
               return (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">
@@ -108,7 +111,7 @@ export function ProjectsList() {
                   <TableCell className="font-medium">{p.projectName}</TableCell>
                   <TableCell>{p.clientName}</TableCell>
                   <TableCell className="text-muted-foreground">{p.location || "-"}</TableCell>
-                  <TableCell>{(p as any).salespersonName || <span className="text-muted-foreground italic text-xs">Unassigned</span>}</TableCell>
+                  <TableCell>{anyP.salespersonName || <span className="text-muted-foreground italic text-xs">Unassigned</span>}</TableCell>
                   <TableCell className="text-right font-semibold">AED {Number(p.projectValue ?? 0).toLocaleString()}</TableCell>
                   <TableCell><Badge variant="secondary" className={stageColors[p.stage] ?? ""}>{p.stage.replace("_"," ")}</Badge></TableCell>
                   <TableCell>
@@ -119,7 +122,24 @@ export function ProjectsList() {
                   </TableCell>
                   <TableCell className="text-xs">{p.startDate || "-"}</TableCell>
                   <TableCell className="text-xs">{p.endDate || "-"}</TableCell>
-                  <TableCell className="text-xs">{(p as any).deliveryDate || "-"}</TableCell>
+                  <TableCell className="text-xs">{anyP.deliveryDate || "-"}</TableCell>
+                  <TableCell>
+                    {anyP.clientPhone && (
+                      <WhatsAppQuickIcon
+                        phone={anyP.clientPhone}
+                        context="project"
+                        defaultTemplateId="delivery_update"
+                        vars={{
+                          name: p.clientName,
+                          companyName: p.clientName,
+                          number: p.projectNumber,
+                          date: anyP.deliveryDate,
+                        }}
+                        className="h-7 w-7"
+                        testId={`button-wa-project-${p.id}`}
+                      />
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })}

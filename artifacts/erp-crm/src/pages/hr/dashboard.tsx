@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
-import { useListEmployees, useListAttendances, useListUsers } from "@workspace/api-client-react";
+import { useListEmployees, useListAttendance, useListUsers } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ function localDayKey(raw?: string | null): string | null {
 export function HrDashboard() {
   const { filterByCompany } = useActiveCompany();
   const { data: employeesRaw }   = useListEmployees({});
-  const { data: attendanceRaw }  = useListAttendances({});
+  const { data: attendanceRaw }  = useListAttendance({});
   const { data: usersRaw }       = useListUsers();
 
   const employees  = useMemo(() => filterByCompany(employeesRaw ?? []), [employeesRaw, filterByCompany]);

@@ -45,6 +45,12 @@ import { PurchaseOrderDetail } from "@/pages/procurement/purchase-order-detail";
 import { RfqsList } from "@/pages/procurement/rfqs";
 import { SupplierQuotationsList } from "@/pages/procurement/supplier-quotations";
 import ProcurementDashboardPage from "@/pages/procurement/procurement-dashboard";
+import { SalesDashboard } from "@/pages/sales/dashboard";
+import { ProjectsDashboard } from "@/pages/projects/dashboard";
+import { HrDashboard } from "@/pages/hr/dashboard";
+import { AssetsDashboard } from "@/pages/assets/dashboard";
+import { EmailDashboard } from "@/pages/email/dashboard";
+import { ReportsDashboard } from "@/pages/reports/dashboard";
 import { ChequeDetail } from "@/pages/accounts/cheque-detail";
 import { InventoryItemsList } from "@/pages/inventory/items";
 import { StockEntriesList } from "@/pages/inventory/stock-entries";
@@ -127,6 +133,12 @@ function Router() {
       </Route>
 
       {/* Sales */}
+      <Route path="/sales/dashboard">
+        <ModuleGuard module="quotations"><SalesDashboard /></ModuleGuard>
+      </Route>
+      <Route path="/sales">
+        <ModuleGuard module="quotations"><SalesDashboard /></ModuleGuard>
+      </Route>
       <Route path="/sales/quotations/new">
         <ModuleGuard module="quotations" action="canCreate"><QuotationNew /></ModuleGuard>
       </Route>
@@ -256,6 +268,9 @@ function Router() {
       </Route>
 
       {/* Projects */}
+      <Route path="/projects/dashboard">
+        <ModuleGuard module="projects"><ProjectsDashboard /></ModuleGuard>
+      </Route>
       <Route path="/projects/sales-performance">
         <ModuleGuard module="projects"><SalesPerformance /></ModuleGuard>
       </Route>
@@ -269,6 +284,12 @@ function Router() {
       </Route>
 
       {/* HR */}
+      <Route path="/hr/dashboard">
+        <ModuleGuard module="employees"><HrDashboard /></ModuleGuard>
+      </Route>
+      <Route path="/hr">
+        <ModuleGuard module="employees"><HrDashboard /></ModuleGuard>
+      </Route>
       <Route path="/hr/employees">
         <ModuleGuard module="employees"><EmployeesList /></ModuleGuard>
       </Route>
@@ -277,6 +298,9 @@ function Router() {
       </Route>
 
       {/* Assets */}
+      <Route path="/assets/dashboard">
+        <ModuleGuard module="assets"><AssetsDashboard /></ModuleGuard>
+      </Route>
       <Route path="/assets">
         <ModuleGuard module="assets"><AssetsList /></ModuleGuard>
       </Route>
@@ -305,6 +329,9 @@ function Router() {
       </Route>
       <Route path="/reports/procurement">
         <ModuleGuard module="dashboard"><ProcurementReport /></ModuleGuard>
+      </Route>
+      <Route path="/reports/dashboard">
+        <ModuleGuard module="dashboard"><ReportsDashboard /></ModuleGuard>
       </Route>
       <Route path="/reports">
         <ModuleGuard module="dashboard"><ReportsHub /></ModuleGuard>
@@ -339,6 +366,8 @@ function Router() {
 
       <Route path="/notifications" component={NotificationsList} />
       <Route path="/profile" component={MyProfile} />
+      {/* Email routes intentionally unguarded — "emails" is not yet in the backend MODULES list (see scripts/src/seed.ts MODULES). Add the module + run seed before wrapping with <ModuleGuard module="emails">. */}
+      <Route path="/email/dashboard"><EmailDashboard /></Route>
       <Route path="/email" component={EmailPanel} />
 
       <Route path="/" component={Dashboard} />

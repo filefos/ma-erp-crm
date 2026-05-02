@@ -17,6 +17,7 @@ import {
   ArrowLeft, Pencil, MessageCircle, Phone, Mail, MapPin, Calendar, Building2, X, Save,
   Sparkles, Plus, CheckCircle2, Circle, Briefcase, Copy, Wand2, ListChecks, Brain, Trophy,
 } from "lucide-react";
+import { WhatsAppButton } from "@/components/whatsapp-button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -184,12 +185,21 @@ export function LeadDetail({ id }: Props) {
               </Button>
             </>
           )}
-          {l.whatsapp && (
-            <Button variant="outline" size="sm" asChild>
-              <a href={`https://wa.me/${l.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
-                <MessageCircle className="w-4 h-4 mr-1.5 text-green-600" />WhatsApp
-              </a>
-            </Button>
+          {(l.whatsapp || l.phone) && (
+            <WhatsAppButton
+              phone={l.whatsapp || l.phone}
+              context="lead"
+              leadId={l.id}
+              defaultTemplateId={l.status === "new" ? "lead_intro" : "lead_followup"}
+              vars={{ name: l.contactPerson || l.leadName, companyName: l.companyName }}
+              variant="outline"
+              size="sm"
+              iconOnly={false}
+              label="WhatsApp"
+              iconClassName="w-4 h-4 mr-1.5 text-green-600"
+              className="text-green-700"
+              testId="button-wa-lead-detail"
+            />
           )}
         </div>
       </div>
