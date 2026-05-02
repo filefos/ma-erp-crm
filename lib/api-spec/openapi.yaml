@@ -1618,26 +1618,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/PurchaseOrder"
 
-  /suppliers/{id}:
-    delete:
-      operationId: deleteSupplier
-      tags: [suppliers]
-      summary: Delete supplier
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: integer }
-      responses:
-        "200":
-          description: Deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success: { type: boolean }
-
   /purchase-requests/{id}/submit:
     post:
       operationId: submitPurchaseRequest

@@ -1,14 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { getProcurementDashboard } from "@workspace/api-client";
+import { useGetProcurementDashboard } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, FileText, Send, BarChart3, ShoppingCart, CheckCircle, Clock, DollarSign } from "lucide-react";
+import { Link } from "wouter";
 
 export default function ProcurementDashboardPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["procurement-dashboard"],
-    queryFn: () => getProcurementDashboard(),
-  });
+  const { data, isLoading } = useGetProcurementDashboard();
 
   const stats = [
     {
@@ -106,7 +103,7 @@ export default function ProcurementDashboardPage() {
                 </div>
                 {i < steps.length - 1 && (
                   <div className="hidden sm:flex absolute top-1/2 -right-2 transform -translate-y-1/2 z-10">
-                    <span className="text-muted-foreground text-lg">→</span>
+                    <span className="text-muted-foreground text-lg font-bold">›</span>
                   </div>
                 )}
               </div>
@@ -128,7 +125,7 @@ export default function ProcurementDashboardPage() {
               { label: "RFQs", href: "/procurement/rfqs", icon: Send, badge: data?.rfqSent },
               { label: "Purchase Orders", href: "/procurement/purchase-orders", icon: ShoppingCart, badge: data?.poIssued },
             ].map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl border hover:border-[#1e6ab0] hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors cursor-pointer"
@@ -138,7 +135,7 @@ export default function ProcurementDashboardPage() {
                 {link.badge != null && link.badge > 0 && (
                   <Badge className={link.badgeColor ?? "bg-blue-100 text-blue-700"}>{link.badge}</Badge>
                 )}
-              </a>
+              </Link>
             ))}
           </div>
         </CardContent>

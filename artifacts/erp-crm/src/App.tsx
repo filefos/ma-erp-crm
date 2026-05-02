@@ -35,6 +35,9 @@ import { SuppliersList } from "@/pages/procurement/suppliers";
 import { PurchaseRequestsList } from "@/pages/procurement/purchase-requests";
 import { PurchaseOrdersList } from "@/pages/procurement/purchase-orders";
 import { PurchaseOrderDetail } from "@/pages/procurement/purchase-order-detail";
+import { RfqsList } from "@/pages/procurement/rfqs";
+import { SupplierQuotationsList } from "@/pages/procurement/supplier-quotations";
+import ProcurementDashboardPage from "@/pages/procurement/procurement-dashboard";
 import { ChequeDetail } from "@/pages/accounts/cheque-detail";
 import { InventoryItemsList } from "@/pages/inventory/items";
 import { StockEntriesList } from "@/pages/inventory/stock-entries";
@@ -177,11 +180,25 @@ function Router() {
       </Route>
 
       {/* Procurement */}
+      <Route path="/procurement/dashboard">
+        <ModuleGuard module="suppliers"><ProcurementDashboardPage /></ModuleGuard>
+      </Route>
       <Route path="/procurement/suppliers">
         <ModuleGuard module="suppliers"><SuppliersList /></ModuleGuard>
       </Route>
       <Route path="/procurement/purchase-requests">
         <ModuleGuard module="purchase_requests"><PurchaseRequestsList /></ModuleGuard>
+      </Route>
+      <Route path="/procurement/rfqs">
+        <ModuleGuard module="purchase_requests"><RfqsList /></ModuleGuard>
+      </Route>
+      <Route path="/procurement/supplier-quotations">
+        <ModuleGuard module="purchase_requests"><SupplierQuotationsList /></ModuleGuard>
+      </Route>
+      <Route path="/procurement/purchase-orders/:id">
+        {(params) => (
+          <ModuleGuard module="purchase_orders"><PurchaseOrderDetail id={params.id} /></ModuleGuard>
+        )}
       </Route>
       <Route path="/procurement/purchase-orders">
         <ModuleGuard module="purchase_orders"><PurchaseOrdersList /></ModuleGuard>

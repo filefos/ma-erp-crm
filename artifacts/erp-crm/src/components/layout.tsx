@@ -9,7 +9,7 @@ import {
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
-  BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot,
+  BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -67,8 +67,11 @@ const NAV: NavGroup[] = [
     label: "Procurement",
     icon: ShoppingCart,
     items: [
+      { href: "/procurement/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/procurement/suppliers", label: "Suppliers", icon: Building2 },
       { href: "/procurement/purchase-requests", label: "Purchase Requests", icon: ClipboardList },
+      { href: "/procurement/rfqs", label: "RFQs", icon: Send },
+      { href: "/procurement/supplier-quotations", label: "Quotations", icon: FileText },
       { href: "/procurement/purchase-orders", label: "Purchase Orders", icon: ShoppingCart },
     ],
   },
