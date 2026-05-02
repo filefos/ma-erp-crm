@@ -1,0 +1,312 @@
+Upgrade my existing CRM/ERP system to a TOP-NOTCH PRO LEVEL CRM like Zoho CRM, Salesforce, and Odoo.
+
+Do not rebuild from scratch. Improve the existing system.
+
+SYSTEM NAME:
+Elite & Prime Max Pro CRM
+
+GOAL:
+Make the CRM professional, executive, fast, secure, beautiful, and enterprise-ready.
+
+--------------------------------------------------
+1. PRO UI / UX UPGRADE
+--------------------------------------------------
+Upgrade the full interface to a premium SaaS CRM look.
+
+Design:
+- Dark blue + light blue executive theme
+- Clean sidebar
+- Top global search
+- Modern dashboard cards
+- Beautiful tables
+- Status badges
+- Smooth hover effects
+- Loading states
+- Empty states
+- Error states
+- Mobile responsive
+- Executive dashboard
+- Modern icons
+- Polished forms
+- Professional spacing and typography
+
+--------------------------------------------------
+2. CRM DASHBOARD
+--------------------------------------------------
+Create Pro CRM dashboard showing:
+
+- Total leads
+- New leads
+- Hot leads
+- Follow-ups due today
+- Overdue follow-ups
+- Active deals
+- Won deals
+- Lost deals
+- Quotation value
+- Sales target progress
+- Sales performance by user
+- Lead source chart
+- Deal pipeline chart
+- Recent activities
+- AI suggested actions
+
+--------------------------------------------------
+3. LEADS MODULE PRO
+--------------------------------------------------
+Upgrade leads module.
+
+Fields:
+- Lead ID
+- Company
+- Lead name
+- Client company
+- Contact person
+- Phone
+- WhatsApp
+- Email
+- Location
+- Requirement type
+- Lead source
+- Budget
+- Quantity
+- Expected value
+- Priority
+- Lead score
+- Assigned salesperson
+- Status
+- Next follow-up
+- Notes
+- Attachments
+- Created by
+- Created date
+
+Features:
+- Add/edit/view lead
+- Advanced filters
+- Search
+- Import leads from CSV/Excel
+- Export leads
+- Duplicate lead detection
+- Lead assignment
+- Lead timeline
+- Lead notes
+- Attachments
+- Convert lead to deal
+- Lead cannot be deleted by normal users
+- Archive only by Admin
+
+--------------------------------------------------
+4. SALES PIPELINE PRO
+--------------------------------------------------
+Create Kanban sales pipeline.
+
+Stages:
+- New Inquiry
+- Contacted
+- Qualified
+- Site Visit
+- Quotation Required
+- Quotation Sent
+- Negotiation
+- Approved
+- Won
+- Lost
+
+Features:
+- Drag-and-drop cards
+- Deal value on each card
+- Salesperson name
+- Follow-up date
+- Probability %
+- Expected closing date
+- Pipeline total value
+- Stage-wise value
+- Stage movement activity log
+
+--------------------------------------------------
+5. CONTACTS & CLIENTS
+--------------------------------------------------
+Upgrade contacts and clients.
+
+Features:
+- Contact database
+- Client company database
+- Link contacts to leads/deals/quotations
+- Prevent duplicate contacts
+- Client communication history
+- Client documents
+- Client notes
+- Statement placeholder
+
+--------------------------------------------------
+6. FOLLOW-UP & ACTIVITY SYSTEM
+--------------------------------------------------
+Create professional follow-up system.
+
+Follow-up types:
+- Call
+- WhatsApp
+- Email
+- Meeting
+- Site Visit
+- Quotation Follow-up
+- Payment Follow-up
+
+Features:
+- Today follow-ups
+- Overdue follow-ups
+- Completed follow-ups
+- Reminder notifications
+- Calendar view placeholder
+- Activity timeline
+- Next follow-up auto-create option
+
+--------------------------------------------------
+7. QUOTATION CRM LINK
+--------------------------------------------------
+Improve quotation connection with CRM.
+
+Features:
+- Create quotation from lead/deal
+- Show quotation status in CRM
+- Show quotation value
+- Quotation approval status
+- Quotation revision history
+- Quotation PDF preview
+- Convert approved quotation to sales order/project
+
+--------------------------------------------------
+8. AI CRM ASSISTANT
+--------------------------------------------------
+Add AI-ready CRM assistant.
+
+AI features:
+- Lead scoring
+- Hot/Warm/Cold lead badge
+- Suggested next action
+- Auto follow-up message
+- Professional email writing
+- WhatsApp reply suggestion
+- Lost deal reason analysis
+- Client summary
+- Sales performance insights
+- Duplicate lead warning
+
+AI buttons:
+- Score lead
+- Generate follow-up
+- Improve note
+- Generate WhatsApp message
+- Summarize client
+- Suggest next action
+
+Use placeholder AI logic now.
+Structure code so OpenAI API can be added later using OPENAI_API_KEY.
+
+--------------------------------------------------
+9. AUTOMATION
+--------------------------------------------------
+Add CRM automation rules.
+
+Examples:
+- New lead assigned → notify salesperson
+- Lead not contacted in 24 hours → reminder
+- Quotation sent and no reply in 3 days → follow-up task
+- Deal stage changed → log activity
+- Hot lead created → notify sales manager
+- Overdue follow-up → notify user + manager
+- Lead won → create project placeholder
+- Lead lost → require lost reason
+
+--------------------------------------------------
+10. REPORTS
+--------------------------------------------------
+Add CRM reports:
+
+- Leads by source
+- Leads by salesperson
+- Leads by status
+- Hot leads report
+- Follow-up report
+- Overdue follow-up report
+- Deals by stage
+- Won/lost deals
+- Sales performance report
+- Quotation value report
+- Conversion rate report
+- Monthly sales report
+
+Export:
+- PDF
+- Excel
+- CSV
+
+--------------------------------------------------
+11. ROLE & PERMISSION
+--------------------------------------------------
+Strict access:
+
+- Admin sees all CRM data
+- Sales Manager sees team data
+- Sales User sees only assigned leads/deals
+- Other departments cannot see CRM unless permission granted
+- Users cannot delete leads
+- Admin can archive leads
+- All actions logged
+
+--------------------------------------------------
+12. SECURITY & QUALITY
+--------------------------------------------------
+Add:
+- Input validation
+- Duplicate detection
+- Audit logs
+- Protected routes
+- Permission-based API access
+- Clean error messages
+- Pagination for large data
+- Fast search
+- Optimized tables
+
+--------------------------------------------------
+13. PRO MODULES TO ADD
+--------------------------------------------------
+Add these CRM pro features:
+
+- Global search
+- Saved filters
+- Lead tags
+- Priority labels
+- Bulk assignment
+- Bulk status update
+- Attachment upload
+- Notes timeline
+- Activity history
+- Notification bell
+- Sales target tracking
+- Sales leaderboard
+- Client communication log
+
+--------------------------------------------------
+14. OUTPUT REQUIRED
+--------------------------------------------------
+Upgrade existing system and deliver:
+
+- Pro CRM dashboard
+- Pro Leads module
+- Pro Contacts module
+- Pro Deals pipeline
+- Follow-up system
+- Activity timeline
+- AI CRM assistant
+- CRM reports
+- Role-based permissions
+- Premium UI
+- Mobile responsive CRM screens
+- No broken pages
+- Clean scalable code
+
+IMPORTANT:
+Do not delete existing work.
+Upgrade current CRM to professional enterprise level.

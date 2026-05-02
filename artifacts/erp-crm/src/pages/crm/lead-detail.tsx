@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { useGetLead, useUpdateLead } from "@workspace/api-client-react";
+import { useMemo, useState } from "react";
+import {
+  useGetLead, useUpdateLead, useListActivities, useCreateActivity, useUpdateActivity,
+  useCreateDeal, getListDealsQueryKey, getListActivitiesQueryKey, getGetLeadQueryKey,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -7,9 +10,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Link } from "wouter";
-import { ArrowLeft, Pencil, MessageCircle, Phone, Mail, MapPin, Calendar, Building2, DollarSign, X, Save } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Link, useLocation } from "wouter";
+import {
+  ArrowLeft, Pencil, MessageCircle, Phone, Mail, MapPin, Calendar, Building2, X, Save,
+  Sparkles, Plus, CheckCircle2, Circle, Briefcase, Copy, Wand2, ListChecks, Brain, Trophy,
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import {
+  scoreLead, suggestNextAction, generateFollowUpMessage, generateWhatsAppMessage, summarizeClient,
+} from "@/lib/ai-crm";
 
 const scoreColors: Record<string, string> = {
   hot: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
@@ -30,43 +42,79 @@ const statusColors: Record<string, string> = {
 };
 
 const STATUSES = ["new","contacted","qualified","site_visit","quotation_required","quotation_sent","negotiation","won","lost"];
+const ACTIVITY_TYPES = ["call", "email", "meeting", "site_visit", "follow_up", "task", "other"];
 
 interface Props { id: string }
 
 export function LeadDetail({ id }: Props) {
   const lid = parseInt(id, 10);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
   const { data: lead, isLoading } = useGetLead(lid);
+  const { data: allActivities } = useListActivities();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const [activityForm, setActivityForm] = useState({ type: "follow_up", subject: "", description: "", dueDate: "" });
+  const [convertForm, setConvertForm] = useState({ title: "", value: "", probability: "50", expectedCloseDate: "" });
+  const [aiText, setAiText] = useState<string>("");
+  const [aiTitle, setAiTitle] = useState<string>("");
 
   const update = useUpdateLead({
     mutation: {
       onSuccess: () => {
+        // Invalidate the list view AND this lead's detail cache — otherwise
+        // useGetLead(lid) keeps showing the stale row after save.
         queryClient.invalidateQueries({ queryKey: ["/leads"] });
+        queryClient.invalidateQueries({ queryKey: getGetLeadQueryKey(lid) });
         setEditing(false);
+        toast({ title: "Lead updated" });
+      },
+    },
+  });
+  const createActivity = useCreateActivity({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() });
+        setActivityOpen(false);
+        setActivityForm({ type: "follow_up", subject: "", description: "", dueDate: "" });
+        toast({ title: "Activity added" });
+      },
+    },
+  });
+  const updateActivity = useUpdateActivity({
+    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() }) },
+  });
+  const createDeal = useCreateDeal({
+    mutation: {
+      onSuccess: (deal: any) => {
+        queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() });
+        setConvertOpen(false);
+        toast({ title: "Deal created", description: `${deal.dealNumber} from ${(lead as any)?.leadName}` });
+        navigate("/crm/deals");
       },
     },
   });
 
+  const leadActivities = useMemo(
+    () => (allActivities ?? []).filter((a: any) => a.leadId === lid),
+    [allActivities, lid],
+  );
+
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading lead details...</div>;
   if (!lead) return <div className="text-muted-foreground p-8">Lead not found.</div>;
 
+  const l = lead as any;
+
   const startEditing = () => {
     setForm({
-      leadName: (lead as any).leadName ?? "",
-      companyName: (lead as any).companyName ?? "",
-      contactPerson: (lead as any).contactPerson ?? "",
-      phone: (lead as any).phone ?? "",
-      whatsapp: (lead as any).whatsapp ?? "",
-      email: (lead as any).email ?? "",
-      location: (lead as any).location ?? "",
-      requirementType: (lead as any).requirementType ?? "",
-      budget: String((lead as any).budget ?? ""),
-      leadScore: (lead as any).leadScore ?? "cold",
-      status: (lead as any).status ?? "new",
-      notes: (lead as any).notes ?? "",
-      nextFollowUp: (lead as any).nextFollowUp ?? "",
+      leadName: l.leadName ?? "", companyName: l.companyName ?? "",
+      contactPerson: l.contactPerson ?? "", phone: l.phone ?? "", whatsapp: l.whatsapp ?? "",
+      email: l.email ?? "", location: l.location ?? "", requirementType: l.requirementType ?? "",
+      budget: String(l.budget ?? ""), leadScore: l.leadScore ?? "cold", status: l.status ?? "new",
+      notes: l.notes ?? "", nextFollowUp: l.nextFollowUp ?? "",
     });
     setEditing(true);
   };
@@ -75,25 +123,63 @@ export function LeadDetail({ id }: Props) {
     update.mutate({ id: lid, data: { ...form, budget: form.budget ? parseFloat(form.budget) : undefined } as any });
   };
 
-  const l = lead as any;
+  const ai = scoreLead(l, leadActivities);
+
+  const showAi = (title: string, text: string) => { setAiTitle(title); setAiText(text); };
+  const copyText = (txt: string) => { navigator.clipboard.writeText(txt); toast({ title: "Copied to clipboard" }); };
+
+  const openConvert = () => {
+    setConvertForm({
+      title: l.requirementType ? `${l.leadName} — ${l.requirementType}` : l.leadName,
+      value: String(l.budget ?? ""),
+      probability: l.leadScore === "hot" ? "75" : l.leadScore === "warm" ? "50" : "25",
+      expectedCloseDate: "",
+    });
+    setConvertOpen(true);
+  };
+
+  const submitConvert = () => {
+    createDeal.mutate({
+      data: {
+        title: convertForm.title,
+        clientName: l.companyName ?? l.leadName,
+        value: parseFloat(convertForm.value) || 0,
+        probability: parseFloat(convertForm.probability) || 0,
+        stage: "qualification",
+        expectedCloseDate: convertForm.expectedCloseDate || undefined,
+        leadId: lid,
+        companyId: l.companyId,
+        notes: `Converted from lead ${l.leadNumber}.${l.notes ? "\n\nLead notes: " + l.notes : ""}`,
+      } as any,
+    });
+  };
+
+  const submitActivity = () => {
+    createActivity.mutate({ data: { ...activityForm, leadId: lid } as any });
+  };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/crm/leads"><ArrowLeft className="w-4 h-4 mr-1" />Back to Leads</Link>
         </Button>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2 flex-wrap">
+          {!editing && l.status !== "won" && l.status !== "lost" && (
+            <Button variant="outline" size="sm" onClick={openConvert} data-testid="button-convert-deal" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50">
+              <Briefcase className="w-4 h-4 mr-1.5" />Convert to Deal
+            </Button>
+          )}
           {!editing && (
-            <Button variant="outline" size="sm" onClick={startEditing}>
+            <Button variant="outline" size="sm" onClick={startEditing} data-testid="button-edit-lead">
               <Pencil className="w-4 h-4 mr-1.5" />Edit Lead
             </Button>
           )}
           {editing && (
             <>
               <Button variant="outline" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4 mr-1.5" />Cancel</Button>
-              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={saveEdit} disabled={update.isPending}>
-                <Save className="w-4 h-4 mr-1.5" />{update.isPending ? "Saving..." : "Save Changes"}
+              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={saveEdit} disabled={update.isPending} data-testid="button-save-lead">
+                <Save className="w-4 h-4 mr-1.5" />{update.isPending ? "Saving..." : "Save"}
               </Button>
             </>
           )}
@@ -107,9 +193,10 @@ export function LeadDetail({ id }: Props) {
         </div>
       </div>
 
+      {/* Header card */}
       <div className="bg-card border rounded-xl p-6 space-y-6">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
             {editing ? (
               <div className="space-y-1">
                 <Label>Lead / Client Name</Label>
@@ -134,9 +221,7 @@ export function LeadDetail({ id }: Props) {
                 </SelectContent>
               </Select>
             ) : (
-              <Badge variant="secondary" className={scoreColors[l.leadScore ?? ""] ?? "bg-slate-100 text-slate-700"}>
-                {l.leadScore}
-              </Badge>
+              <Badge variant="secondary" className={scoreColors[l.leadScore ?? ""] ?? "bg-slate-100 text-slate-700"}>{l.leadScore}</Badge>
             )}
             {editing ? (
               <Select value={form.status} onValueChange={v => setForm(p => ({...p, status: v}))}>
@@ -144,10 +229,12 @@ export function LeadDetail({ id }: Props) {
                 <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace("_"," ")}</SelectItem>)}</SelectContent>
               </Select>
             ) : (
-              <Badge variant="secondary" className={`${statusColors[l.status] ?? ""} capitalize`}>
-                {l.status?.replace("_"," ")}
-              </Badge>
+              <Badge variant="secondary" className={`${statusColors[l.status] ?? ""} capitalize`}>{l.status?.replace("_"," ")}</Badge>
             )}
+            {/* AI score chip */}
+            <div className="flex items-center gap-1 bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] text-white rounded-full px-2.5 py-0.5 text-xs font-semibold" title={`AI score: ${ai.score}/100 (${ai.band})`}>
+              <Sparkles className="w-3 h-3" />AI {ai.score}
+            </div>
           </div>
         </div>
 
@@ -173,7 +260,6 @@ export function LeadDetail({ id }: Props) {
               </div>
             )}
           </div>
-
           <div className="space-y-4">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Requirement Details</h3>
             {editing ? (
@@ -217,17 +303,175 @@ export function LeadDetail({ id }: Props) {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</h3>
-          {editing ? (
-            <Textarea value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} rows={4} placeholder="Additional notes..." />
-          ) : (
-            <div className="p-3 bg-muted/30 rounded-lg text-sm min-h-[80px]">
+        {!editing && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</h3>
+            <div className="p-3 bg-muted/30 rounded-lg text-sm min-h-[60px] whitespace-pre-wrap">
               {l.notes || <span className="text-muted-foreground italic">No notes added.</span>}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+        {editing && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</h3>
+            <Textarea value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} rows={4} placeholder="Additional notes..." />
+          </div>
+        )}
       </div>
+
+      {/* Tabs: Activity, AI Assistant */}
+      <Tabs defaultValue="activity" className="w-full">
+        <TabsList>
+          <TabsTrigger value="activity" data-testid="tab-activity"><ListChecks className="w-4 h-4 mr-1.5" />Activity Timeline</TabsTrigger>
+          <TabsTrigger value="ai" data-testid="tab-ai"><Brain className="w-4 h-4 mr-1.5" />AI Assistant</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="activity" className="space-y-3">
+          <div className="bg-card border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold">Activity Timeline</h3>
+                <p className="text-xs text-muted-foreground">{leadActivities.length} touchpoint{leadActivities.length === 1 ? "" : "s"} for this lead</p>
+              </div>
+              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => setActivityOpen(true)} data-testid="button-add-activity">
+                <Plus className="w-4 h-4 mr-1.5" />Add Activity
+              </Button>
+            </div>
+
+            {leadActivities.length === 0 ? (
+              <div className="text-sm text-muted-foreground italic py-8 text-center">No activities logged yet. Add your first call, meeting or follow-up.</div>
+            ) : (
+              <ol className="relative border-l border-border/60 ml-3 space-y-4">
+                {leadActivities.map((a: any) => (
+                  <li key={a.id} className="ml-6">
+                    <span className={`absolute -left-[7px] flex items-center justify-center w-3.5 h-3.5 rounded-full ring-4 ring-background ${a.isDone ? "bg-emerald-500" : "bg-blue-500"}`} />
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="capitalize text-[10px]">{a.type?.replace("_", " ")}</Badge>
+                          <span className="font-medium text-sm">{a.subject}</span>
+                          {a.isDone && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-[10px]">Done</Badge>}
+                        </div>
+                        {a.description && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{a.description}</p>}
+                        <div className="text-[11px] text-muted-foreground mt-1">
+                          {a.dueDate ? `Due ${a.dueDate}` : a.createdAt ? `Logged ${new Date(a.createdAt).toLocaleDateString()}` : ""}
+                          {a.createdByName ? ` · by ${a.createdByName}` : ""}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => updateActivity.mutate({ id: a.id, data: { ...a, isDone: !a.isDone } as any })}>
+                        {a.isDone ? <Circle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-3">
+          <div className="bg-card border rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold">AI Sales Assistant</h3>
+                <p className="text-xs text-muted-foreground">Heuristic-powered insights — swap to a generative model when you connect an API key.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="border rounded-lg p-3 bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">AI Lead Score</span>
+                  <Badge variant="secondary" className={`capitalize ${scoreColors[ai.band]}`}>{ai.band}</Badge>
+                </div>
+                <div className="text-2xl font-bold mt-1">{ai.score}<span className="text-sm text-muted-foreground">/100</span></div>
+              </div>
+              <div className="border rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">Reasoning</div>
+                <ul className="text-[11px] space-y-0.5 list-disc pl-4 max-h-20 overflow-y-auto">
+                  {ai.reasons.slice(0, 5).map((r, i) => <li key={i}>{r}</li>)}
+                </ul>
+              </div>
+              <div className="border rounded-lg p-3 bg-amber-50/50 dark:bg-amber-900/5">
+                <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1 mb-1"><Trophy className="w-3 h-3" />Next best action</div>
+                <p className="text-xs leading-snug">{suggestNextAction(l, leadActivities)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => showAi("Suggested Follow-up Email", generateFollowUpMessage(l))} data-testid="button-ai-followup">
+                <Wand2 className="w-3.5 h-3.5 mr-1.5" />Draft Follow-up Email
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => showAi("Suggested WhatsApp Message", generateWhatsAppMessage(l))} data-testid="button-ai-whatsapp">
+                <MessageCircle className="w-3.5 h-3.5 mr-1.5 text-green-600" />Draft WhatsApp Message
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => showAi("Client Snapshot", summarizeClient(l, leadActivities))} data-testid="button-ai-summary">
+                <Brain className="w-3.5 h-3.5 mr-1.5" />Summarize Client
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => update.mutate({ id: lid, data: { ...l, leadScore: ai.band } as any })} data-testid="button-ai-apply-score">
+                Apply AI score → {ai.band}
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* AI text dialog */}
+      <Dialog open={!!aiText} onOpenChange={open => !open && setAiText("")}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#1e6ab0]" />{aiTitle}</DialogTitle></DialogHeader>
+          <Textarea value={aiText} onChange={e => setAiText(e.target.value)} rows={10} className="font-mono text-sm" />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setAiText("")}>Close</Button>
+            <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => copyText(aiText)}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Convert to Deal dialog */}
+      <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-emerald-600" />Convert Lead to Deal</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="text-xs text-muted-foreground">A new deal will be created in the Qualification stage with the values below.</div>
+            <div className="space-y-1"><Label>Deal Title *</Label><Input value={convertForm.title} onChange={e => setConvertForm(p => ({...p, title: e.target.value}))} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1"><Label>Value (AED)</Label><Input type="number" value={convertForm.value} onChange={e => setConvertForm(p => ({...p, value: e.target.value}))} /></div>
+              <div className="space-y-1"><Label>Probability (%)</Label><Input type="number" value={convertForm.probability} onChange={e => setConvertForm(p => ({...p, probability: e.target.value}))} /></div>
+            </div>
+            <div className="space-y-1"><Label>Expected Close Date</Label><Input type="date" value={convertForm.expectedCloseDate} onChange={e => setConvertForm(p => ({...p, expectedCloseDate: e.target.value}))} /></div>
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={submitConvert} disabled={!convertForm.title || createDeal.isPending} data-testid="button-submit-convert">
+              {createDeal.isPending ? "Creating..." : "Create Deal & Open Pipeline"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Activity dialog */}
+      <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add Activity to {l.leadName}</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1"><Label>Type</Label>
+                <Select value={activityForm.type} onValueChange={v => setActivityForm(p => ({...p, type: v}))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{ACTIVITY_TYPES.map(t => <SelectItem key={t} value={t} className="capitalize">{t.replace("_"," ")}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1"><Label>Due Date</Label><Input type="date" value={activityForm.dueDate} onChange={e => setActivityForm(p => ({...p, dueDate: e.target.value}))} /></div>
+            </div>
+            <div className="space-y-1"><Label>Subject *</Label><Input value={activityForm.subject} onChange={e => setActivityForm(p => ({...p, subject: e.target.value}))} placeholder="e.g. Site visit at Al Quoz warehouse" /></div>
+            <div className="space-y-1"><Label>Notes</Label><Textarea value={activityForm.description} onChange={e => setActivityForm(p => ({...p, description: e.target.value}))} rows={3} /></div>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submitActivity} disabled={!activityForm.subject || createActivity.isPending}>
+              {createActivity.isPending ? "Saving..." : "Add Activity"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

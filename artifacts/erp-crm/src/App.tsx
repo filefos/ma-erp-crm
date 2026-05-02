@@ -5,7 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout";
 import { Login } from "@/pages/login";
 import { Dashboard } from "@/pages/dashboard";
-import { CRMHub } from "@/pages/crm/hub";
+import { CRMDashboard } from "@/pages/crm/dashboard";
+import { SalesPipeline } from "@/pages/crm/pipeline";
 import { LeadsList } from "@/pages/crm/leads";
 import { LeadDetail } from "@/pages/crm/lead-detail";
 import { ContactsList } from "@/pages/crm/contacts";
@@ -87,7 +88,10 @@ function Router() {
 
       {/* CRM */}
       <Route path="/crm">
-        <ModuleGuard module="leads"><CRMHub /></ModuleGuard>
+        <ModuleGuard module="leads"><CRMDashboard /></ModuleGuard>
+      </Route>
+      <Route path="/crm/pipeline">
+        <ModuleGuard module="deals"><SalesPipeline /></ModuleGuard>
       </Route>
       <Route path="/crm/leads/:id">
         {(params) => (

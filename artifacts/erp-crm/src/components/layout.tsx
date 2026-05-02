@@ -31,6 +31,8 @@ const NAV: NavGroup[] = [
     label: "CRM",
     icon: Users,
     items: [
+      { href: "/crm", label: "CRM Dashboard", icon: LayoutDashboard },
+      { href: "/crm/pipeline", label: "Sales Pipeline", icon: Briefcase },
       { href: "/crm/leads", label: "Leads", icon: Users },
       { href: "/crm/contacts", label: "Contacts", icon: HardHat },
       { href: "/crm/deals", label: "Deals", icon: Briefcase },
@@ -309,7 +311,7 @@ const ROUTE_LABELS: Record<string, string> = {
   crm: "CRM", sales: "Sales", accounts: "Accounts",
   procurement: "Procurement", inventory: "Inventory", hr: "HR",
   projects: "Projects", assets: "Assets", reports: "Reports", admin: "Admin",
-  leads: "Leads", contacts: "Contacts", deals: "Deals", activities: "Activities",
+  leads: "Leads", contacts: "Contacts", deals: "Deals", activities: "Activities", pipeline: "Sales Pipeline",
   quotations: "Quotations", "proforma-invoices": "Proforma Invoices", lpos: "LPOs",
   invoices: "Tax Invoices", "delivery-notes": "Delivery Notes",
   expenses: "Expenses", cheques: "Cheques", "bank-accounts": "Bank Accounts",

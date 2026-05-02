@@ -1,18 +1,20 @@
-import { useState } from "react";
-import { useListLeads, useCreateLead, useListCompanies } from "@workspace/api-client-react";
+import { useMemo, useState } from "react";
+import { useListLeads, useCreateLead, useUpdateLead, useListCompanies } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, MessageCircle, Filter, ArrowLeft } from "lucide-react";
+import { Search, Plus, MessageCircle, Filter, ArrowLeft, X, Sparkles, CheckSquare } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 const SOURCES = ["website", "referral", "social_media", "cold_call", "exhibition", "walk_in", "tender", "other"];
 const STATUSES = ["new", "contacted", "qualified", "site_visit", "quotation_required", "quotation_sent", "negotiation", "won", "lost"];
@@ -47,6 +49,8 @@ export function LeadsList() {
     budget: "", leadScore: "warm", status: "new", companyId: "", notes: "", nextFollowUp: "",
   });
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const { data: leads, isLoading } = useListLeads({ search: search || undefined });
   const { data: companies } = useListCompanies();
   const create = useCreateLead({
@@ -58,13 +62,38 @@ export function LeadsList() {
       },
     },
   });
+  const update = useUpdateLead({
+    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/leads"] }) },
+  });
 
   const { filterByCompany } = useActiveCompany();
-  const filtered = filterByCompany(leads ?? []).filter(l => {
+  const filtered = useMemo(() => filterByCompany(leads ?? []).filter(l => {
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
     if (scoreFilter !== "all" && l.leadScore !== scoreFilter) return false;
     return true;
-  });
+  }), [leads, filterByCompany, statusFilter, scoreFilter]);
+
+  const allSelected = filtered.length > 0 && filtered.every(l => selected.has(l.id));
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(filtered.map(l => l.id)));
+  };
+  const toggleOne = (id: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  const bulkUpdate = async (patch: Record<string, unknown>, label: string) => {
+    const targets = filtered.filter(l => selected.has(l.id));
+    if (targets.length === 0) return;
+    await Promise.all(targets.map(l => update.mutateAsync({ id: l.id, data: { ...l, ...patch } as any })));
+    toast({ title: `${label} applied`, description: `Updated ${targets.length} lead${targets.length === 1 ? "" : "s"}` });
+    clearSelection();
+  };
 
   const hot = leads?.filter(l => l.leadScore === "hot").length ?? 0;
   const won = leads?.filter(l => l.status === "won").length ?? 0;
@@ -204,10 +233,35 @@ export function LeadsList() {
         </Select>
       </div>
 
+      {selected.size > 0 && (
+        <div className="bg-[#0f2d5a]/5 border border-[#1e6ab0]/30 rounded-lg p-3 flex items-center gap-3 flex-wrap" data-testid="bulk-toolbar">
+          <CheckSquare className="w-4 h-4 text-[#1e6ab0]" />
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <span className="text-xs text-muted-foreground">Bulk actions:</span>
+          <Select onValueChange={v => bulkUpdate({ status: v }, `Status → ${v}`)}>
+            <SelectTrigger className="h-8 w-44 text-xs"><SelectValue placeholder="Set status…" /></SelectTrigger>
+            <SelectContent>{STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s.replace("_"," ")}</SelectItem>)}</SelectContent>
+          </Select>
+          <Select onValueChange={v => bulkUpdate({ leadScore: v }, `Score → ${v}`)}>
+            <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder="Set score…" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hot">🔥 Hot</SelectItem>
+              <SelectItem value="warm">🌡️ Warm</SelectItem>
+              <SelectItem value="cold">❄️ Cold</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" className="h-8" onClick={() => bulkUpdate({ isActive: false }, "Archived")} data-testid="button-bulk-archive">Archive</Button>
+          <Button size="sm" variant="ghost" className="h-8 ml-auto" onClick={clearSelection}><X className="w-3.5 h-3.5 mr-1" />Clear</Button>
+        </div>
+      )}
+
       <div className="border rounded-lg bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Select all" data-testid="checkbox-select-all" />
+              </TableHead>
               <TableHead>Lead Ref</TableHead>
               <TableHead>Name / Company</TableHead>
               <TableHead>Contact</TableHead>
@@ -220,12 +274,15 @@ export function LeadsList() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading leads...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading leads...</TableCell></TableRow>
             ) : filtered?.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No leads found. Add your first lead to get started.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No leads found. Add your first lead to get started.</TableCell></TableRow>
             ) : (
               filtered?.map((lead) => (
-                <TableRow key={lead.id} className="hover:bg-muted/30">
+                <TableRow key={lead.id} className={`hover:bg-muted/30 ${selected.has(lead.id) ? "bg-[#1e6ab0]/5" : ""}`}>
+                  <TableCell>
+                    <Checkbox checked={selected.has(lead.id)} onCheckedChange={() => toggleOne(lead.id)} aria-label={`Select ${lead.leadName}`} data-testid={`checkbox-lead-${lead.id}`} />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <Link href={`/crm/leads/${lead.id}`} className="hover:underline text-primary font-mono text-sm">
                       {lead.leadNumber}
