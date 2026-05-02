@@ -105,7 +105,8 @@ export function downloadWord(
 
 export function printTable(
   title: string,
-  rows: (string | number | null | undefined)[][]
+  rows: (string | number | null | undefined)[][],
+  landscape = true
 ) {
   const header = rows[0] ?? [];
   const body = rows.slice(1);
@@ -135,7 +136,7 @@ export function printTable(
   <meta charset="utf-8">
   <title>${title}</title>
   <style>
-    @page { margin: 12mm 10mm; size: A4 landscape; }
+    @page { margin: 12mm 10mm; size: A4 ${landscape ? "landscape" : "portrait"}; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; font-size: 9.5pt; color: #222; background: #fff; }
 

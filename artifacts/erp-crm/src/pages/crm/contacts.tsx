@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, MessageCircle, Trash2 } from "lucide-react";
+import { Search, Plus, MessageCircle, Trash2, ArrowLeft } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListContactsQueryKey } from "@workspace/api-client-react";
 
@@ -19,29 +20,41 @@ export function ContactsList() {
   const { filterByCompany } = useActiveCompany();
   const filtered = filterByCompany(contacts ?? []);
   const create = useCreateContact({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }); setOpen(false); } } });
+  const del = useDeleteContact({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }); } } });
 
   const [form, setForm] = useState({ name: "", email: "", phone: "", whatsapp: "", companyName: "", designation: "" });
+
+  const filteredWithSno = filtered.map((c, idx) => ({ ...c, sno: idx + 1 }));
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Link href="/crm">
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground gap-1">
+                <ArrowLeft className="w-3.5 h-3.5" />Back to CRM
+              </Button>
+            </Link>
+          </div>
           <h1 className="text-2xl font-bold tracking-tight">Contacts</h1>
           <p className="text-muted-foreground">Manage your client contacts and directory.</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={filtered as Record<string, unknown>[]}
+            data={filteredWithSno as Record<string, unknown>[]}
             columns={[
+              { header: "S.No.", key: "sno" },
               { header: "Name", key: "name" },
-              { header: "Email", key: "email" },
-              { header: "Phone", key: "phone" },
-              { header: "WhatsApp", key: "whatsapp" },
               { header: "Company", key: "companyName" },
               { header: "Designation", key: "designation" },
+              { header: "Phone", key: "phone" },
+              { header: "WhatsApp", key: "whatsapp" },
+              { header: "Email", key: "email" },
             ]}
             filename="contacts"
             title="Contacts"
+            defaultLandscape={true}
           />
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -57,7 +70,7 @@ export function ContactsList() {
                 </div>
               ))}
             </div>
-            <Button className="mt-4" onClick={() => create.mutate({ data: form as any })} disabled={!form.name || create.isPending}>
+            <Button className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => create.mutate({ data: form as any })} disabled={!form.name || create.isPending}>
               {create.isPending ? "Saving..." : "Save Contact"}
             </Button>
           </DialogContent>
@@ -72,6 +85,7 @@ export function ContactsList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-14 text-center">#</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Designation</TableHead>
@@ -81,17 +95,21 @@ export function ContactsList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow> :
-            filtered.map(c => (
+            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow> :
+            filtered.map((c, idx) => (
               <TableRow key={c.id}>
+                <TableCell className="text-center text-muted-foreground text-sm font-mono">{idx + 1}</TableCell>
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell>{c.companyName || "-"}</TableCell>
                 <TableCell>{c.designation || "-"}</TableCell>
                 <TableCell>{c.phone || "-"}</TableCell>
                 <TableCell>{c.email || "-"}</TableCell>
                 <TableCell>
-                  {c.whatsapp && <Button variant="ghost" size="icon" asChild><a href={`https://wa.me/${c.whatsapp.replace(/[^0-9]/g,"")}`} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 text-green-600" /></a></Button>}
+                  <div className="flex items-center gap-1">
+                    {c.whatsapp && <Button variant="ghost" size="icon" asChild><a href={`https://wa.me/${c.whatsapp.replace(/[^0-9]/g,"")}`} target="_blank" rel="noreferrer"><MessageCircle className="w-4 h-4 text-green-600" /></a></Button>}
+                    <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-700" onClick={() => del.mutate({ id: c.id })}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

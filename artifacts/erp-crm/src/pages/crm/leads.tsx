@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, MessageCircle, Filter } from "lucide-react";
+import { Search, Plus, MessageCircle, Filter, ArrowLeft } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -70,28 +70,40 @@ export function LeadsList() {
   const won = leads?.filter(l => l.status === "won").length ?? 0;
   const active = leads?.filter(l => !["won","lost"].includes(l.status)).length ?? 0;
 
+  const exportColumns = [
+    { header: "Lead Ref", key: "leadNumber" },
+    { header: "Lead Name", key: "leadName" },
+    { header: "Company", key: "companyName" },
+    { header: "Phone", key: "phone" },
+    { header: "Email", key: "email" },
+    { header: "Score", key: "leadScore" },
+    { header: "Status", key: "status" },
+    { header: "Source", key: "source" },
+    { header: "Est. Value (AED)", key: "estimatedValue", format: (v: unknown) => Number(v ?? 0).toFixed(2) },
+    { header: "Next Follow-up", key: "nextFollowUp" },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Link href="/crm">
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground gap-1">
+                <ArrowLeft className="w-3.5 h-3.5" />Back to CRM
+              </Button>
+            </Link>
+          </div>
           <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
           <p className="text-muted-foreground">Manage your sales prospects and inquiries.</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(filtered ?? []) as Record<string, unknown>[]}
-            columns={[
-              { header: "Lead Name", key: "leadName" },
-              { header: "Company", key: "companyName" },
-              { header: "Phone", key: "phone" },
-              { header: "Email", key: "email" },
-              { header: "Score", key: "leadScore" },
-              { header: "Status", key: "status" },
-              { header: "Source", key: "source" },
-              { header: "Est. Value (AED)", key: "estimatedValue", format: v => Number(v ?? 0).toFixed(2) },
-            ]}
+            data={(filtered ?? []) as unknown as Record<string, unknown>[]}
+            columns={exportColumns}
             filename="leads"
             title="Leads"
+            defaultLandscape={true}
           />
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>

@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/layout";
 import { Login } from "@/pages/login";
 import { Dashboard } from "@/pages/dashboard";
+import { CRMHub } from "@/pages/crm/hub";
 import { LeadsList } from "@/pages/crm/leads";
 import { LeadDetail } from "@/pages/crm/lead-detail";
 import { ContactsList } from "@/pages/crm/contacts";
@@ -71,6 +72,9 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
 
       {/* CRM */}
+      <Route path="/crm">
+        <ModuleGuard module="leads"><CRMHub /></ModuleGuard>
+      </Route>
       <Route path="/crm/leads/:id">
         {(params) => (
           <ModuleGuard module="leads"><LeadDetail id={params.id} /></ModuleGuard>

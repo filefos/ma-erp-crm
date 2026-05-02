@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, Briefcase, Calendar, FileText, FileBox, Receipt,
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
-  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound
+  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home
 } from "lucide-react";
 import { useState } from "react";
 
@@ -287,9 +287,41 @@ function SidebarContent() {
   );
 }
 
+const ROUTE_LABELS: Record<string, string> = {
+  crm: "CRM", sales: "Sales", accounts: "Accounts",
+  procurement: "Procurement", inventory: "Inventory", hr: "HR",
+  projects: "Projects", assets: "Assets", reports: "Reports", admin: "Admin",
+  leads: "Leads", contacts: "Contacts", deals: "Deals", activities: "Activities",
+  quotations: "Quotations", "proforma-invoices": "Proforma Invoices", lpos: "LPOs",
+  invoices: "Tax Invoices", "delivery-notes": "Delivery Notes",
+  expenses: "Expenses", cheques: "Cheques", "bank-accounts": "Bank Accounts",
+  suppliers: "Suppliers", "purchase-requests": "Purchase Requests",
+  "purchase-orders": "Purchase Orders", items: "Items",
+  "stock-entries": "Stock Entries", employees: "Employees", attendance: "Attendance",
+};
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
+
+  const showBreadcrumb =
+    location !== "/" &&
+    location !== "/dashboard" &&
+    !location.startsWith("/login") &&
+    !location.startsWith("/profile");
+
+  const breadcrumbItems = (() => {
+    const parts = location.split("/").filter(Boolean);
+    const items: { label: string; href: string }[] = [];
+    let path = "";
+    for (const part of parts) {
+      path += "/" + part;
+      if (/^\d+$/.test(part)) continue;
+      const label = ROUTE_LABELS[part] ?? part.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      items.push({ label, href: path });
+    }
+    return items;
+  })();
 
   if (isLoading) {
     return (
@@ -336,6 +368,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
           <NotificationBell />
         </header>
+
+        {showBreadcrumb && (
+          <div className="border-b bg-muted/20 px-4 md:px-6 py-1.5 flex items-center gap-1 text-xs text-muted-foreground shrink-0 overflow-x-auto">
+            <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1 shrink-0">
+              <Home className="w-3 h-3" />
+              <span>Home</span>
+            </Link>
+            {breadcrumbItems.map((item, i) => (
+              <span key={i} className="flex items-center gap-1 shrink-0">
+                <ChevronRight className="w-3 h-3" />
+                {i === breadcrumbItems.length - 1 ? (
+                  <span className="text-foreground font-medium">{item.label}</span>
+                ) : (
+                  <Link href={item.href} className="hover:text-foreground transition-colors">{item.label}</Link>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {children}
