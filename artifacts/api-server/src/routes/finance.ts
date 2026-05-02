@@ -142,12 +142,16 @@ router.put("/chart-of-accounts/:id", requirePermission("expenses", "edit"), requ
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(chartOfAccountsTable).where(eq(chartOfAccountsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [acc] = await db.update(chartOfAccountsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(chartOfAccountsTable.id, id)).returning();
   res.json(acc);
 });
 
 router.delete("/chart-of-accounts/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(chartOfAccountsTable).where(eq(chartOfAccountsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(chartOfAccountsTable).where(eq(chartOfAccountsTable.id, id));
   res.json({ success: true });
 });

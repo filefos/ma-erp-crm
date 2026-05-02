@@ -5,14 +5,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Pencil, Trash2, BookOpen } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, BookOpen, Library, Loader2 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
+import { CONSTRUCTION_COA_TEMPLATE, CONSTRUCTION_COA_COUNT } from "@/lib/construction-coa";
 
 const ACCOUNT_TYPES = [
   "Assets", "Liabilities", "Equity", "Income", "Cost of Goods Sold",
@@ -53,13 +54,78 @@ export function ChartOfAccountsList() {
 
   const { data: accounts = [], isLoading } = useListChartOfAccounts();
   const { data: companies = [] } = useListCompanies();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["/chart-of-accounts"] });
+  const invalidate = () => qc.invalidateQueries({
+    predicate: q => {
+      const k = q.queryKey?.[0];
+      return typeof k === "string" && (k === "/chart-of-accounts" || k === "/api/chart-of-accounts");
+    },
+  });
 
   const createMutation = useCreateChartOfAccount({ mutation: { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Account created." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
   const updateMutation = useUpdateChartOfAccount({ mutation: { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Account updated." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
   const deleteMutation = useDeleteChartOfAccount({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Account deleted." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
+  const seedMutation = useCreateChartOfAccount();
+
+  // ── Bulk-seed industry template ────────────────────────────────────────────
+  const [seedOpen, setSeedOpen] = useState(false);
+  const [seedCompanyId, setSeedCompanyId] = useState<string>("");
+  const [seeding, setSeeding] = useState(false);
+  const [seedProgress, setSeedProgress] = useState({ done: 0, skipped: 0, failed: 0 });
+
+  const openSeed = () => {
+    setSeedCompanyId(activeCompanyId ? String(activeCompanyId) : (companies[0]?.id ? String(companies[0].id) : ""));
+    setSeedProgress({ done: 0, skipped: 0, failed: 0 });
+    setSeedOpen(true);
+  };
+
+  const handleSeedTemplate = async () => {
+    const companyIdNum = parseInt(seedCompanyId, 10);
+    if (!companyIdNum) {
+      toast({ title: "Pick a company first.", variant: "destructive" });
+      return;
+    }
+    setSeeding(true);
+    const existingCodes = new Set(
+      accounts.filter(a => a.companyId === companyIdNum).map(a => a.accountCode)
+    );
+
+    let done = 0, skipped = 0, failed = 0;
+    for (const seed of CONSTRUCTION_COA_TEMPLATE) {
+      if (existingCodes.has(seed.accountCode)) {
+        skipped += 1;
+        setSeedProgress({ done, skipped, failed });
+        continue;
+      }
+      try {
+        await seedMutation.mutateAsync({
+          data: {
+            companyId: companyIdNum,
+            accountCode: seed.accountCode,
+            accountName: seed.accountName,
+            accountType: seed.accountType,
+            openingBalance: 0,
+            currency: "AED",
+            isActive: true,
+          } as any,
+        });
+        existingCodes.add(seed.accountCode); // prevent re-creating on retry within same session
+        done += 1;
+      } catch {
+        failed += 1;
+      }
+      setSeedProgress({ done, skipped, failed });
+    }
+
+    setSeeding(false);
+    invalidate();
+    toast({
+      title: "Industry template loaded",
+      description: `Created ${done}, skipped ${skipped} (already existed), failed ${failed}.`,
+    });
+    setTimeout(() => setSeedOpen(false), 600);
+  };
 
   const filtered = filterByCompany(accounts).filter(a =>
     (typeFilter === "all" || a.accountType === typeFilter) &&
@@ -103,6 +169,9 @@ export function ChartOfAccountsList() {
             title="Chart of Accounts"
             size="sm"
           />
+          <Button variant="outline" onClick={openSeed} title={`Bulk-load ${CONSTRUCTION_COA_COUNT} construction industry accounts`}>
+            <Library className="w-4 h-4 mr-2" />Load Industry Template
+          </Button>
           <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" />Add Account
           </Button>
@@ -178,6 +247,48 @@ export function ChartOfAccountsList() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={seedOpen} onOpenChange={(v) => { if (!seeding) setSeedOpen(v); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Load Construction Industry Chart of Accounts</DialogTitle>
+            <DialogDescription>
+              This will create {CONSTRUCTION_COA_COUNT} pre-defined accounts (Assets, Liabilities, Equity, Revenue, Cost of Sales, and Operating Expenses) tailored for prefab manufacturing & construction services. Existing account codes will be skipped.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1">
+              <Label>Target Company *</Label>
+              <Select value={seedCompanyId} onValueChange={setSeedCompanyId} disabled={seeding}>
+                <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
+                <SelectContent>{companies.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            {seeding || seedProgress.done + seedProgress.skipped + seedProgress.failed > 0 ? (
+              <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs space-y-1">
+                <div>Created: <span className="font-medium text-green-700">{seedProgress.done}</span></div>
+                <div>Skipped (already exists): <span className="font-medium text-amber-700">{seedProgress.skipped}</span></div>
+                <div>Failed: <span className="font-medium text-red-700">{seedProgress.failed}</span></div>
+                <div className="text-muted-foreground pt-1">
+                  Progress: {seedProgress.done + seedProgress.skipped + seedProgress.failed} / {CONSTRUCTION_COA_COUNT}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Tip: After loading, use the <span className="font-medium">Add Account</span> button to create your own custom accounts on top of this template.
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2 border-t">
+            <Button variant="outline" onClick={() => setSeedOpen(false)} disabled={seeding}>
+              {seeding ? "Working…" : "Close"}
+            </Button>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSeedTemplate} disabled={!seedCompanyId || seeding}>
+              {seeding ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading…</> : <>Load Template</>}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">

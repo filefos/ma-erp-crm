@@ -131,6 +131,14 @@ pnpm workspace monorepo with React+Vite frontend, Express 5 backend, PostgreSQL 
 - `GET /api/dashboard/pending-approvals`, `GET /api/dashboard/inventory-alerts`
 - `GET /api/dashboard/recent-activity`
 
+## Chart of Accounts — Industry Template
+
+- `artifacts/erp-crm/src/lib/construction-coa.ts` exports `CONSTRUCTION_COA_TEMPLATE` (157 pre-defined accounts) and `CONSTRUCTION_COA_COUNT`. Codes follow industry convention: 1xxx Assets, 2xxx Liabilities, 3xxx Equity, 4xxx Revenue, 5xxx Cost of Sales / Direct Costs, 6xxx Operating & Admin Expenses. Tailored for UAE prefab manufacturing & construction services.
+- Chart of Accounts page (`/accounts/chart-of-accounts`) has two action buttons:
+  - **Load Industry Template** — opens a dialog to pick a target company, then bulk-creates all template accounts via sequential `useCreateChartOfAccount` mutations. Skips account codes that already exist on that company. Shows live progress (created / skipped / failed) and a final summary toast.
+  - **Add Account** — existing single-account create dialog for fully customised additions on top of (or instead of) the template.
+- Bulk-seed uses a separate `seedMutation = useCreateChartOfAccount()` instance with no toast handlers to avoid 100+ toast spam; one summary toast fires after the loop completes.
+
 ## Important Notes
 
 - `lib/api-zod/src/index.ts` must only contain `export * from "./generated/api";` — codegen overwrites it
