@@ -59,7 +59,7 @@ export function AttendanceList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(filtered ?? []) as unknown as Record<string, unknown>[]}
+            data={(filtered ?? [])}
             columns={[
               { header: "Employee", key: "employeeName" },
               { header: "Date", key: "date" },

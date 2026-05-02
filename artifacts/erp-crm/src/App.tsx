@@ -361,9 +361,6 @@ function Router() {
         <AdminGuard><AdminEmailPanel /></AdminGuard>
       </Route>
 
-      <Route path="/procurement/purchase-orders/:id">
-        {(params) => <ModuleGuard module="purchase_orders"><PurchaseOrderDetail id={params.id!} /></ModuleGuard>}
-      </Route>
       <Route path="/accounts/cheques/:id">
         {(params) => <ChequeDetail id={params.id!} />}
       </Route>

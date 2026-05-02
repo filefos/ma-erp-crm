@@ -43,7 +43,7 @@ export function ContactsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={filteredWithSno as unknown as Record<string, unknown>[]}
+            data={filteredWithSno}
             columns={[
               { header: "S.No.", key: "sno" },
               { header: "Name", key: "name" },

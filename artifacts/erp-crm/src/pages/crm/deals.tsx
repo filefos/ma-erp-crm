@@ -80,7 +80,7 @@ export function DealsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(filtered ?? []) as unknown as Record<string, unknown>[]}
+            data={(filtered ?? [])}
             columns={[
               { header: "Deal No.", key: "dealNumber" },
               { header: "Title", key: "title" },

@@ -59,7 +59,7 @@ export function VatReport() {
           <p className="text-muted-foreground">UAE VAT 5% — Input and Output Tax Summary</p>
         </div>
         <ExportMenu
-          data={vatRows as unknown as Record<string, unknown>[]}
+          data={vatRows}
           columns={[
             { header: "Date", key: "date" },
             { header: "Description", key: "description" },

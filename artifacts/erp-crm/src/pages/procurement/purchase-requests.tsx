@@ -67,7 +67,7 @@ export function PurchaseRequestsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(requests ?? []) as unknown as Record<string, unknown>[]}
+            data={(requests ?? [])}
             columns={[
               { header: "PR Number", key: "prNumber" },
               { header: "Title", key: "title" },

@@ -77,7 +77,7 @@ export function PaymentsMadeList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={filtered as unknown as Record<string, unknown>[]}
+            data={filtered}
             columns={[
               { header: "Payment No.", key: "paymentNumber" },
               { header: "Payee", key: "payeeName" },

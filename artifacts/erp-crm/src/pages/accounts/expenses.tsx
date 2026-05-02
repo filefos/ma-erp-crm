@@ -42,7 +42,7 @@ export function ExpensesList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(expenses ?? []) as unknown as Record<string, unknown>[]}
+            data={(expenses ?? [])}
             columns={[
               { header: "Category", key: "category" },
               { header: "Description", key: "description" },

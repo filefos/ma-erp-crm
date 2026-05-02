@@ -178,7 +178,7 @@ export function LposList() {
         </div>
         <div className="flex items-center gap-3">
           <ExportMenu
-            data={(lpos ?? []) as unknown as Record<string, unknown>[]}
+            data={(lpos ?? [])}
             columns={[
               { header: "LPO Number", key: "lpoNumber" },
               { header: "Client", key: "clientName" },

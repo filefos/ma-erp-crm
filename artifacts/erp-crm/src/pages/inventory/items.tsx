@@ -37,7 +37,7 @@ export function InventoryItemsList() {
         </div>
         <div className="flex items-center gap-3">
           <ExportMenu
-            data={filtered as unknown as Record<string, unknown>[]}
+            data={filtered}
             columns={[
               { header: "Item Name", key: "name" },
               { header: "Category", key: "category" },

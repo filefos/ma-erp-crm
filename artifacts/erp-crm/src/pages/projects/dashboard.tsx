@@ -312,7 +312,7 @@ export function ProjectsDashboard() {
             <div className="space-y-2">
               {topPMs.map((pm, i) => (
                 <div key={pm.name} className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-amber-500 to-orange-600" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-amber-700" : "bg-[#1e6ab0]"}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
                     {i + 1}
                   </div>
                   <Avatar name={pm.name} size={32} />

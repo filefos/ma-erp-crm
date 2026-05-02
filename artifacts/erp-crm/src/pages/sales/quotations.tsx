@@ -39,7 +39,7 @@ export function QuotationsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={filtered as unknown as Record<string, unknown>[]}
+            data={filtered}
             columns={[
               { header: "Quotation No.", key: "quotationNumber" },
               { header: "Client", key: "clientName" },

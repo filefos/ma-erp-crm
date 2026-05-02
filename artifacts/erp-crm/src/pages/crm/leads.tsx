@@ -106,7 +106,7 @@ export function LeadsList() {
     <div className="space-y-4">
       <ExecutiveHeader icon={Users} title="Leads" subtitle="Manage your sales prospects and inquiries">
         <ExportMenu
-          data={(filtered ?? []) as unknown as Record<string, unknown>[]}
+          data={(filtered ?? [])}
           columns={exportColumns}
           filename="leads"
           title="Leads"

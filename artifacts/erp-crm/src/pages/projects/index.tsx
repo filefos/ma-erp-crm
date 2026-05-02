@@ -48,7 +48,7 @@ export function ProjectsList() {
             <Link href="/projects/sales-performance"><Target className="w-4 h-4 mr-1.5" />Sales Performance</Link>
           </Button>
           <ExportMenu
-            data={filtered as unknown as Record<string, unknown>[]}
+            data={filtered}
             columns={[
               { header: "Project No.", key: "projectNumber" },
               { header: "Project Name", key: "projectName" },
