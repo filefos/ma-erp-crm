@@ -80,6 +80,25 @@ pnpm workspace monorepo with React+Vite frontend, Express 5 backend, PostgreSQL 
 - Projects: `PM-PRJ-2026-0001`, `EP-PRJ-2026-0001`
 - Employees: `PM-EMP-0001`, `EP-EMP-0001`
 
+## Detail Pages
+
+- `/procurement/purchase-orders/:id` — PO detail with edit, line items, CSV export, print, signature block
+- `/accounts/cheques/:id` — Cheque detail with cheque visual, edit, CSV export, print
+
+## Signature Feature
+
+- Users can upload their signature on the Profile page (`/profile`)
+- Signature stored as base64 data URL in `users.signature_url` column (added via migration)
+- `PUT /api/users/:id/signature` — save own signature
+- `document-print.tsx` `DocumentData` now accepts `preparedBySignatureUrl` — renders image above the signature line on all printed documents
+
+## Admin Features
+
+- `POST /api/users/:id/change-password` — admin-level password reset for any user (requires `company_admin` permission)
+- Admin Users page has a key icon button (amber) per row to open ChangePasswordDialog
+- `src/lib/export.ts` — `downloadCSV()` and `tableToCSV()` utilities used across list pages
+- Purchase Orders list and Cheques list both have a CSV Export button
+
 ## API Routes (all under `/api`)
 
 - `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
@@ -91,11 +110,12 @@ pnpm workspace monorepo with React+Vite frontend, Express 5 backend, PostgreSQL 
 - `GET/POST /api/tax-invoices`, `GET /api/delivery-notes`
 - `GET/POST /api/expenses`, `GET /api/cheques`, `GET /api/bank-accounts`
 - `GET/POST /api/suppliers`, `GET /api/purchase-requests`, `GET /api/purchase-orders`
+- `GET/PUT /api/purchase-orders/:id`, `GET/PUT /api/cheques/:id`
 - `GET/POST /api/inventory/items`, `GET/POST /api/inventory/stock-entries`
 - `GET/POST /api/projects`, `GET/PUT /api/projects/:id`
 - `GET/POST /api/hr/employees`, `GET /api/hr/attendance`
 - `GET/POST /api/assets`
-- `GET/POST /api/users`
+- `GET/POST /api/users`, `POST /api/users/:id/change-password`, `PUT /api/users/:id/signature`
 - `GET /api/audit-logs`, `GET/PATCH /api/notifications`
 - `GET /api/dashboard/summary`, `GET /api/dashboard/sales-pipeline`
 - `GET /api/dashboard/pending-approvals`, `GET /api/dashboard/inventory-alerts`

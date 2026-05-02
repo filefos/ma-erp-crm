@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUpdateUser, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, Shield, Building2, Pencil, Check, X } from "lucide-react";
+import { User, Mail, Phone, Shield, Building2, Pencil, Check, X, Upload, Trash2 } from "lucide-react";
 
 const LEVEL_COLORS: Record<string, string> = {
   super_admin: "bg-red-100 text-red-800",
@@ -27,14 +27,25 @@ export function MyProfile() {
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [saved, setSaved] = useState(false);
 
+  // Signature state
+  const [sigPreview, setSigPreview] = useState<string | null>(null);
+  const [sigSaving, setSigSaving] = useState(false);
+  const [sigSaved, setSigSaved] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const token = localStorage.getItem("erp_token");
+
   const u = user as {
     id: number; name: string; email: string; phone?: string | null;
     role?: string; permissionLevel?: string;
     companyId?: number | null; department?: { name: string } | null;
+    signatureUrl?: string | null;
   } | undefined;
 
   useEffect(() => {
-    if (u) setForm({ name: u.name ?? "", email: u.email ?? "", phone: u.phone ?? "" });
+    if (u) {
+      setForm({ name: u.name ?? "", email: u.email ?? "", phone: u.phone ?? "" });
+      if (u.signatureUrl) setSigPreview(u.signatureUrl);
+    }
   }, [u?.id]);
 
   const update = useUpdateUser({
@@ -61,6 +72,38 @@ export function MyProfile() {
   const handleCancel = () => {
     setForm({ name: u.name ?? "", email: u.email ?? "", phone: u.phone ?? "" });
     setEditing(false);
+  };
+
+  const handleSignatureFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      setSigPreview(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveSignature = async () => {
+    if (!sigPreview) return;
+    setSigSaving(true);
+    try {
+      await fetch(`/api/users/${u.id}/signature`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ signatureUrl: sigPreview }),
+      });
+      queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      setSigSaved(true);
+      setTimeout(() => setSigSaved(false), 3000);
+    } finally {
+      setSigSaving(false);
+    }
+  };
+
+  const handleRemoveSignature = () => {
+    setSigPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -114,7 +157,7 @@ export function MyProfile() {
               <Button variant="outline" size="sm" onClick={handleCancel}>
                 <X className="w-3.5 h-3.5 mr-1.5" /> Cancel
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={update.isPending || !form.name.trim()}>
+              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSave} disabled={update.isPending || !form.name.trim()}>
                 <Check className="w-3.5 h-3.5 mr-1.5" />
                 {update.isPending ? "Saving..." : "Save"}
               </Button>
@@ -147,6 +190,57 @@ export function MyProfile() {
                 <p className="text-sm font-medium">{u.phone || <span className="text-muted-foreground italic">Not set</span>}</p>
               )}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Signature */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">My Signature</CardTitle>
+          <CardDescription>Upload your signature image. It will appear on printed documents (quotations, invoices, POs, etc.).</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {sigPreview ? (
+            <div className="border rounded-lg p-4 bg-muted/30 flex items-center gap-4">
+              <img src={sigPreview} alt="Signature" className="h-16 object-contain rounded border bg-white p-1" style={{ maxWidth: 220 }} />
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="w-3.5 h-3.5 mr-1.5" />Change
+                </Button>
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={handleRemoveSignature}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />Remove
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center cursor-pointer hover:border-[#1e6ab0]/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">Click to upload signature image</p>
+              <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF (transparent PNG recommended)</p>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleSignatureFile}
+          />
+          <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              onClick={handleSaveSignature}
+              disabled={!sigPreview || sigSaving}
+            >
+              <Check className="w-3.5 h-3.5 mr-1.5" />
+              {sigSaving ? "Saving..." : "Save Signature"}
+            </Button>
+            {sigSaved && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Signature saved!</span>}
           </div>
         </CardContent>
       </Card>

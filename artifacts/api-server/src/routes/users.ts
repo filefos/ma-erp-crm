@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, usersTable, companiesTable, departmentsTable, userCompanyAccessTable } from "@workspace/db";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { requireAuth, requirePermissionLevel } from "../middlewares/auth";
 import type { Request } from "express";
 import { hashPassword } from "../lib/auth";
@@ -247,6 +247,32 @@ router.put("/users/:id", requirePermissionLevel("company_admin"), validateBody(U
     await audit(req, { action: "deactivate", entity: "user", entityId: id, details: `Deactivated user ${user.email}` });
   }
   res.json(await enrichUser(user));
+});
+
+router.post("/users/:id/change-password", requirePermissionLevel("company_admin"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 6) {
+    res.status(400).json({ error: "Password must be at least 6 characters" });
+    return;
+  }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  if (!user) { res.status(404).json({ error: "Not found" }); return; }
+  const passwordHash = await hashPassword(newPassword);
+  await db.update(usersTable).set({ passwordHash, updatedAt: new Date() }).where(eq(usersTable.id, id));
+  await audit(req, { action: "update", entity: "user", entityId: id, details: `Password changed for user ${user.email}` });
+  res.json({ success: true });
+});
+
+router.put("/users/:id/signature", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (req.user?.id !== id) {
+    res.status(403).json({ error: "You can only update your own signature" });
+    return;
+  }
+  const { signatureUrl } = req.body;
+  await db.execute(sql`UPDATE users SET signature_url = ${signatureUrl}, updated_at = NOW() WHERE id = ${id}`);
+  res.json({ success: true });
 });
 
 router.delete("/users/:id", requirePermissionLevel("super_admin"), async (req, res): Promise<void> => {

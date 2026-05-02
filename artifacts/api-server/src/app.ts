@@ -15,6 +15,9 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS vat_percent DOUBLE PRECISION DEFAULT 5`);
     await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS notes TEXT`);
     await db.execute(sql`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS tech_specs TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signature_url TEXT`);
+    await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS lpo_file_url TEXT`);
+    await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS scope TEXT`);
     logger.info("Schema migrations applied");
   } catch (err) {
     logger.warn({ err }, "Migration warning (non-fatal)");

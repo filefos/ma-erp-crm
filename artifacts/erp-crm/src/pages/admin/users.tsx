@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Power, Pencil, ShieldCheck, Loader2 } from "lucide-react";
+import { Search, Plus, Power, Pencil, ShieldCheck, Loader2, KeyRound } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -46,6 +46,59 @@ type EditableUser = {
   departmentId?: number | null;
   companyId?: number | null;
 };
+
+function ChangePasswordDialog({ user, open, onClose }: { user: EditableUser; open: boolean; onClose: () => void }) {
+  const token = localStorage.getItem("erp_token");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async () => {
+    setError("");
+    if (newPassword.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (newPassword !== confirm) { setError("Passwords do not match."); return; }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/users/${user.id}/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ newPassword }),
+      });
+      if (!res.ok) { const d = await res.json(); setError(d.error ?? "Failed"); return; }
+      setSuccess(true);
+      setTimeout(() => { setSuccess(false); onClose(); setNewPassword(""); setConfirm(""); }, 1500);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setNewPassword(""); setConfirm(""); setError(""); } }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><KeyRound className="w-4 h-4 text-[#1e6ab0]" />Change Password — {user.name}</DialogTitle></DialogHeader>
+        {success ? (
+          <div className="py-6 text-center text-emerald-600 font-medium">Password updated successfully!</div>
+        ) : (
+          <div className="space-y-3 pt-2">
+            <div className="space-y-1"><Label>New Password *</Label><Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" /></div>
+            <div className="space-y-1"><Label>Confirm Password *</Label><Input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Repeat password" /></div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </div>
+        )}
+        {!success && (
+          <DialogFooter className="border-t pt-3 mt-2">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSubmit} disabled={!newPassword || !confirm || saving}>
+              {saving ? "Saving..." : "Change Password"}
+            </Button>
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function EditUserDialog({
   user, open, onClose, departments, companies,
@@ -310,6 +363,7 @@ export function UsersList() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EditableUser | null>(null);
   const [permsFor, setPermsFor] = useState<{ id: number; name: string } | null>(null);
+  const [pwdChangeFor, setPwdChangeFor] = useState<EditableUser | null>(null);
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "user", departmentId: "none", companyId: "all", permissionLevel: "user" });
   const queryClient = useQueryClient();
   const { data: users, isLoading } = useListUsers();
@@ -470,6 +524,17 @@ export function UsersList() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        title="Change password"
+                        onClick={() => setPwdChangeFor({
+                          id: u.id, name: u.name, email: u.email, phone, role: u.role,
+                          isActive: u.isActive, permissionLevel: lvl, departmentId, companyId,
+                        })}
+                      >
+                        <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         title={u.isActive ? "Deactivate" : "Activate"}
                         data-testid={`toggle-user-${u.id}`}
                         onClick={() => update.mutate({ id: u.id, data: { isActive: !u.isActive } })}
@@ -501,6 +566,13 @@ export function UsersList() {
           open={!!permsFor}
           onClose={() => setPermsFor(null)}
           isSuperAdmin={isSuperAdmin}
+        />
+      )}
+      {pwdChangeFor && (
+        <ChangePasswordDialog
+          user={pwdChangeFor}
+          open={!!pwdChangeFor}
+          onClose={() => setPwdChangeFor(null)}
         />
       )}
     </div>

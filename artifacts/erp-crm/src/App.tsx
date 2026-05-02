@@ -26,6 +26,8 @@ import { BankAccountsList } from "@/pages/accounts/bank-accounts";
 import { SuppliersList } from "@/pages/procurement/suppliers";
 import { PurchaseRequestsList } from "@/pages/procurement/purchase-requests";
 import { PurchaseOrdersList } from "@/pages/procurement/purchase-orders";
+import { PurchaseOrderDetail } from "@/pages/procurement/purchase-order-detail";
+import { ChequeDetail } from "@/pages/accounts/cheque-detail";
 import { InventoryItemsList } from "@/pages/inventory/items";
 import { StockEntriesList } from "@/pages/inventory/stock-entries";
 import { ProjectsList } from "@/pages/projects/index";
@@ -224,6 +226,13 @@ function Router() {
       </Route>
       <Route path="/admin/audit-logs">
         <AdminGuard><AuditLogsList /></AdminGuard>
+      </Route>
+
+      <Route path="/procurement/purchase-orders/:id">
+        {(params) => <ModuleGuard module="purchase_orders"><PurchaseOrderDetail id={params.id!} /></ModuleGuard>}
+      </Route>
+      <Route path="/accounts/cheques/:id">
+        {(params) => <ChequeDetail id={params.id!} />}
       </Route>
 
       <Route path="/notifications" component={NotificationsList} />

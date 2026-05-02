@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListPurchaseOrders, useCreatePurchaseOrder, useListSuppliers, useListCompanies } from "@workspace/api-client-react";
+import { useListPurchaseOrders, useCreatePurchaseOrder, useListSuppliers, useListCompanies, getListPurchaseOrdersQueryKey } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,8 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Download } from "lucide-react";
+import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { downloadCSV, tableToCSV } from "@/lib/export";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -34,8 +36,8 @@ export function PurchaseOrdersList() {
   const { data: companies } = useListCompanies();
   const create = useCreatePurchaseOrder({
     mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/purchase-orders"] });
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: getListPurchaseOrdersQueryKey() });
         setOpen(false);
         setForm({ supplierId: "", deliveryDate: "", paymentTerms: "30 days", deliveryAddress: "", notes: "", companyId: "" });
       },
@@ -50,6 +52,19 @@ export function PurchaseOrdersList() {
 
   const totalValue = filtered?.reduce((s, o) => s + (o.total ?? 0), 0) ?? 0;
 
+  const handleExportCSV = () => {
+    if (!filtered) return;
+    const rows = tableToCSV(filtered, [
+      { header: "PO Number", key: "poNumber" },
+      { header: "Supplier", key: "supplierName" as any },
+      { header: "Delivery Date", key: "deliveryDate" },
+      { header: "Payment Terms", key: "paymentTerms" },
+      { header: "Total (AED)", key: "total", format: v => (v as number ?? 0).toFixed(2) },
+      { header: "Status", key: "status" },
+    ]);
+    downloadCSV("purchase-orders.csv", rows);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -57,55 +72,58 @@ export function PurchaseOrdersList() {
           <h1 className="text-2xl font-bold tracking-tight">Purchase Orders</h1>
           <p className="text-muted-foreground">Official orders placed with suppliers.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
-              <Plus className="w-4 h-4 mr-2" />New PO
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>New Purchase Order</DialogTitle></DialogHeader>
-            <div className="space-y-3 pt-2">
-              <div className="space-y-1"><Label>Supplier *</Label>
-                <Select value={form.supplierId} onValueChange={v => setForm(p => ({...p, supplierId: v}))}>
-                  <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
-                  <SelectContent>{suppliers?.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>Company *</Label>
-                  <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="w-4 h-4 mr-1" />CSV</Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+                <Plus className="w-4 h-4 mr-2" />New PO
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader><DialogTitle>New Purchase Order</DialogTitle></DialogHeader>
+              <div className="space-y-3 pt-2">
+                <div className="space-y-1"><Label>Supplier *</Label>
+                  <Select value={form.supplierId} onValueChange={v => setForm(p => ({...p, supplierId: v}))}>
+                    <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
+                    <SelectContent>{suppliers?.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1"><Label>Delivery Date</Label><Input type="date" value={form.deliveryDate} onChange={e => setForm(p => ({...p, deliveryDate: e.target.value}))} /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1"><Label>Company *</Label>
+                    <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1"><Label>Delivery Date</Label><Input type="date" value={form.deliveryDate} onChange={e => setForm(p => ({...p, deliveryDate: e.target.value}))} /></div>
+                </div>
+                <div className="space-y-1"><Label>Payment Terms</Label>
+                  <Select value={form.paymentTerms} onValueChange={v => setForm(p => ({...p, paymentTerms: v}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="immediate">Immediate / Cash</SelectItem>
+                      <SelectItem value="15 days">Net 15 Days</SelectItem>
+                      <SelectItem value="30 days">Net 30 Days</SelectItem>
+                      <SelectItem value="45 days">Net 45 Days</SelectItem>
+                      <SelectItem value="60 days">Net 60 Days</SelectItem>
+                      <SelectItem value="advance">100% Advance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1"><Label>Delivery Address</Label><Input value={form.deliveryAddress} onChange={e => setForm(p => ({...p, deliveryAddress: e.target.value}))} placeholder="Site or warehouse address" /></div>
+                <div className="space-y-1"><Label>Notes / Instructions</Label><Textarea value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} rows={2} /></div>
               </div>
-              <div className="space-y-1"><Label>Payment Terms</Label>
-                <Select value={form.paymentTerms} onValueChange={v => setForm(p => ({...p, paymentTerms: v}))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immediate / Cash</SelectItem>
-                    <SelectItem value="15 days">Net 15 Days</SelectItem>
-                    <SelectItem value="30 days">Net 30 Days</SelectItem>
-                    <SelectItem value="45 days">Net 45 Days</SelectItem>
-                    <SelectItem value="60 days">Net 60 Days</SelectItem>
-                    <SelectItem value="advance">100% Advance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1"><Label>Delivery Address</Label><Input value={form.deliveryAddress} onChange={e => setForm(p => ({...p, deliveryAddress: e.target.value}))} placeholder="Site or warehouse address" /></div>
-              <div className="space-y-1"><Label>Notes / Instructions</Label><Textarea value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} rows={2} /></div>
-            </div>
-            <Button
-              className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
-              onClick={() => create.mutate({ data: { ...form, supplierId: parseInt(form.supplierId, 10), companyId: parseInt(form.companyId, 10) } as any })}
-              disabled={!form.supplierId || !form.companyId || create.isPending}
-            >
-              {create.isPending ? "Creating..." : "Create Purchase Order"}
-            </Button>
-          </DialogContent>
-        </Dialog>
+              <Button
+                className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                onClick={() => create.mutate({ data: { ...form, supplierId: parseInt(form.supplierId, 10), companyId: parseInt(form.companyId, 10) } as any })}
+                disabled={!form.supplierId || !form.companyId || create.isPending}
+              >
+                {create.isPending ? "Creating..." : "Create Purchase Order"}
+              </Button>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
@@ -143,8 +161,12 @@ export function PurchaseOrdersList() {
             {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
             filtered?.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No purchase orders found.</TableCell></TableRow> :
             filtered?.map(po => (
-              <TableRow key={po.id}>
-                <TableCell className="font-medium text-primary font-mono text-sm">{po.poNumber}</TableCell>
+              <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50">
+                <TableCell className="font-medium font-mono text-sm">
+                  <Link href={`/procurement/purchase-orders/${po.id}`} className="text-primary hover:underline">
+                    {po.poNumber}
+                  </Link>
+                </TableCell>
                 <TableCell className="font-medium">{(po as any).supplierName || "-"}</TableCell>
                 <TableCell className="text-sm">{po.deliveryDate || "-"}</TableCell>
                 <TableCell className="text-sm">{po.paymentTerms || "-"}</TableCell>
