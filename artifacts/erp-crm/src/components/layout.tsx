@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, Briefcase, Calendar, FileText, FileBox, Receipt,
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
-  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home
+  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail
 } from "lucide-react";
 import { useState } from "react";
 
@@ -93,6 +93,13 @@ const NAV: NavGroup[] = [
     icon: Wrench,
     items: [
       { href: "/assets", label: "Asset Register", icon: Wrench },
+    ],
+  },
+  {
+    label: "Email",
+    icon: Mail,
+    items: [
+      { href: "/email", label: "Email Panel", icon: Mail },
     ],
   },
   {

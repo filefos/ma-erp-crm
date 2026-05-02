@@ -19,6 +19,7 @@ import financeRouter from "./finance";
 import notificationsRouter from "./notifications";
 import dashboardRouter from "./dashboard";
 import rolesRouter from "./roles";
+import emailsRouter from "./emails";
 
 const router: IRouter = Router();
 
@@ -42,5 +43,6 @@ router.use(hrRouter);
 router.use(financeRouter);
 router.use(notificationsRouter);
 router.use(dashboardRouter);
+router.use(emailsRouter);
 
 export default router;

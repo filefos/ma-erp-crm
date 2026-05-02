@@ -24,6 +24,14 @@ pnpm workspace monorepo with React+Vite frontend, Express 5 backend, PostgreSQL 
 
 ## Key Commands
 
+## Modules / Features
+- Sales: Quotations (with revision bump R00→R01), Proforma Invoices, Delivery Notes, Invoices
+- Procurement, HR, Finance (Accounts), Assets, Projects, Inventory
+- **Email Panel** (`/email`): 3-pane Gmail-style email client — Inbox, Sent, Drafts, Trash, Starred. Compose, reply, star, mark read/unread, trash. SMTP sending via nodemailer (SMTP_HOST/SMTP_USER/SMTP_PASS env vars); falls back to DB-only if not configured. "Log Received" button to manually log inbound emails. Backend: `GET/POST/PATCH/DELETE /api/emails`, `emails` table in DB.
+- Notifications, Roles & Permissions, Audit Logs, Admin panels
+
+## Key Commands
+
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec

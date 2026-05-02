@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS "emails" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "company_id" integer,
+  "folder" text NOT NULL DEFAULT 'inbox',
+  "from_address" text NOT NULL,
+  "from_name" text,
+  "to_address" text NOT NULL,
+  "to_name" text,
+  "cc_address" text,
+  "bcc_address" text,
+  "subject" text NOT NULL,
+  "body" text NOT NULL,
+  "is_read" boolean NOT NULL DEFAULT false,
+  "is_starred" boolean NOT NULL DEFAULT false,
+  "reply_to_id" integer,
+  "sent_at" timestamp,
+  "created_by_id" integer,
+  "created_at" timestamp NOT NULL DEFAULT now(),
+  "updated_at" timestamp NOT NULL DEFAULT now()
+);

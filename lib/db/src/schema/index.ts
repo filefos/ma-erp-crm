@@ -15,3 +15,4 @@ export * from "./assets";
 export * from "./hr";
 export * from "./finance";
 export * from "./notifications";
+export * from "./emails";

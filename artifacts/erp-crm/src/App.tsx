@@ -55,6 +55,7 @@ import { AdminGuard } from "@/components/AdminGuard";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { NotificationsList } from "@/pages/notifications/index";
 import { MyProfile } from "@/pages/profile/index";
+import { EmailPanel } from "@/pages/email/index";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -247,6 +248,7 @@ function Router() {
 
       <Route path="/notifications" component={NotificationsList} />
       <Route path="/profile" component={MyProfile} />
+      <Route path="/email" component={EmailPanel} />
 
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
