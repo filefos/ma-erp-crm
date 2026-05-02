@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
 import {
-  useGetProcurementDashboard, useListSuppliers, useListPurchaseRequests,
+  useListSuppliers, useListPurchaseRequests,
   useListPurchaseOrders, useListRfqs, useListSupplierQuotations,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
@@ -29,7 +29,10 @@ function fmtAED(v: number): string {
 
 export default function ProcurementDashboardPage() {
   const { filterByCompany } = useActiveCompany();
-  const { data: summary }      = useGetProcurementDashboard();
+  // We deliberately do NOT call useGetProcurementDashboard() — that
+  // endpoint is not active-company scoped, so its KPI numbers would leak
+  // values from other tenants into this executive view. All KPIs below
+  // are derived from already company-filtered list data.
   const { data: suppliersRaw } = useListSuppliers({});
   const { data: prsRaw }       = useListPurchaseRequests({});
   const { data: posRaw }       = useListPurchaseOrders();
@@ -42,16 +45,18 @@ export default function ProcurementDashboardPage() {
   const rfqs      = useMemo(() => filterByCompany(rfqsRaw      ?? []), [rfqsRaw,      filterByCompany]);
   const sqs       = useMemo(() => filterByCompany(sqsRaw       ?? []), [sqsRaw,       filterByCompany]);
 
-  // KPIs from summary as fallback + computed live
-  const totalSuppliers = suppliers.length || (summary?.totalSuppliers ?? 0);
-  const activeSuppliers = suppliers.filter((s: any) => s.isActive !== false).length || (summary?.activeSuppliers ?? 0);
-  const prPending = prs.filter((p: any) => (p.status ?? "").toLowerCase() === "pending_approval").length || (summary?.prPending ?? 0);
-  const prApproved = prs.filter((p: any) => (p.status ?? "").toLowerCase() === "approved").length || (summary?.prApproved ?? 0);
-  const rfqSent = rfqs.filter((r: any) => (r.status ?? "").toLowerCase() === "sent").length || (summary?.rfqSent ?? 0);
-  const sqReceived = sqs.length || (summary?.sqReceived ?? 0);
-  const poIssued = pos.filter((p: any) => !["draft", "pending_approval"].includes((p.status ?? "").toLowerCase())).length || (summary?.poIssued ?? 0);
-  const poPending = pos.filter((p: any) => (p.status ?? "").toLowerCase() === "pending_approval").length || (summary?.poPending ?? 0);
-  const totalPoValue = pos.reduce((s: number, p: any) => s + Number(p.grandTotal ?? p.totalAmount ?? 0), 0) || Number(summary?.totalPoValue ?? 0);
+  // KPIs computed live from company-scoped data only — preserves real
+  // zero counts (was previously falling back to non-scoped summary via
+  // `||`, which both leaked data and overwrote legitimate zeros).
+  const totalSuppliers  = suppliers.length;
+  const activeSuppliers = suppliers.filter((s: any) => s.isActive !== false).length;
+  const prPending  = prs.filter((p: any) => (p.status ?? "").toLowerCase() === "pending_approval").length;
+  const prApproved = prs.filter((p: any) => (p.status ?? "").toLowerCase() === "approved").length;
+  const rfqSent    = rfqs.filter((r: any) => (r.status ?? "").toLowerCase() === "sent").length;
+  const sqReceived = sqs.length;
+  const poIssued   = pos.filter((p: any) => !["draft", "pending_approval"].includes((p.status ?? "").toLowerCase())).length;
+  const poPending  = pos.filter((p: any) => (p.status ?? "").toLowerCase() === "pending_approval").length;
+  const totalPoValue = pos.reduce((s: number, p: any) => s + Number(p.grandTotal ?? p.totalAmount ?? 0), 0);
   const avgPoValue = pos.length > 0 ? totalPoValue / pos.length : 0;
 
   // Sparklines

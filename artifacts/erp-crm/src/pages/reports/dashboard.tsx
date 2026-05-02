@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useMemo } from "react";
 import {
-  useGetDashboardSummary, useListQuotations, useListTaxInvoices, useListProjects,
+  useListQuotations, useListTaxInvoices, useListProjects,
   useListExpenses, useListPurchaseOrders, useListAttendance, useListInventoryItems,
   useListEmployees,
 } from "@workspace/api-client-react";
@@ -38,7 +38,6 @@ const REPORTS = [
 
 export function ReportsDashboard() {
   const { filterByCompany } = useActiveCompany();
-  const { data: summary } = useGetDashboardSummary();
   const { data: quotationsRaw } = useListQuotations();
   const { data: invoicesRaw }   = useListTaxInvoices();
   const { data: projectsRaw }   = useListProjects({});
@@ -49,6 +48,10 @@ export function ReportsDashboard() {
   const { data: leadsRaw }      = useListLeads({});
   const { data: dealsRaw }      = useListDeals();
   const { data: employeesRaw }  = useListEmployees({});
+  // Note: we intentionally do NOT call useGetDashboardSummary() here —
+  // that endpoint is not active-company scoped, so its values would leak
+  // numbers from other companies into the executive Reports header. All
+  // figures below are derived from the company-filtered list data above.
 
   const quotations = useMemo(() => filterByCompany(quotationsRaw ?? []), [quotationsRaw, filterByCompany]);
   const invoices   = useMemo(() => filterByCompany(invoicesRaw   ?? []), [invoicesRaw,   filterByCompany]);
@@ -74,6 +77,21 @@ export function ReportsDashboard() {
 
   // ---- KPIs ----
   const totalRevenue   = invoices.reduce((s: number, i: any) => s + Number(i.grandTotal ?? 0), 0);
+  // Derived (company-scoped) replacements for the previously-unscoped
+  // `summary` figures rendered in the Reporting Highlights banner.
+  const dealsValue          = deals.reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+  const outstandingReceivables = invoices.reduce((s: number, i: any) => {
+    const status = (i.paymentStatus ?? i.status ?? "").toLowerCase();
+    if (status === "paid" || status === "cancelled" || status === "void") return s;
+    const total = Number(i.grandTotal ?? 0);
+    const paid  = Number(i.amountPaid ?? i.paidAmount ?? 0);
+    return s + Math.max(0, total - paid);
+  }, 0);
+  const _now = new Date();
+  const _monthStart = new Date(_now.getFullYear(), _now.getMonth(), 1).getTime();
+  const wonDealsValueThisMonth = deals
+    .filter((d: any) => d.stage === "won" && new Date(d.updatedAt ?? d.closedAt ?? d.createdAt).getTime() >= _monthStart)
+    .reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
   const totalQuoted    = quotations.reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
   const totalExpenses  = expenses.reduce((s: number, e: any) => s + Number(e.amount ?? 0), 0);
   const totalPoSpend   = pos.reduce((s: number, p: any) => s + Number(p.grandTotal ?? p.totalAmount ?? 0), 0);
@@ -182,15 +200,15 @@ export function ReportsDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
           <div className="rounded-lg p-3 bg-muted/40">
             <div className="text-[11px] text-muted-foreground">Deals value (open + won)</div>
-            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.dealsValue ?? 0))}</div>
+            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(dealsValue)}</div>
           </div>
           <div className="rounded-lg p-3 bg-muted/40">
             <div className="text-[11px] text-muted-foreground">Outstanding receivables</div>
-            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.outstandingReceivables ?? 0))}</div>
+            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(outstandingReceivables)}</div>
           </div>
           <div className="rounded-lg p-3 bg-muted/40">
             <div className="text-[11px] text-muted-foreground">Won deals · this month</div>
-            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(summary?.wonDealsValue ?? 0))}</div>
+            <div className="text-lg font-bold text-[#0f2d5a] dark:text-white">{fmtAED(wonDealsValueThisMonth)}</div>
           </div>
         </div>
       </div>

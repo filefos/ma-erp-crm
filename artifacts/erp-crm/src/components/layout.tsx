@@ -150,30 +150,33 @@ const NAV: NavGroup[] = [
 
 const ADMIN_LEVELS = new Set(["super_admin", "company_admin"]);
 // Department/role admins see their own department's groups in full.
+// Email is a personal productivity surface — every non-admin role gets it
+// in addition to their domain groups so they can read/send mail and view
+// their own engagement metrics.
 const DEPT_GROUPS: Record<string, string[]> = {
-  Sales: ["CRM", "Sales"],
-  Accounts: ["Accounts"],
-  Finance: ["Accounts", "Reports"],
-  Procurement: ["Procurement"],
-  Store: ["Inventory"],
-  Inventory: ["Inventory"],
-  Assets: ["Assets"],
-  HR: ["HR"],
-  Production: ["Projects", "Assets"],
-  Management: ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports"],
-  "Main Admin": ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports"],
+  Sales:        ["CRM", "Sales", "Email"],
+  Accounts:     ["Accounts", "Email"],
+  Finance:      ["Accounts", "Reports", "Email"],
+  Procurement:  ["Procurement", "Email"],
+  Store:        ["Inventory", "Email"],
+  Inventory:    ["Inventory", "Email"],
+  Assets:       ["Assets", "Email"],
+  HR:           ["HR", "Email"],
+  Production:   ["Projects", "Assets", "Email"],
+  Management:   ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
+  "Main Admin": ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
 };
 // Fallback by role code (for users with role-driven access when department is missing).
 const ROLE_GROUPS: Record<string, string[]> = {
-  sales: ["CRM", "Sales"],
-  accounts: ["Accounts"],
-  finance: ["Accounts", "Reports"],
-  procurement: ["Procurement"],
-  store: ["Inventory"],
-  inventory: ["Inventory"],
-  hr: ["HR"],
-  production: ["Projects", "Assets"],
-  management: ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports"],
+  sales:       ["CRM", "Sales", "Email"],
+  accounts:    ["Accounts", "Email"],
+  finance:     ["Accounts", "Reports", "Email"],
+  procurement: ["Procurement", "Email"],
+  store:       ["Inventory", "Email"],
+  inventory:   ["Inventory", "Email"],
+  hr:          ["HR", "Email"],
+  production:  ["Projects", "Assets", "Email"],
+  management:  ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
 };
 
 function visibleGroupsFor(user: { permissionLevel?: string; role?: string; departmentName?: string } | undefined): NavGroup[] {
@@ -191,6 +194,8 @@ function visibleGroupsFor(user: { permissionLevel?: string; role?: string; depar
     // Conservative default — at minimum let them see CRM if no mapping.
     allowedLabels.add("CRM");
   }
+  // Email is universally available to non-admin users regardless of mapping.
+  allowedLabels.add("Email");
   return nonAdminNav.filter(g => allowedLabels.has(g.label));
 }
 
