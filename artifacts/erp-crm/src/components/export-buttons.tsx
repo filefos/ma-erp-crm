@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,6 +42,20 @@ function buildWordHtml(innerHtml: string): string {
 </html>`;
 }
 
+function extractTableRows(table: HTMLTableElement): (string | number)[][] {
+  const rows: (string | number)[][] = [];
+  for (const tr of Array.from(table.rows)) {
+    const cells: (string | number)[] = [];
+    for (const cell of Array.from(tr.cells)) {
+      const text = (cell.textContent ?? "").trim();
+      const num = Number(text.replace(/,/g, ""));
+      cells.push(!isNaN(num) && text !== "" ? num : text);
+    }
+    rows.push(cells);
+  }
+  return rows;
+}
+
 export function ExportButtons({ docNumber }: ExportButtonsProps) {
   const handlePrint = () => {
     const prev = document.title;
@@ -67,26 +81,39 @@ export function ExportButtons({ docNumber }: ExportButtonsProps) {
     URL.revokeObjectURL(url);
   };
 
-  const handleExcel = () => {
+  const handleExcel = async () => {
     const el = getPrintEl();
     if (!el) return;
-    const tables = Array.from(el.querySelectorAll("table"));
+    const tables = Array.from(el.querySelectorAll("table")) as HTMLTableElement[];
     if (tables.length === 0) return;
 
-    const wb = XLSX.utils.book_new();
+    const wb = new ExcelJS.Workbook();
     const sheetNames = ["Company-Client", "Line Items", "Additional Items", "Totals", "Sheet5"];
 
-    tables.forEach((tbl, idx) => {
-      const ws = XLSX.utils.table_to_sheet(tbl as HTMLTableElement, { raw: false });
-      const cols: XLSX.ColInfo[] = [];
-      const range = XLSX.utils.decode_range(ws["!ref"] ?? "A1");
-      for (let c = range.s.c; c <= range.e.c; c++) cols.push({ wch: 22 });
-      ws["!cols"] = cols;
+    for (let idx = 0; idx < tables.length; idx++) {
+      const tbl = tables[idx];
       const name = (sheetNames[idx] ?? `Sheet${idx + 1}`).slice(0, 31);
-      XLSX.utils.book_append_sheet(wb, ws, name);
-    });
+      const ws = wb.addWorksheet(name);
+      const rows = extractTableRows(tbl);
+      const maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+      ws.columns = Array.from({ length: maxCols }, () => ({ width: 22 }));
+      for (const row of rows) {
+        ws.addRow(row);
+      }
+    }
 
-    XLSX.writeFile(wb, `${docNumber}.xlsx`);
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${docNumber}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -108,7 +135,7 @@ export function ExportButtons({ docNumber }: ExportButtonsProps) {
             <FileText className="w-4 h-4 mr-2 text-blue-600" />
             Word Document (.doc)
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleExcel}>
+          <DropdownMenuItem onClick={() => void handleExcel()}>
             <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
             Excel Spreadsheet (.xlsx)
           </DropdownMenuItem>

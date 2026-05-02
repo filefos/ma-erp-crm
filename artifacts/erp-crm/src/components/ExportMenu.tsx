@@ -72,7 +72,7 @@ export function ExportMenu({ data, columns, filename, title, size = "sm", defaul
             <FileText className="w-4 h-4 text-red-500" /> Save as PDF
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => downloadExcel(filename, rows())} className="gap-2">
+          <DropdownMenuItem onClick={() => void downloadExcel(filename, rows()).catch(console.error)} className="gap-2">
             <FileSpreadsheet className="w-4 h-4 text-green-600" /> Export Excel (.xlsx)
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => downloadCSV(filename, rows())} className="gap-2">
