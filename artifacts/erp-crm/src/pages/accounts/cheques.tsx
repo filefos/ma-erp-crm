@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListCheques, useCreateCheque, useListBankAccounts, useListCompanies, getListChequesQueryKey } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,8 @@ export function ChequesList() {
     },
   });
 
-  const filtered = cheques?.filter(c =>
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(cheques ?? []).filter(c =>
     !search ||
     c.chequeNumber.toLowerCase().includes(search.toLowerCase()) ||
     c.payeeName.toLowerCase().includes(search.toLowerCase())

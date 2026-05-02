@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListContacts, useCreateContact, useDeleteContact } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ export function ContactsList() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: contacts, isLoading } = useListContacts({ search: search || undefined });
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(contacts ?? []);
   const create = useCreateContact({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }); setOpen(false); } } });
 
   const [form, setForm] = useState({ name: "", email: "", phone: "", whatsapp: "", companyName: "", designation: "" });
@@ -28,7 +31,7 @@ export function ContactsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(contacts ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Name", key: "name" },
               { header: "Email", key: "email" },
@@ -79,8 +82,8 @@ export function ContactsList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            contacts?.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow> :
-            contacts?.map(c => (
+            filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow> :
+            filtered.map(c => (
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell>{c.companyName || "-"}</TableCell>

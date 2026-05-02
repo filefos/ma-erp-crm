@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListLpos, useCreateLpo, useListCompanies } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,8 @@ export function LposList() {
     },
   });
 
-  const filtered = lpos?.filter(l =>
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(lpos ?? []).filter(l =>
     !search ||
     l.lpoNumber.toLowerCase().includes(search.toLowerCase()) ||
     l.clientName.toLowerCase().includes(search.toLowerCase())

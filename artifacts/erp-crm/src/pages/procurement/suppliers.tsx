@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListSuppliers, useCreateSupplier } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ export function SuppliersList() {
   const [form, setForm] = useState({ name: "", contactPerson: "", email: "", phone: "", address: "", trn: "", category: "", paymentTerms: "" });
   const queryClient = useQueryClient();
   const { data: suppliers, isLoading } = useListSuppliers({ search: search || undefined });
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(suppliers ?? []);
   const create = useCreateSupplier({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() }); setOpen(false); } } });
 
   return (
@@ -28,7 +31,7 @@ export function SuppliersList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(suppliers ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Supplier Name", key: "name" },
               { header: "Contact Person", key: "contactPerson" },
@@ -78,8 +81,8 @@ export function SuppliersList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            suppliers?.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No suppliers found.</TableCell></TableRow> :
-            suppliers?.map(s => (
+            filtered.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No suppliers found.</TableCell></TableRow> :
+            filtered.map(s => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium">{s.name}</TableCell>
                 <TableCell>{s.contactPerson || "-"}</TableCell>

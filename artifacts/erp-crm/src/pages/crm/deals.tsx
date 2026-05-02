@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListDeals, useCreateDeal } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,8 @@ export function DealsList() {
   const { data: deals, isLoading } = useListDeals();
   const create = useCreateDeal({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() }); setOpen(false); } } });
 
-  const filtered = deals?.filter(d => !search || d.title.toLowerCase().includes(search.toLowerCase()) || d.clientName?.toLowerCase().includes(search.toLowerCase()));
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(deals ?? []).filter(d => !search || d.title.toLowerCase().includes(search.toLowerCase()) || d.clientName?.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-4">

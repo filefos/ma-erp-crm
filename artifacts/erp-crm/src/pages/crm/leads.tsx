@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListLeads, useCreateLead, useListCompanies } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,8 @@ export function LeadsList() {
     },
   });
 
-  const filtered = leads?.filter(l => {
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(leads ?? []).filter(l => {
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
     if (scoreFilter !== "all" && l.leadScore !== scoreFilter) return false;
     return true;

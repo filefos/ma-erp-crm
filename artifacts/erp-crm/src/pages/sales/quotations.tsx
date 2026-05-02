@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListQuotations, useApproveQuotation } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ export function QuotationsList() {
   const queryClient = useQueryClient();
   const { data: quotations, isLoading } = useListQuotations({ status: status === "all" ? undefined : status, search: search || undefined });
   const approve = useApproveQuotation({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListQuotationsQueryKey() }) } });
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(quotations ?? []);
 
   return (
     <div className="space-y-4">
@@ -35,7 +38,7 @@ export function QuotationsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(quotations ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Quotation No.", key: "quotationNumber" },
               { header: "Client", key: "clientName" },
@@ -81,8 +84,8 @@ export function QuotationsList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            quotations?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No quotations found.</TableCell></TableRow> :
-            quotations?.map(q => (
+            filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No quotations found.</TableCell></TableRow> :
+            filtered.map(q => (
               <TableRow key={q.id}>
                 <TableCell className="font-medium">
                   <Link href={`/sales/quotations/${q.id}`} className="text-primary hover:underline">{q.quotationNumber}</Link>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListStockEntries, useCreateStockEntry, useListInventoryItems } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ export function StockEntriesList() {
   const queryClient = useQueryClient();
   const { data: entries, isLoading } = useListStockEntries();
   const { data: items } = useListInventoryItems();
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(entries ?? []);
   const create = useCreateStockEntry({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListStockEntriesQueryKey() }); queryClient.invalidateQueries({ queryKey: getListInventoryItemsQueryKey() }); setOpen(false); } } });
 
   return (
@@ -36,7 +39,7 @@ export function StockEntriesList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(entries ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Date", key: "date" },
               { header: "Type", key: "type" },
@@ -98,8 +101,8 @@ export function StockEntriesList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            entries?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No stock entries found.</TableCell></TableRow> :
-            entries?.map((e: any) => (
+            filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No stock entries found.</TableCell></TableRow> :
+            filtered.map((e: any) => (
               <TableRow key={e.id}>
                 <TableCell className="font-mono text-xs text-primary">{e.entryNumber}</TableCell>
                 <TableCell><Badge variant="secondary" className={typeColors[e.type] ?? ""}>{e.type?.replace("_"," ")}</Badge></TableCell>

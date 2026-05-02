@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListProformaInvoices, useCreateProformaInvoice, useListCompanies } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,8 @@ export function ProformaInvoicesList() {
     } as any });
   };
 
-  const filtered = invoices?.filter(i =>
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(invoices ?? []).filter(i =>
     !search ||
     i.piNumber.toLowerCase().includes(search.toLowerCase()) ||
     i.clientName.toLowerCase().includes(search.toLowerCase())

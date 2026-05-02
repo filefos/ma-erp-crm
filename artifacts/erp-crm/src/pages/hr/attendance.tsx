@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListAttendance, useCreateAttendance, useListEmployees } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,8 @@ export function AttendanceList() {
     },
   });
 
-  const filtered = attendance?.filter(a => employeeFilter === "all" || a.employeeId === parseInt(employeeFilter, 10));
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(attendance ?? []).filter(a => employeeFilter === "all" || a.employeeId === parseInt(employeeFilter, 10));
 
   const present = filtered?.filter(a => a.status === "present").length ?? 0;
   const absent = filtered?.filter(a => a.status === "absent").length ?? 0;

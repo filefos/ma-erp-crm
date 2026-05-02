@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListPurchaseRequests, useCreatePurchaseRequest, useListCompanies } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,8 @@ export function PurchaseRequestsList() {
     },
   });
 
-  const filtered = requests?.filter(r =>
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(requests ?? []).filter(r =>
     !search ||
     r.prNumber.toLowerCase().includes(search.toLowerCase()) ||
     (r.description ?? "").toLowerCase().includes(search.toLowerCase())

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListPurchaseOrders, useCreatePurchaseOrder, useListSuppliers, useListCompanies, getListPurchaseOrdersQueryKey } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,8 @@ export function PurchaseOrdersList() {
     },
   });
 
-  const filtered = orders?.filter(o =>
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(orders ?? []).filter(o =>
     !search ||
     o.poNumber.toLowerCase().includes(search.toLowerCase()) ||
     ((o as any).supplierName ?? "").toLowerCase().includes(search.toLowerCase())

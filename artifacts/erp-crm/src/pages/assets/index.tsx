@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListAssets, useCreateAsset } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ export function AssetsList() {
   const [form, setForm] = useState({ name: "", category: "Machinery", purchaseDate: "", purchaseValue: "", currentLocation: "", assignedTo: "", condition: "good", companyId: "", notes: "" });
   const queryClient = useQueryClient();
   const { data: assets, isLoading } = useListAssets({ search: search || undefined });
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(assets ?? []);
   const { data: companies } = useListCompanies();
   const create = useCreateAsset({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListAssetsQueryKey() }); setOpen(false); } } });
 
@@ -38,7 +41,7 @@ export function AssetsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(assets ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Asset Name", key: "name" },
               { header: "Category", key: "category" },
@@ -107,8 +110,8 @@ export function AssetsList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            assets?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No assets found.</TableCell></TableRow> :
-            assets?.map(a => (
+            filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No assets found.</TableCell></TableRow> :
+            filtered.map(a => (
               <TableRow key={a.id}>
                 <TableCell className="font-mono text-xs text-primary">{a.assetId}</TableCell>
                 <TableCell className="font-medium">{a.name}</TableCell>

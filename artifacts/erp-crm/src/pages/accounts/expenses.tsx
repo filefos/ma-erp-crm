@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListExpenses, useCreateExpense } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,8 @@ export function ExpensesList() {
   const { data: companies } = useListCompanies();
   const create = useCreateExpense({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() }); setOpen(false); } } });
 
-  const filtered = expenses?.filter(e => !search || e.category.toLowerCase().includes(search.toLowerCase()) || e.description?.toLowerCase().includes(search.toLowerCase()));
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(expenses ?? []).filter(e => !search || e.category.toLowerCase().includes(search.toLowerCase()) || e.description?.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-4">

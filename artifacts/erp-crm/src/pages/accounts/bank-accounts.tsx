@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListBankAccounts, useCreateBankAccount, useListCompanies } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ export function BankAccountsList() {
   const queryClient = useQueryClient();
   const { data: accounts, isLoading } = useListBankAccounts();
   const { data: companies } = useListCompanies();
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(accounts ?? []);
   const create = useCreateBankAccount({
     mutation: {
       onSuccess: () => {
@@ -44,7 +47,7 @@ export function BankAccountsList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(accounts ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Bank Name", key: "bankName" },
               { header: "Account Name", key: "accountName" },
@@ -97,7 +100,7 @@ export function BankAccountsList() {
 
       {isLoading ? <div className="text-muted-foreground">Loading...</div> :
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {accounts?.map(acc => (
+        {filtered.map(acc => (
           <Card key={acc.id} className="relative overflow-hidden hover:shadow-md transition-shadow">
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
@@ -138,7 +141,7 @@ export function BankAccountsList() {
             </CardContent>
           </Card>
         ))}
-        {accounts?.length === 0 && (
+        {filtered.length === 0 && (
           <div className="col-span-3 text-center py-16 text-muted-foreground">
             <Landmark className="w-12 h-12 mx-auto mb-3 opacity-20" />
             No bank accounts found. Add your first account.

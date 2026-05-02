@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useListNotifications } from "@workspace/api-client-react";
@@ -227,6 +228,7 @@ function NotificationBell() {
 
 function SidebarContent() {
   const { user, logout } = useAuth();
+  const { companyShort, poweredBy } = useActiveCompany();
   const u = user as { name?: string; permissionLevel?: string; role?: string; departmentName?: string } | undefined;
   const level = u?.permissionLevel ?? "user";
   const visibleGroups = visibleGroupsFor(u);
@@ -240,8 +242,8 @@ function SidebarContent() {
             <Building2 className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="text-sm font-bold text-white leading-tight">Prime Max</div>
-            <div className="text-[11px] text-white/50 leading-tight">& Elite Prefab ERP</div>
+            <div className="text-sm font-bold text-white leading-tight">{companyShort}</div>
+            <div className="text-[11px] text-white/50 leading-tight">Powered by {poweredBy}</div>
           </div>
         </div>
       </div>

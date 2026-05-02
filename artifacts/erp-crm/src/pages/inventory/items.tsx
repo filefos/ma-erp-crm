@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListInventoryItems, useCreateInventoryItem } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ export function InventoryItemsList() {
   const [form, setForm] = useState({ name: "", category: "Steel & Structure", unit: "nos", openingStock: "0", minimumStock: "0", unitCost: "0", warehouseLocation: "" });
   const queryClient = useQueryClient();
   const { data: items, isLoading } = useListInventoryItems({ search: search || undefined, category: category === "all" ? undefined : category });
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(items ?? []);
   const create = useCreateInventoryItem({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInventoryItemsQueryKey() }); setOpen(false); } } });
 
   const lowStockCount = items?.filter(i => i.currentStock <= i.minimumStock).length ?? 0;
@@ -34,7 +37,7 @@ export function InventoryItemsList() {
         </div>
         <div className="flex items-center gap-3">
           <ExportMenu
-            data={(items ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Item Name", key: "name" },
               { header: "Category", key: "category" },
@@ -109,8 +112,8 @@ export function InventoryItemsList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            items?.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found.</TableCell></TableRow> :
-            items?.map(item => {
+            filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found.</TableCell></TableRow> :
+            filtered.map(item => {
               const isLow = item.currentStock <= item.minimumStock;
               return (
                 <TableRow key={item.id} className={isLow ? "bg-red-50/50 dark:bg-red-900/10" : ""}>

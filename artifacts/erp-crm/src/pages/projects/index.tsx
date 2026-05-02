@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListProjects } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,8 @@ export function ProjectsList() {
   const [search, setSearch] = useState("");
   const [stage, setStage] = useState("all");
   const { data: projects, isLoading } = useListProjects({ stage: stage === "all" ? undefined : stage, search: search || undefined });
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(projects ?? []);
 
   return (
     <div className="space-y-4">
@@ -39,7 +42,7 @@ export function ProjectsList() {
           <p className="text-muted-foreground">Track all active and completed prefab projects.</p>
         </div>
         <ExportMenu
-          data={(projects ?? []) as Record<string, unknown>[]}
+          data={filtered as Record<string, unknown>[]}
           columns={[
             { header: "Project Name", key: "name" },
             { header: "Client", key: "clientName" },
@@ -82,8 +85,8 @@ export function ProjectsList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            projects?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No projects found.</TableCell></TableRow> :
-            projects?.map(p => {
+            filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No projects found.</TableCell></TableRow> :
+            filtered.map(p => {
               const progress = getProgress(p);
               return (
                 <TableRow key={p.id}>

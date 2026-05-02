@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListDeliveryNotes, useCreateDeliveryNote, useListCompanies } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,8 @@ export function DeliveryNotesList() {
     },
   });
 
-  const filtered = notes?.filter(n =>
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(notes ?? []).filter(n =>
     !search ||
     n.dnNumber.toLowerCase().includes(search.toLowerCase()) ||
     n.clientName.toLowerCase().includes(search.toLowerCase())

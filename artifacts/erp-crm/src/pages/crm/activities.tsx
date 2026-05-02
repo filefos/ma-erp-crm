@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListActivities, useCreateActivity } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,8 @@ export function ActivitiesList() {
   const [form, setForm] = useState({ type: "call", subject: "", description: "", dueDate: "" });
   const queryClient = useQueryClient();
   const { data: activities, isLoading } = useListActivities();
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(activities ?? []);
   const create = useCreateActivity({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() }); setOpen(false); } } });
 
   return (
@@ -31,7 +34,7 @@ export function ActivitiesList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(activities ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Type", key: "type" },
               { header: "Subject", key: "subject" },
@@ -79,8 +82,8 @@ export function ActivitiesList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            activities?.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No activities found.</TableCell></TableRow> :
-            activities?.map((a: any) => (
+            filtered.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No activities found.</TableCell></TableRow> :
+            filtered.map((a: any) => (
               <TableRow key={a.id} className={a.isDone ? "opacity-60" : ""}>
                 <TableCell>{a.isDone ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Circle className="w-4 h-4 text-muted-foreground" />}</TableCell>
                 <TableCell><Badge variant="outline" className="capitalize">{a.type?.replace("_"," ")}</Badge></TableCell>

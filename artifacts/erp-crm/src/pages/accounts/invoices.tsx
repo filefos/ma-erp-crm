@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListTaxInvoices } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ export function TaxInvoicesList() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const { data: invoices, isLoading } = useListTaxInvoices({ search: search || undefined });
-  const filtered = invoices?.filter(i => status === "all" || i.paymentStatus === status);
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(invoices ?? []).filter(i => status === "all" || i.paymentStatus === status);
 
   const totalOutstanding = filtered?.reduce((s, i) => s + (i.balance ?? 0), 0) ?? 0;
 

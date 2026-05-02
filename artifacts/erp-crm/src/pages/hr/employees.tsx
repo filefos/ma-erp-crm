@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useListEmployees, useCreateEmployee } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ export function EmployeesList() {
   const [form, setForm] = useState({ name: "", type: "staff", designation: "", companyId: "", phone: "", email: "", nationality: "", siteLocation: "", joiningDate: "" });
   const queryClient = useQueryClient();
   const { data: employees, isLoading } = useListEmployees({ type: type === "all" ? undefined : type, search: search || undefined });
+  const { filterByCompany } = useActiveCompany();
+  const filtered = filterByCompany(employees ?? []);
   const { data: companies } = useListCompanies();
   const create = useCreateEmployee({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey() }); setOpen(false); } } });
 
@@ -32,7 +35,7 @@ export function EmployeesList() {
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
-            data={(employees ?? []) as Record<string, unknown>[]}
+            data={filtered as Record<string, unknown>[]}
             columns={[
               { header: "Emp. No.", key: "employeeNumber" },
               { header: "Name", key: "name" },
@@ -107,8 +110,8 @@ export function EmployeesList() {
           </TableHeader>
           <TableBody>
             {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            employees?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No employees found.</TableCell></TableRow> :
-            employees?.map(e => (
+            filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No employees found.</TableCell></TableRow> :
+            filtered.map(e => (
               <TableRow key={e.id}>
                 <TableCell className="font-mono text-xs text-primary">{e.employeeId}</TableCell>
                 <TableCell className="font-medium">{e.name}</TableCell>
