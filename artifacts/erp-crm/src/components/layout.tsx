@@ -9,7 +9,7 @@ import {
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
-  BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send,
+  BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -318,6 +318,22 @@ const ROUTE_LABELS: Record<string, string> = {
   "stock-entries": "Stock Entries", employees: "Employees", attendance: "Attendance",
 };
 
+// Each top-level category's "home" / landing route — used by the
+// "Back to <Category>" button that appears on every sub-page.
+const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
+  crm:         { label: "CRM",         href: "/crm" },
+  sales:       { label: "Sales",       href: "/sales/quotations" },
+  accounts:    { label: "Accounts",    href: "/accounts/invoices" },
+  procurement: { label: "Procurement", href: "/procurement/dashboard" },
+  inventory:   { label: "Inventory",   href: "/inventory/items" },
+  projects:    { label: "Projects",    href: "/projects" },
+  hr:          { label: "HR",          href: "/hr/employees" },
+  assets:      { label: "Assets",      href: "/assets" },
+  email:       { label: "Email",       href: "/email" },
+  reports:     { label: "Reports",     href: "/reports" },
+  admin:       { label: "Admin",       href: "/admin/companies" },
+};
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
@@ -339,6 +355,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       items.push({ label, href: path });
     }
     return items;
+  })();
+
+  // "Back to <Category>" target — only shows when the user is on a sub-page
+  // under a known main category and isn't already on that category's home.
+  const backTarget = (() => {
+    const parts = location.split("/").filter(Boolean);
+    if (parts.length < 2) return null;          // top-level category page or root
+    const cat = CATEGORY_HOMES[parts[0]];
+    if (!cat) return null;                       // unknown category
+    if (location === cat.href) return null;      // already on the category home
+    return cat;
   })();
 
   if (isLoading) {
@@ -388,7 +415,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {showBreadcrumb && (
-          <div className="border-b bg-muted/20 px-4 md:px-6 py-1.5 flex items-center gap-1 text-xs text-muted-foreground shrink-0 overflow-x-auto">
+          <div className="border-b bg-muted/20 px-4 md:px-6 py-1.5 flex items-center gap-2 text-xs text-muted-foreground shrink-0 overflow-x-auto">
+            {backTarget && (
+              <>
+                <Link
+                  href={backTarget.href}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#0f2d5a] text-white hover:bg-[#1e6ab0] transition-colors shrink-0 font-medium"
+                  data-testid="link-back-to-category"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to {backTarget.label}</span>
+                </Link>
+                <span className="h-4 w-px bg-border shrink-0" aria-hidden />
+              </>
+            )}
             <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1 shrink-0">
               <Home className="w-3 h-3" />
               <span>Home</span>
