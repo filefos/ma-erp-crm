@@ -213,6 +213,12 @@ The Sales/CRM module is being elevated to a "World-Class Executive CRM". Phase-2
 
 Deferred to a later phase (require backend/schema work): dedicated CRM Reports page, "Approved" deal stage, attachments / tags / priority / quantity fields, automation-rule engine, monthly sales targets table, deeper RBAC scoping (sales sees only own).
 
+### Task #2 — Final pass updates (May 2026)
+- **Projects Dashboard** now includes **Upcoming Handovers** panel (next 30 days, color-coded urgency: red overdue / orange ≤7d / blue) and **Revenue by Project** horizontal bar chart (top 8 by contract value, with invoiced overlay) per task spec.
+- **Email routes** (`/email`, `/email/dashboard`) are now ungated — Email is treated as a personal productivity surface available to every authenticated user. Sidebar Email group is appended unconditionally to non-admin users in `visibleGroupsFor()`.
+- **Reports Dashboard** no longer calls `useGetDashboardSummary()`. Deals value, Outstanding receivables, and Won-deals-this-month figures derived from already company-filtered deals + invoices.
+- **Procurement Dashboard** no longer calls `useGetProcurementDashboard()`. All KPI counts computed from company-filtered list data; the previous `computed || summary` fallback (which both leaked across tenants and clobbered legitimate zero counts) is removed.
+
 ## Important Notes
 
 - `lib/api-zod/src/index.ts` must only contain `export * from "./generated/api";` — codegen overwrites it

@@ -164,6 +164,43 @@ export function ProjectsDashboard() {
       .slice(0, 8);
   }, [projects]);
 
+  // ---- Upcoming handovers (next 30 days, not yet completed) ----
+  const upcomingHandovers = useMemo(() => {
+    const now = Date.now();
+    const horizon = 30 * 86_400_000;
+    return (projects as any[])
+      .filter(p => {
+        if (p.stage === "completed") return false;
+        if (!p.endDate) return false;
+        const t = new Date(p.endDate).getTime();
+        return t >= now - 7 * 86_400_000 && t <= now + horizon;
+      })
+      .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+      .slice(0, 8)
+      .map(p => ({
+        ...p,
+        daysToHandover: Math.ceil((new Date(p.endDate).getTime() - now) / 86_400_000),
+      }));
+  }, [projects]);
+
+  // ---- Revenue-by-project (top 8 by value, completed first) ----
+  const revenueByProject = useMemo(
+    () => [...projects]
+      .filter((p: any) => Number(p.projectValue ?? 0) > 0)
+      .sort((a: any, b: any) => Number(b.projectValue ?? 0) - Number(a.projectValue ?? 0))
+      .slice(0, 8)
+      .map((p: any) => ({
+        name: p.projectNumber ?? p.projectName?.slice(0, 18) ?? "—",
+        fullName: p.projectName,
+        value: Number(p.projectValue ?? 0),
+        invoiced: invoices
+          .filter((i: any) => i.projectId === p.id)
+          .reduce((s: number, i: any) => s + Number(i.grandTotal ?? 0), 0),
+        stage: p.stage,
+      })),
+    [projects, invoices],
+  );
+
   // ---- Risks ----
   const risks = useMemo(() => {
     const out: { tone: "red" | "amber" | "blue"; text: string; href?: string }[] = [];
@@ -347,6 +384,63 @@ export function ProjectsDashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Upcoming handovers + Revenue by project */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PanelCard title="Upcoming Handovers" subtitle="Next 30 days · scheduled completions" icon={Calendar}>
+          {upcomingHandovers.length === 0 ? (
+            <Empty>No handovers scheduled in the next 30 days.</Empty>
+          ) : (
+            <div className="space-y-2 max-h-[320px] overflow-y-auto" data-testid="list-handovers">
+              {upcomingHandovers.map((p: any) => {
+                const overdue = p.daysToHandover < 0;
+                const soon    = p.daysToHandover >= 0 && p.daysToHandover <= 7;
+                return (
+                  <Link key={p.id} href={`/projects/${p.id}`} className="block">
+                    <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center shrink-0 text-white ${overdue ? "bg-red-500" : soon ? "bg-orange-500" : "bg-[#1e6ab0]"}`}>
+                        <span className="text-xs font-bold leading-none">{Math.abs(p.daysToHandover)}d</span>
+                        <span className="text-[9px] leading-none mt-0.5">{overdue ? "late" : "to go"}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold truncate">{p.projectName}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">
+                          {p.projectNumber} · {p.clientName} · {STAGE_LABELS[p.stage] ?? p.stage}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(Number(p.projectValue ?? 0))}</div>
+                        <div className="text-[10px] text-muted-foreground">{new Date(p.endDate).toLocaleDateString("en-AE", { day: "2-digit", month: "short" })}</div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </PanelCard>
+
+        <PanelCard title="Revenue by Project" subtitle="Top 8 projects · contract value vs invoiced" icon={DollarSign}>
+          {revenueByProject.length === 0 ? (
+            <Empty>No project revenue recorded yet.</Empty>
+          ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={revenueByProject} layout="vertical" margin={{ left: 12, right: 12 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
+                <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={70} />
+                <Tooltip
+                  formatter={(v: number) => fmtAED(v)}
+                  labelFormatter={(_, p: any) => p?.[0]?.payload?.fullName ?? ""}
+                />
+                <Legend wrapperStyle={{ fontSize: 10 }} />
+                <Bar dataKey="value"    name="Contract value" fill="#1e6ab0" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="invoiced" name="Invoiced"       fill="#10b981" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </PanelCard>
       </div>
 
       {/* Activity Timeline */}
