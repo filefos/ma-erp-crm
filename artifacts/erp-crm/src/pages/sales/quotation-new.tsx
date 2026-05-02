@@ -139,10 +139,22 @@ export function QuotationNew() {
   const [specType, setSpecType] = useState<SpecTypeKey>(DEFAULT_SPEC_TYPE);
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
+  const [customSpecSection, setCustomSpecSection] = useState("");
 
   const handleSpecTypeChange = (key: SpecTypeKey) => {
     setSpecType(key);
     setForm(p => ({ ...p, techSpecs: getSpecTemplate(key) }));
+  };
+
+  const handleAddSpecSection = () => {
+    const name = customSpecSection.trim();
+    if (!name) return;
+    const heading = name.toUpperCase();
+    setForm(p => {
+      const sep = p.techSpecs.endsWith("\n") ? "\n" : "\n\n";
+      return { ...p, techSpecs: `${p.techSpecs}${sep}${heading}\na. ` };
+    });
+    setCustomSpecSection("");
   };
 
   const updateItem = (i: number, field: keyof Item, val: string | number) => {
@@ -551,6 +563,35 @@ export function QuotationNew() {
               rows={20}
               className="font-mono text-xs"
             />
+            <div className="flex items-end gap-2 mt-3">
+              <div className="flex-1 space-y-1">
+                <Label className="text-xs font-medium">Add Custom Section</Label>
+                <Input
+                  value={customSpecSection}
+                  onChange={e => setCustomSpecSection(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddSpecSection();
+                    }
+                  }}
+                  placeholder="e.g. Plumbing, HVAC, Painting…"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleAddSpecSection}
+                disabled={!customSpecSection.trim()}
+              >
+                <Plus className="w-4 h-4 mr-1" /> Add Section
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Appends a new uppercase section heading and an "a." bullet at the end of the spec — fill in the rest in the editor above.
+            </p>
           </CardContent>
         )}
       </Card>
