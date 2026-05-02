@@ -24,7 +24,7 @@ const PO_COLORS: Record<string, string> = {
   draft: "#94a3b8",
   sent: "#3b82f6",
   confirmed: "#8b5cf6",
-  partial: "#f59e0b",
+  partial: "#f97316",
   received: "#10b981",
   cancelled: "#ef4444",
 };
@@ -38,7 +38,7 @@ const LPO_COLORS: Record<string, string> = {
 
 const CATEGORY_PALETTE = [
   "#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#8b5cf6",
-  "#f59e0b", "#ef4444", "#14b8a6", "#6366f1", "#64748b",
+  "#f97316", "#ef4444", "#14b8a6", "#6366f1", "#64748b",
 ];
 
 function fmtAED(n: number) {
@@ -283,7 +283,7 @@ export function InventoryDashboard() {
               const toneClass = ins.tone === "red"
                 ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-400"
                 : ins.tone === "amber"
-                ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900 text-amber-700 dark:text-amber-400"
+                ? "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900 text-orange-700 dark:text-orange-400"
                 : ins.tone === "green"
                 ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400"
                 : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900 text-blue-700 dark:text-blue-400";
@@ -429,7 +429,7 @@ export function InventoryDashboard() {
         <div className="p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-semibold flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertTriangle className="w-4 h-4 text-orange-600" />
               Reorder Alerts
               <span className="text-[11px] font-normal text-muted-foreground">({lowStockItems.length + outOfStockItems.length} items)</span>
             </div>
@@ -446,14 +446,14 @@ export function InventoryDashboard() {
                 const reorderQty = Math.max(item.minimumStock * 2 - item.currentStock, item.minimumStock);
                 return (
                   <Link key={item.id} href="/inventory/items" className="block">
-                    <div className={`p-3 rounded-lg border bg-card hover:shadow-md transition-all ${isOut ? "border-red-300 dark:border-red-800" : "border-amber-300 dark:border-amber-800"}`}>
+                    <div className={`p-3 rounded-lg border bg-card hover:shadow-md transition-all ${isOut ? "border-red-300 dark:border-red-800" : "border-orange-300 dark:border-orange-800"}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="text-xs font-mono text-muted-foreground">{item.itemCode}</div>
                           <div className="text-sm font-semibold truncate">{item.name}</div>
                           <div className="text-[11px] text-muted-foreground">{item.category}</div>
                         </div>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${isOut ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"}`}>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${isOut ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" : "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300"}`}>
                           {isOut ? "OUT" : "LOW"}
                         </span>
                       </div>
@@ -669,7 +669,7 @@ export function InventoryDashboard() {
                 const Icon = isIn ? ArrowDownCircle : isOut ? ArrowUpCircle : Package;
                 const color = isIn ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
                   : isOut ? "text-red-600 bg-red-50 dark:bg-red-900/20"
-                  : "text-amber-600 bg-amber-50 dark:bg-amber-900/20";
+                  : "text-orange-600 bg-orange-50 dark:bg-orange-900/20";
                 return (
                   <div key={m.id} className="flex items-center justify-between py-2 gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -687,7 +687,7 @@ export function InventoryDashboard() {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className={`text-sm font-bold tabular-nums ${isIn ? "text-emerald-600" : isOut ? "text-red-600" : "text-amber-600"}`}>
+                      <div className={`text-sm font-bold tabular-nums ${isIn ? "text-emerald-600" : isOut ? "text-red-600" : "text-orange-600"}`}>
                         {isOut ? "−" : "+"}{m.quantity}
                       </div>
                       <div className="text-[10px] text-muted-foreground capitalize">{m.approvalStatus}</div>

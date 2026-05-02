@@ -17,7 +17,7 @@ interface Props { id: string }
 
 const PAYMENT_COLORS: Record<string, string> = {
   unpaid: "bg-red-100 text-red-800",
-  partial: "bg-amber-100 text-amber-800",
+  partial: "bg-orange-100 text-orange-800",
   paid: "bg-green-100 text-green-800",
 };
 

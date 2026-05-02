@@ -16,12 +16,12 @@ import { useQueryClient } from "@tanstack/react-query";
 const priorityColors: Record<string, string> = {
   low: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   normal: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  high: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  high: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   urgent: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
 const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  pending: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   approved: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
   ordered: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
@@ -127,7 +127,7 @@ export function PurchaseRequestsList() {
 
       {(pendingCount > 0 || urgentCount > 0) && (
         <div className="flex gap-3">
-          {pendingCount > 0 && <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400"><span className="font-semibold">{pendingCount}</span> awaiting approval</div>}
+          {pendingCount > 0 && <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg text-orange-700 text-sm dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400"><span className="font-semibold">{pendingCount}</span> awaiting approval</div>}
           {urgentCount > 0 && <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">🚨 <span className="font-semibold">{urgentCount}</span> urgent requests</div>}
         </div>
       )}

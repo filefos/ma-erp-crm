@@ -328,8 +328,8 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-xs text-amber-600 px-1">
-                <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+              <div className="flex items-center gap-1.5 text-xs text-orange-600 px-1">
+                <span className="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" />
                 Not connected
               </div>
             )}
@@ -397,7 +397,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                   </span>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {email.attachments && (email.attachments as any[]).length > 0 && <Paperclip className="w-2.5 h-2.5 text-gray-400" />}
-                    {email.isStarred && <Star className="w-3 h-3 text-amber-400 fill-amber-400" />}
+                    {email.isStarred && <Star className="w-3 h-3 text-orange-400 fill-orange-400" />}
                     {!email.isRead && email.folder === "inbox" && <span className="w-2 h-2 rounded-full bg-[#1e6ab0]" />}
                     <span className="text-[10px] text-gray-400">{formatDate(email.createdAt)}</span>
                   </div>
@@ -592,9 +592,9 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                   <span className="text-[11px] text-gray-400 ml-1">Max {MAX_ATTACH_MB}MB per file</span>
 
                   {!isConnected && (
-                    <div className="ml-auto flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2.5 py-1">
+                    <div className="ml-auto flex items-center gap-1.5 text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded px-2.5 py-1">
                       <span>SMTP not configured</span>
-                      <button className="underline font-medium hover:text-amber-900" onClick={() => setShowSettings(true)}>
+                      <button className="underline font-medium hover:text-orange-900" onClick={() => setShowSettings(true)}>
                         Connect
                       </button>
                     </div>
@@ -621,7 +621,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                   <Button variant="ghost" size="icon" className="h-8 w-8"
                     onClick={() => patchMutation.mutate({ id: selectedEmail.id, patch: { isStarred: !selectedEmail.isStarred } })}
                   >
-                    <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-amber-400 text-amber-400" : "text-gray-400"}`} />
+                    <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-orange-400 text-orange-400" : "text-gray-400"}`} />
                   </Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8"
                     onClick={() => patchMutation.mutate({ id: selectedEmail.id, patch: { isRead: !selectedEmail.isRead } })}
@@ -708,7 +708,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
               </div>
               {!isConnected ? (
                 <div className="mt-2 text-center space-y-2">
-                  <p className="text-xs text-amber-600">No email account connected yet.</p>
+                  <p className="text-xs text-orange-600">No email account connected yet.</p>
                   <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => setShowSettings(true)}>
                     <Mail className="w-4 h-4 mr-2" /> Connect Email Account
                   </Button>

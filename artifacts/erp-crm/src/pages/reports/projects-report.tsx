@@ -7,7 +7,7 @@ import { ArrowLeft, Briefcase } from "lucide-react";
 const stageColors: Record<string, string> = {
   enquiry: "bg-blue-100 text-blue-800",
   design: "bg-purple-100 text-purple-800",
-  approval: "bg-amber-100 text-amber-800",
+  approval: "bg-orange-100 text-orange-800",
   production: "bg-orange-100 text-orange-800",
   delivery: "bg-teal-100 text-teal-800",
   installation: "bg-indigo-100 text-indigo-800",
@@ -60,7 +60,7 @@ export function ProjectsReport() {
           { label: "Total Projects", value: total, color: "text-foreground" },
           { label: "Active", value: active, color: "text-blue-600" },
           { label: "Completed", value: completed, color: "text-green-600" },
-          { label: "Total Contract Value", value: `AED ${(totalValue/1000).toFixed(0)}K`, color: "text-amber-600" },
+          { label: "Total Contract Value", value: `AED ${(totalValue/1000).toFixed(0)}K`, color: "text-orange-600" },
         ].map(s => (
           <div key={s.label} className="bg-card border rounded-xl p-5">
             <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>

@@ -26,7 +26,7 @@ const typeColors: Record<string, string> = {
   "Equity": "bg-purple-100 text-purple-800",
   "Income": "bg-green-100 text-green-800",
   "Cost of Goods Sold": "bg-orange-100 text-orange-800",
-  "Expenses": "bg-amber-100 text-amber-800",
+  "Expenses": "bg-orange-100 text-orange-800",
   "Bank": "bg-cyan-100 text-cyan-800",
   "Cash": "bg-teal-100 text-teal-800",
   "VAT Input": "bg-indigo-100 text-indigo-800",
@@ -267,7 +267,7 @@ export function ChartOfAccountsList() {
             {seeding || seedProgress.done + seedProgress.skipped + seedProgress.failed > 0 ? (
               <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs space-y-1">
                 <div>Created: <span className="font-medium text-green-700">{seedProgress.done}</span></div>
-                <div>Skipped (already exists): <span className="font-medium text-amber-700">{seedProgress.skipped}</span></div>
+                <div>Skipped (already exists): <span className="font-medium text-orange-700">{seedProgress.skipped}</span></div>
                 <div>Failed: <span className="font-medium text-red-700">{seedProgress.failed}</span></div>
                 <div className="text-muted-foreground pt-1">
                   Progress: {seedProgress.done + seedProgress.skipped + seedProgress.failed} / {CONSTRUCTION_COA_COUNT}

@@ -15,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const statusColors: Record<string, string> = {
   present: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   absent: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  half_day: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  half_day: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   leave: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   holiday: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
 };
@@ -126,7 +126,7 @@ export function AttendanceList() {
           { label: "Present", value: present, color: "text-green-600", bg: "bg-green-50 dark:bg-green-900/20" },
           { label: "Absent", value: absent, color: "text-red-600", bg: "bg-red-50 dark:bg-red-900/20" },
           { label: "Leave", value: leave, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
-          { label: "Half Day", value: halfDay, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-900/20" },
+          { label: "Half Day", value: halfDay, color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-900/20" },
         ].map(s => (
           <div key={s.label} className={`${s.bg} border rounded-lg p-3 text-center`}>
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -175,7 +175,7 @@ export function AttendanceList() {
                 <TableCell>{a.date}</TableCell>
                 <TableCell className="font-mono text-sm">{a.checkIn || "-"}</TableCell>
                 <TableCell className="font-mono text-sm">{a.checkOut || "-"}</TableCell>
-                <TableCell>{a.overtime ? <span className="text-amber-600 font-medium">{a.overtime} hrs</span> : "-"}</TableCell>
+                <TableCell>{a.overtime ? <span className="text-orange-600 font-medium">{a.overtime} hrs</span> : "-"}</TableCell>
                 <TableCell>
                   {a.latitude && a.longitude
                     ? <a href={`https://maps.google.com/?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline text-sm"><MapPin className="w-3 h-3" />View</a>

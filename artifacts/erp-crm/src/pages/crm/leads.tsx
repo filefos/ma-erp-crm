@@ -317,7 +317,7 @@ export function LeadsList() {
                       )}
                       <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                         <Link href={`/crm/leads/${lead.id}`} title="Open lead" aria-label={`Open ${lead.leadName}`}>
-                          <CalendarIcon className="w-3.5 h-3.5 text-amber-600" />
+                          <CalendarIcon className="w-3.5 h-3.5 text-orange-600" />
                         </Link>
                       </Button>
                     </div>

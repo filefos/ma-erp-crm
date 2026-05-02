@@ -6,7 +6,7 @@ import { ArrowLeft, BarChart2 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  partial: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  partial: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   unpaid: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
@@ -48,7 +48,7 @@ export function RevenueReport() {
           { label: "Total Revenue", value: `AED ${(totalRevenue/1000).toFixed(0)}K`, color: "text-blue-600" },
           { label: "Collected", value: `AED ${(totalPaid/1000).toFixed(0)}K`, color: "text-green-600" },
           { label: "Outstanding", value: `AED ${(totalOutstanding/1000).toFixed(0)}K`, color: "text-red-600" },
-          { label: "Collection Rate", value: `${collectionRate}%`, color: "text-amber-600" },
+          { label: "Collection Rate", value: `${collectionRate}%`, color: "text-orange-600" },
         ].map(s => (
           <div key={s.label} className="bg-card border rounded-xl p-5">
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -62,7 +62,7 @@ export function RevenueReport() {
           <h2 className="font-semibold flex items-center gap-2"><BarChart2 className="w-4 h-4 text-primary" />Payment Status</h2>
           {[
             { label: "Paid", count: paidCount, value: invoices?.filter(i => i.paymentStatus === "paid").reduce((s,i) => s+(i.grandTotal??0), 0) ?? 0, color: "bg-green-500" },
-            { label: "Partial", count: partialCount, value: invoices?.filter(i => i.paymentStatus === "partial").reduce((s,i) => s+(i.grandTotal??0), 0) ?? 0, color: "bg-amber-500" },
+            { label: "Partial", count: partialCount, value: invoices?.filter(i => i.paymentStatus === "partial").reduce((s,i) => s+(i.grandTotal??0), 0) ?? 0, color: "bg-orange-500" },
             { label: "Unpaid", count: unpaidCount, value: invoices?.filter(i => i.paymentStatus === "unpaid").reduce((s,i) => s+(i.grandTotal??0), 0) ?? 0, color: "bg-red-500" },
           ].map(s => (
             <div key={s.label} className="flex items-center gap-3">

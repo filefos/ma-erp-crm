@@ -18,7 +18,7 @@ interface Props { id: string }
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
-  pending: "bg-amber-100 text-amber-800",
+  pending: "bg-orange-100 text-orange-800",
   approved: "bg-green-100 text-green-800",
 };
 

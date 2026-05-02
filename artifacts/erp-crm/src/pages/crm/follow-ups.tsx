@@ -192,7 +192,7 @@ function StatCard({ icon: Icon, label, value, tone }: {
 }) {
   const colors = {
     red:   "bg-red-100 text-red-700",
-    amber: "bg-amber-100 text-amber-700",
+    amber: "bg-orange-100 text-orange-700",
     blue:  "bg-blue-100 text-blue-700",
     slate: "bg-slate-100 text-slate-700",
   }[tone];
@@ -223,12 +223,12 @@ function FollowUpList({ items, emptyText, overdue, onDone, onReschedule }: {
         const score = lead.leadScore;
         return (
           <div key={`${item.kind}-${item.id}`} className="p-3 flex items-center gap-3 hover:bg-muted/30">
-            <div className={`w-1 h-12 rounded-full shrink-0 ${overdue ? "bg-red-500" : item.date === todayISO() ? "bg-amber-500" : "bg-blue-500"}`} />
+            <div className={`w-1 h-12 rounded-full shrink-0 ${overdue ? "bg-red-500" : item.date === todayISO() ? "bg-orange-500" : "bg-blue-500"}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <Link href={`/crm/leads/${item.refId}`} className="font-medium text-sm hover:text-primary truncate">{item.primary}</Link>
                 {isLead && score === "hot"  && <Badge variant="secondary" className="bg-red-100 text-red-700 text-[10px]">🔥 Hot</Badge>}
-                {isLead && score === "warm" && <Badge variant="secondary" className="bg-amber-100 text-amber-700 text-[10px]">🌡️ Warm</Badge>}
+                {isLead && score === "warm" && <Badge variant="secondary" className="bg-orange-100 text-orange-700 text-[10px]">🌡️ Warm</Badge>}
                 {!isLead && <Badge variant="outline" className="capitalize text-[10px]">{item.type?.replace("_", " ")}</Badge>}
               </div>
               <div className="text-[11px] text-muted-foreground truncate mt-0.5">

@@ -68,7 +68,7 @@ const PIPELINE_STAGES = [
   { key: "contacted", label: "Contacted", color: "bg-indigo-500" },
   { key: "qualified", label: "Qualified", color: "bg-purple-500" },
   { key: "site_visit", label: "Site Visit", color: "bg-teal-500" },
-  { key: "quotation_required", label: "Quot. Req.", color: "bg-amber-500" },
+  { key: "quotation_required", label: "Quot. Req.", color: "bg-orange-500" },
   { key: "quotation_sent", label: "Quot. Sent", color: "bg-orange-500" },
   { key: "negotiation", label: "Negotiation", color: "bg-pink-500" },
   { key: "won", label: "Won ✅", color: "bg-green-500" },
@@ -88,7 +88,7 @@ function KPICard({
   const tones: Record<string, { bg: string; icon: string }> = {
     primary: { bg: "bg-[#1e6ab0]", icon: "text-white" },
     success: { bg: "bg-emerald-500", icon: "text-white" },
-    warning: { bg: "bg-amber-500", icon: "text-white" },
+    warning: { bg: "bg-orange-500", icon: "text-white" },
     danger: { bg: "bg-red-500", icon: "text-white" },
     neutral: { bg: "bg-[#0f2d5a]", icon: "text-white" },
   };
@@ -116,7 +116,7 @@ function KPICard({
 function PendingBadge({ count }: { count: number }) {
   if (!count) return null;
   return (
-    <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 font-bold ml-auto">
+    <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 font-bold ml-auto">
       {count}
     </Badge>
   );
@@ -177,9 +177,9 @@ export function DepartmentDashboard() {
         </div>
         {allPendingItems.length > 0 && (
           <div className="mt-3 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
             <span className="text-sm text-white/90">
-              <span className="font-bold text-amber-300">{allPendingItems.length}</span> item{allPendingItems.length > 1 ? "s" : ""} awaiting your attention
+              <span className="font-bold text-orange-300">{allPendingItems.length}</span> item{allPendingItems.length > 1 ? "s" : ""} awaiting your attention
             </span>
           </div>
         )}
@@ -428,7 +428,7 @@ export function DepartmentDashboard() {
           {[
             { label: "Sales Pipeline", href: "/reports/sales-pipeline", icon: TrendingUp, color: "text-blue-600" },
             { label: "Revenue", href: "/reports/revenue", icon: DollarSign, color: "text-green-600" },
-            { label: "Expenses", href: "/reports/expenses", icon: Receipt, color: "text-amber-600" },
+            { label: "Expenses", href: "/reports/expenses", icon: Receipt, color: "text-orange-600" },
             { label: "Inventory", href: "/reports/inventory", icon: Package, color: "text-purple-600" },
             { label: "Projects", href: "/reports/projects", icon: Briefcase, color: "text-teal-600" },
             { label: "Attendance", href: "/reports/attendance", icon: CalendarCheck, color: "text-indigo-600" },

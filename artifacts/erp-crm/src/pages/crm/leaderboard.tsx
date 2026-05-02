@@ -80,7 +80,7 @@ export function SalesLeaderboard() {
   }));
 
   const medal = (rank: number) =>
-    rank === 0 ? { icon: Crown,  className: "bg-amber-500 text-white" } :
+    rank === 0 ? { icon: Crown,  className: "bg-orange-500 text-white" } :
     rank === 1 ? { icon: Medal,  className: "bg-slate-400 text-white" } :
     rank === 2 ? { icon: Award,  className: "bg-orange-700 text-white" } :
                   { icon: Star,  className: "bg-muted text-muted-foreground" };
@@ -89,7 +89,7 @@ export function SalesLeaderboard() {
     <div className="space-y-5">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Trophy className="w-5 h-5 text-amber-500" />Sales Leaderboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2"><Trophy className="w-5 h-5 text-orange-500" />Sales Leaderboard</h1>
           <p className="text-muted-foreground text-sm">Salesperson performance — ranked by composite score (won value, deals closed, activity).</p>
         </div>
         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export function SalesLeaderboard() {
       {/* Top performer card */}
       {top && top.score > 0 && (
         <div className="bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] rounded-xl p-5 text-white flex items-center gap-4 flex-wrap">
-          <div className="w-14 h-14 rounded-full bg-amber-500 flex items-center justify-center shadow-lg">
+          <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center shadow-lg">
             <Crown className="w-7 h-7 text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -196,7 +196,7 @@ function StatCard({ icon: Icon, label, value, tone }: {
   const colors = {
     blue:   "bg-blue-100 text-blue-700",
     indigo: "bg-indigo-100 text-indigo-700",
-    amber:  "bg-amber-100 text-amber-700",
+    amber:  "bg-orange-100 text-orange-700",
     green:  "bg-emerald-100 text-emerald-700",
   }[tone];
   return (

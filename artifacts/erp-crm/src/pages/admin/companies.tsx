@@ -114,7 +114,7 @@ export function CompaniesAdmin() {
                 {c.website && <div className="flex items-center gap-2 text-muted-foreground"><Globe className="w-3.5 h-3.5" />{c.website}</div>}
                 {c.address && <div className="text-xs text-muted-foreground pt-1 border-t mt-2">{c.address}</div>}
                 {!(c as any).logo && (
-                  <div className="flex items-center gap-1 text-xs text-amber-600 pt-1">
+                  <div className="flex items-center gap-1 text-xs text-orange-600 pt-1">
                     <Upload className="w-3 h-3" />No logo uploaded — click Edit to add one
                   </div>
                 )}

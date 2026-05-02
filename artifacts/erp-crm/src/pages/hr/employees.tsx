@@ -115,7 +115,7 @@ export function EmployeesList() {
               <TableRow key={e.id}>
                 <TableCell className="font-mono text-xs text-primary">{e.employeeId}</TableCell>
                 <TableCell className="font-medium">{e.name}</TableCell>
-                <TableCell><Badge variant="secondary" className={e.type === "staff" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"}>{e.type}</Badge></TableCell>
+                <TableCell><Badge variant="secondary" className={e.type === "staff" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" : "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"}>{e.type}</Badge></TableCell>
                 <TableCell>{e.designation || "-"}</TableCell>
                 <TableCell>{e.nationality || "-"}</TableCell>
                 <TableCell>{e.phone || "-"}</TableCell>

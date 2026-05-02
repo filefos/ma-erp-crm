@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 const statusColors: Record<string, string> = {
   present: "bg-green-100 text-green-800",
   absent: "bg-red-100 text-red-800",
-  half_day: "bg-amber-100 text-amber-800",
+  half_day: "bg-orange-100 text-orange-800",
   leave: "bg-blue-100 text-blue-800",
   holiday: "bg-purple-100 text-purple-800",
 };
@@ -94,7 +94,7 @@ export function AttendanceReport() {
           { label: "Total Records", value: totalDays, color: "text-foreground" },
           { label: "Present Days", value: presentDays, color: "text-green-600" },
           { label: "Attendance Rate", value: `${attendanceRate}%`, color: "text-blue-600" },
-          { label: "Total Overtime", value: `${totalOvertime.toFixed(1)} hrs`, color: "text-amber-600" },
+          { label: "Total Overtime", value: `${totalOvertime.toFixed(1)} hrs`, color: "text-orange-600" },
         ].map(s => (
           <div key={s.label} className="bg-card border rounded-xl p-5">
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -126,8 +126,8 @@ export function AttendanceReport() {
                   <td className="p-3 text-center text-green-600 font-medium">{data.present}</td>
                   <td className="p-3 text-center text-red-600 font-medium">{data.absent}</td>
                   <td className="p-3 text-center text-blue-600 font-medium">{data.leave}</td>
-                  <td className="p-3 text-right">{data.overtime > 0 ? <span className="text-amber-600 font-medium">{data.overtime.toFixed(1)}</span> : "-"}</td>
-                  <td className="p-3 text-right"><Badge variant="secondary" className={parseInt(rate) >= 90 ? "bg-green-100 text-green-800" : parseInt(rate) >= 75 ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800"}>{rate}%</Badge></td>
+                  <td className="p-3 text-right">{data.overtime > 0 ? <span className="text-orange-600 font-medium">{data.overtime.toFixed(1)}</span> : "-"}</td>
+                  <td className="p-3 text-right"><Badge variant="secondary" className={parseInt(rate) >= 90 ? "bg-green-100 text-green-800" : parseInt(rate) >= 75 ? "bg-orange-100 text-orange-800" : "bg-red-100 text-red-800"}>{rate}%</Badge></td>
                 </tr>
               );
             })}

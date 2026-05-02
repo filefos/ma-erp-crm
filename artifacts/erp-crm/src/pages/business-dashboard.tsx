@@ -12,7 +12,7 @@ import {
   LineChart, Line, PieChart, Pie, Cell
 } from "recharts";
 
-const COLORS = ["#1e6ab0", "#38bdf8", "#0f2d5a", "#0e7490", "#0d9488", "#22c55e", "#eab308", "#f97316", "#ef4444"];
+const COLORS = ["#1e6ab0", "#38bdf8", "#0f2d5a", "#0e7490", "#0d9488", "#22c55e", "#f97316", "#f97316", "#ef4444"];
 
 function KPICard({ title, value, sub, icon: Icon, color, href }: { title: string; value: string | number; sub?: string; icon: React.ComponentType<{ className?: string }>; color: string; href?: string }) {
   const content = (
@@ -62,7 +62,7 @@ export function BusinessDashboard() {
   const kpis = [
     { title: "Total Leads", value: summary?.totalLeads ?? 0, sub: `${summary?.hotLeads ?? 0} hot leads`, icon: Users, color: "bg-[#1e6ab0]", href: "/crm/leads" },
     { title: "Active Deals", value: summary?.totalDeals ?? 0, sub: fmtAED(summary?.dealsValue), icon: Briefcase, color: "bg-[#0f2d5a]", href: "/crm/deals" },
-    { title: "Quotations", value: summary?.totalQuotations ?? 0, sub: fmtAED(summary?.quotationsValue), icon: FileText, color: "bg-amber-500", href: "/sales/quotations" },
+    { title: "Quotations", value: summary?.totalQuotations ?? 0, sub: fmtAED(summary?.quotationsValue), icon: FileText, color: "bg-orange-500", href: "/sales/quotations" },
     { title: "Invoices", value: summary?.totalInvoices ?? 0, sub: fmtAED(summary?.invoicesValue), icon: Receipt, color: "bg-teal-500", href: "/accounts/invoices" },
     { title: "Outstanding", value: fmtAED(summary?.outstandingReceivables), sub: "Receivables", icon: DollarSign, color: "bg-red-500", href: "/accounts/invoices" },
     { title: "Active Projects", value: summary?.activeProjects ?? 0, sub: "In progress", icon: Folders, color: "bg-cyan-500", href: "/projects" },
@@ -160,7 +160,7 @@ export function BusinessDashboard() {
                   <Link key={item.href} href={item.href}>
                     <div className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                       <span className="text-sm">{item.label}</span>
-                      <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 font-bold">{item.count}</Badge>
+                      <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 font-bold">{item.count}</Badge>
                     </div>
                   </Link>
                 ))}
@@ -172,7 +172,7 @@ export function BusinessDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <AlertTriangle className="w-4 h-4 text-orange-500" />
               Low Stock Alerts
             </CardTitle>
           </CardHeader>

@@ -25,7 +25,7 @@ const STAGE_LABELS: Record<string, string> = {
   negotiation: "Negotiation", won: "Won", lost: "Lost",
 };
 
-const SOURCE_COLORS = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#64748b"];
+const SOURCE_COLORS = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f97316", "#ef4444", "#8b5cf6", "#64748b"];
 
 export function CRMDashboard() {
   const { data: leadsRaw } = useListLeads({});
@@ -158,7 +158,7 @@ export function CRMDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {insights.map((i, idx) => (
               <div key={idx} className="flex items-center gap-2 text-sm rounded-lg p-2 bg-muted/40">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${i.tone === "red" ? "bg-red-500" : i.tone === "amber" ? "bg-amber-500" : "bg-emerald-500"}`} />
+                <div className={`w-2 h-2 rounded-full shrink-0 ${i.tone === "red" ? "bg-red-500" : i.tone === "amber" ? "bg-orange-500" : "bg-emerald-500"}`} />
                 <span className="text-foreground/85">{i.text}</span>
               </div>
             ))}
@@ -252,8 +252,8 @@ export function CRMDashboard() {
         {/* Follow-ups Today / Overdue */}
         <div className="bg-card border rounded-2xl p-4 space-y-3 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-              <Clock className="w-4 h-4 text-amber-600" />
+            <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-orange-600" />
             </div>
             <div>
               <div className="text-sm font-semibold">Follow-ups</div>
@@ -266,7 +266,7 @@ export function CRMDashboard() {
               return (
                 <Link key={lead.id} href={`/crm/leads/${lead.id}`} className="block">
                   <div className="border rounded-xl p-2 hover:bg-muted/40 hover:border-[#1e6ab0]/40 cursor-pointer flex items-center gap-2 transition-all">
-                    <div className={`w-1.5 h-9 rounded-full shrink-0 ${isOverdue ? "bg-red-500" : "bg-amber-500"}`} />
+                    <div className={`w-1.5 h-9 rounded-full shrink-0 ${isOverdue ? "bg-red-500" : "bg-orange-500"}`} />
                     <Avatar name={lead.leadName} size={28} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{lead.leadName}</div>

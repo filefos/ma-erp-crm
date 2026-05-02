@@ -14,11 +14,11 @@ import {
 } from "lucide-react";
 import { ExecutiveHeader, KPIWidget } from "@/components/crm/premium";
 
-const SOURCE_COLORS = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#64748b"];
+const SOURCE_COLORS = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f97316", "#ef4444", "#8b5cf6", "#64748b"];
 const FUNNEL_STAGES = [
   { key: "new",           label: "New",           color: "#3b82f6" },
   { key: "qualification", label: "Qualified",     color: "#8b5cf6" },
-  { key: "proposal",      label: "Proposal",      color: "#f59e0b" },
+  { key: "proposal",      label: "Proposal",      color: "#f97316" },
   { key: "negotiation",   label: "Negotiation",   color: "#fb923c" },
   { key: "won",           label: "Won",           color: "#10b981" },
 ];
@@ -261,8 +261,8 @@ export function CRMReports() {
       {/* Sales by user (bar) */}
       <div className="bg-card border rounded-2xl p-4 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-            <Trophy className="w-4 h-4 text-amber-600" />
+          <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+            <Trophy className="w-4 h-4 text-orange-600" />
           </div>
           <div>
             <div className="text-sm font-semibold">Sales by Salesperson</div>

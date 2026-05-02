@@ -248,11 +248,11 @@ export function QuotationEdit({ id }: Props) {
         <Badge className="capitalize bg-gray-100 text-gray-700">{q.status}</Badge>
 
         {/* Revision bump toggle */}
-        <div className="ml-auto flex items-center gap-2 border rounded-lg px-3 py-2 bg-amber-50 border-amber-200">
-          <RotateCcw className="w-4 h-4 text-amber-600 flex-shrink-0" />
+        <div className="ml-auto flex items-center gap-2 border rounded-lg px-3 py-2 bg-orange-50 border-orange-200">
+          <RotateCcw className="w-4 h-4 text-orange-600 flex-shrink-0" />
           <div className="text-sm">
-            <span className="text-amber-800 font-medium">Bump revision: </span>
-            <span className="text-amber-700 font-mono text-xs">{form.quotationNumber} → {nextRevNum}</span>
+            <span className="text-orange-800 font-medium">Bump revision: </span>
+            <span className="text-orange-700 font-mono text-xs">{form.quotationNumber} → {nextRevNum}</span>
           </div>
           <button
             type="button"
@@ -260,7 +260,7 @@ export function QuotationEdit({ id }: Props) {
             aria-checked={bumpRev}
             onClick={() => setBumpRev(v => !v)}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0
-              ${bumpRev ? "bg-amber-500" : "bg-gray-300"}`}
+              ${bumpRev ? "bg-orange-500" : "bg-gray-300"}`}
           >
             <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform
               ${bumpRev ? "translate-x-4" : "translate-x-1"}`} />
@@ -681,7 +681,7 @@ export function QuotationEdit({ id }: Props) {
       {/* Save Actions */}
       <div className="flex gap-3 justify-end items-center flex-wrap pb-8">
         {bumpRev && (
-          <p className="text-xs text-amber-600 mr-auto">
+          <p className="text-xs text-orange-600 mr-auto">
             Revision will be saved as <span className="font-mono font-bold">{nextRevNum}</span>
           </p>
         )}

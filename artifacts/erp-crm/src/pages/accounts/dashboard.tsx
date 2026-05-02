@@ -25,20 +25,20 @@ import {
 
 const STATUS_COLORS: Record<string, string> = {
   paid:    "#10b981",
-  partial: "#f59e0b",
+  partial: "#f97316",
   unpaid:  "#ef4444",
   overdue: "#dc2626",
   draft:   "#94a3b8",
   pending: "#3b82f6",
   cleared: "#10b981",
-  issued:  "#f59e0b",
+  issued:  "#f97316",
   bounced: "#ef4444",
   cancelled: "#64748b",
 };
 
 const CATEGORY_PALETTE = [
   "#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#8b5cf6",
-  "#f59e0b", "#ef4444", "#14b8a6", "#6366f1", "#64748b",
+  "#f97316", "#ef4444", "#14b8a6", "#6366f1", "#64748b",
 ];
 
 function fmtAED(n: number) {
@@ -406,7 +406,7 @@ export function AccountsDashboard() {
 
       {/* HIGH ALERT — Cheques due / overdue (only renders when relevant) */}
       {chequesDueSoon.length > 0 && (
-        <div className="relative overflow-hidden rounded-2xl border-2 border-red-400 dark:border-red-700 bg-gradient-to-r from-red-50 via-red-50 to-amber-50 dark:from-red-950/40 dark:via-red-950/30 dark:to-amber-950/30 shadow-lg">
+        <div className="relative overflow-hidden rounded-2xl border-2 border-red-400 dark:border-red-700 bg-gradient-to-r from-red-50 via-red-50 to-orange-50 dark:from-red-950/40 dark:via-red-950/30 dark:to-orange-950/30 shadow-lg">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-red-600 to-red-700 animate-pulse" />
           <div className="p-4 pl-5">
             <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
@@ -446,8 +446,8 @@ export function AccountsDashboard() {
                   : isToday
                   ? "bg-red-500 text-white animate-pulse"
                   : c._daysUntil <= 2
-                  ? "bg-amber-500 text-white"
-                  : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+                  ? "bg-orange-500 text-white"
+                  : "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300";
                 return (
                   <div key={c.id} className="rounded-lg bg-white dark:bg-card border border-red-200 dark:border-red-900/60 p-3 shadow-sm">
                     <div className="flex items-start justify-between gap-2 mb-1">
@@ -502,7 +502,7 @@ export function AccountsDashboard() {
               const toneClass = ins.tone === "red"
                 ? "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-900 text-red-700 dark:text-red-400"
                 : ins.tone === "amber"
-                ? "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900 text-amber-700 dark:text-amber-400"
+                ? "bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-900 text-orange-700 dark:text-orange-400"
                 : ins.tone === "green"
                 ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400"
                 : "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900 text-blue-700 dark:text-blue-400";
@@ -660,7 +660,7 @@ export function AccountsDashboard() {
           <div className="p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-semibold flex items-center gap-2">
-                <FileWarning className="w-4 h-4 text-amber-700" />
+                <FileWarning className="w-4 h-4 text-orange-700" />
                 Outstanding Invoices — Oldest First
               </div>
               <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
@@ -681,7 +681,7 @@ export function AccountsDashboard() {
                 </thead>
                 <tbody>
                   {outstandingInvoices.map(i => (
-                    <tr key={i.id} className="border-b border-border/30 hover:bg-amber-50/40 dark:hover:bg-amber-950/20 transition-colors">
+                    <tr key={i.id} className="border-b border-border/30 hover:bg-orange-50/40 dark:hover:bg-orange-950/20 transition-colors">
                       <td className="px-2 py-2">
                         <Link href={`/accounts/invoices/${i.id}`} className="text-[#1e6ab0] font-medium hover:underline">
                           {i.invoiceNumber}
@@ -690,9 +690,9 @@ export function AccountsDashboard() {
                       <td className="px-2 py-2 truncate max-w-[160px]">{i.clientName}</td>
                       <td className="px-2 py-2 text-muted-foreground">{i.invoiceDate ?? "—"}</td>
                       <td className="px-2 py-2 text-right tabular-nums">{fmtAED(i.grandTotal ?? 0)}</td>
-                      <td className="px-2 py-2 text-right tabular-nums font-semibold text-amber-700">{fmtAED(i.balanceDue)}</td>
+                      <td className="px-2 py-2 text-right tabular-nums font-semibold text-orange-700">{fmtAED(i.balanceDue)}</td>
                       <td className="px-2 py-2 text-right">
-                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${i.daysOpen > 60 ? "bg-red-100 text-red-700" : i.daysOpen > 30 ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${i.daysOpen > 60 ? "bg-red-100 text-red-700" : i.daysOpen > 30 ? "bg-orange-100 text-orange-700" : "bg-blue-100 text-blue-700"}`}>
                           {i.daysOpen}d
                         </span>
                       </td>
@@ -781,14 +781,14 @@ export function AccountsDashboard() {
                 <div className="text-sm font-bold text-foreground tabular-nums mt-1">{fmtAED(vatInput)}</div>
                 <div className="text-[10px] text-blue-700 dark:text-blue-400 font-medium mt-0.5">recoverable on costs</div>
               </div>
-              <div className={`rounded-lg p-2.5 border ${vatPayable >= 0 ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800" : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800"}`}>
-                <div className={`text-[10px] uppercase tracking-wide font-semibold ${vatPayable >= 0 ? "text-amber-800 dark:text-amber-300" : "text-emerald-800 dark:text-emerald-300"}`}>
+              <div className={`rounded-lg p-2.5 border ${vatPayable >= 0 ? "bg-orange-50 dark:bg-orange-950/40 border-orange-300 dark:border-orange-800" : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800"}`}>
+                <div className={`text-[10px] uppercase tracking-wide font-semibold ${vatPayable >= 0 ? "text-orange-800 dark:text-orange-300" : "text-emerald-800 dark:text-emerald-300"}`}>
                   {vatPayable >= 0 ? "Net Payable" : "Refundable"}
                 </div>
-                <div className={`text-sm font-bold tabular-nums mt-1 ${vatPayable >= 0 ? "text-amber-900 dark:text-amber-200" : "text-emerald-900 dark:text-emerald-200"}`}>
+                <div className={`text-sm font-bold tabular-nums mt-1 ${vatPayable >= 0 ? "text-orange-900 dark:text-orange-200" : "text-emerald-900 dark:text-emerald-200"}`}>
                   {fmtAED(Math.abs(vatPayable))}
                 </div>
-                <div className={`text-[10px] font-medium mt-0.5 ${vatPayable >= 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"}`}>
+                <div className={`text-[10px] font-medium mt-0.5 ${vatPayable >= 0 ? "text-orange-700 dark:text-orange-400" : "text-emerald-700 dark:text-emerald-400"}`}>
                   {vatPayable >= 0 ? "due to FTA" : "claim from FTA"}
                 </div>
               </div>
@@ -1060,7 +1060,7 @@ export function AccountsDashboard() {
           <div className="p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-semibold flex items-center gap-2">
-                <Truck className="w-4 h-4 text-amber-700" />
+                <Truck className="w-4 h-4 text-orange-700" />
                 Recent Delivery Notes ({deliveryNotes.length})
               </div>
               <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
@@ -1077,7 +1077,7 @@ export function AccountsDashboard() {
                     status === "delivered" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
                     status === "in_transit" || status === "dispatched" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" :
                     status === "cancelled" ? "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300" :
-                    "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300";
+                    "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300";
                   return (
                     <div key={d.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-border/50 bg-card/40">
                       <div className="min-w-0 flex-1">

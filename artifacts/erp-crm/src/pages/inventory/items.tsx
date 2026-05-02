@@ -52,7 +52,7 @@ export function InventoryItemsList() {
             size="sm"
           />
           {lowStockCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg text-orange-700 text-sm dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400">
               <AlertTriangle className="w-4 h-4" />
               {lowStockCount} low stock
             </div>

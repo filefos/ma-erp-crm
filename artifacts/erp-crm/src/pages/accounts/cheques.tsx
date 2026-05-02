@@ -17,7 +17,7 @@ const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   approved: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   printed: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  issued: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  issued: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   cleared: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   bounced: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
@@ -120,7 +120,7 @@ export function ChequesList() {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-card border rounded-lg p-4">
           <div className="text-xs text-muted-foreground">Total Issued</div>
-          <div className="text-xl font-bold text-amber-600">AED {totalIssued.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div className="text-xl font-bold text-orange-600">AED {totalIssued.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
         </div>
         <div className="bg-card border rounded-lg p-4">
           <div className="text-xs text-muted-foreground">Total Cleared</div>

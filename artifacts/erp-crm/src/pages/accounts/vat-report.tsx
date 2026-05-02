@@ -126,20 +126,20 @@ export function VatReport() {
           </CardContent>
         </Card>
 
-        <Card className={netVat >= 0 ? "border-amber-200 bg-amber-50" : "border-blue-200 bg-blue-50"}>
+        <Card className={netVat >= 0 ? "border-orange-200 bg-orange-50" : "border-blue-200 bg-blue-50"}>
           <CardHeader className="flex flex-row items-center gap-3 pb-2 pt-4 px-4">
-            <div className={`p-2 rounded-lg ${netVat >= 0 ? "bg-amber-100" : "bg-blue-100"}`}>
-              <DollarSign className={`w-4 h-4 ${netVat >= 0 ? "text-amber-700" : "text-blue-700"}`} />
+            <div className={`p-2 rounded-lg ${netVat >= 0 ? "bg-orange-100" : "bg-blue-100"}`}>
+              <DollarSign className={`w-4 h-4 ${netVat >= 0 ? "text-orange-700" : "text-blue-700"}`} />
             </div>
-            <CardTitle className={`text-sm font-medium ${netVat >= 0 ? "text-amber-700" : "text-blue-700"}`}>
+            <CardTitle className={`text-sm font-medium ${netVat >= 0 ? "text-orange-700" : "text-blue-700"}`}>
               {netVat >= 0 ? "VAT Payable" : "VAT Refundable"}
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            <div className={`text-xl font-bold ${netVat >= 0 ? "text-amber-800" : "text-blue-800"}`}>
+            <div className={`text-xl font-bold ${netVat >= 0 ? "text-orange-800" : "text-blue-800"}`}>
               AED {Math.abs(netVat).toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
-            <div className={`text-xs mt-0.5 ${netVat >= 0 ? "text-amber-600" : "text-blue-600"}`}>Net VAT position</div>
+            <div className={`text-xs mt-0.5 ${netVat >= 0 ? "text-orange-600" : "text-blue-600"}`}>Net VAT position</div>
           </CardContent>
         </Card>
 
@@ -163,7 +163,7 @@ export function VatReport() {
             { label: "Standard Rated Supplies (Output Base)", value: outputVatBase, color: "text-gray-700" },
             { label: "Output VAT @ 5%", value: outputVat, color: "text-green-700" },
             { label: "Input VAT Recoverable", value: inputVat, color: "text-red-700" },
-            { label: "Net VAT Due / (Refundable)", value: netVat, color: netVat >= 0 ? "text-amber-700 font-bold" : "text-blue-700 font-bold" },
+            { label: "Net VAT Due / (Refundable)", value: netVat, color: netVat >= 0 ? "text-orange-700 font-bold" : "text-blue-700 font-bold" },
           ].map(row => (
             <div key={row.label} className="flex justify-between py-1.5 border-b border-[#0f2d5a]/10">
               <span className="text-muted-foreground">{row.label}</span>

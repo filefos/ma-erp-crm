@@ -15,7 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
   approved: "bg-blue-100 text-blue-800",
   printed: "bg-purple-100 text-purple-800",
-  issued: "bg-amber-100 text-amber-800",
+  issued: "bg-orange-100 text-orange-800",
   cleared: "bg-green-100 text-green-800",
   bounced: "bg-red-100 text-red-800",
   cancelled: "bg-red-100 text-red-800",

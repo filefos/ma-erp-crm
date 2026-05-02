@@ -21,8 +21,8 @@ export default function ProcurementDashboardPage() {
       value: data?.prPending ?? 0,
       sub: `${data?.prApproved ?? 0} approved`,
       icon: Clock,
-      color: "text-amber-500",
-      bg: "bg-amber-50 dark:bg-amber-950",
+      color: "text-orange-500",
+      bg: "bg-orange-50 dark:bg-orange-950",
     },
     {
       label: "RFQs Sent",
@@ -53,7 +53,7 @@ export default function ProcurementDashboardPage() {
   const steps = [
     { step: 1, label: "Purchase Request", icon: FileText, desc: "Departments request materials/services", color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" },
     { step: 2, label: "RFQ", icon: Send, desc: "Request for quotation sent to suppliers", color: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300" },
-    { step: 3, label: "Supplier Quotation", icon: BarChart3, desc: "Collect & compare supplier quotes", color: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300" },
+    { step: 3, label: "Supplier Quotation", icon: BarChart3, desc: "Collect & compare supplier quotes", color: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300" },
     { step: 4, label: "Purchase Order", icon: ShoppingCart, desc: "Issue PO to selected supplier", color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" },
   ];
 
@@ -121,7 +121,7 @@ export default function ProcurementDashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { label: "Suppliers", href: "/procurement/suppliers", icon: Users, badge: data?.totalSuppliers },
-              { label: "Purchase Requests", href: "/procurement/purchase-requests", icon: FileText, badge: data?.prPending, badgeColor: "bg-amber-100 text-amber-700" },
+              { label: "Purchase Requests", href: "/procurement/purchase-requests", icon: FileText, badge: data?.prPending, badgeColor: "bg-orange-100 text-orange-700" },
               { label: "RFQs", href: "/procurement/rfqs", icon: Send, badge: data?.rfqSent },
               { label: "Purchase Orders", href: "/procurement/purchase-orders", icon: ShoppingCart, badge: data?.poIssued },
             ].map((link) => (

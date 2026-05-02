@@ -9,7 +9,7 @@ const STAGES = [
   { key: "contacted", label: "Contacted", color: "bg-indigo-500" },
   { key: "qualified", label: "Qualified", color: "bg-purple-500" },
   { key: "site_visit", label: "Site Visit", color: "bg-teal-500" },
-  { key: "quotation_required", label: "Quot. Required", color: "bg-amber-500" },
+  { key: "quotation_required", label: "Quot. Required", color: "bg-orange-500" },
   { key: "quotation_sent", label: "Quot. Sent", color: "bg-orange-500" },
   { key: "negotiation", label: "Negotiation", color: "bg-pink-500" },
   { key: "won", label: "Won", color: "bg-green-500" },
@@ -18,7 +18,7 @@ const STAGES = [
 
 const scoreColors: Record<string, string> = {
   hot: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  warm: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  warm: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   cold: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
 };
 
@@ -94,7 +94,7 @@ export function SalesPipelineReport() {
                 <Badge variant="secondary" className={scoreColors[score]}>{score}</Badge>
                 <div className="flex items-center gap-3 flex-1 ml-3">
                   <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${score === "hot" ? "bg-red-500" : score === "warm" ? "bg-amber-500" : "bg-blue-400"}`} style={{ width: `${pct}%` }} />
+                    <div className={`h-full rounded-full ${score === "hot" ? "bg-red-500" : score === "warm" ? "bg-orange-500" : "bg-blue-400"}`} style={{ width: `${pct}%` }} />
                   </div>
                   <span className="text-sm font-medium w-16 text-right">{count} ({pct}%)</span>
                 </div>

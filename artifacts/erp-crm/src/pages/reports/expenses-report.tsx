@@ -7,12 +7,12 @@ import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
+  pending: "bg-orange-100 text-orange-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
 };
 
-const CATEGORY_COLORS = ["bg-blue-500","bg-purple-500","bg-green-500","bg-amber-500","bg-red-500","bg-teal-500","bg-indigo-500","bg-pink-500","bg-orange-500","bg-gray-500"];
+const CATEGORY_COLORS = ["bg-blue-500","bg-purple-500","bg-green-500","bg-orange-500","bg-red-500","bg-teal-500","bg-indigo-500","bg-pink-500","bg-orange-500","bg-gray-500"];
 
 export function ExpensesReport() {
   const [companyFilter, setCompanyFilter] = useState("all");
@@ -63,7 +63,7 @@ export function ExpensesReport() {
         {[
           { label: "Total Expenses", value: `AED ${(total/1000).toFixed(1)}K`, color: "text-foreground" },
           { label: "Approved", value: `AED ${(approvedAmt/1000).toFixed(1)}K`, color: "text-green-600" },
-          { label: "Pending Approval", value: `AED ${(pendingAmt/1000).toFixed(1)}K`, color: "text-amber-600" },
+          { label: "Pending Approval", value: `AED ${(pendingAmt/1000).toFixed(1)}K`, color: "text-orange-600" },
           { label: "Expense Records", value: filtered.length, color: "text-blue-600" },
         ].map(s => (
           <div key={s.label} className="bg-card border rounded-xl p-5">

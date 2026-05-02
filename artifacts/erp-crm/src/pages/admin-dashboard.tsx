@@ -9,7 +9,7 @@ function StatCard({ icon: Icon, label, value, sub, tone = "primary" }: { icon: R
   const tones: Record<string, string> = {
     primary: "bg-[#1e6ab0]",
     success: "bg-emerald-600",
-    warning: "bg-amber-600",
+    warning: "bg-orange-600",
     neutral: "bg-[#0f2d5a]",
   };
   return (
@@ -77,12 +77,12 @@ export function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-900">
+        <Card className="border-orange-200 bg-orange-50/40 dark:bg-orange-950/20 dark:border-orange-900">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-600"><ShieldAlert className="w-4 h-4 text-white" /></div>
+            <div className="p-2 rounded-lg bg-orange-600"><ShieldAlert className="w-4 h-4 text-white" /></div>
             <div>
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Failed Logins · 24h</div>
-              <div className="text-xl font-bold text-amber-700 dark:text-amber-400">{data.failedLogins24h}</div>
+              <div className="text-xl font-bold text-orange-700 dark:text-orange-400">{data.failedLogins24h}</div>
             </div>
           </CardContent>
         </Card>

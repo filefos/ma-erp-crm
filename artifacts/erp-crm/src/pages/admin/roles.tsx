@@ -24,7 +24,7 @@ const LEVEL_BADGE: Record<string, string> = {
   department_admin: "bg-indigo-100 text-indigo-800 border-indigo-200",
   manager: "bg-blue-100 text-blue-800 border-blue-200",
   user: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  data_entry: "bg-amber-100 text-amber-800 border-amber-200",
+  data_entry: "bg-orange-100 text-orange-800 border-orange-200",
   viewer: "bg-slate-100 text-slate-700 border-slate-200",
 };
 

@@ -8,13 +8,13 @@ const poStatusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
   sent: "bg-blue-100 text-blue-800",
   confirmed: "bg-purple-100 text-purple-800",
-  partial: "bg-amber-100 text-amber-800",
+  partial: "bg-orange-100 text-orange-800",
   received: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
 };
 
 const prStatusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800",
+  pending: "bg-orange-100 text-orange-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
   ordered: "bg-blue-100 text-blue-800",
@@ -64,7 +64,7 @@ export function ProcurementReport() {
         {[
           { label: "Total POs", value: totalOrders, color: "text-foreground" },
           { label: "Total Spend (AED)", value: `${(totalSpend/1000).toFixed(0)}K`, color: "text-blue-600" },
-          { label: "Pending PRs", value: pendingPRs, color: "text-amber-600" },
+          { label: "Pending PRs", value: pendingPRs, color: "text-orange-600" },
           { label: "Active Suppliers", value: activeSuppliers, color: "text-green-600" },
         ].map(s => (
           <div key={s.label} className="bg-card border rounded-xl p-5">

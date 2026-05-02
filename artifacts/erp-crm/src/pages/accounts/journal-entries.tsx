@@ -18,7 +18,7 @@ import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 
 const statusColors: Record<string, string> = {
-  draft: "bg-amber-100 text-amber-800",
+  draft: "bg-orange-100 text-orange-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
 };

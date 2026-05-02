@@ -224,7 +224,7 @@ export function AiAssistant() {
         {[
           { icon: TrendingUp, label: "Total Received", value: `AED ${data.paymentsReceived.reduce((s, p) => s + (p.amount ?? 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, color: "text-green-700" },
           { icon: TrendingDown, label: "Total Paid Out", value: `AED ${data.paymentsMade.reduce((s, p) => s + (p.amount ?? 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, color: "text-red-700" },
-          { icon: Lightbulb, label: "Total Expenses", value: `AED ${data.expenses.reduce((s, e) => s + (e.total ?? 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, color: "text-amber-700" },
+          { icon: Lightbulb, label: "Total Expenses", value: `AED ${data.expenses.reduce((s, e) => s + (e.total ?? 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, color: "text-orange-700" },
           { icon: FileText, label: "Journal Entries", value: String(data.journalEntries.length), color: "text-[#0f2d5a]" },
         ].map(k => (
           <div key={k.label} className="bg-card border rounded-xl p-4">

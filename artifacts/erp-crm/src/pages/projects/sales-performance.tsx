@@ -26,7 +26,7 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 const stageColors: Record<string, string> = {
   new_project:  "bg-blue-100 text-blue-800",
   production:   "bg-purple-100 text-purple-800",
-  procurement:  "bg-amber-100 text-amber-800",
+  procurement:  "bg-orange-100 text-orange-800",
   delivery:     "bg-cyan-100 text-cyan-800",
   installation: "bg-orange-100 text-orange-800",
   testing:      "bg-violet-100 text-violet-800",
@@ -297,7 +297,7 @@ function SalespersonRow({
   const [draft, setDraft] = useState<string>(String(row.target || ""));
 
   const status = row.attainment >= 100 ? "exceeded" : row.attainment >= 75 ? "on track" : row.attainment >= 40 ? "behind" : "at risk";
-  const statusColor = row.attainment >= 100 ? "bg-emerald-500" : row.attainment >= 75 ? "bg-blue-500" : row.attainment >= 40 ? "bg-amber-500" : "bg-red-500";
+  const statusColor = row.attainment >= 100 ? "bg-emerald-500" : row.attainment >= 75 ? "bg-blue-500" : row.attainment >= 40 ? "bg-orange-500" : "bg-red-500";
 
   return (
     <div className="border rounded-xl p-4 bg-card hover:shadow-sm transition-all">
@@ -335,7 +335,7 @@ function SalespersonRow({
           </div>
           <div>
             <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Remaining</div>
-            <div className="font-bold text-sm text-amber-700">{row.target > 0 ? fmtAED(row.remaining) : "—"}</div>
+            <div className="font-bold text-sm text-orange-700">{row.target > 0 ? fmtAED(row.remaining) : "—"}</div>
           </div>
         </div>
       </div>
@@ -412,7 +412,7 @@ function KpiTile({
     navy:  { bg: "bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white", icon: "bg-white/15 text-white" },
     blue:  { bg: "bg-card border", icon: "bg-blue-100 text-blue-700" },
     green: { bg: "bg-card border", icon: "bg-emerald-100 text-emerald-700" },
-    amber: { bg: "bg-card border", icon: "bg-amber-100 text-amber-700" },
+    amber: { bg: "bg-card border", icon: "bg-orange-100 text-orange-700" },
   }[tone];
   const isNavy = tone === "navy";
   return (

@@ -218,7 +218,7 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
         )}
 
         {!isLoading && !isConnected && (
-          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-xs text-amber-800">
+          <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-4 py-2.5 text-xs text-orange-800">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             No email account connected. Fill in the details below to connect.
           </div>
@@ -321,7 +321,7 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
               <Label className="text-xs">Password / App Password *</Label>
               <Input {...F("imapPass")} type="password" placeholder="Enter password" className="h-8 text-sm" />
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 text-xs text-amber-800">
+            <div className="bg-orange-50 border border-orange-200 rounded-md p-2.5 text-xs text-orange-800">
               <strong>Tip:</strong> For Gmail or Outlook, generate an <strong>App Password</strong> from your account's security settings instead of your main password.
             </div>
             <div className="flex items-center gap-3 pt-1">

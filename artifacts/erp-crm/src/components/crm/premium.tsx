@@ -6,7 +6,7 @@ const TONES = {
   navy:   { bg: "from-[#0f2d5a] to-[#1e6ab0]",        icon: "bg-white/15 text-white",                              spark: "#1e6ab0" },
   blue:   { bg: "from-blue-500/10 to-blue-500/0",     icon: "bg-blue-500/15 text-blue-700 dark:text-blue-300",     spark: "#1e6ab0" },
   red:    { bg: "from-red-500/10 to-red-500/0",       icon: "bg-red-500/15 text-red-600",                          spark: "#ef4444" },
-  amber:  { bg: "from-amber-500/10 to-amber-500/0",   icon: "bg-amber-500/15 text-amber-600",                      spark: "#f59e0b" },
+  amber:  { bg: "from-orange-500/10 to-orange-500/0",   icon: "bg-orange-500/15 text-orange-600",                      spark: "#f97316" },
   green:  { bg: "from-emerald-500/10 to-emerald-500/0", icon: "bg-emerald-500/15 text-emerald-600",                spark: "#10b981" },
   purple: { bg: "from-purple-500/10 to-purple-500/0", icon: "bg-purple-500/15 text-purple-600",                    spark: "#8b5cf6" },
   indigo: { bg: "from-indigo-500/10 to-indigo-500/0", icon: "bg-indigo-500/15 text-indigo-600",                    spark: "#6366f1" },
@@ -112,9 +112,9 @@ const STATUS_STYLES: Record<string, string> = {
   qualified:          "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-900/40",
   qualification:      "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-900/40",
   site_visit:         "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300 dark:border-teal-900/40",
-  quotation_required: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-900/40",
+  quotation_required: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-900/40",
   quotation_sent:     "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-900/40",
-  proposal:           "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-900/40",
+  proposal:           "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-900/40",
   negotiation:        "bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-900/20 dark:text-pink-300 dark:border-pink-900/40",
   won:                "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-900/40",
   lost:               "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-900/40",
@@ -137,7 +137,7 @@ export function PriorityBadge({
   const p = (priority ?? "medium").toLowerCase();
   const styles: Record<string, { bg: string; label: string; dot: string }> = {
     high:   { bg: "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-900/40",       label: "High",   dot: "bg-red-500" },
-    medium: { bg: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-900/40", label: "Medium", dot: "bg-amber-500" },
+    medium: { bg: "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-900/40", label: "Medium", dot: "bg-orange-500" },
     low:    { bg: "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700", label: "Low",    dot: "bg-slate-400" },
   };
   const s = styles[p] ?? styles.medium;
@@ -153,7 +153,7 @@ export function AIScoreBadge({ score, className = "" }: { score?: string; classN
   const s = (score ?? "warm").toLowerCase();
   const styles: Record<string, string> = {
     hot:  "bg-gradient-to-r from-red-500 to-orange-500 text-white",
-    warm: "bg-gradient-to-r from-amber-400 to-yellow-500 text-white",
+    warm: "bg-gradient-to-r from-orange-400 to-orange-500 text-white",
     cold: "bg-gradient-to-r from-sky-400 to-blue-500 text-white",
   };
   const emoji: Record<string, string> = { hot: "🔥", warm: "🌡️", cold: "❄️" };

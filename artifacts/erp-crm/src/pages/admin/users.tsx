@@ -22,7 +22,7 @@ const PERMISSION_LEVELS = [
   { value: "department_admin", label: "Department Admin", color: "bg-indigo-100 text-indigo-800" },
   { value: "manager", label: "Manager", color: "bg-blue-100 text-blue-800" },
   { value: "user", label: "User", color: "bg-emerald-100 text-emerald-800" },
-  { value: "data_entry", label: "Data Entry", color: "bg-amber-100 text-amber-800" },
+  { value: "data_entry", label: "Data Entry", color: "bg-orange-100 text-orange-800" },
   { value: "viewer", label: "Viewer", color: "bg-slate-100 text-slate-800" },
 ];
 
@@ -318,7 +318,7 @@ function UserPermissionsDialog({
                             className={[
                               "inline-flex items-center justify-center w-6 h-6 rounded border text-xs font-semibold",
                               effective ? "bg-emerald-500 text-white border-emerald-600" : "bg-rose-100 text-rose-700 border-rose-300",
-                              hasOverride ? "ring-2 ring-amber-400 ring-offset-1" : "opacity-90",
+                              hasOverride ? "ring-2 ring-orange-400 ring-offset-1" : "opacity-90",
                               !isSuperAdmin ? "cursor-not-allowed opacity-60" : "hover:opacity-100 cursor-pointer",
                             ].join(" ")}
                             title={hasOverride ? `Override (was ${roleDefault ? "✓" : "✗"})` : "Inherits from role"}
@@ -530,7 +530,7 @@ export function UsersList() {
                           isActive: u.isActive, permissionLevel: lvl, departmentId, companyId,
                         })}
                       >
-                        <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                        <KeyRound className="w-3.5 h-3.5 text-orange-600" />
                       </Button>
                       <Button
                         size="sm"

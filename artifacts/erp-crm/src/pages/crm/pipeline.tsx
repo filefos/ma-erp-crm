@@ -21,7 +21,7 @@ interface Stage {
 const STAGES: Stage[] = [
   { key: "new",           label: "New",           description: "Just created", accent: "border-blue-500",   badge: "bg-blue-100 text-blue-700" },
   { key: "qualification", label: "Qualification", description: "Discovery",    accent: "border-purple-500", badge: "bg-purple-100 text-purple-700" },
-  { key: "proposal",      label: "Proposal",      description: "Quotation sent", accent: "border-amber-500",  badge: "bg-amber-100 text-amber-700" },
+  { key: "proposal",      label: "Proposal",      description: "Quotation sent", accent: "border-orange-500",  badge: "bg-orange-100 text-orange-700" },
   { key: "negotiation",   label: "Negotiation",   description: "Closing",      accent: "border-orange-500", badge: "bg-orange-100 text-orange-700" },
   { key: "won",           label: "Won",           description: "Closed-won",   accent: "border-emerald-500", badge: "bg-emerald-100 text-emerald-700" },
   { key: "lost",          label: "Lost",          description: "Closed-lost",  accent: "border-red-500",    badge: "bg-red-100 text-red-700" },
@@ -128,7 +128,7 @@ export function SalesPipeline() {
       </ExecutiveHeader>
 
       {stuckCount > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-lg p-2.5 text-sm flex items-center gap-2 text-amber-800 dark:text-amber-300" data-testid="banner-stuck-deals">
+        <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/30 rounded-lg p-2.5 text-sm flex items-center gap-2 text-orange-800 dark:text-orange-300" data-testid="banner-stuck-deals">
           <AlertTriangle className="w-4 h-4" />
           <span><strong>{stuckCount}</strong> deal{stuckCount === 1 ? " has" : "s have"} been stuck for {STUCK_DAYS}+ days — review and act.</span>
         </div>
@@ -178,7 +178,7 @@ export function SalesPipeline() {
                         draggable
                         onDragStart={e => handleDragStart(e, d.id)}
                         onDragEnd={() => setDraggingId(null)}
-                        className={`bg-card border rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${draggingId === d.id ? "opacity-40" : ""} ${stuck ? "ring-1 ring-amber-300 dark:ring-amber-700" : ""}`}
+                        className={`bg-card border rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${draggingId === d.id ? "opacity-40" : ""} ${stuck ? "ring-1 ring-orange-300 dark:ring-orange-700" : ""}`}
                         data-testid={`pipeline-card-${d.id}`}
                       >
                         <div className="flex items-start gap-1.5">
@@ -188,7 +188,7 @@ export function SalesPipeline() {
                               <div className="flex items-center justify-between gap-1 mb-1">
                                 <span className="text-[11px] font-mono text-primary truncate">{d.dealNumber}</span>
                                 <div className="flex items-center gap-1 shrink-0">
-                                  {stuck && <span title="Stuck — no movement in 7+ days"><AlertTriangle className="w-3 h-3 text-amber-500" /></span>}
+                                  {stuck && <span title="Stuck — no movement in 7+ days"><AlertTriangle className="w-3 h-3 text-orange-500" /></span>}
                                   {(d as any).assignedToName && <Avatar name={(d as any).assignedToName} size={20} />}
                                 </div>
                               </div>
@@ -197,7 +197,7 @@ export function SalesPipeline() {
                             </Link>
                             {(() => {
                               const prob = Number(d.probability ?? 0);
-                              const probTone = prob >= 70 ? "bg-emerald-500" : prob >= 40 ? "bg-amber-500" : "bg-slate-400";
+                              const probTone = prob >= 70 ? "bg-emerald-500" : prob >= 40 ? "bg-orange-500" : "bg-slate-400";
                               return (
                                 <div className="flex items-center justify-between mt-2 gap-2">
                                   <span className="text-xs font-bold text-emerald-600 truncate">AED {Number(d.value ?? 0).toLocaleString()}</span>
@@ -236,7 +236,7 @@ function PipelineStat({ icon: Icon, label, value, tone = "slate" }: {
     slate: "bg-slate-100 text-slate-700",
     blue:  "bg-blue-100 text-blue-700",
     green: "bg-emerald-100 text-emerald-700",
-    amber: "bg-amber-100 text-amber-700",
+    amber: "bg-orange-100 text-orange-700",
   }[tone];
   return (
     <div className="bg-card border rounded-lg px-3 py-2 flex items-center gap-2">

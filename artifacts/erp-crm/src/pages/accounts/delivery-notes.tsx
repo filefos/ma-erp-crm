@@ -14,7 +14,7 @@ import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 
 const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  pending: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
@@ -71,7 +71,7 @@ export function DeliveryNotesList() {
             size="sm"
           />
           {pending > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg text-orange-700 text-sm dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400">
               <Truck className="w-4 h-4" />{pending} pending
             </div>
           )}

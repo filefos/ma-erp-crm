@@ -408,7 +408,7 @@ export function QuotationDetail({ id }: Props) {
                   <tr className="border-t bg-muted/40 text-xs">
                     <td className="p-2"></td>
                     <td className="p-2 font-medium">Total</td>
-                    <td className={`p-2 text-right font-medium ${Math.abs(sumPercent - 100) > 0.01 ? "text-amber-600" : ""}`}>
+                    <td className={`p-2 text-right font-medium ${Math.abs(sumPercent - 100) > 0.01 ? "text-orange-600" : ""}`}>
                       {sumPercent}%
                     </td>
                     <td colSpan={4}></td>
@@ -422,7 +422,7 @@ export function QuotationDetail({ id }: Props) {
                 <Plus className="w-3.5 h-3.5 mr-1" />Add Installment
               </Button>
               {Math.abs(sumPercent - 100) > 0.01 && (
-                <p className="text-xs text-amber-600">
+                <p className="text-xs text-orange-600">
                   Installments add up to {sumPercent}% (not 100%). Continue only if intentional.
                 </p>
               )}

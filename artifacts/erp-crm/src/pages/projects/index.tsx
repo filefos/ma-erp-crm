@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const stageColors: Record<string, string> = {
   new_project:  "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
   production:   "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  procurement:  "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  procurement:  "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   delivery:     "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400",
   installation: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   testing:      "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400",

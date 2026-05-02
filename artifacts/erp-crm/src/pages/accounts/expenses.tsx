@@ -16,7 +16,7 @@ import { getListExpensesQueryKey } from "@workspace/api-client-react";
 
 const CATEGORIES = ["office","transport","utilities","material","labour","equipment","maintenance","travel","meals","other"];
 const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  pending: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   approved: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };

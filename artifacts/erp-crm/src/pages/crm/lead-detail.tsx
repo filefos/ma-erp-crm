@@ -26,7 +26,7 @@ import {
 
 const scoreColors: Record<string, string> = {
   hot: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  warm: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  warm: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   cold: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
 };
 
@@ -35,7 +35,7 @@ const statusColors: Record<string, string> = {
   contacted: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
   qualified: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
   site_visit: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
-  quotation_required: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  quotation_required: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   quotation_sent: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
   negotiation: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400",
   won: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -396,8 +396,8 @@ export function LeadDetail({ id }: Props) {
                   {ai.reasons.slice(0, 5).map((r, i) => <li key={i}>{r}</li>)}
                 </ul>
               </div>
-              <div className="border rounded-lg p-3 bg-amber-50/50 dark:bg-amber-900/5">
-                <div className="text-xs text-amber-700 dark:text-amber-400 font-semibold flex items-center gap-1 mb-1"><Trophy className="w-3 h-3" />Next best action</div>
+              <div className="border rounded-lg p-3 bg-orange-50/50 dark:bg-orange-900/5">
+                <div className="text-xs text-orange-700 dark:text-orange-400 font-semibold flex items-center gap-1 mb-1"><Trophy className="w-3 h-3" />Next best action</div>
                 <p className="text-xs leading-snug">{suggestNextAction(l, leadActivities)}</p>
               </div>
             </div>

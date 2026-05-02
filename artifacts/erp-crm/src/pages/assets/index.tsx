@@ -18,7 +18,7 @@ const CATEGORIES = ["Vehicles & Equipment","Machinery","Furniture & Fixtures","I
 const CONDITIONS = ["excellent","good","fair","poor","out_of_service"];
 const conditionColors: Record<string, string> = {
   excellent: "bg-green-100 text-green-800", good: "bg-blue-100 text-blue-800",
-  fair: "bg-amber-100 text-amber-800", poor: "bg-orange-100 text-orange-800", out_of_service: "bg-red-100 text-red-800",
+  fair: "bg-orange-100 text-orange-800", poor: "bg-orange-100 text-orange-800", out_of_service: "bg-red-100 text-red-800",
 };
 
 export function AssetsList() {

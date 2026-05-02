@@ -19,7 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
   sent: "bg-blue-100 text-blue-800",
   confirmed: "bg-purple-100 text-purple-800",
-  partial: "bg-amber-100 text-amber-800",
+  partial: "bg-orange-100 text-orange-800",
   received: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
 };

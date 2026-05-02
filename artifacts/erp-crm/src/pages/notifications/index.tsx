@@ -8,7 +8,7 @@ import { getListNotificationsQueryKey } from "@workspace/api-client-react";
 
 const typeIcons: Record<string, ReactElement> = {
   info: <Info className="w-4 h-4 text-blue-500" />,
-  warning: <AlertTriangle className="w-4 h-4 text-amber-500" />,
+  warning: <AlertTriangle className="w-4 h-4 text-orange-500" />,
   error: <XCircle className="w-4 h-4 text-red-500" />,
   success: <CheckCircle className="w-4 h-4 text-green-500" />,
 };
