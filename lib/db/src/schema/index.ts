@@ -16,3 +16,4 @@ export * from "./hr";
 export * from "./finance";
 export * from "./notifications";
 export * from "./emails";
+export * from "./email-settings";

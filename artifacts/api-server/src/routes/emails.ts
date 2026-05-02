@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, emailsTable } from "@workspace/db";
+import { db, emailsTable, emailSettingsTable } from "@workspace/db";
 import { eq, sql, and, or } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import nodemailer from "nodemailer";
@@ -135,6 +135,92 @@ router.delete("/emails/:id", requireAuth, async (req, res): Promise<void> => {
     await db.update(emailsTable).set({ folder: "trash", updatedAt: new Date() }).where(eq(emailsTable.id, id));
   }
   res.json({ success: true });
+});
+
+router.post("/emails/sync", requireAuth, async (req, res): Promise<void> => {
+  const companyId = req.body.companyId ?? (req.user as any)?.companyId ?? 1;
+  const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
+  if (!settings?.imapHost || !settings?.imapUser || !settings?.imapPass) {
+    res.status(400).json({ error: "IMAP not configured. Go to Email Settings first." });
+    return;
+  }
+
+  try {
+    const { ImapFlow } = await import("imapflow");
+    const client = new ImapFlow({
+      host: settings.imapHost,
+      port: settings.imapPort ?? 993,
+      secure: settings.imapSecure === "ssl",
+      auth: { user: settings.imapUser, pass: settings.imapPass },
+      logger: false,
+      tls: { rejectUnauthorized: false },
+    });
+
+    await client.connect();
+    const lock = await client.getMailboxLock("INBOX");
+    let fetched = 0;
+    let skipped = 0;
+
+    try {
+      const status = await client.status("INBOX", { messages: true, unseen: true });
+      const total = status.messages ?? 0;
+      const fetchFrom = Math.max(1, total - 49);
+
+      for await (const msg of client.fetch(`${fetchFrom}:*`, { envelope: true, source: true, flags: true })) {
+        const env = msg.envelope;
+        const fromAddr = env.from?.[0]?.address ?? "";
+        const fromName = env.from?.[0]?.name ?? "";
+        const toAddr = env.to?.[0]?.address ?? settings.imapUser;
+        const subject = env.subject ?? "(No Subject)";
+        const msgDate = env.date ?? new Date();
+
+        const existing = await db.select({ id: emailsTable.id })
+          .from(emailsTable)
+          .where(sql`${emailsTable.fromAddress} = ${fromAddr} AND ${emailsTable.subject} = ${subject} AND ${emailsTable.folder} = 'inbox' AND ABS(EXTRACT(EPOCH FROM (${emailsTable.createdAt} - ${msgDate.toISOString()}::timestamp))) < 60`)
+          .limit(1);
+
+        if (existing.length > 0) { skipped++; continue; }
+
+        let bodyText = "";
+        try {
+          const raw = msg.source?.toString() ?? "";
+          const parts = raw.split(/\r?\n\r?\n/);
+          bodyText = parts.slice(1).join("\n\n").replace(/<[^>]+>/g, "").replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/gi, (_, h) => String.fromCharCode(parseInt(h, 16))).substring(0, 8000).trim();
+          if (!bodyText) bodyText = raw.substring(0, 2000);
+        } catch { bodyText = "(Unable to decode body)"; }
+
+        const isSeen = msg.flags?.has("\\Seen") ?? false;
+
+        await db.insert(emailsTable).values({
+          companyId,
+          folder: "inbox",
+          fromAddress: fromAddr,
+          fromName: fromName || fromAddr,
+          toAddress: toAddr,
+          subject,
+          body: bodyText,
+          isRead: isSeen,
+          isStarred: false,
+          sentAt: msgDate,
+          createdAt: msgDate,
+        });
+        fetched++;
+      }
+    } finally {
+      lock.release();
+    }
+
+    await client.logout();
+
+    await db.update(emailSettingsTable)
+      .set({ lastSyncedAt: new Date(), updatedAt: new Date() })
+      .where(eq(emailSettingsTable.companyId, companyId));
+
+    res.json({ success: true, fetched, skipped, message: `Synced ${fetched} new email(s).` });
+  } catch (err: any) {
+    logger.error({ err }, "IMAP sync failed");
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;
