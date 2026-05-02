@@ -3593,6 +3593,19 @@ components:
             required: [description, quantity, unit]
       required: [companyId, clientName]
 
+    LpoAttachment:
+      type: object
+      properties:
+        filename:
+          type: string
+        contentType:
+          type: string
+        size:
+          type: integer
+        content:
+          type: string
+          description: base64 encoded file content (only present when uploading)
+
     Lpo:
       type: object
       properties:
@@ -3606,6 +3619,8 @@ components:
           type: string
         clientName:
           type: string
+        projectRef:
+          type: string
         projectId:
           type: integer
         quotationId:
@@ -3622,7 +3637,15 @@ components:
           type: string
         status:
           type: string
+        notes:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/LpoAttachment"
         createdAt:
+          type: string
+        updatedAt:
           type: string
       required: [id, lpoNumber, companyId, clientName, lpoValue, status, createdAt]
 
@@ -3633,6 +3656,8 @@ components:
           type: integer
         clientName:
           type: string
+        projectRef:
+          type: string
         projectId:
           type: integer
         quotationId:
@@ -3649,6 +3674,12 @@ components:
           type: string
         status:
           type: string
+        notes:
+          type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/LpoAttachment"
       required: [companyId, clientName, lpoValue]
 
     Project:

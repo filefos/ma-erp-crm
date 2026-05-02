@@ -541,12 +541,21 @@ export interface CreateDeliveryNoteBody {
   items?: CreateDeliveryNoteBodyItemsItem[];
 }
 
+export interface LpoAttachment {
+  filename?: string;
+  contentType?: string;
+  size?: number;
+  /** base64 encoded file content (only present when uploading) */
+  content?: string;
+}
+
 export interface Lpo {
   id: number;
   lpoNumber: string;
   companyId: number;
   companyRef?: string;
   clientName: string;
+  projectRef?: string;
   projectId?: number;
   quotationId?: number;
   lpoDate?: string;
@@ -555,12 +564,16 @@ export interface Lpo {
   deliverySchedule?: string;
   paymentTerms?: string;
   status: string;
+  notes?: string;
+  attachments?: LpoAttachment[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface CreateLpoBody {
   companyId: number;
   clientName: string;
+  projectRef?: string;
   projectId?: number;
   quotationId?: number;
   lpoDate?: string;
@@ -569,6 +582,8 @@ export interface CreateLpoBody {
   deliverySchedule?: string;
   paymentTerms?: string;
   status?: string;
+  notes?: string;
+  attachments?: LpoAttachment[];
 }
 
 export interface Project {

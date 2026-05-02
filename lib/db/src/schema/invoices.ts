@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, doublePrecision, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -74,6 +74,7 @@ export const lposTable = pgTable("lpos", {
   lpoNumber: text("lpo_number").notNull().unique(),
   companyId: integer("company_id").notNull(),
   clientName: text("client_name").notNull(),
+  projectRef: text("project_ref"),
   projectId: integer("project_id"),
   quotationId: integer("quotation_id"),
   lpoDate: text("lpo_date"),
@@ -82,6 +83,8 @@ export const lposTable = pgTable("lpos", {
   deliverySchedule: text("delivery_schedule"),
   paymentTerms: text("payment_terms"),
   status: text("status").notNull().default("active"),
+  notes: text("notes"),
+  attachments: jsonb("attachments").default([]),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

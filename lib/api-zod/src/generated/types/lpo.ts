@@ -5,6 +5,7 @@
  * Prime Max & Elite Prefab ERP CRM API
  * OpenAPI spec version: 0.1.0
  */
+import type { LpoAttachment } from "./lpoAttachment";
 
 export interface Lpo {
   id: number;
@@ -12,6 +13,7 @@ export interface Lpo {
   companyId: number;
   companyRef?: string;
   clientName: string;
+  projectRef?: string;
   projectId?: number;
   quotationId?: number;
   lpoDate?: string;
@@ -20,5 +22,8 @@ export interface Lpo {
   deliverySchedule?: string;
   paymentTerms?: string;
   status: string;
+  notes?: string;
+  attachments?: LpoAttachment[];
   createdAt: string;
+  updatedAt?: string;
 }

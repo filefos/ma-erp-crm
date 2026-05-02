@@ -1834,6 +1834,7 @@ export const ListLposResponseItem = zod.object({
   companyId: zod.number(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
+  projectRef: zod.string().optional(),
   projectId: zod.number().optional(),
   quotationId: zod.number().optional(),
   lpoDate: zod.string().optional(),
@@ -1842,7 +1843,24 @@ export const ListLposResponseItem = zod.object({
   deliverySchedule: zod.string().optional(),
   paymentTerms: zod.string().optional(),
   status: zod.string(),
+  notes: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string().optional(),
+        contentType: zod.string().optional(),
+        size: zod.number().optional(),
+        content: zod
+          .string()
+          .optional()
+          .describe(
+            "base64 encoded file content (only present when uploading)",
+          ),
+      }),
+    )
+    .optional(),
   createdAt: zod.string(),
+  updatedAt: zod.string().optional(),
 });
 export const ListLposResponse = zod.array(ListLposResponseItem);
 
@@ -1852,6 +1870,7 @@ export const ListLposResponse = zod.array(ListLposResponseItem);
 export const CreateLpoBody = zod.object({
   companyId: zod.number(),
   clientName: zod.string(),
+  projectRef: zod.string().optional(),
   projectId: zod.number().optional(),
   quotationId: zod.number().optional(),
   lpoDate: zod.string().optional(),
@@ -1860,6 +1879,22 @@ export const CreateLpoBody = zod.object({
   deliverySchedule: zod.string().optional(),
   paymentTerms: zod.string().optional(),
   status: zod.string().optional(),
+  notes: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string().optional(),
+        contentType: zod.string().optional(),
+        size: zod.number().optional(),
+        content: zod
+          .string()
+          .optional()
+          .describe(
+            "base64 encoded file content (only present when uploading)",
+          ),
+      }),
+    )
+    .optional(),
 });
 
 /**
@@ -1875,6 +1910,7 @@ export const GetLpoResponse = zod.object({
   companyId: zod.number(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
+  projectRef: zod.string().optional(),
   projectId: zod.number().optional(),
   quotationId: zod.number().optional(),
   lpoDate: zod.string().optional(),
@@ -1883,7 +1919,24 @@ export const GetLpoResponse = zod.object({
   deliverySchedule: zod.string().optional(),
   paymentTerms: zod.string().optional(),
   status: zod.string(),
+  notes: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string().optional(),
+        contentType: zod.string().optional(),
+        size: zod.number().optional(),
+        content: zod
+          .string()
+          .optional()
+          .describe(
+            "base64 encoded file content (only present when uploading)",
+          ),
+      }),
+    )
+    .optional(),
   createdAt: zod.string(),
+  updatedAt: zod.string().optional(),
 });
 
 /**
@@ -1896,6 +1949,7 @@ export const UpdateLpoParams = zod.object({
 export const UpdateLpoBody = zod.object({
   companyId: zod.number(),
   clientName: zod.string(),
+  projectRef: zod.string().optional(),
   projectId: zod.number().optional(),
   quotationId: zod.number().optional(),
   lpoDate: zod.string().optional(),
@@ -1904,6 +1958,22 @@ export const UpdateLpoBody = zod.object({
   deliverySchedule: zod.string().optional(),
   paymentTerms: zod.string().optional(),
   status: zod.string().optional(),
+  notes: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string().optional(),
+        contentType: zod.string().optional(),
+        size: zod.number().optional(),
+        content: zod
+          .string()
+          .optional()
+          .describe(
+            "base64 encoded file content (only present when uploading)",
+          ),
+      }),
+    )
+    .optional(),
 });
 
 export const UpdateLpoResponse = zod.object({
@@ -1912,6 +1982,7 @@ export const UpdateLpoResponse = zod.object({
   companyId: zod.number(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
+  projectRef: zod.string().optional(),
   projectId: zod.number().optional(),
   quotationId: zod.number().optional(),
   lpoDate: zod.string().optional(),
@@ -1920,7 +1991,24 @@ export const UpdateLpoResponse = zod.object({
   deliverySchedule: zod.string().optional(),
   paymentTerms: zod.string().optional(),
   status: zod.string(),
+  notes: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string().optional(),
+        contentType: zod.string().optional(),
+        size: zod.number().optional(),
+        content: zod
+          .string()
+          .optional()
+          .describe(
+            "base64 encoded file content (only present when uploading)",
+          ),
+      }),
+    )
+    .optional(),
   createdAt: zod.string(),
+  updatedAt: zod.string().optional(),
 });
 
 /**

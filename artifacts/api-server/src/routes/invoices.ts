@@ -183,12 +183,30 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
   res.status(201).json(lpo);
 });
 
+router.get("/lpos/:id/attachments/:idx", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const idx = parseInt(req.params.idx, 10);
+  const [lpo] = await db.select().from(lposTable).where(eq(lposTable.id, id));
+  if (!lpo) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [lpo]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const atts = (lpo.attachments ?? []) as Array<{ filename: string; contentType: string; size: number; content?: string }>;
+  const att = atts[idx];
+  if (!att) { res.status(404).json({ error: "Attachment not found" }); return; }
+  if (!att.content) { res.status(404).json({ error: "Attachment content not stored" }); return; }
+  const buf = Buffer.from(att.content, "base64");
+  res.setHeader("Content-Type", att.contentType || "application/octet-stream");
+  res.setHeader("Content-Disposition", `attachment; filename="${att.filename}"`);
+  res.setHeader("Content-Length", buf.length);
+  res.send(buf);
+});
+
 router.get("/lpos/:id", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [lpo] = await db.select().from(lposTable).where(eq(lposTable.id, id));
   if (!lpo) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [lpo]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  res.json(lpo);
+  const [co] = lpo.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, lpo.companyId)) : [undefined];
+  res.json({ ...lpo, companyRef: co?.name });
 });
 
 router.put("/lpos/:id", requirePermission("lpos", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {

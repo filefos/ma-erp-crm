@@ -90,6 +90,7 @@ export * from "./listTaxInvoicesParams";
 export * from "./listUsersParams";
 export * from "./loginBody";
 export * from "./lpo";
+export * from "./lpoAttachment";
 export * from "./modulePermission";
 export * from "./notification";
 export * from "./nullableActions";
