@@ -50,13 +50,17 @@ export function Login() {
         />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center gap-3">
-            <div className="bg-white/15 rounded-2xl p-4 backdrop-blur ring-1 ring-white/20">
+            <div className="bg-white/15 rounded-2xl p-4 backdrop-blur ring-1 ring-white/20 flex items-center gap-4">
               <img
                 src="/prime-max-logo.png"
                 alt="Prime Max & Elite Prefab"
                 className="h-24 w-auto object-contain"
                 style={{ filter: "brightness(0) invert(1) drop-shadow(0 1px 6px rgba(0,0,0,0.25))" }}
               />
+              <div className="border-l border-white/30 pl-4">
+                <div className="text-2xl font-extrabold tracking-widest text-white leading-none">ASIF</div>
+                <div className="text-base font-bold tracking-[0.3em] text-white/80 mt-1">ERP</div>
+              </div>
             </div>
           </div>
 
