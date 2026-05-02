@@ -14,6 +14,7 @@ import { ActivitiesList } from "@/pages/crm/activities";
 import { QuotationsList } from "@/pages/sales/quotations";
 import { QuotationDetail } from "@/pages/sales/quotation-detail";
 import { QuotationNew } from "@/pages/sales/quotation-new";
+import { QuotationEdit } from "@/pages/sales/quotation-edit";
 import { ProformaInvoicesList } from "@/pages/sales/proforma-invoices";
 import { ProformaInvoiceDetail } from "@/pages/sales/proforma-invoice-detail";
 import { LposList } from "@/pages/sales/lpos";
@@ -96,6 +97,11 @@ function Router() {
       {/* Sales */}
       <Route path="/sales/quotations/new">
         <ModuleGuard module="quotations" action="canCreate"><QuotationNew /></ModuleGuard>
+      </Route>
+      <Route path="/sales/quotations/:id/edit">
+        {(params) => (
+          <ModuleGuard module="quotations" action="canCreate"><QuotationEdit id={params.id} /></ModuleGuard>
+        )}
       </Route>
       <Route path="/sales/quotations/:id">
         {(params) => (

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown } from "lucide-react";
+import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -186,6 +186,12 @@ export function QuotationDetail({ id }: Props) {
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[q.status] ?? "bg-gray-100"}`}>{q.status}</Badge>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/sales/quotations/${qid}/edit`}>
+              <Pencil className="w-4 h-4 mr-1" />Edit / Revise
+            </Link>
+          </Button>
+
           {q.status === "sent" && (
             <Button
               size="sm" variant="outline"
