@@ -95,11 +95,11 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function EmailPanel() {
+export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } = {}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const companyId: number = (user as any)?.companyId ?? 1;
+  const companyId: number = companyIdProp ?? (user as any)?.companyId ?? 1;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [folder, setFolder] = useState<Folder>("inbox");
@@ -273,7 +273,9 @@ export function EmailPanel() {
                 setComposing(true);
                 setSelectedId(null);
                 setAttachments([]);
-                setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
+                setShowCc(false);
+                setShowBcc(false);
+                setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "" });
               }}
             >
               <Plus className="w-4 h-4 mr-2" /> Compose
@@ -666,11 +668,19 @@ export function EmailPanel() {
               {selectedEmail.attachments && (selectedEmail.attachments as any[]).length > 0 && (
                 <div className="px-5 py-2 border-b border-gray-100 bg-gray-50 flex flex-wrap gap-2">
                   {(selectedEmail.attachments as any[]).map((att, i) => (
-                    <div key={i} className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-md px-2.5 py-1.5">
-                      <Paperclip className="w-3 h-3 text-gray-400" />
-                      <span className="text-xs text-gray-700 max-w-[140px] truncate">{att.filename}</span>
-                      <span className="text-[10px] text-gray-400">{formatBytes(att.size)}</span>
-                    </div>
+                    <a
+                      key={i}
+                      href={att.content
+                        ? `data:${att.contentType};base64,${att.content}`
+                        : `${BASE}api/emails/${selectedEmail.id}/attachments/${i}`}
+                      download={att.filename}
+                      className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-md px-2.5 py-1.5 hover:bg-blue-50 hover:border-[#1e6ab0] transition-colors group"
+                      title="Download attachment"
+                    >
+                      <Paperclip className="w-3 h-3 text-gray-400 group-hover:text-[#1e6ab0]" />
+                      <span className="text-xs text-gray-700 max-w-[140px] truncate group-hover:text-[#1e6ab0]">{att.filename}</span>
+                      <span className="text-[10px] text-gray-400">{formatBytes(att.size ?? 0)}</span>
+                    </a>
                   ))}
                 </div>
               )}
@@ -707,7 +717,9 @@ export function EmailPanel() {
                 <Button className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => {
                   setComposing(true);
                   setAttachments([]);
-                  setCompose({ toAddress: "", toName: "", ccAddress: "", subject: "", body: "" });
+                  setShowCc(false);
+                  setShowBcc(false);
+                  setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "" });
                 }}>
                   <Plus className="w-4 h-4 mr-2" /> Compose Email
                 </Button>

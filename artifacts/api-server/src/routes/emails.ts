@@ -109,7 +109,12 @@ router.post("/emails", requireAuth, async (req, res): Promise<void> => {
       bccAddress: data.bccAddress ?? null,
       subject: data.subject,
       body: data.body,
-      attachments: attachments.map(a => ({ filename: a.filename, contentType: a.contentType, size: a.content.length })),
+      attachments: attachments.map(a => ({
+        filename: a.filename,
+        contentType: a.contentType,
+        size: a.content.length,
+        content: a.content,
+      })),
       isRead: true,
       replyToId: data.replyToId ?? null,
       sentAt: new Date(),
@@ -136,6 +141,22 @@ router.post("/emails", requireAuth, async (req, res): Promise<void> => {
     createdById: userId ?? null,
   }).returning();
   res.status(201).json(email);
+});
+
+router.get("/emails/:id/attachments/:idx", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const idx = parseInt(req.params.idx, 10);
+  const [email] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
+  if (!email) { res.status(404).json({ error: "Not found" }); return; }
+  const atts = (email.attachments ?? []) as Array<{ filename: string; contentType: string; size: number; content?: string }>;
+  const att = atts[idx];
+  if (!att) { res.status(404).json({ error: "Attachment not found" }); return; }
+  if (!att.content) { res.status(404).json({ error: "Attachment content not stored" }); return; }
+  const buf = Buffer.from(att.content, "base64");
+  res.setHeader("Content-Type", att.contentType || "application/octet-stream");
+  res.setHeader("Content-Disposition", `attachment; filename="${att.filename}"`);
+  res.setHeader("Content-Length", buf.length);
+  res.send(buf);
 });
 
 router.get("/emails/:id", requireAuth, async (req, res): Promise<void> => {

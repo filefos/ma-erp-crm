@@ -119,6 +119,7 @@ const NAV: NavGroup[] = [
       { href: "/admin/users", label: "Users", icon: UserCog },
       { href: "/admin/roles", label: "Roles & Permissions", icon: KeyRound },
       { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
+      { href: "/admin/emails", label: "All Company Emails", icon: Mail },
     ],
   },
 ];

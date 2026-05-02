@@ -51,6 +51,7 @@ import { AuditLogsList } from "@/pages/admin/audit-logs";
 import { CompaniesAdmin } from "@/pages/admin/companies";
 import { DepartmentsAdmin } from "@/pages/admin/departments";
 import { RolesAdmin } from "@/pages/admin/roles";
+import { AdminEmailPanel } from "@/pages/admin/emails";
 import { AdminGuard } from "@/components/AdminGuard";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { NotificationsList } from "@/pages/notifications/index";
@@ -237,6 +238,9 @@ function Router() {
       </Route>
       <Route path="/admin/audit-logs">
         <AdminGuard><AuditLogsList /></AdminGuard>
+      </Route>
+      <Route path="/admin/emails">
+        <AdminGuard><AdminEmailPanel /></AdminGuard>
       </Route>
 
       <Route path="/procurement/purchase-orders/:id">
