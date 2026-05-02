@@ -15,11 +15,31 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * Returns the basic list of active companies for display on the login screen. No auth required.
+ * @summary List companies (public, pre-login)
+ */
+export const ListAuthCompaniesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  shortName: zod.string().nullish(),
+  prefix: zod.string().nullish(),
+});
+export const ListAuthCompaniesResponse = zod.array(
+  ListAuthCompaniesResponseItem,
+);
+
+/**
  * @summary Login
  */
 export const LoginBody = zod.object({
   email: zod.string(),
   password: zod.string(),
+  companyId: zod
+    .number()
+    .nullish()
+    .describe(
+      "Optional — the company workspace the user wants to enter. Must be in the user's accessibleCompanies. If omitted, the user's primary companyId is used.",
+    ),
 });
 
 export const LoginResponse = zod.object({
@@ -34,6 +54,18 @@ export const LoginResponse = zod.object({
     companyId: zod.number().optional(),
     companyName: zod.string().optional(),
     permissionLevel: zod.string().optional(),
+    status: zod.string().optional(),
+    lastLoginAt: zod.string().optional(),
+    accessibleCompanies: zod
+      .array(
+        zod.object({
+          id: zod.number(),
+          name: zod.string(),
+          shortName: zod.string(),
+          prefix: zod.string(),
+        }),
+      )
+      .optional(),
     isActive: zod.boolean(),
     createdAt: zod.string(),
   }),
@@ -62,6 +94,18 @@ export const GetMeResponse = zod.object({
   companyId: zod.number().optional(),
   companyName: zod.string().optional(),
   permissionLevel: zod.string().optional(),
+  status: zod.string().optional(),
+  lastLoginAt: zod.string().optional(),
+  accessibleCompanies: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        name: zod.string(),
+        shortName: zod.string(),
+        prefix: zod.string(),
+      }),
+    )
+    .optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -225,6 +269,18 @@ export const ListUsersResponseItem = zod.object({
   companyId: zod.number().optional(),
   companyName: zod.string().optional(),
   permissionLevel: zod.string().optional(),
+  status: zod.string().optional(),
+  lastLoginAt: zod.string().optional(),
+  accessibleCompanies: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        name: zod.string(),
+        shortName: zod.string(),
+        prefix: zod.string(),
+      }),
+    )
+    .optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -241,6 +297,7 @@ export const CreateUserBody = zod.object({
   role: zod.string(),
   departmentId: zod.number().optional(),
   companyId: zod.number().optional(),
+  companyIds: zod.array(zod.number()).optional(),
   permissionLevel: zod.string().optional(),
 });
 
@@ -262,6 +319,18 @@ export const GetUserResponse = zod.object({
   companyId: zod.number().optional(),
   companyName: zod.string().optional(),
   permissionLevel: zod.string().optional(),
+  status: zod.string().optional(),
+  lastLoginAt: zod.string().optional(),
+  accessibleCompanies: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        name: zod.string(),
+        shortName: zod.string(),
+        prefix: zod.string(),
+      }),
+    )
+    .optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -280,7 +349,14 @@ export const UpdateUserBody = zod.object({
   role: zod.string().optional(),
   departmentId: zod.number().optional(),
   companyId: zod.number().optional(),
+  companyIds: zod
+    .array(zod.number())
+    .optional()
+    .describe(
+      "Replace the user's company access list. When provided, fully replaces user_company_access rows.",
+    ),
   permissionLevel: zod.string().optional(),
+  status: zod.string().optional(),
   isActive: zod.boolean().optional(),
 });
 
@@ -295,6 +371,18 @@ export const UpdateUserResponse = zod.object({
   companyId: zod.number().optional(),
   companyName: zod.string().optional(),
   permissionLevel: zod.string().optional(),
+  status: zod.string().optional(),
+  lastLoginAt: zod.string().optional(),
+  accessibleCompanies: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        name: zod.string(),
+        shortName: zod.string(),
+        prefix: zod.string(),
+      }),
+    )
+    .optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -3289,3 +3377,183 @@ export const GetInventoryAlertsResponseItem = zod.object({
 export const GetInventoryAlertsResponse = zod.array(
   GetInventoryAlertsResponseItem,
 );
+
+/**
+ * @summary Get admin-only system overview (companies, users, audit stats)
+ */
+export const GetAdminSummaryResponse = zod.object({
+  totalCompanies: zod.number(),
+  activeCompanies: zod.number(),
+  totalUsers: zod.number(),
+  activeUsers: zod.number(),
+  totalDepartments: zod.number(),
+  totalAuditLogs: zod.number(),
+  logins24h: zod.number(),
+  failedLogins24h: zod.number(),
+  companyCards: zod.array(
+    zod.object({
+      id: zod.number(),
+      name: zod.string(),
+      shortName: zod.string(),
+      prefix: zod.string(),
+      trn: zod.string().optional(),
+      logo: zod.string().optional(),
+      isActive: zod.boolean(),
+      userCount: zod.number(),
+      leadCount: zod.number(),
+      dealCount: zod.number(),
+      dealsValue: zod.number(),
+      invoicesValue: zod.number(),
+    }),
+  ),
+});
+
+/**
+ * @summary List roles with permission and user counts
+ */
+export const ListRolesResponseItem = zod.object({
+  id: zod.number(),
+  code: zod.string(),
+  name: zod.string(),
+  description: zod.string().nullish(),
+  permissionLevel: zod.number(),
+  isSystem: zod.boolean(),
+  permissionCount: zod.number(),
+  userCount: zod.number(),
+});
+export const ListRolesResponse = zod.array(ListRolesResponseItem);
+
+/**
+ * @summary Get the full permission matrix for a role
+ */
+export const GetRolePermissionsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetRolePermissionsResponseItem = zod.object({
+  module: zod.string(),
+  canView: zod.boolean(),
+  canCreate: zod.boolean(),
+  canEdit: zod.boolean(),
+  canApprove: zod.boolean(),
+  canDelete: zod.boolean(),
+  canExport: zod.boolean(),
+  canPrint: zod.boolean(),
+});
+export const GetRolePermissionsResponse = zod.array(
+  GetRolePermissionsResponseItem,
+);
+
+/**
+ * @summary Replace the permission matrix for a role
+ */
+export const UpdateRolePermissionsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateRolePermissionsBody = zod.object({
+  permissions: zod.array(
+    zod.object({
+      module: zod.string(),
+      canView: zod.boolean(),
+      canCreate: zod.boolean(),
+      canEdit: zod.boolean(),
+      canApprove: zod.boolean(),
+      canDelete: zod.boolean(),
+      canExport: zod.boolean(),
+      canPrint: zod.boolean(),
+    }),
+  ),
+});
+
+export const UpdateRolePermissionsResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Get a user's effective permission matrix (role baseline + per-user overrides)
+ */
+export const GetUserPermissionsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetUserPermissionsResponseItem = zod.object({
+  module: zod.string(),
+  roleDefault: zod.object({
+    canView: zod.boolean().optional(),
+    canCreate: zod.boolean().optional(),
+    canEdit: zod.boolean().optional(),
+    canApprove: zod.boolean().optional(),
+    canDelete: zod.boolean().optional(),
+    canExport: zod.boolean().optional(),
+    canPrint: zod.boolean().optional(),
+  }),
+  override: zod
+    .object({
+      canView: zod.boolean().nullish(),
+      canCreate: zod.boolean().nullish(),
+      canEdit: zod.boolean().nullish(),
+      canApprove: zod.boolean().nullish(),
+      canDelete: zod.boolean().nullish(),
+      canExport: zod.boolean().nullish(),
+      canPrint: zod.boolean().nullish(),
+    })
+    .nullish(),
+});
+export const GetUserPermissionsResponse = zod.array(
+  GetUserPermissionsResponseItem,
+);
+
+/**
+ * @summary Replace per-user permission overrides
+ */
+export const UpdateUserPermissionsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUserPermissionsBody = zod.object({
+  permissions: zod.array(
+    zod
+      .object({
+        module: zod.string(),
+      })
+      .and(
+        zod.object({
+          canView: zod.boolean().nullish(),
+          canCreate: zod.boolean().nullish(),
+          canEdit: zod.boolean().nullish(),
+          canApprove: zod.boolean().nullish(),
+          canDelete: zod.boolean().nullish(),
+          canExport: zod.boolean().nullish(),
+          canPrint: zod.boolean().nullish(),
+        }),
+      ),
+  ),
+});
+
+export const UpdateUserPermissionsResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Update a department
+ */
+export const UpdateDepartmentParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateDepartmentBody = zod.object({
+  name: zod.string().optional(),
+  description: zod.string().optional(),
+  isActive: zod.boolean().optional(),
+});
+
+export const UpdateDepartmentResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string().optional(),
+  isActive: zod.boolean(),
+  createdAt: zod.string(),
+});

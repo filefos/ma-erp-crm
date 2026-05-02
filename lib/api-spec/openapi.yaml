@@ -54,6 +54,23 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 
   # AUTH
+  /auth/companies:
+    get:
+      operationId: listAuthCompanies
+      tags: [auth]
+      summary: List companies (public, pre-login)
+      description: Returns the basic list of active companies for display on the login screen. No auth required.
+      security: []
+      responses:
+        "200":
+          description: Companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuthCompany"
+
   /auth/login:
     post:
       operationId: login
@@ -2415,6 +2432,148 @@ paths:
                 items:
                   $ref: "#/components/schemas/InventoryItem"
 
+  /dashboard/admin-summary:
+    get:
+      operationId: getAdminSummary
+      tags: [dashboard]
+      summary: Get admin-only system overview (companies, users, audit stats)
+      responses:
+        "200":
+          description: Admin summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSummary"
+
+  # ROLES (admin)
+  /roles:
+    get:
+      operationId: listRoles
+      tags: [roles]
+      summary: List roles with permission and user counts
+      responses:
+        "200":
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleSummary"
+
+  /roles/{id}/permissions:
+    get:
+      operationId: getRolePermissions
+      tags: [roles]
+      summary: Get the full permission matrix for a role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Permission matrix rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ModulePermission"
+    put:
+      operationId: updateRolePermissions
+      tags: [roles]
+      summary: Replace the permission matrix for a role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRolePermissionsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /users/{id}/permissions:
+    get:
+      operationId: getUserPermissions
+      tags: [users]
+      summary: Get a user's effective permission matrix (role baseline + per-user overrides)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User effective permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserModulePermission"
+    put:
+      operationId: updateUserPermissions
+      tags: [users]
+      summary: Replace per-user permission overrides
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserPermissionsBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /departments/{id}:
+    put:
+      operationId: updateDepartment
+      tags: [departments]
+      summary: Update a department
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDepartmentBody"
+      responses:
+        "200":
+          description: Updated department
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+
 components:
   schemas:
     HealthStatus:
@@ -2449,6 +2608,10 @@ components:
           type: string
         password:
           type: string
+        companyId:
+          type: integer
+          nullable: true
+          description: Optional — the company workspace the user wants to enter. Must be in the user's accessibleCompanies. If omitted, the user's primary companyId is used.
       required: [email, password]
 
     ChangePasswordBody:
@@ -2468,6 +2631,101 @@ components:
         token:
           type: string
       required: [user, token]
+
+    RoleSummary:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        permissionLevel: { type: integer }
+        isSystem: { type: boolean }
+        permissionCount: { type: integer }
+        userCount: { type: integer }
+      required: [id, code, name, permissionLevel, isSystem, permissionCount, userCount]
+
+    ModulePermission:
+      type: object
+      properties:
+        module: { type: string }
+        canView: { type: boolean }
+        canCreate: { type: boolean }
+        canEdit: { type: boolean }
+        canApprove: { type: boolean }
+        canDelete: { type: boolean }
+        canExport: { type: boolean }
+        canPrint: { type: boolean }
+      required: [module, canView, canCreate, canEdit, canApprove, canDelete, canExport, canPrint]
+
+    UpdateRolePermissionsBody:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModulePermission"
+      required: [permissions]
+
+    NullableActions:
+      type: object
+      properties:
+        canView: { type: boolean, nullable: true }
+        canCreate: { type: boolean, nullable: true }
+        canEdit: { type: boolean, nullable: true }
+        canApprove: { type: boolean, nullable: true }
+        canDelete: { type: boolean, nullable: true }
+        canExport: { type: boolean, nullable: true }
+        canPrint: { type: boolean, nullable: true }
+
+    UserModulePermission:
+      type: object
+      properties:
+        module: { type: string }
+        roleDefault:
+          type: object
+          properties:
+            canView: { type: boolean }
+            canCreate: { type: boolean }
+            canEdit: { type: boolean }
+            canApprove: { type: boolean }
+            canDelete: { type: boolean }
+            canExport: { type: boolean }
+            canPrint: { type: boolean }
+        override:
+          allOf:
+            - $ref: "#/components/schemas/NullableActions"
+          nullable: true
+      required: [module, roleDefault]
+
+    UpdateUserPermissionsBody:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            allOf:
+              - type: object
+                properties:
+                  module: { type: string }
+                required: [module]
+              - $ref: "#/components/schemas/NullableActions"
+      required: [permissions]
+
+    AuthCompany:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        shortName:
+          type: string
+          nullable: true
+        prefix:
+          type: string
+          nullable: true
+      required: [id, name]
 
     Company:
       type: object
@@ -2580,11 +2838,32 @@ components:
           type: string
         permissionLevel:
           type: string
+        status:
+          type: string
+        lastLoginAt:
+          type: string
+        accessibleCompanies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompanyRef"
         isActive:
           type: boolean
         createdAt:
           type: string
       required: [id, name, email, role, isActive, createdAt]
+
+    CompanyRef:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        shortName:
+          type: string
+        prefix:
+          type: string
+      required: [id, name, shortName, prefix]
 
     CreateUserBody:
       type: object
@@ -2603,6 +2882,10 @@ components:
           type: integer
         companyId:
           type: integer
+        companyIds:
+          type: array
+          items:
+            type: integer
         permissionLevel:
           type: string
       required: [name, email, password, role]
@@ -2622,7 +2905,24 @@ components:
           type: integer
         companyId:
           type: integer
+        companyIds:
+          type: array
+          items:
+            type: integer
+          description: Replace the user's company access list. When provided, fully replaces user_company_access rows.
         permissionLevel:
+          type: string
+        status:
+          type: string
+        isActive:
+          type: boolean
+
+    UpdateDepartmentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
           type: string
         isActive:
           type: boolean
@@ -4235,3 +4535,57 @@ components:
         cheques:
           type: integer
       required: [quotations, proformaInvoices, taxInvoices, purchaseRequests, purchaseOrders, expenses, stockAdjustments, cheques]
+
+    AdminCompanyCard:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        shortName:
+          type: string
+        prefix:
+          type: string
+        trn:
+          type: string
+        logo:
+          type: string
+        isActive:
+          type: boolean
+        userCount:
+          type: integer
+        leadCount:
+          type: integer
+        dealCount:
+          type: integer
+        dealsValue:
+          type: number
+        invoicesValue:
+          type: number
+      required: [id, name, shortName, prefix, isActive, userCount, leadCount, dealCount, dealsValue, invoicesValue]
+
+    AdminSummary:
+      type: object
+      properties:
+        totalCompanies:
+          type: integer
+        activeCompanies:
+          type: integer
+        totalUsers:
+          type: integer
+        activeUsers:
+          type: integer
+        totalDepartments:
+          type: integer
+        totalAuditLogs:
+          type: integer
+        logins24h:
+          type: integer
+        failedLogins24h:
+          type: integer
+        companyCards:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminCompanyCard"
+      required: [totalCompanies, activeCompanies, totalUsers, activeUsers, totalDepartments, totalAuditLogs, logins24h, failedLogins24h, companyCards]

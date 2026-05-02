@@ -14,5 +14,6 @@ export interface CreateUserBody {
   role: string;
   departmentId?: number;
   companyId?: number;
+  companyIds?: number[];
   permissionLevel?: string;
 }

@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { db, leadsTable, usersTable } from "@workspace/db";
 import { eq, like, and, or, sql } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
+// Module-level RBAC: every leads route is gated through requirePermission so
+// a user without `leads.view` (e.g., a viewer in another department) gets 403.
 
 async function enrichLead(lead: typeof leadsTable.$inferSelect) {
   let assignedToName: string | undefined;
@@ -16,9 +18,9 @@ async function enrichLead(lead: typeof leadsTable.$inferSelect) {
   return { ...lead, assignedToName, companyRef: lead.companyName };
 }
 
-router.get("/leads", async (req, res): Promise<void> => {
+router.get("/leads", requirePermission("leads", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(leadsTable).orderBy(sql`${leadsTable.createdAt} desc`);
-  
+  rows = scopeFilter(req, rows);
   const { status, companyId, assignedTo, search, leadScore } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -33,8 +35,9 @@ router.get("/leads", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.get("/leads/pipeline", async (req, res): Promise<void> => {
+router.get("/leads/pipeline", requirePermission("leads", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(leadsTable).orderBy(sql`${leadsTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { companyId } = req.query;
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
   
@@ -55,7 +58,7 @@ router.get("/leads/pipeline", async (req, res): Promise<void> => {
   res.json(pipeline);
 });
 
-router.post("/leads", async (req, res): Promise<void> => {
+router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   // Generate lead number
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(leadsTable);
@@ -86,23 +89,28 @@ router.post("/leads", async (req, res): Promise<void> => {
   res.status(201).json(await enrichLead(lead));
 });
 
-router.get("/leads/:id", async (req, res): Promise<void> => {
+router.get("/leads/:id", requirePermission("leads", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [lead] = await db.select().from(leadsTable).where(eq(leadsTable.id, id));
   if (!lead) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [lead]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichLead(lead));
 });
 
-router.put("/leads/:id", async (req, res): Promise<void> => {
+router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(leadsTable).where(eq(leadsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const data = req.body;
   const [lead] = await db.update(leadsTable).set({ ...data, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
-  if (!lead) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichLead(lead));
 });
 
-router.delete("/leads/:id", async (req, res): Promise<void> => {
+router.delete("/leads/:id", requirePermission("leads", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(leadsTable).where(eq(leadsTable.id, id));
+  if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(leadsTable).where(eq(leadsTable.id, id));
   res.json({ success: true });
 });

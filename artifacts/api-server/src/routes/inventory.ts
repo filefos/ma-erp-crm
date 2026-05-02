@@ -1,14 +1,15 @@
 import { Router } from "express";
 import { db, inventoryItemsTable, stockEntriesTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
 
 // Inventory Items
-router.get("/inventory-items", async (req, res): Promise<void> => {
+router.get("/inventory-items", requirePermission("inventory_items", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(inventoryItemsTable).orderBy(inventoryItemsTable.name);
+  rows = scopeFilter(req, rows);
   const { category, companyId, lowStock, search } = req.query;
   if (category) rows = rows.filter(r => r.category === category);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -20,7 +21,7 @@ router.get("/inventory-items", async (req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/inventory-items", async (req, res): Promise<void> => {
+router.post("/inventory-items", requirePermission("inventory_items", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(inventoryItemsTable);
   const num = (count[0]?.count ?? 0) + 1;
@@ -31,28 +32,32 @@ router.post("/inventory-items", async (req, res): Promise<void> => {
   res.status(201).json(item);
 });
 
-router.get("/inventory-items/:id", async (req, res): Promise<void> => {
+router.get("/inventory-items/:id", requirePermission("inventory_items", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [item] = await db.select().from(inventoryItemsTable).where(eq(inventoryItemsTable.id, id));
   if (!item) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [item]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(item);
 });
 
-router.put("/inventory-items/:id", async (req, res): Promise<void> => {
+router.put("/inventory-items/:id", requirePermission("inventory_items", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(inventoryItemsTable).where(eq(inventoryItemsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [item] = await db.update(inventoryItemsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(inventoryItemsTable.id, id)).returning();
-  if (!item) { res.status(404).json({ error: "Not found" }); return; }
   res.json(item);
 });
 
 // Stock Entries
-router.get("/stock-entries", async (req, res): Promise<void> => {
+router.get("/stock-entries", requirePermission("stock_entries", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(stockEntriesTable).orderBy(sql`${stockEntriesTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { type, itemId, companyId } = req.query;
   if (type) rows = rows.filter(r => r.type === type);
   if (itemId) rows = rows.filter(r => r.itemId === parseInt(itemId as string, 10));
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
-  
+
   const enriched = await Promise.all(rows.map(async (entry) => {
     const [item] = await db.select({ name: inventoryItemsTable.name }).from(inventoryItemsTable).where(eq(inventoryItemsTable.id, entry.itemId));
     let createdByName: string | undefined;
@@ -65,17 +70,16 @@ router.get("/stock-entries", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.post("/stock-entries", async (req, res): Promise<void> => {
+router.post("/stock-entries", requirePermission("stock_entries", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(stockEntriesTable);
   const num = (count[0]?.count ?? 0) + 1;
   const entryNumber = `SE-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
-  
+
   const [entry] = await db.insert(stockEntriesTable).values({
     ...data, entryNumber, createdById: req.user?.id, approvalStatus: "approved",
   }).returning();
 
-  // Update stock
   const [item] = await db.select().from(inventoryItemsTable).where(eq(inventoryItemsTable.id, data.itemId));
   if (item) {
     const delta = ["stock_in", "material_return"].includes(data.type) ? data.quantity : -Math.abs(data.quantity);
@@ -89,10 +93,11 @@ router.post("/stock-entries", async (req, res): Promise<void> => {
   res.status(201).json({ ...entry, itemName: itemRecord?.name });
 });
 
-router.get("/stock-entries/:id", async (req, res): Promise<void> => {
+router.get("/stock-entries/:id", requirePermission("stock_entries", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [entry] = await db.select().from(stockEntriesTable).where(eq(stockEntriesTable.id, id));
   if (!entry) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [entry]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [item] = await db.select({ name: inventoryItemsTable.name }).from(inventoryItemsTable).where(eq(inventoryItemsTable.id, entry.itemId));
   res.json({ ...entry, itemName: item?.name });
 });

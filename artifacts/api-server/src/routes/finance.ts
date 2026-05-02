@@ -1,34 +1,38 @@
 import { Router } from "express";
 import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
 
 // Bank Accounts
-router.get("/bank-accounts", async (req, res): Promise<void> => {
+router.get("/bank-accounts", requirePermission("bank_accounts", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(bankAccountsTable).orderBy(bankAccountsTable.bankName);
+  rows = scopeFilter(req, rows);
   const { companyId } = req.query;
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
   res.json(rows);
 });
 
-router.post("/bank-accounts", async (req, res): Promise<void> => {
+router.post("/bank-accounts", requirePermission("bank_accounts", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const [acc] = await db.insert(bankAccountsTable).values(req.body).returning();
   res.status(201).json(acc);
 });
 
-router.put("/bank-accounts/:id", async (req, res): Promise<void> => {
+router.put("/bank-accounts/:id", requirePermission("bank_accounts", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(bankAccountsTable).where(eq(bankAccountsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [acc] = await db.update(bankAccountsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(bankAccountsTable.id, id)).returning();
-  if (!acc) { res.status(404).json({ error: "Not found" }); return; }
   res.json(acc);
 });
 
 // Cheques
-router.get("/cheques", async (req, res): Promise<void> => {
+router.get("/cheques", requirePermission("cheques", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(chequesTable).orderBy(sql`${chequesTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { status, companyId, bankAccountId } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -40,9 +44,8 @@ router.get("/cheques", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.post("/cheques", async (req, res): Promise<void> => {
+router.post("/cheques", requirePermission("cheques", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
-  // Generate amount in words
   const words = numberToWords(data.amount ?? 0);
   const [cheque] = await db.insert(chequesTable).values({
     ...data, amountInWords: words + " UAE Dirhams Only", preparedById: req.user?.id,
@@ -50,23 +53,27 @@ router.post("/cheques", async (req, res): Promise<void> => {
   res.status(201).json(cheque);
 });
 
-router.get("/cheques/:id", async (req, res): Promise<void> => {
+router.get("/cheques/:id", requirePermission("cheques", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [cheque] = await db.select().from(chequesTable).where(eq(chequesTable.id, id));
   if (!cheque) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [cheque]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(cheque);
 });
 
-router.put("/cheques/:id", async (req, res): Promise<void> => {
+router.put("/cheques/:id", requirePermission("cheques", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(chequesTable).where(eq(chequesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [cheque] = await db.update(chequesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(chequesTable.id, id)).returning();
-  if (!cheque) { res.status(404).json({ error: "Not found" }); return; }
   res.json(cheque);
 });
 
 // Expenses
-router.get("/expenses", async (req, res): Promise<void> => {
+router.get("/expenses", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(expensesTable).orderBy(sql`${expensesTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { status, companyId, category } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -82,7 +89,7 @@ router.get("/expenses", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.post("/expenses", async (req, res): Promise<void> => {
+router.post("/expenses", requirePermission("expenses", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(expensesTable);
   const num = (count[0]?.count ?? 0) + 1;
@@ -91,22 +98,27 @@ router.post("/expenses", async (req, res): Promise<void> => {
   res.status(201).json(expense);
 });
 
-router.get("/expenses/:id", async (req, res): Promise<void> => {
+router.get("/expenses/:id", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [expense] = await db.select().from(expensesTable).where(eq(expensesTable.id, id));
   if (!expense) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [expense]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(expense);
 });
 
-router.put("/expenses/:id", async (req, res): Promise<void> => {
+router.put("/expenses/:id", requirePermission("expenses", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(expensesTable).where(eq(expensesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [expense] = await db.update(expensesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(expensesTable.id, id)).returning();
-  if (!expense) { res.status(404).json({ error: "Not found" }); return; }
   res.json(expense);
 });
 
-router.delete("/expenses/:id", async (req, res): Promise<void> => {
+router.delete("/expenses/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(expensesTable).where(eq(expensesTable.id, id));
+  if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(expensesTable).where(eq(expensesTable.id, id));
   res.json({ success: true });
 });

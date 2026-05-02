@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useGetMe, useLogin, useLogout } from "@workspace/api-client-react";
+import { useEffect } from "react";
+import { useGetMe, useLogin, useLogout, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -8,8 +8,9 @@ export function useAuth() {
   const queryClient = useQueryClient();
   const token = localStorage.getItem("erp_token");
 
-  const { data: user, isLoading, error } = useGetMe({
+  const { data: user, isLoading } = useGetMe({
     query: {
+      queryKey: getGetMeQueryKey(),
       enabled: !!token,
       retry: false,
     }
@@ -19,7 +20,10 @@ export function useAuth() {
     mutation: {
       onSuccess: (data) => {
         localStorage.setItem("erp_token", data.token);
-        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+        if ((data.user as { companyId?: number | null })?.companyId) {
+          localStorage.setItem("erp_active_company_id", String((data.user as { companyId: number }).companyId));
+        }
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
         setLocation("/dashboard");
       }
     }

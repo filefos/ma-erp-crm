@@ -12,6 +12,8 @@ export const usersTable = pgTable("users", {
   departmentId: integer("department_id"),
   companyId: integer("company_id"),
   permissionLevel: text("permission_level").default("user"),
+  status: text("status").notNull().default("active"),
+  lastLoginAt: timestamp("last_login_at"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

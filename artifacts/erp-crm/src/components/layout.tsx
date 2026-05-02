@@ -1,14 +1,13 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useListNotifications } from "@workspace/api-client-react";
 import {
   LayoutDashboard, Users, Briefcase, Calendar, FileText, FileBox, Receipt,
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
-  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText
+  Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound
 } from "lucide-react";
 import { useState } from "react";
 
@@ -22,6 +21,7 @@ interface NavGroup {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
+  adminOnly?: boolean;
 }
 
 const NAV: NavGroup[] = [
@@ -104,12 +104,62 @@ const NAV: NavGroup[] = [
   {
     label: "Admin",
     icon: Settings,
+    adminOnly: true,
     items: [
+      { href: "/admin/companies", label: "Companies", icon: Building2 },
+      { href: "/admin/departments", label: "Departments", icon: Folders },
       { href: "/admin/users", label: "Users", icon: UserCog },
+      { href: "/admin/roles", label: "Roles & Permissions", icon: KeyRound },
       { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
     ],
   },
 ];
+
+const ADMIN_LEVELS = new Set(["super_admin", "company_admin"]);
+// Department/role admins see their own department's groups in full.
+const DEPT_GROUPS: Record<string, string[]> = {
+  Sales: ["CRM", "Sales"],
+  Accounts: ["Accounts"],
+  Finance: ["Accounts", "Reports"],
+  Procurement: ["Procurement"],
+  Store: ["Inventory"],
+  Inventory: ["Inventory"],
+  Assets: ["Assets"],
+  HR: ["HR"],
+  Production: ["Projects", "Assets"],
+  Management: ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports"],
+  "Main Admin": ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports"],
+};
+// Fallback by role code (for users with role-driven access when department is missing).
+const ROLE_GROUPS: Record<string, string[]> = {
+  sales: ["CRM", "Sales"],
+  accounts: ["Accounts"],
+  finance: ["Accounts", "Reports"],
+  procurement: ["Procurement"],
+  store: ["Inventory"],
+  inventory: ["Inventory"],
+  hr: ["HR"],
+  production: ["Projects", "Assets"],
+  management: ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports"],
+};
+
+function visibleGroupsFor(user: { permissionLevel?: string; role?: string; departmentName?: string } | undefined): NavGroup[] {
+  const level = user?.permissionLevel ?? "user";
+  if (ADMIN_LEVELS.has(level)) {
+    // Admins see everything including the Admin group.
+    return NAV;
+  }
+  // Non-admin: never show admin group.
+  const nonAdminNav = NAV.filter(g => !g.adminOnly);
+  const dept = user?.departmentName ?? "";
+  const role = (user?.role ?? "").toLowerCase();
+  const allowedLabels = new Set<string>(DEPT_GROUPS[dept] ?? ROLE_GROUPS[role] ?? []);
+  if (allowedLabels.size === 0) {
+    // Conservative default — at minimum let them see CRM if no mapping.
+    allowedLabels.add("CRM");
+  }
+  return nonAdminNav.filter(g => allowedLabels.has(g.label));
+}
 
 function NavGroupItem({ group }: { group: NavGroup }) {
   const [location] = useLocation();
@@ -134,7 +184,7 @@ function NavGroupItem({ group }: { group: NavGroup }) {
             const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-white/15 text-white font-medium" : "text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-white/8"}`}>
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-[#1e6ab0] text-white font-medium" : "text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-white/8"}`}>
                 <ItemIcon className="w-3.5 h-3.5 shrink-0" />
                 {item.label}
               </Link>
@@ -151,7 +201,7 @@ function DashboardLink() {
   const isActive = location === "/" || location === "/dashboard";
   return (
     <Link href="/dashboard"
-      className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-white/15 text-white font-medium" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/8"}`}>
+      className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-[#1e6ab0] text-white font-medium" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/8"}`}>
       <LayoutDashboard className="w-4 h-4 shrink-0" />
       Dashboard
     </Link>
@@ -177,18 +227,21 @@ function NotificationBell() {
 
 function SidebarContent() {
   const { user, logout } = useAuth();
+  const u = user as { name?: string; permissionLevel?: string; role?: string; departmentName?: string } | undefined;
+  const level = u?.permissionLevel ?? "user";
+  const visibleGroups = visibleGroupsFor(u);
 
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Logo */}
       <div className="p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 bg-[#1e6ab0] rounded-lg flex items-center justify-center shrink-0 ring-1 ring-white/15">
             <Building2 className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="text-sm font-bold text-white leading-tight">Prime Max</div>
-            <div className="text-xs text-white/40 leading-tight">& Elite Prefab ERP</div>
+            <div className="text-[11px] text-white/50 leading-tight">& Elite Prefab ERP</div>
           </div>
         </div>
       </div>
@@ -196,7 +249,7 @@ function SidebarContent() {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
         <DashboardLink />
-        {NAV.map(group => (
+        {visibleGroups.map(group => (
           <NavGroupItem key={group.label} group={group} />
         ))}
       </div>
@@ -204,17 +257,19 @@ function SidebarContent() {
       {/* User footer */}
       <div className="p-3 border-t border-white/10">
         <div className="flex items-center gap-2 mb-2 px-2">
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
+          <div className="w-7 h-7 rounded-full bg-[#1e6ab0] flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/15">
+            {u?.name?.charAt(0)?.toUpperCase() ?? "U"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-white truncate">{user?.name}</p>
-            <p className="text-xs text-white/40 truncate capitalize">{user?.role?.replace("_", " ")}</p>
+            <p className="text-xs font-medium text-white truncate">{u?.name}</p>
+            <p className="text-[10px] text-white/40 truncate capitalize">
+              {level.replace(/_/g, " ")}
+            </p>
           </div>
         </div>
         <Button variant="ghost" size="sm"
           className="w-full justify-start h-8 text-white/50 hover:text-white hover:bg-white/10 text-xs"
-          onClick={() => logout({})}>
+          onClick={() => logout()}>
           <LogOut className="w-3.5 h-3.5 mr-2" />
           Sign Out
         </Button>
@@ -231,7 +286,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-sidebar">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center mx-auto">
+          <div className="w-10 h-10 bg-[#1e6ab0] rounded-xl flex items-center justify-center mx-auto">
             <Building2 className="w-5 h-5 text-white" />
           </div>
           <div className="text-white/60 text-sm">Loading ERP CRM...</div>

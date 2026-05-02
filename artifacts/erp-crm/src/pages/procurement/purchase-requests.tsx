@@ -24,7 +24,7 @@ export function PurchaseRequestsList() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const { data: requests, isLoading } = useListPurchaseRequests({ status: status === "all" ? undefined : status });
-  const filtered = requests?.filter(r => !search || r.prNumber.toLowerCase().includes(search.toLowerCase()) || r.description.toLowerCase().includes(search.toLowerCase()));
+  const filtered = requests?.filter(r => !search || r.prNumber.toLowerCase().includes(search.toLowerCase()) || (r.description ?? "").toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-4">

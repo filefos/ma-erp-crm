@@ -1,12 +1,29 @@
 import { Router } from "express";
-import { db, activitiesTable, usersTable } from "@workspace/db";
+import { db, activitiesTable, usersTable, leadsTable, dealsTable, contactsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requirePermission } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
 
-router.get("/activities", async (req, res): Promise<void> => {
+/** Resolve the companyId for an activity via its linked lead, deal, or contact. */
+async function resolveCompanyId(a: typeof activitiesTable.$inferSelect): Promise<number | null> {
+  if (a.leadId) {
+    const [r] = await db.select({ companyId: leadsTable.companyId }).from(leadsTable).where(eq(leadsTable.id, a.leadId));
+    if (r?.companyId) return r.companyId;
+  }
+  if (a.dealId) {
+    const [r] = await db.select({ companyId: dealsTable.companyId }).from(dealsTable).where(eq(dealsTable.id, a.dealId));
+    if (r?.companyId) return r.companyId;
+  }
+  if (a.contactId) {
+    const [r] = await db.select({ companyId: contactsTable.companyId }).from(contactsTable).where(eq(contactsTable.id, a.contactId));
+    if (r?.companyId) return r.companyId;
+  }
+  return null;
+}
+
+router.get("/activities", requirePermission("activities", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(activitiesTable).orderBy(sql`${activitiesTable.createdAt} desc`);
   const { leadId, dealId, contactId, type } = req.query;
   if (leadId) rows = rows.filter(r => r.leadId === parseInt(leadId as string, 10));
@@ -15,17 +32,38 @@ router.get("/activities", async (req, res): Promise<void> => {
   if (type) rows = rows.filter(r => r.type === type);
 
   const enriched = await Promise.all(rows.map(async (a) => {
-    let createdByName: string | undefined;
-    if (a.createdById) {
-      const [u] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, a.createdById));
-      createdByName = u?.name;
-    }
-    return { ...a, createdByName };
+    const [companyId, user] = await Promise.all([
+      resolveCompanyId(a),
+      a.createdById
+        ? db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, a.createdById)).then(r => r[0])
+        : Promise.resolve(undefined),
+    ]);
+    return { ...a, createdByName: user?.name, _companyId: companyId };
   }));
-  res.json(enriched);
+
+  // Tenant isolation: filter by caller's company scope using the resolved companyId.
+  const scope = req.companyScope;
+  const filtered = enriched
+    .filter(r => {
+      if (scope === null || scope === undefined) return true;
+      return r._companyId == null || scope.includes(r._companyId);
+    })
+    .map(({ _companyId, ...r }) => r);
+
+  res.json(filtered);
 });
 
-router.post("/activities", async (req, res): Promise<void> => {
+router.post("/activities", requirePermission("activities", "create"), async (req, res): Promise<void> => {
+  // Tenant isolation: verify the referenced lead/deal/contact belongs to the caller's scope.
+  const scope = req.companyScope;
+  if (scope !== null && scope !== undefined) {
+    const tmpRow = { leadId: req.body?.leadId ?? null, dealId: req.body?.dealId ?? null, contactId: req.body?.contactId ?? null } as typeof activitiesTable.$inferSelect;
+    const cid = await resolveCompanyId(tmpRow);
+    if (cid != null && !scope.includes(cid)) {
+      res.status(403).json({ error: "Forbidden", message: "Referenced entity belongs to a company outside your scope" });
+      return;
+    }
+  }
   const [activity] = await db.insert(activitiesTable).values({
     ...req.body,
     createdById: req.user?.id,
@@ -33,15 +71,35 @@ router.post("/activities", async (req, res): Promise<void> => {
   res.status(201).json(activity);
 });
 
-router.put("/activities/:id", async (req, res): Promise<void> => {
+router.put("/activities/:id", requirePermission("activities", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(activitiesTable).where(eq(activitiesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  // Scope check before allowing mutation.
+  const scope = req.companyScope;
+  if (scope !== null && scope !== undefined) {
+    const cid = await resolveCompanyId(existing);
+    if (cid != null && !scope.includes(cid)) {
+      res.status(403).json({ error: "Forbidden", message: "Activity belongs to a company outside your scope" });
+      return;
+    }
+  }
   const [activity] = await db.update(activitiesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(activitiesTable.id, id)).returning();
-  if (!activity) { res.status(404).json({ error: "Not found" }); return; }
   res.json(activity);
 });
 
-router.delete("/activities/:id", async (req, res): Promise<void> => {
+router.delete("/activities/:id", requirePermission("activities", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(activitiesTable).where(eq(activitiesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  const scope = req.companyScope;
+  if (scope !== null && scope !== undefined) {
+    const cid = await resolveCompanyId(existing);
+    if (cid != null && !scope.includes(cid)) {
+      res.status(403).json({ error: "Forbidden", message: "Activity belongs to a company outside your scope" });
+      return;
+    }
+  }
   await db.delete(activitiesTable).where(eq(activitiesTable.id, id));
   res.json({ success: true });
 });

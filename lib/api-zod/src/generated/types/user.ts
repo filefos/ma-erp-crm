@@ -5,6 +5,7 @@
  * Prime Max & Elite Prefab ERP CRM API
  * OpenAPI spec version: 0.1.0
  */
+import type { CompanyRef } from "./companyRef";
 
 export interface User {
   id: number;
@@ -17,6 +18,9 @@ export interface User {
   companyId?: number;
   companyName?: string;
   permissionLevel?: string;
+  status?: string;
+  lastLoginAt?: string;
+  accessibleCompanies?: CompanyRef[];
   isActive: boolean;
   createdAt: string;
 }

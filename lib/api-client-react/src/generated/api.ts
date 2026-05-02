@@ -18,9 +18,11 @@ import type {
 
 import type {
   Activity,
+  AdminSummary,
   Asset,
   Attendance,
   AuditLog,
+  AuthCompany,
   AuthResponse,
   BankAccount,
   ChangePasswordBody,
@@ -92,6 +94,7 @@ import type {
   ListUsersParams,
   LoginBody,
   Lpo,
+  ModulePermission,
   Notification,
   PendingApprovals,
   ProformaInvoice,
@@ -99,13 +102,18 @@ import type {
   PurchaseOrder,
   PurchaseRequest,
   Quotation,
+  RoleSummary,
   SalesPipeline,
   StockEntry,
   SuccessResponse,
   Supplier,
   TaxInvoice,
+  UpdateDepartmentBody,
+  UpdateRolePermissionsBody,
   UpdateUserBody,
+  UpdateUserPermissionsBody,
   User,
+  UserModulePermission,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -184,6 +192,82 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns the basic list of active companies for display on the login screen. No auth required.
+ * @summary List companies (public, pre-login)
+ */
+export const getListAuthCompaniesUrl = () => {
+  return `/api/auth/companies`;
+};
+
+export const listAuthCompanies = async (
+  options?: RequestInit,
+): Promise<AuthCompany[]> => {
+  return customFetch<AuthCompany[]>(getListAuthCompaniesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAuthCompaniesQueryKey = () => {
+  return [`/api/auth/companies`] as const;
+};
+
+export const getListAuthCompaniesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAuthCompanies>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAuthCompanies>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAuthCompaniesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listAuthCompanies>>
+  > = ({ signal }) => listAuthCompanies({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAuthCompanies>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAuthCompaniesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAuthCompanies>>
+>;
+export type ListAuthCompaniesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List companies (public, pre-login)
+ */
+
+export function useListAuthCompanies<
+  TData = Awaited<ReturnType<typeof listAuthCompanies>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listAuthCompanies>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAuthCompaniesQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -10003,3 +10087,582 @@ export function useGetInventoryAlerts<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get admin-only system overview (companies, users, audit stats)
+ */
+export const getGetAdminSummaryUrl = () => {
+  return `/api/dashboard/admin-summary`;
+};
+
+export const getAdminSummary = async (
+  options?: RequestInit,
+): Promise<AdminSummary> => {
+  return customFetch<AdminSummary>(getGetAdminSummaryUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAdminSummaryQueryKey = () => {
+  return [`/api/dashboard/admin-summary`] as const;
+};
+
+export const getGetAdminSummaryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAdminSummary>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminSummary>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAdminSummaryQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSummary>>> = ({
+    signal,
+  }) => getAdminSummary({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminSummary>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAdminSummaryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAdminSummary>>
+>;
+export type GetAdminSummaryQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get admin-only system overview (companies, users, audit stats)
+ */
+
+export function useGetAdminSummary<
+  TData = Awaited<ReturnType<typeof getAdminSummary>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAdminSummary>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAdminSummaryQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List roles with permission and user counts
+ */
+export const getListRolesUrl = () => {
+  return `/api/roles`;
+};
+
+export const listRoles = async (
+  options?: RequestInit,
+): Promise<RoleSummary[]> => {
+  return customFetch<RoleSummary[]>(getListRolesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListRolesQueryKey = () => {
+  return [`/api/roles`] as const;
+};
+
+export const getListRolesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRoles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListRolesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listRoles>>> = ({
+    signal,
+  }) => listRoles({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listRoles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListRolesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listRoles>>
+>;
+export type ListRolesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List roles with permission and user counts
+ */
+
+export function useListRoles<
+  TData = Awaited<ReturnType<typeof listRoles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListRolesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get the full permission matrix for a role
+ */
+export const getGetRolePermissionsUrl = (id: number) => {
+  return `/api/roles/${id}/permissions`;
+};
+
+export const getRolePermissions = async (
+  id: number,
+  options?: RequestInit,
+): Promise<ModulePermission[]> => {
+  return customFetch<ModulePermission[]>(getGetRolePermissionsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetRolePermissionsQueryKey = (id: number) => {
+  return [`/api/roles/${id}/permissions`] as const;
+};
+
+export const getGetRolePermissionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getRolePermissions>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRolePermissions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetRolePermissionsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getRolePermissions>>
+  > = ({ signal }) => getRolePermissions(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getRolePermissions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetRolePermissionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getRolePermissions>>
+>;
+export type GetRolePermissionsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get the full permission matrix for a role
+ */
+
+export function useGetRolePermissions<
+  TData = Awaited<ReturnType<typeof getRolePermissions>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getRolePermissions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetRolePermissionsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Replace the permission matrix for a role
+ */
+export const getUpdateRolePermissionsUrl = (id: number) => {
+  return `/api/roles/${id}/permissions`;
+};
+
+export const updateRolePermissions = async (
+  id: number,
+  updateRolePermissionsBody: UpdateRolePermissionsBody,
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(getUpdateRolePermissionsUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateRolePermissionsBody),
+  });
+};
+
+export const getUpdateRolePermissionsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateRolePermissions>>,
+    TError,
+    { id: number; data: BodyType<UpdateRolePermissionsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateRolePermissions>>,
+  TError,
+  { id: number; data: BodyType<UpdateRolePermissionsBody> },
+  TContext
+> => {
+  const mutationKey = ["updateRolePermissions"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateRolePermissions>>,
+    { id: number; data: BodyType<UpdateRolePermissionsBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateRolePermissions(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateRolePermissionsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateRolePermissions>>
+>;
+export type UpdateRolePermissionsMutationBody =
+  BodyType<UpdateRolePermissionsBody>;
+export type UpdateRolePermissionsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Replace the permission matrix for a role
+ */
+export const useUpdateRolePermissions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateRolePermissions>>,
+    TError,
+    { id: number; data: BodyType<UpdateRolePermissionsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateRolePermissions>>,
+  TError,
+  { id: number; data: BodyType<UpdateRolePermissionsBody> },
+  TContext
+> => {
+  return useMutation(getUpdateRolePermissionsMutationOptions(options));
+};
+
+/**
+ * @summary Get a user's effective permission matrix (role baseline + per-user overrides)
+ */
+export const getGetUserPermissionsUrl = (id: number) => {
+  return `/api/users/${id}/permissions`;
+};
+
+export const getUserPermissions = async (
+  id: number,
+  options?: RequestInit,
+): Promise<UserModulePermission[]> => {
+  return customFetch<UserModulePermission[]>(getGetUserPermissionsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetUserPermissionsQueryKey = (id: number) => {
+  return [`/api/users/${id}/permissions`] as const;
+};
+
+export const getGetUserPermissionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUserPermissions>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserPermissions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUserPermissionsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUserPermissions>>
+  > = ({ signal }) => getUserPermissions(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUserPermissions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUserPermissionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUserPermissions>>
+>;
+export type GetUserPermissionsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get a user's effective permission matrix (role baseline + per-user overrides)
+ */
+
+export function useGetUserPermissions<
+  TData = Awaited<ReturnType<typeof getUserPermissions>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserPermissions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUserPermissionsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Replace per-user permission overrides
+ */
+export const getUpdateUserPermissionsUrl = (id: number) => {
+  return `/api/users/${id}/permissions`;
+};
+
+export const updateUserPermissions = async (
+  id: number,
+  updateUserPermissionsBody: UpdateUserPermissionsBody,
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(getUpdateUserPermissionsUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateUserPermissionsBody),
+  });
+};
+
+export const getUpdateUserPermissionsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserPermissions>>,
+    TError,
+    { id: number; data: BodyType<UpdateUserPermissionsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateUserPermissions>>,
+  TError,
+  { id: number; data: BodyType<UpdateUserPermissionsBody> },
+  TContext
+> => {
+  const mutationKey = ["updateUserPermissions"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateUserPermissions>>,
+    { id: number; data: BodyType<UpdateUserPermissionsBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateUserPermissions(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUserPermissionsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUserPermissions>>
+>;
+export type UpdateUserPermissionsMutationBody =
+  BodyType<UpdateUserPermissionsBody>;
+export type UpdateUserPermissionsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Replace per-user permission overrides
+ */
+export const useUpdateUserPermissions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserPermissions>>,
+    TError,
+    { id: number; data: BodyType<UpdateUserPermissionsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateUserPermissions>>,
+  TError,
+  { id: number; data: BodyType<UpdateUserPermissionsBody> },
+  TContext
+> => {
+  return useMutation(getUpdateUserPermissionsMutationOptions(options));
+};
+
+/**
+ * @summary Update a department
+ */
+export const getUpdateDepartmentUrl = (id: number) => {
+  return `/api/departments/${id}`;
+};
+
+export const updateDepartment = async (
+  id: number,
+  updateDepartmentBody: UpdateDepartmentBody,
+  options?: RequestInit,
+): Promise<Department> => {
+  return customFetch<Department>(getUpdateDepartmentUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateDepartmentBody),
+  });
+};
+
+export const getUpdateDepartmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateDepartment>>,
+    TError,
+    { id: number; data: BodyType<UpdateDepartmentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateDepartment>>,
+  TError,
+  { id: number; data: BodyType<UpdateDepartmentBody> },
+  TContext
+> => {
+  const mutationKey = ["updateDepartment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateDepartment>>,
+    { id: number; data: BodyType<UpdateDepartmentBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateDepartment(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateDepartmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateDepartment>>
+>;
+export type UpdateDepartmentMutationBody = BodyType<UpdateDepartmentBody>;
+export type UpdateDepartmentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a department
+ */
+export const useUpdateDepartment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateDepartment>>,
+    TError,
+    { id: number; data: BodyType<UpdateDepartmentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateDepartment>>,
+  TError,
+  { id: number; data: BodyType<UpdateDepartmentBody> },
+  TContext
+> => {
+  return useMutation(getUpdateDepartmentMutationOptions(options));
+};

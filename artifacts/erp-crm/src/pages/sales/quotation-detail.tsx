@@ -12,7 +12,7 @@ interface Props { id: string }
 export function QuotationDetail({ id }: Props) {
   const qid = parseInt(id, 10);
   const queryClient = useQueryClient();
-  const { data: q, isLoading } = useGetQuotation(qid, { query: { enabled: !!qid } });
+  const { data: q, isLoading } = useGetQuotation(qid, { query: { queryKey: getGetQuotationQueryKey(qid), enabled: !!qid } });
   const approve = useApproveQuotation({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(qid) }) } });
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading...</div>;

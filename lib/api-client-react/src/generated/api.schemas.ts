@@ -22,11 +22,20 @@ export interface SuccessResponse {
 export interface LoginBody {
   email: string;
   password: string;
+  /** Optional — the company workspace the user wants to enter. Must be in the user's accessibleCompanies. If omitted, the user's primary companyId is used. */
+  companyId?: number | null;
 }
 
 export interface ChangePasswordBody {
   currentPassword: string;
   newPassword: string;
+}
+
+export interface CompanyRef {
+  id: number;
+  name: string;
+  shortName: string;
+  prefix: string;
 }
 
 export interface User {
@@ -40,6 +49,9 @@ export interface User {
   companyId?: number;
   companyName?: string;
   permissionLevel?: string;
+  status?: string;
+  lastLoginAt?: string;
+  accessibleCompanies?: CompanyRef[];
   isActive: boolean;
   createdAt: string;
 }
@@ -47,6 +59,73 @@ export interface User {
 export interface AuthResponse {
   user: User;
   token: string;
+}
+
+export interface RoleSummary {
+  id: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  permissionLevel: number;
+  isSystem: boolean;
+  permissionCount: number;
+  userCount: number;
+}
+
+export interface ModulePermission {
+  module: string;
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canApprove: boolean;
+  canDelete: boolean;
+  canExport: boolean;
+  canPrint: boolean;
+}
+
+export interface UpdateRolePermissionsBody {
+  permissions: ModulePermission[];
+}
+
+export interface NullableActions {
+  canView?: boolean | null;
+  canCreate?: boolean | null;
+  canEdit?: boolean | null;
+  canApprove?: boolean | null;
+  canDelete?: boolean | null;
+  canExport?: boolean | null;
+  canPrint?: boolean | null;
+}
+
+export type UserModulePermissionRoleDefault = {
+  canView?: boolean;
+  canCreate?: boolean;
+  canEdit?: boolean;
+  canApprove?: boolean;
+  canDelete?: boolean;
+  canExport?: boolean;
+  canPrint?: boolean;
+};
+
+export interface UserModulePermission {
+  module: string;
+  roleDefault: UserModulePermissionRoleDefault;
+  override?: NullableActions | null;
+}
+
+export type UpdateUserPermissionsBodyPermissionsItem = NullableActions & {
+  module: string;
+};
+
+export interface UpdateUserPermissionsBody {
+  permissions: UpdateUserPermissionsBodyPermissionsItem[];
+}
+
+export interface AuthCompany {
+  id: number;
+  name: string;
+  shortName?: string | null;
+  prefix?: string | null;
 }
 
 export interface Company {
@@ -103,6 +182,7 @@ export interface CreateUserBody {
   role: string;
   departmentId?: number;
   companyId?: number;
+  companyIds?: number[];
   permissionLevel?: string;
 }
 
@@ -113,7 +193,16 @@ export interface UpdateUserBody {
   role?: string;
   departmentId?: number;
   companyId?: number;
+  /** Replace the user's company access list. When provided, fully replaces user_company_access rows. */
+  companyIds?: number[];
   permissionLevel?: string;
+  status?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateDepartmentBody {
+  name?: string;
+  description?: string;
   isActive?: boolean;
 }
 
@@ -944,6 +1033,33 @@ export interface PendingApprovals {
   expenses: number;
   stockAdjustments: number;
   cheques: number;
+}
+
+export interface AdminCompanyCard {
+  id: number;
+  name: string;
+  shortName: string;
+  prefix: string;
+  trn?: string;
+  logo?: string;
+  isActive: boolean;
+  userCount: number;
+  leadCount: number;
+  dealCount: number;
+  dealsValue: number;
+  invoicesValue: number;
+}
+
+export interface AdminSummary {
+  totalCompanies: number;
+  activeCompanies: number;
+  totalUsers: number;
+  activeUsers: number;
+  totalDepartments: number;
+  totalAuditLogs: number;
+  logins24h: number;
+  failedLogins24h: number;
+  companyCards: AdminCompanyCard[];
 }
 
 export type ListUsersParams = {

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, notificationsTable, auditLogsTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requirePermissionLevel } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -20,7 +20,12 @@ router.get("/notifications", async (req, res): Promise<void> => {
 
 router.post("/notifications/:id/read", async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.id, id));
+  const userId = req.user!.id;
+  const result = await db.update(notificationsTable)
+    .set({ isRead: true })
+    .where(and(eq(notificationsTable.id, id), eq(notificationsTable.userId, userId)))
+    .returning();
+  if (!result.length) { res.status(404).json({ error: "Not found" }); return; }
   res.json({ success: true });
 });
 
@@ -30,8 +35,10 @@ router.post("/notifications/read-all", async (req, res): Promise<void> => {
   res.json({ success: true });
 });
 
-// Audit Logs
-router.get("/audit-logs", async (req, res): Promise<void> => {
+// Audit Logs (admin only)
+// audit_logs has no company_id column, so only super_admin can read them
+// to avoid cross-tenant activity leakage.
+router.get("/audit-logs", requirePermissionLevel("super_admin"), async (req, res): Promise<void> => {
   let rows = await db.select().from(auditLogsTable).orderBy(sql`${auditLogsTable.createdAt} desc`);
   const { userId, action, entity, limit } = req.query;
   if (userId) rows = rows.filter(r => r.userId === parseInt(userId as string, 10));

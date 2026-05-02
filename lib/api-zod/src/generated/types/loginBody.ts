@@ -9,4 +9,6 @@
 export interface LoginBody {
   email: string;
   password: string;
+  /** Optional — the company workspace the user wants to enter. Must be in the user's accessibleCompanies. If omitted, the user's primary companyId is used. */
+  companyId?: number | null;
 }

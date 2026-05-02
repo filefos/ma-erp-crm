@@ -18,6 +18,7 @@ import hrRouter from "./hr";
 import financeRouter from "./finance";
 import notificationsRouter from "./notifications";
 import dashboardRouter from "./dashboard";
+import rolesRouter from "./roles";
 
 const router: IRouter = Router();
 
@@ -26,6 +27,7 @@ router.use(authRouter);
 router.use(companiesRouter);
 router.use(departmentsRouter);
 router.use(usersRouter);
+router.use(rolesRouter);
 router.use(leadsRouter);
 router.use(contactsRouter);
 router.use(dealsRouter);

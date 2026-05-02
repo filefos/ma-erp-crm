@@ -13,6 +13,9 @@ export interface UpdateUserBody {
   role?: string;
   departmentId?: number;
   companyId?: number;
+  /** Replace the user's company access list. When provided, fully replaces user_company_access rows. */
+  companyIds?: number[];
   permissionLevel?: string;
+  status?: string;
   isActive?: boolean;
 }

@@ -2,60 +2,202 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { Building2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Building2, Shield, ArrowRight, Loader2, Check } from "lucide-react";
+import { useListAuthCompanies } from "@workspace/api-client-react";
 
 export function Login() {
   const { login, isLoggingIn } = useAuth();
+  const { data: companies } = useListAuthCompanies();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (companies && companies.length && companyId === null) {
+      setCompanyId(companies[0].id);
+    }
+  }, [companies, companyId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login({ data: { email, password } });
+    setError(null);
+    login(
+      { data: { email, password, companyId: companyId ?? undefined } },
+      {
+        onError: (err: unknown) => {
+          const msg =
+            (err as { error?: string; message?: string })?.error ??
+            (err as { message?: string })?.message ??
+            "Invalid credentials";
+          setError(msg);
+        },
+      }
+    );
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700">
-        <div className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
-            <Building2 className="text-white w-6 h-6" />
+    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-background">
+      {/* LEFT — branding panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0f2d5a] text-white">
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            background:
+              "radial-gradient(circle at 20% 20%, #1e6ab0 0%, transparent 50%), radial-gradient(circle at 80% 80%, #38bdf8 0%, transparent 45%)",
+          }}
+        />
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center ring-1 ring-white/25">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="text-base font-bold leading-tight tracking-tight">
+                Prime Max & Elite Prefab
+              </div>
+              <div className="text-[11px] text-white/60 uppercase tracking-wider">
+                Enterprise ERP CRM
+              </div>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Prime Max & Elite Prefab
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Sign in to the ERP CRM system
-          </p>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+          <div className="space-y-6 max-w-md">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight">
+              Run two companies from one secure platform.
+            </h1>
+            <p className="text-white/70 text-sm leading-relaxed">
+              Multi-company sales, accounts, procurement, inventory, projects and HR — built for
+              Prime Max General Trading and Elite Prefab Industries.
+            </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+
+          <div className="flex items-center gap-2 text-xs text-white/50">
+            <Shield className="w-3.5 h-3.5" />
+            Enterprise-grade audit logging · Role-based access control
           </div>
-          <Button type="submit" className="w-full" disabled={isLoggingIn}>
-            {isLoggingIn ? "Signing in..." : "Sign In"}
-          </Button>
-        </form>
+        </div>
+      </div>
+
+      {/* RIGHT — form panel */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="lg:hidden flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#0f2d5a] flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="text-sm font-bold tracking-tight">Prime Max & Elite Prefab</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">ERP CRM</div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+            <p className="text-sm text-muted-foreground">Sign in to your ERP workspace.</p>
+          </div>
+
+          {/* Company selector */}
+          {companies && companies.length > 0 && (
+            <div className="space-y-2" data-testid="company-selector">
+              <Label className="text-xs font-medium">Company workspace</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {companies.map((c) => {
+                  const selected = companyId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setCompanyId(c.id)}
+                      data-testid={`company-option-${c.id}`}
+                      data-selected={selected ? "true" : "false"}
+                      aria-pressed={selected}
+                      className={`relative text-left rounded-lg border p-3 transition-all ${
+                        selected
+                          ? "border-[#1e6ab0] bg-[#1e6ab0]/5 ring-2 ring-[#1e6ab0]/30"
+                          : "border-border hover:border-[#1e6ab0]/50 hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="text-[10px] font-mono text-[#1e6ab0] tracking-widest uppercase">
+                        {c.prefix}
+                      </div>
+                      <div className="text-xs font-semibold mt-1 leading-tight truncate">
+                        {c.shortName ?? c.name}
+                      </div>
+                      {selected && (
+                        <Check className="absolute top-2 right-2 w-3.5 h-3.5 text-[#1e6ab0]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-xs font-medium">
+                Email address
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@primemax.ae"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-xs font-medium">
+                  Password
+                </Label>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="h-10"
+              />
+            </div>
+
+            {error && (
+              <div className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full h-10 mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0] text-white font-medium"
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
+              )}
+            </Button>
+          </form>
+
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-[11px] text-muted-foreground">
+            <span className="font-semibold text-foreground/80">Secure access</span> — All actions are
+            recorded in the audit trail. Contact your administrator if you cannot sign in.
+          </div>
+        </div>
       </div>
     </div>
   );

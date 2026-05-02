@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { useGetProject, useUpdateProject } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,14 +15,14 @@ const pipelineStatuses = ["pending","in_progress","done"];
 
 function StatusBadge({ status }: { status: string | null }) {
   const colors: Record<string, string> = { pending: "bg-gray-100 text-gray-700", in_progress: "bg-blue-100 text-blue-800", done: "bg-green-100 text-green-800", paid: "bg-green-100 text-green-800", partial: "bg-amber-100 text-amber-800", unpaid: "bg-red-100 text-red-800" };
-  const icons: Record<string, JSX.Element> = { done: <CheckCircle2 className="w-3 h-3" />, paid: <CheckCircle2 className="w-3 h-3" />, in_progress: <Clock className="w-3 h-3" />, pending: <Circle className="w-3 h-3" />, unpaid: <Circle className="w-3 h-3" /> };
+  const icons: Record<string, ReactElement> = { done: <CheckCircle2 className="w-3 h-3" />, paid: <CheckCircle2 className="w-3 h-3" />, in_progress: <Clock className="w-3 h-3" />, pending: <Circle className="w-3 h-3" />, unpaid: <Circle className="w-3 h-3" /> };
   return <Badge variant="secondary" className={`${colors[status ?? "pending"] ?? ""} flex items-center gap-1`}>{icons[status ?? "pending"]}{status?.replace("_"," ")}</Badge>;
 }
 
 export function ProjectDetail({ id }: Props) {
   const pid = parseInt(id, 10);
   const queryClient = useQueryClient();
-  const { data: project, isLoading } = useGetProject(pid, { query: { enabled: !!pid } });
+  const { data: project, isLoading } = useGetProject(pid, { query: { queryKey: getGetProjectQueryKey(pid), enabled: !!pid } });
   const update = useUpdateProject({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(pid) }) } });
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading...</div>;

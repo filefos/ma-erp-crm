@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, dealsTable, usersTable, companiesTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -20,8 +20,9 @@ async function enrichDeal(deal: typeof dealsTable.$inferSelect) {
   return { ...deal, assignedToName, companyRef };
 }
 
-router.get("/deals", async (req, res): Promise<void> => {
+router.get("/deals", requirePermission("deals", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(dealsTable).orderBy(sql`${dealsTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { stage, companyId, assignedTo } = req.query;
   if (stage) rows = rows.filter(r => r.stage === stage);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -29,7 +30,7 @@ router.get("/deals", async (req, res): Promise<void> => {
   res.json(await Promise.all(rows.map(enrichDeal)));
 });
 
-router.post("/deals", async (req, res): Promise<void> => {
+router.post("/deals", requirePermission("deals", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(dealsTable);
   const num = (count[0]?.count ?? 0) + 1;
   const dealNumber = `DEAL-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
@@ -37,22 +38,27 @@ router.post("/deals", async (req, res): Promise<void> => {
   res.status(201).json(await enrichDeal(deal));
 });
 
-router.get("/deals/:id", async (req, res): Promise<void> => {
+router.get("/deals/:id", requirePermission("deals", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [deal] = await db.select().from(dealsTable).where(eq(dealsTable.id, id));
   if (!deal) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [deal]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichDeal(deal));
 });
 
-router.put("/deals/:id", async (req, res): Promise<void> => {
+router.put("/deals/:id", requirePermission("deals", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(dealsTable).where(eq(dealsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [deal] = await db.update(dealsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(dealsTable.id, id)).returning();
-  if (!deal) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichDeal(deal));
 });
 
-router.delete("/deals/:id", async (req, res): Promise<void> => {
+router.delete("/deals/:id", requirePermission("deals", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(dealsTable).where(eq(dealsTable.id, id));
+  if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(dealsTable).where(eq(dealsTable.id, id));
   res.json({ success: true });
 });

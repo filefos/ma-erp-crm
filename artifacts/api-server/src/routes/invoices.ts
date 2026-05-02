@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -16,8 +16,9 @@ async function genDocNumber(companyId: number, type: string, table: any) {
 }
 
 // Proforma Invoices
-router.get("/proforma-invoices", async (req, res): Promise<void> => {
+router.get("/proforma-invoices", requirePermission("proforma_invoices", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(proformaInvoicesTable).orderBy(sql`${proformaInvoicesTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { status, companyId } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -28,30 +29,34 @@ router.get("/proforma-invoices", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.post("/proforma-invoices", async (req, res): Promise<void> => {
+router.post("/proforma-invoices", requirePermission("proforma_invoices", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const piNumber = await genDocNumber(data.companyId, "PI", proformaInvoicesTable);
   const [pi] = await db.insert(proformaInvoicesTable).values({ ...data, piNumber, preparedById: req.user?.id }).returning();
   res.status(201).json(pi);
 });
 
-router.get("/proforma-invoices/:id", async (req, res): Promise<void> => {
+router.get("/proforma-invoices/:id", requirePermission("proforma_invoices", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [pi] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
   if (!pi) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [pi]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(pi);
 });
 
-router.put("/proforma-invoices/:id", async (req, res): Promise<void> => {
+router.put("/proforma-invoices/:id", requirePermission("proforma_invoices", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [pi] = await db.update(proformaInvoicesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(proformaInvoicesTable.id, id)).returning();
-  if (!pi) { res.status(404).json({ error: "Not found" }); return; }
   res.json(pi);
 });
 
 // Tax Invoices
-router.get("/tax-invoices", async (req, res): Promise<void> => {
+router.get("/tax-invoices", requirePermission("tax_invoices", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(taxInvoicesTable).orderBy(sql`${taxInvoicesTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { status, companyId, search } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -66,7 +71,7 @@ router.get("/tax-invoices", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.post("/tax-invoices", async (req, res): Promise<void> => {
+router.post("/tax-invoices", requirePermission("tax_invoices", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const invoiceNumber = await genDocNumber(data.companyId, "INV", taxInvoicesTable);
   const balance = (data.grandTotal ?? 0) - (data.amountPaid ?? 0);
@@ -74,28 +79,32 @@ router.post("/tax-invoices", async (req, res): Promise<void> => {
   res.status(201).json(inv);
 });
 
-router.get("/tax-invoices/:id", async (req, res): Promise<void> => {
+router.get("/tax-invoices/:id", requirePermission("tax_invoices", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [inv] = await db.select().from(taxInvoicesTable).where(eq(taxInvoicesTable.id, id));
   if (!inv) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [inv]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(inv);
 });
 
-router.put("/tax-invoices/:id", async (req, res): Promise<void> => {
+router.put("/tax-invoices/:id", requirePermission("tax_invoices", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(taxInvoicesTable).where(eq(taxInvoicesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const data = req.body;
   if (data.amountPaid !== undefined && data.grandTotal !== undefined) {
     data.balance = data.grandTotal - data.amountPaid;
     data.paymentStatus = data.balance <= 0 ? "paid" : data.amountPaid > 0 ? "partial" : "unpaid";
   }
   const [inv] = await db.update(taxInvoicesTable).set({ ...data, updatedAt: new Date() }).where(eq(taxInvoicesTable.id, id)).returning();
-  if (!inv) { res.status(404).json({ error: "Not found" }); return; }
   res.json(inv);
 });
 
 // Delivery Notes
-router.get("/delivery-notes", async (req, res): Promise<void> => {
+router.get("/delivery-notes", requirePermission("delivery_notes", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(deliveryNotesTable).orderBy(sql`${deliveryNotesTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { status, companyId } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -107,7 +116,7 @@ router.get("/delivery-notes", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.post("/delivery-notes", async (req, res): Promise<void> => {
+router.post("/delivery-notes", requirePermission("delivery_notes", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const dnNumber = await genDocNumber(data.companyId, "DN", deliveryNotesTable);
   const [dn] = await db.insert(deliveryNotesTable).values({
@@ -116,30 +125,34 @@ router.post("/delivery-notes", async (req, res): Promise<void> => {
   res.status(201).json({ ...dn, items: data.items ?? [] });
 });
 
-router.get("/delivery-notes/:id", async (req, res): Promise<void> => {
+router.get("/delivery-notes/:id", requirePermission("delivery_notes", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [dn] = await db.select().from(deliveryNotesTable).where(eq(deliveryNotesTable.id, id));
   if (!dn) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [dn]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   let items = [];
   try { items = JSON.parse(dn.items ?? "[]"); } catch {}
   res.json({ ...dn, items });
 });
 
-router.put("/delivery-notes/:id", async (req, res): Promise<void> => {
+router.put("/delivery-notes/:id", requirePermission("delivery_notes", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(deliveryNotesTable).where(eq(deliveryNotesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const data = req.body;
   const [dn] = await db.update(deliveryNotesTable).set({
     ...data, items: data.items ? JSON.stringify(data.items) : undefined, updatedAt: new Date(),
   }).where(eq(deliveryNotesTable.id, id)).returning();
-  if (!dn) { res.status(404).json({ error: "Not found" }); return; }
   let items = [];
   try { items = JSON.parse(dn.items ?? "[]"); } catch {}
   res.json({ ...dn, items });
 });
 
 // LPOs
-router.get("/lpos", async (req, res): Promise<void> => {
+router.get("/lpos", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(lposTable).orderBy(sql`${lposTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
   const { status, companyId } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -150,24 +163,27 @@ router.get("/lpos", async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.post("/lpos", async (req, res): Promise<void> => {
+router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const lpoNumber = await genDocNumber(data.companyId, "LPO", lposTable);
   const [lpo] = await db.insert(lposTable).values({ ...data, lpoNumber }).returning();
   res.status(201).json(lpo);
 });
 
-router.get("/lpos/:id", async (req, res): Promise<void> => {
+router.get("/lpos/:id", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [lpo] = await db.select().from(lposTable).where(eq(lposTable.id, id));
   if (!lpo) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [lpo]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(lpo);
 });
 
-router.put("/lpos/:id", async (req, res): Promise<void> => {
+router.put("/lpos/:id", requirePermission("lpos", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(lposTable).where(eq(lposTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [lpo] = await db.update(lposTable).set({ ...req.body, updatedAt: new Date() }).where(eq(lposTable.id, id)).returning();
-  if (!lpo) { res.status(404).json({ error: "Not found" }); return; }
   res.json(lpo);
 });
 

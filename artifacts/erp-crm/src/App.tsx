@@ -32,6 +32,11 @@ import { AssetsList } from "@/pages/assets/index";
 import { ReportsHub } from "@/pages/reports/index";
 import { UsersList } from "@/pages/admin/users";
 import { AuditLogsList } from "@/pages/admin/audit-logs";
+import { CompaniesAdmin } from "@/pages/admin/companies";
+import { DepartmentsAdmin } from "@/pages/admin/departments";
+import { RolesAdmin } from "@/pages/admin/roles";
+import { AdminGuard } from "@/components/AdminGuard";
+import { ModuleGuard } from "@/components/ModuleGuard";
 import { NotificationsList } from "@/pages/notifications/index";
 import NotFound from "@/pages/not-found";
 
@@ -49,50 +54,113 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/dashboard" component={Dashboard} />
-      
-      <Route path="/crm/leads" component={LeadsList} />
-      <Route path="/crm/contacts" component={ContactsList} />
-      <Route path="/crm/deals" component={DealsList} />
-      <Route path="/crm/activities" component={ActivitiesList} />
-      
-      <Route path="/sales/quotations/new" component={QuotationNew} />
+
+      <Route path="/crm/leads">
+        <ModuleGuard module="leads"><LeadsList /></ModuleGuard>
+      </Route>
+      <Route path="/crm/contacts">
+        <ModuleGuard module="contacts"><ContactsList /></ModuleGuard>
+      </Route>
+      <Route path="/crm/deals">
+        <ModuleGuard module="deals"><DealsList /></ModuleGuard>
+      </Route>
+      <Route path="/crm/activities">
+        <ModuleGuard module="activities"><ActivitiesList /></ModuleGuard>
+      </Route>
+
+      <Route path="/sales/quotations/new">
+        <ModuleGuard module="quotations" action="canCreate"><QuotationNew /></ModuleGuard>
+      </Route>
       <Route path="/sales/quotations/:id">
-        {(params) => <QuotationDetail id={params.id} />}
+        {(params) => (
+          <ModuleGuard module="quotations"><QuotationDetail id={params.id} /></ModuleGuard>
+        )}
       </Route>
-      <Route path="/sales/quotations" component={QuotationsList} />
-      <Route path="/sales/proforma-invoices" component={ProformaInvoicesList} />
-      <Route path="/sales/lpos" component={LposList} />
-      
-      <Route path="/accounts/invoices" component={TaxInvoicesList} />
-      <Route path="/accounts/delivery-notes" component={DeliveryNotesList} />
-      <Route path="/accounts/expenses" component={ExpensesList} />
-      <Route path="/accounts/cheques" component={ChequesList} />
-      <Route path="/accounts/bank-accounts" component={BankAccountsList} />
-      
-      <Route path="/procurement/suppliers" component={SuppliersList} />
-      <Route path="/procurement/purchase-requests" component={PurchaseRequestsList} />
-      <Route path="/procurement/purchase-orders" component={PurchaseOrdersList} />
-      
-      <Route path="/inventory/items" component={InventoryItemsList} />
-      <Route path="/inventory/stock-entries" component={StockEntriesList} />
-      
+      <Route path="/sales/quotations">
+        <ModuleGuard module="quotations"><QuotationsList /></ModuleGuard>
+      </Route>
+      <Route path="/sales/proforma-invoices">
+        <ModuleGuard module="proforma_invoices"><ProformaInvoicesList /></ModuleGuard>
+      </Route>
+      <Route path="/sales/lpos">
+        <ModuleGuard module="lpos"><LposList /></ModuleGuard>
+      </Route>
+
+      <Route path="/accounts/invoices">
+        <ModuleGuard module="tax_invoices"><TaxInvoicesList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/delivery-notes">
+        <ModuleGuard module="delivery_notes"><DeliveryNotesList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/expenses">
+        <ModuleGuard module="expenses"><ExpensesList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/cheques">
+        <ModuleGuard module="cheques"><ChequesList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/bank-accounts">
+        <ModuleGuard module="bank_accounts"><BankAccountsList /></ModuleGuard>
+      </Route>
+
+      <Route path="/procurement/suppliers">
+        <ModuleGuard module="suppliers"><SuppliersList /></ModuleGuard>
+      </Route>
+      <Route path="/procurement/purchase-requests">
+        <ModuleGuard module="purchase_requests"><PurchaseRequestsList /></ModuleGuard>
+      </Route>
+      <Route path="/procurement/purchase-orders">
+        <ModuleGuard module="purchase_orders"><PurchaseOrdersList /></ModuleGuard>
+      </Route>
+
+      <Route path="/inventory/items">
+        <ModuleGuard module="inventory_items"><InventoryItemsList /></ModuleGuard>
+      </Route>
+      <Route path="/inventory/stock-entries">
+        <ModuleGuard module="stock_entries"><StockEntriesList /></ModuleGuard>
+      </Route>
+
       <Route path="/projects/:id">
-        {(params) => <ProjectDetail id={params.id} />}
+        {(params) => (
+          <ModuleGuard module="projects"><ProjectDetail id={params.id} /></ModuleGuard>
+        )}
       </Route>
-      <Route path="/projects" component={ProjectsList} />
-      
-      <Route path="/hr/employees" component={EmployeesList} />
-      <Route path="/hr/attendance" component={AttendanceList} />
-      
-      <Route path="/assets" component={AssetsList} />
-      
-      <Route path="/reports" component={ReportsHub} />
-      
-      <Route path="/admin/users" component={UsersList} />
-      <Route path="/admin/audit-logs" component={AuditLogsList} />
-      
+      <Route path="/projects">
+        <ModuleGuard module="projects"><ProjectsList /></ModuleGuard>
+      </Route>
+
+      <Route path="/hr/employees">
+        <ModuleGuard module="employees"><EmployeesList /></ModuleGuard>
+      </Route>
+      <Route path="/hr/attendance">
+        <ModuleGuard module="attendance"><AttendanceList /></ModuleGuard>
+      </Route>
+
+      <Route path="/assets">
+        <ModuleGuard module="assets"><AssetsList /></ModuleGuard>
+      </Route>
+
+      <Route path="/reports">
+        <ModuleGuard module="dashboard"><ReportsHub /></ModuleGuard>
+      </Route>
+
+      <Route path="/admin/companies">
+        <AdminGuard><CompaniesAdmin /></AdminGuard>
+      </Route>
+      <Route path="/admin/departments">
+        <AdminGuard><DepartmentsAdmin /></AdminGuard>
+      </Route>
+      <Route path="/admin/users">
+        <AdminGuard><UsersList /></AdminGuard>
+      </Route>
+      <Route path="/admin/roles">
+        <AdminGuard><RolesAdmin /></AdminGuard>
+      </Route>
+      <Route path="/admin/audit-logs">
+        <AdminGuard><AuditLogsList /></AdminGuard>
+      </Route>
+
       <Route path="/notifications" component={NotificationsList} />
-      
+
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>

@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { useListNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -5,7 +6,7 @@ import { Bell, CheckCheck, Info, AlertTriangle, XCircle, CheckCircle } from "luc
 import { useQueryClient } from "@tanstack/react-query";
 import { getListNotificationsQueryKey } from "@workspace/api-client-react";
 
-const typeIcons: Record<string, JSX.Element> = {
+const typeIcons: Record<string, ReactElement> = {
   info: <Info className="w-4 h-4 text-blue-500" />,
   warning: <AlertTriangle className="w-4 h-4 text-amber-500" />,
   error: <XCircle className="w-4 h-4 text-red-500" />,
@@ -28,7 +29,7 @@ export function NotificationsList() {
           <p className="text-muted-foreground">{unread > 0 ? `${unread} unread notifications` : "All notifications read"}</p>
         </div>
         {unread > 0 && (
-          <Button variant="outline" size="sm" onClick={() => markAll.mutate({})}>
+          <Button variant="outline" size="sm" onClick={() => markAll.mutate()}>
             <CheckCheck className="w-4 h-4 mr-2" />Mark All Read
           </Button>
         )}
