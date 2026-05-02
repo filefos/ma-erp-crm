@@ -11,9 +11,14 @@ import {
 } from "recharts";
 import {
   Users, Briefcase, Flame, CheckCircle2, AlertTriangle, Clock, TrendingUp, FileText, Sparkles,
-  Phone, MessageCircle, Calendar, ArrowRight, Activity as ActivityIcon, Trophy, Target,
+  Phone, MessageCircle, ArrowRight, Activity as ActivityIcon, Trophy, Target, Calendar, BarChart3,
+  Mail,
 } from "lucide-react";
 import { suggestNextAction } from "@/lib/ai-crm";
+import {
+  ExecutiveHeader, KPIWidget, StatusBadge, AIScoreBadge, Avatar,
+  weeklyCounts, weeklyValues, trendPct,
+} from "@/components/crm/premium";
 
 const STAGE_LABELS: Record<string, string> = {
   new: "New", qualification: "Qualified", proposal: "Proposal",
@@ -54,6 +59,13 @@ export function CRMDashboard() {
   const followUpsToday = leads.filter(l => l.nextFollowUp === today && !["won", "lost"].includes(l.status));
   const overdueFollowUps = leads.filter(l => l.nextFollowUp && l.nextFollowUp < today && !["won", "lost"].includes(l.status));
   const conversionRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
+
+  // --- Sparklines (8 weekly buckets) ---
+  const leadSpark = useMemo(() => weeklyCounts(leads, "createdAt", 8), [leads]);
+  const hotSpark = useMemo(() => weeklyCounts(leads.filter(l => l.leadScore === "hot"), "createdAt", 8), [leads]);
+  const dealSpark = useMemo(() => weeklyCounts(deals, "createdAt", 8), [deals]);
+  const wonSpark = useMemo(() => weeklyValues(deals.filter(d => d.stage === "won"), "updatedAt", d => Number(d.value ?? 0), 8), [deals]);
+  const quoteSpark = useMemo(() => weeklyValues(quotations, "createdAt", (q: any) => Number(q.grandTotal ?? 0), 8), [quotations]);
 
   // --- Charts ---
   const sourceData = useMemo(() => {
@@ -115,50 +127,55 @@ export function CRMDashboard() {
   }, [overdueFollowUps, followUpsToday, topHotLeads]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">CRM Command Center</h1>
-          <p className="text-muted-foreground text-sm">Live executive view of leads, deals, follow-ups and pipeline.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild data-testid="link-pipeline">
-            <Link href="/crm/pipeline"><Briefcase className="w-4 h-4 mr-1.5" />Sales Pipeline</Link>
-          </Button>
-          <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" asChild data-testid="link-leads">
-            <Link href="/crm/leads"><TrendingUp className="w-4 h-4 mr-1.5" />Open Leads</Link>
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-5">
+      <ExecutiveHeader
+        icon={Sparkles}
+        title="CRM Command Center"
+        subtitle="Live executive view of leads, deals, follow-ups & pipeline"
+      >
+        <Button variant="secondary" size="sm" asChild className="bg-white/15 hover:bg-white/25 text-white border-0" data-testid="link-reports">
+          <Link href="/crm/reports"><BarChart3 className="w-4 h-4 mr-1.5" />Reports</Link>
+        </Button>
+        <Button variant="secondary" size="sm" asChild className="bg-white/15 hover:bg-white/25 text-white border-0" data-testid="link-pipeline">
+          <Link href="/crm/pipeline"><Briefcase className="w-4 h-4 mr-1.5" />Pipeline</Link>
+        </Button>
+        <Button size="sm" asChild className="bg-white text-[#0f2d5a] hover:bg-white/90" data-testid="link-leads">
+          <Link href="/crm/leads"><TrendingUp className="w-4 h-4 mr-1.5" />Open Leads</Link>
+        </Button>
+      </ExecutiveHeader>
 
       {/* AI Insights Banner */}
       {insights.length > 0 && (
-        <div className="bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] rounded-xl p-4 text-white" data-testid="banner-ai-insights">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4" />
+        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm" data-testid="banner-ai-insights">
+          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+          <div className="flex items-center gap-2 mb-2.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+            </div>
             <h3 className="text-sm font-semibold">AI Executive Insights</h3>
+            <Badge variant="secondary" className="text-[10px] bg-[#1e6ab0]/10 text-[#1e6ab0] border-0">live</Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {insights.map((i, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-sm bg-white/10 rounded-lg p-2 backdrop-blur-sm">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${i.tone === "red" ? "bg-red-300" : i.tone === "amber" ? "bg-amber-300" : "bg-emerald-300"}`} />
-                <span className="text-white/95">{i.text}</span>
+              <div key={idx} className="flex items-center gap-2 text-sm rounded-lg p-2 bg-muted/40">
+                <div className={`w-2 h-2 rounded-full shrink-0 ${i.tone === "red" ? "bg-red-500" : i.tone === "amber" ? "bg-amber-500" : "bg-emerald-500"}`} />
+                <span className="text-foreground/85">{i.text}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3">
-        <Kpi icon={Users}        label="Total Leads"           value={totalLeads}                tone="blue"   sub={`${newLeadsThisMonth} new this month`} href="/crm/leads" />
-        <Kpi icon={Flame}        label="Hot Leads"             value={hotLeads}                  tone="red"    sub={`${activeLeads} active`} href="/crm/leads" />
-        <Kpi icon={Briefcase}    label="Active Deals"          value={activeDeals}               tone="amber"  sub={`AED ${pipelineValue.toLocaleString()} pipeline`} href="/crm/pipeline" />
-        <Kpi icon={Trophy}       label="Won Deals"             value={wonDeals}                  tone="green"  sub={`AED ${wonValue.toLocaleString()} closed`} href="/crm/deals" />
-        <Kpi icon={Calendar}     label="Follow-ups Today"      value={followUpsToday.length}     tone="indigo" sub={overdueFollowUps.length ? `${overdueFollowUps.length} overdue` : "All on track"} href="/crm/leads" />
-        <Kpi icon={AlertTriangle} label="Overdue"              value={overdueFollowUps.length}   tone={overdueFollowUps.length ? "red" : "slate"} sub="Need action now" href="/crm/leads" />
-        <Kpi icon={FileText}     label="Quotation Value"       value={`AED ${(quotationValue / 1000).toFixed(0)}k`} tone="purple" sub={`${quotations.length} quotations`} href="/sales/quotations" />
-        <Kpi icon={Target}       label="Conversion"            value={`${conversionRate}%`}      tone="teal"   sub={`${wonLeads}/${totalLeads} won`} href="/reports" />
+      {/* KPI Grid — premium cards with sparklines + trends */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KPIWidget icon={Users}        tone="blue"   label="Total Leads"      value={totalLeads}                   sub={`${newLeadsThisMonth} new this month`}                href="/crm/leads"        sparkline={leadSpark}  trend={trendPct(leadSpark)}  testId="kpi-total-leads" />
+        <KPIWidget icon={Flame}        tone="red"    label="Hot Leads"        value={hotLeads}                     sub={`${activeLeads} active`}                              href="/crm/leads"        sparkline={hotSpark}   trend={trendPct(hotSpark)}   testId="kpi-hot-leads" />
+        <KPIWidget icon={Briefcase}    tone="amber"  label="Active Deals"     value={activeDeals}                  sub={`AED ${pipelineValue.toLocaleString()} pipeline`}     href="/crm/pipeline"     sparkline={dealSpark}  trend={trendPct(dealSpark)}  testId="kpi-active-deals" />
+        <KPIWidget icon={Trophy}       tone="green"  label="Won Value"        value={`AED ${(wonValue / 1000).toFixed(0)}k`} sub={`${wonDeals} closed deals`}                  href="/crm/deals"        sparkline={wonSpark}   trend={trendPct(wonSpark)}   testId="kpi-won-value" />
+        <KPIWidget icon={Calendar}     tone="indigo" label="Follow-ups Today" value={followUpsToday.length}         sub={overdueFollowUps.length ? `${overdueFollowUps.length} overdue` : "All on track"} href="/crm/follow-ups" testId="kpi-followups-today" />
+        <KPIWidget icon={AlertTriangle} tone={overdueFollowUps.length ? "red" : "slate"} label="Overdue" value={overdueFollowUps.length} sub="Need action now" href="/crm/follow-ups" testId="kpi-overdue" />
+        <KPIWidget icon={FileText}     tone="purple" label="Quotation Value"  value={`AED ${(quotationValue / 1000).toFixed(0)}k`} sub={`${quotations.length} quotations`}      href="/sales/quotations" sparkline={quoteSpark} testId="kpi-quote-value" />
+        <KPIWidget icon={Target}       tone="teal"   label="Conversion"       value={`${conversionRate}%`}         sub={`${wonLeads}/${totalLeads} won`}                      href="/crm/reports"      testId="kpi-conversion" />
       </div>
 
       {/* Charts */}
@@ -169,7 +186,7 @@ export function CRMDashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={sourceData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40} paddingAngle={2}>
+                <Pie data={sourceData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2}>
                   {sourceData.map((_, i) => <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
@@ -202,9 +219,9 @@ export function CRMDashboard() {
       {/* Lower row: AI suggestions, follow-ups, recent activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* AI Suggested Actions */}
-        <div className="bg-card border rounded-xl p-4 space-y-3">
+        <div className="bg-card border rounded-2xl p-4 space-y-3 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -217,11 +234,11 @@ export function CRMDashboard() {
           ) : (
             <div className="space-y-2">
               {aiSuggestions.map(({ lead, suggestion }) => (
-                <Link key={lead.id} href={`/crm/leads/${lead.id}`} className="block">
-                  <div className="border rounded-lg p-2.5 hover:bg-muted/30 cursor-pointer transition-colors">
-                    <div className="flex items-center justify-between mb-1">
+                <Link key={lead.id} href={`/crm/leads/${lead.id}`} className="block group">
+                  <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 cursor-pointer transition-all">
+                    <div className="flex items-center justify-between mb-1 gap-2">
                       <span className="text-xs font-mono text-primary">{lead.leadNumber}</span>
-                      <Badge variant="secondary" className="text-[10px] capitalize">{lead.status?.replace(/_/g, " ")}</Badge>
+                      <StatusBadge status={lead.status} />
                     </div>
                     <div className="text-sm font-medium leading-tight truncate">{lead.leadName}</div>
                     <div className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{suggestion}</div>
@@ -233,7 +250,7 @@ export function CRMDashboard() {
         </div>
 
         {/* Follow-ups Today / Overdue */}
-        <div className="bg-card border rounded-xl p-4 space-y-3">
+        <div className="bg-card border rounded-2xl p-4 space-y-3 shadow-sm">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
               <Clock className="w-4 h-4 text-amber-600" />
@@ -248,8 +265,9 @@ export function CRMDashboard() {
               const isOverdue = lead.nextFollowUp! < today;
               return (
                 <Link key={lead.id} href={`/crm/leads/${lead.id}`} className="block">
-                  <div className="border rounded-lg p-2 hover:bg-muted/30 cursor-pointer flex items-center gap-2">
-                    <div className={`w-1.5 h-8 rounded-full shrink-0 ${isOverdue ? "bg-red-500" : "bg-amber-500"}`} />
+                  <div className="border rounded-xl p-2 hover:bg-muted/40 hover:border-[#1e6ab0]/40 cursor-pointer flex items-center gap-2 transition-all">
+                    <div className={`w-1.5 h-9 rounded-full shrink-0 ${isOverdue ? "bg-red-500" : "bg-amber-500"}`} />
+                    <Avatar name={lead.leadName} size={28} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium truncate">{lead.leadName}</div>
                       <div className="text-[11px] text-muted-foreground truncate">
@@ -257,12 +275,12 @@ export function CRMDashboard() {
                       </div>
                     </div>
                     {lead.whatsapp && (
-                      <a href={`https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="text-green-600 hover:text-green-700">
+                      <a href={`https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className="text-green-600 hover:text-green-700" aria-label={`WhatsApp ${lead.leadName}`}>
                         <MessageCircle className="w-4 h-4" />
                       </a>
                     )}
                     {lead.phone && (
-                      <a href={`tel:${lead.phone}`} onClick={e => e.stopPropagation()} className="text-blue-600 hover:text-blue-700">
+                      <a href={`tel:${lead.phone}`} onClick={e => e.stopPropagation()} className="text-blue-600 hover:text-blue-700" aria-label={`Call ${lead.leadName}`}>
                         <Phone className="w-4 h-4" />
                       </a>
                     )}
@@ -275,7 +293,7 @@ export function CRMDashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-card border rounded-xl p-4 space-y-3">
+        <div className="bg-card border rounded-2xl p-4 space-y-3 shadow-sm">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
               <ActivityIcon className="w-4 h-4 text-blue-600" />
@@ -307,10 +325,12 @@ export function CRMDashboard() {
       </div>
 
       {/* Hot Leads strip */}
-      <div className="bg-card border rounded-xl p-4">
+      <div className="bg-card border rounded-2xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 text-red-600" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow">
+              <Flame className="w-4 h-4 text-white" />
+            </div>
             <h3 className="text-sm font-semibold">Top Hot Leads</h3>
             <Badge variant="secondary" className="text-[10px]">{topHotLeads.length}</Badge>
           </div>
@@ -320,15 +340,18 @@ export function CRMDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             {topHotLeads.map(l => (
               <Link key={l.id} href={`/crm/leads/${l.id}`} className="block">
-                <div className="border rounded-lg p-3 hover:bg-muted/30 cursor-pointer">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-mono text-primary">{l.leadNumber}</span>
-                    <Flame className="w-3.5 h-3.5 text-red-500" />
+                <div className="border rounded-xl p-3 hover:bg-muted/40 hover:border-red-300 hover:shadow-md cursor-pointer transition-all">
+                  <div className="flex items-center justify-between mb-2">
+                    <Avatar name={l.leadName} size={28} />
+                    <AIScoreBadge score="hot" />
                   </div>
                   <div className="text-sm font-semibold truncate">{l.leadName}</div>
                   <div className="text-[11px] text-muted-foreground truncate">{l.companyName ?? "—"}</div>
-                  <div className="text-[11px] text-emerald-600 font-medium mt-1">
-                    {l.budget ? `AED ${Number(l.budget).toLocaleString()}` : "Budget TBC"}
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[11px] text-emerald-600 font-medium">
+                      {l.budget ? `AED ${Number(l.budget).toLocaleString()}` : "Budget TBC"}
+                    </span>
+                    <span className="text-[10px] font-mono text-primary">{l.leadNumber}</span>
                   </div>
                 </div>
               </Link>
@@ -340,7 +363,7 @@ export function CRMDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <FooterStat label="Contacts" value={contacts.length} href="/crm/contacts" icon={Users} />
         <FooterStat label="Lost Deals" value={lostDeals} href="/crm/deals" icon={Target} />
-        <FooterStat label="Open Quotations" value={quotations.length} href="/sales/quotations" icon={FileText} />
+        <FooterStat label="Open Quotations" value={quotations.length} href="/sales/quotations" icon={Mail} />
       </div>
     </div>
   );
@@ -348,40 +371,12 @@ export function CRMDashboard() {
 
 // ---- Sub-components ----
 
-const TONE_BG: Record<string, string> = {
-  blue:   "bg-blue-100 text-blue-700",   red:    "bg-red-100 text-red-700",
-  amber:  "bg-amber-100 text-amber-700", green:  "bg-emerald-100 text-emerald-700",
-  indigo: "bg-indigo-100 text-indigo-700", purple: "bg-purple-100 text-purple-700",
-  teal:   "bg-teal-100 text-teal-700",   slate:  "bg-slate-100 text-slate-700",
-};
-
-function Kpi({ icon: Icon, label, value, sub, tone, href }: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string; value: string | number; sub?: string; tone: string; href: string;
-}) {
-  return (
-    <Link href={href} className="block" data-testid={`kpi-${label.toLowerCase().replace(/\s+/g, "-")}`}>
-      <div className="bg-card border rounded-xl p-3.5 hover:shadow-md transition-all cursor-pointer h-full">
-        <div className="flex items-center justify-between mb-2">
-          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${TONE_BG[tone] ?? TONE_BG.slate}`}>
-            <Icon className="w-4 h-4" />
-          </div>
-          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/50" />
-        </div>
-        <div className="text-2xl font-bold tracking-tight leading-none">{value}</div>
-        <div className="text-xs text-muted-foreground mt-1">{label}</div>
-        {sub && <div className="text-[10px] text-muted-foreground/80 mt-0.5 truncate">{sub}</div>}
-      </div>
-    </Link>
-  );
-}
-
 function Card({ title, subtitle, icon: Icon, children, className = "" }: {
   title: string; subtitle?: string; icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode; className?: string;
 }) {
   return (
-    <div className={`bg-card border rounded-xl p-4 space-y-3 ${className}`}>
+    <div className={`bg-card border rounded-2xl p-4 space-y-3 shadow-sm ${className}`}>
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
           <Icon className="w-4 h-4 text-blue-600" />
@@ -405,7 +400,7 @@ function FooterStat({ label, value, href, icon: Icon }: {
 }) {
   return (
     <Link href={href} className="block">
-      <div className="bg-card border rounded-lg p-3 hover:bg-muted/30 cursor-pointer flex items-center gap-3">
+      <div className="bg-card border rounded-xl p-3 hover:bg-muted/40 hover:border-[#1e6ab0]/40 cursor-pointer flex items-center gap-3 transition-all">
         <Icon className="w-4 h-4 text-muted-foreground" />
         <div className="text-sm"><span className="font-bold mr-1">{value}</span><span className="text-muted-foreground">{label}</span></div>
       </div>

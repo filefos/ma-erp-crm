@@ -4,10 +4,10 @@ import { useListDeals, useUpdateDeal, getListDealsQueryKey } from "@workspace/ap
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GripVertical, Search, TrendingUp, DollarSign, Briefcase, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ExecutiveHeader, Avatar } from "@/components/crm/premium";
 
 interface Stage {
   key: string;
@@ -120,18 +120,12 @@ export function SalesPipeline() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Sales Pipeline</h1>
-          <p className="text-muted-foreground text-sm">Drag deals between stages to update them in real time.</p>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <PipelineStat icon={Briefcase}  label="All deals"     value={deals.length} />
-          <PipelineStat icon={TrendingUp} label="Open value"    value={`AED ${openValue.toLocaleString()}`} tone="blue" />
-          <PipelineStat icon={DollarSign} label="Won value"     value={`AED ${wonValue.toLocaleString()}`} tone="green" />
-          {stuckCount > 0 && <PipelineStat icon={AlertTriangle} label="Stuck deals" value={stuckCount} tone="amber" />}
-        </div>
-      </div>
+      <ExecutiveHeader icon={Briefcase} title="Sales Pipeline" subtitle="Drag deals between stages to update them in real time">
+        <PipelineStat icon={Briefcase}  label="All deals"  value={deals.length} />
+        <PipelineStat icon={TrendingUp} label="Open value" value={`AED ${openValue.toLocaleString()}`} tone="blue" />
+        <PipelineStat icon={DollarSign} label="Won value"  value={`AED ${wonValue.toLocaleString()}`} tone="green" />
+        {stuckCount > 0 && <PipelineStat icon={AlertTriangle} label="Stuck" value={stuckCount} tone="amber" />}
+      </ExecutiveHeader>
 
       {stuckCount > 0 && (
         <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-lg p-2.5 text-sm flex items-center gap-2 text-amber-800 dark:text-amber-300" data-testid="banner-stuck-deals">
@@ -184,29 +178,40 @@ export function SalesPipeline() {
                         draggable
                         onDragStart={e => handleDragStart(e, d.id)}
                         onDragEnd={() => setDraggingId(null)}
-                        className={`bg-card border rounded-lg p-2.5 cursor-grab active:cursor-grabbing hover:shadow-md transition-all ${draggingId === d.id ? "opacity-50" : ""} ${stuck ? "ring-1 ring-amber-300 dark:ring-amber-700" : ""}`}
+                        className={`bg-card border rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${draggingId === d.id ? "opacity-40" : ""} ${stuck ? "ring-1 ring-amber-300 dark:ring-amber-700" : ""}`}
                         data-testid={`pipeline-card-${d.id}`}
                       >
                         <div className="flex items-start gap-1.5">
-                          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 mt-0.5 shrink-0" />
+                          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/40 mt-0.5 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <Link href={`/crm/deals`} className="block">
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center justify-between gap-1 mb-1">
                                 <span className="text-[11px] font-mono text-primary truncate">{d.dealNumber}</span>
-                                {stuck && <span title="Stuck — no movement in 7+ days"><AlertTriangle className="w-3 h-3 text-amber-500" /></span>}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {stuck && <span title="Stuck — no movement in 7+ days"><AlertTriangle className="w-3 h-3 text-amber-500" /></span>}
+                                  {(d as any).assignedToName && <Avatar name={(d as any).assignedToName} size={20} />}
+                                </div>
                               </div>
                               <div className="text-sm font-semibold leading-tight truncate">{d.title}</div>
                               {d.clientName && <div className="text-[11px] text-muted-foreground truncate">{d.clientName}</div>}
                             </Link>
-                            <div className="flex items-center justify-between mt-2">
-                              <span className="text-xs font-bold text-emerald-600">AED {Number(d.value ?? 0).toLocaleString()}</span>
-                              <span className="text-[10px] text-muted-foreground">{d.probability ?? 0}%</span>
-                            </div>
+                            {(() => {
+                              const prob = Number(d.probability ?? 0);
+                              const probTone = prob >= 70 ? "bg-emerald-500" : prob >= 40 ? "bg-amber-500" : "bg-slate-400";
+                              return (
+                                <div className="flex items-center justify-between mt-2 gap-2">
+                                  <span className="text-xs font-bold text-emerald-600 truncate">AED {Number(d.value ?? 0).toLocaleString()}</span>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <div className="w-12 h-1 rounded-full bg-muted overflow-hidden">
+                                      <div className={`h-full ${probTone}`} style={{ width: `${Math.min(100, prob)}%` }} />
+                                    </div>
+                                    <span className="text-[10px] text-muted-foreground tabular-nums">{prob}%</span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                             {d.expectedCloseDate && (
                               <div className="text-[10px] text-muted-foreground mt-0.5">Close: {d.expectedCloseDate}</div>
-                            )}
-                            {(d as any).assignedToName && (
-                              <div className="text-[10px] text-muted-foreground mt-0.5">@ {(d as any).assignedToName}</div>
                             )}
                           </div>
                         </div>

@@ -10,34 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, MessageCircle, Filter, ArrowLeft, X, Sparkles, CheckSquare, Upload, UserPlus } from "lucide-react";
+import { Search, Plus, MessageCircle, Filter, X, CheckSquare, Upload, UserPlus, Phone, Mail, Calendar as CalendarIcon, Users, Flame } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { LeadCsvImport } from "@/components/crm/LeadCsvImport";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ExecutiveHeader, StatusBadge, AIScoreBadge, Avatar, KPIWidget } from "@/components/crm/premium";
 
 const SOURCES = ["website", "referral", "social_media", "cold_call", "exhibition", "walk_in", "tender", "other"];
 const STATUSES = ["new", "contacted", "qualified", "site_visit", "quotation_required", "quotation_sent", "negotiation", "won", "lost"];
-const SCORES = ["hot", "warm", "cold"];
-
-const scoreColors: Record<string, string> = {
-  hot: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  warm: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-  cold: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-};
-
-const statusColors: Record<string, string> = {
-  new: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-  contacted: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400",
-  qualified: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-  site_visit: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400",
-  quotation_required: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-  quotation_sent: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
-  negotiation: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400",
-  won: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  lost: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-};
 
 export function LeadsList() {
   const [search, setSearch] = useState("");
@@ -121,32 +103,20 @@ export function LeadsList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link href="/crm">
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground gap-1">
-                <ArrowLeft className="w-3.5 h-3.5" />Back to CRM
-              </Button>
-            </Link>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Leads</h1>
-          <p className="text-muted-foreground">Manage your sales prospects and inquiries.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ExportMenu
-            data={(filtered ?? []) as unknown as Record<string, unknown>[]}
-            columns={exportColumns}
-            filename="leads"
-            title="Leads"
-            defaultLandscape={true}
-          />
-          <Button variant="outline" onClick={() => setImportOpen(true)} data-testid="button-import-leads">
-            <Upload className="w-4 h-4 mr-2" />Import CSV
-          </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
+      <ExecutiveHeader icon={Users} title="Leads" subtitle="Manage your sales prospects and inquiries">
+        <ExportMenu
+          data={(filtered ?? []) as unknown as Record<string, unknown>[]}
+          columns={exportColumns}
+          filename="leads"
+          title="Leads"
+          defaultLandscape={true}
+        />
+        <Button variant="secondary" size="sm" className="bg-white/15 hover:bg-white/25 text-white border-0" onClick={() => setImportOpen(true)} data-testid="button-import-leads">
+          <Upload className="w-4 h-4 mr-2" />Import CSV
+        </Button>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+            <Button size="sm" className="bg-white text-[#0f2d5a] hover:bg-white/90">
               <Plus className="w-4 h-4 mr-2" />Add Lead
             </Button>
           </DialogTrigger>
@@ -202,22 +172,12 @@ export function LeadsList() {
             </Button>
           </DialogContent>
         </Dialog>
-        </div>
-      </div>
+      </ExecutiveHeader>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-card border rounded-lg p-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center"><span className="text-lg">🔥</span></div>
-          <div><div className="text-2xl font-bold text-red-600">{hot}</div><div className="text-xs text-muted-foreground">Hot Leads</div></div>
-        </div>
-        <div className="bg-card border rounded-lg p-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center"><span className="text-lg">📋</span></div>
-          <div><div className="text-2xl font-bold text-blue-600">{active}</div><div className="text-xs text-muted-foreground">Active Leads</div></div>
-        </div>
-        <div className="bg-card border rounded-lg p-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center"><span className="text-lg">✅</span></div>
-          <div><div className="text-2xl font-bold text-green-600">{won}</div><div className="text-xs text-muted-foreground">Won</div></div>
-        </div>
+        <KPIWidget icon={Flame}     tone="red"   label="Hot Leads"   value={hot}    sub={`${active} active`} />
+        <KPIWidget icon={Users}     tone="blue"  label="Active Leads" value={active} sub="In progress" />
+        <KPIWidget icon={CheckSquare} tone="green" label="Won"         value={won}   sub="Closed deals" />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -297,7 +257,11 @@ export function LeadsList() {
               <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No leads found. Add your first lead to get started.</TableCell></TableRow>
             ) : (
               filtered?.map((lead) => (
-                <TableRow key={lead.id} className={`hover:bg-muted/30 ${selected.has(lead.id) ? "bg-[#1e6ab0]/5" : ""}`}>
+                <TableRow
+                  key={lead.id}
+                  className={`group hover:bg-muted/40 transition-colors ${selected.has(lead.id) ? "bg-[#1e6ab0]/5" : ""}`}
+                  data-testid={`row-lead-${lead.id}`}
+                >
                   <TableCell>
                     <Checkbox checked={selected.has(lead.id)} onCheckedChange={() => toggleOne(lead.id)} aria-label={`Select ${lead.leadName}`} data-testid={`checkbox-lead-${lead.id}`} />
                   </TableCell>
@@ -307,32 +271,56 @@ export function LeadsList() {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{lead.leadName}</div>
-                    {lead.companyName && <div className="text-xs text-muted-foreground">{lead.companyName}</div>}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Avatar name={lead.leadName} size={32} />
+                      <div className="min-w-0">
+                        <Link href={`/crm/leads/${lead.id}`} className="block">
+                          <div className="font-medium truncate hover:text-primary transition-colors">{lead.leadName}</div>
+                        </Link>
+                        {lead.companyName && <div className="text-xs text-muted-foreground truncate">{lead.companyName}</div>}
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">{lead.phone || lead.email || "-"}</div>
                   </TableCell>
                   <TableCell className="capitalize text-sm">{lead.source?.replace("_"," ") || "-"}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className={scoreColors[lead.leadScore ?? ""] ?? "bg-slate-100 text-slate-700"}>
-                      {lead.leadScore}
-                    </Badge>
+                    <AIScoreBadge score={lead.leadScore ?? "warm"} />
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className={statusColors[lead.status] ?? ""}>
-                      {lead.status?.replace("_"," ")}
-                    </Badge>
+                    <StatusBadge status={lead.status} />
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{lead.nextFollowUp || "-"}</TableCell>
                   <TableCell>
-                    {lead.whatsapp && (
-                      <Button variant="ghost" size="icon" asChild>
-                        <a href={`https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" title="WhatsApp">
-                          <MessageCircle className="w-4 h-4 text-green-600" />
-                        </a>
+                    <div className="flex items-center justify-end gap-0.5 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
+                      {lead.phone && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                          <a href={`tel:${lead.phone}`} title="Call" aria-label={`Call ${lead.leadName}`} onClick={e => e.stopPropagation()}>
+                            <Phone className="w-3.5 h-3.5 text-blue-600" />
+                          </a>
+                        </Button>
+                      )}
+                      {lead.whatsapp && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                          <a href={`https://wa.me/${lead.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" title="WhatsApp" aria-label={`WhatsApp ${lead.leadName}`} onClick={e => e.stopPropagation()}>
+                            <MessageCircle className="w-3.5 h-3.5 text-green-600" />
+                          </a>
+                        </Button>
+                      )}
+                      {lead.email && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                          <a href={`mailto:${lead.email}`} title="Email" aria-label={`Email ${lead.leadName}`} onClick={e => e.stopPropagation()}>
+                            <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                          </a>
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <Link href={`/crm/leads/${lead.id}`} title="Open lead" aria-label={`Open ${lead.leadName}`}>
+                          <CalendarIcon className="w-3.5 h-3.5 text-amber-600" />
+                        </Link>
                       </Button>
-                    )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
