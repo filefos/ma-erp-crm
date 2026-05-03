@@ -36,10 +36,13 @@ const EMPTY_FORM = {
 
 export function OfferLettersList() {
   const [, setLocation] = useLocation();
-  const [status, setStatus] = useState<string>("all");
-  const [templateType, setTemplateType] = useState<string>("all");
-  const [companyFilter, setCompanyFilter] = useState<string>("all");
-  const [search, setSearch] = useState("");
+  // Initial filter state mirrors URL query params so dashboard links such as
+  // /hr/offer-letters?status=issued land on a pre-filtered view.
+  const initialParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [status, setStatus] = useState<string>(initialParams.get("status") ?? "all");
+  const [templateType, setTemplateType] = useState<string>(initialParams.get("templateType") ?? "all");
+  const [companyFilter, setCompanyFilter] = useState<string>(initialParams.get("companyId") ?? "all");
+  const [search, setSearch] = useState(initialParams.get("q") ?? "");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
