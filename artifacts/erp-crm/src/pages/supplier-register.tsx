@@ -301,8 +301,7 @@ export default function SupplierRegisterPage() {
         <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-white/15 rounded-xl px-4 py-2 backdrop-blur ring-1 ring-white/20">
-              <div className="text-xl font-extrabold tracking-widest leading-none">MA</div>
-              <div className="text-[10px] font-bold tracking-[0.3em] text-white/75 mt-0.5">ERP</div>
+              <div className="text-xl font-extrabold tracking-widest leading-none">Prime</div>
             </div>
             <div>
               <div className="text-lg font-semibold">Become a Supplier</div>
