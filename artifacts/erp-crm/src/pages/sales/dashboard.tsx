@@ -277,15 +277,13 @@ export function SalesDashboard() {
         const lpoMtdVal = lpoMtd.reduce((s: number, l: any) => s + Number(l.lpoValue ?? 0), 0);
         const conversionRate = quotations.length > 0 ? Math.round((lpos.length / quotations.length) * 100) : 0;
         return (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3" data-testid="primary-sales-kpi-strip">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="primary-sales-kpi-strip">
             <KPIWidget icon={FileText}      tone="blue"   label="Open Quotations"  value={openQuotations}      sub={`${sentQuotations} sent · ${pendingApprovalQ} pending`}                              href="/sales/quotations"        testId="kpi-open-quotations" />
             <KPIWidget icon={FileText}      tone="indigo" label="Quotation Value"  value={fmtAED(quotationValue)} sub={`${quotations.length} total quotations`}                                          href="/sales/quotations"        testId="kpi-quotation-value" />
             <KPIWidget icon={FileCheck}     tone="amber"  label="Proforma Pending" value={pendingPIs}          sub={`${proformas.length} total proforma`}                                                href="/sales/proforma-invoices" testId="kpi-proforma-pending" />
             <KPIWidget icon={Target}        tone="teal"   label="Conversion Rate"  value={`${conversionRate}%`} sub={`${lpos.length} LPOs from ${quotations.length} quotes`}                              href="/sales/lpos"              testId="kpi-conversion-rate" />
             <KPIWidget icon={Trophy}        tone="green"  label="Win Rate"         value={`${winRate}%`}        sub={`${acceptedQuotes} of ${quotations.length} quotes won`}                              href="/sales/quotations"        testId="kpi-win-rate" />
             <KPIWidget icon={ClipboardList} tone="purple" label="LPOs This Month"  value={lpoMtd.length}        sub={lpoMtd.length > 0 ? `${fmtAED(lpoMtdVal)} value` : "No LPOs this month"}             href="/sales/lpos"              testId="kpi-lpos-mtd" />
-            <KPIWidget icon={Crown}         tone="amber"  label="Top Salesperson"  value={salesPerformance[0]?.name ?? "—"} sub={salesPerformance[0] ? `${fmtAED(salesPerformance[0].won)} won` : "No activity yet"} href="/crm/leaderboard" testId="kpi-top-salesperson" />
-            <KPIWidget icon={Users}         tone="navy"   label="Top Customer"     value={topClients[0]?.name ?? "—"}       sub={topClients[0] ? `${fmtAED(topClients[0].value)} quoted` : "No customers yet"}    href={topClients[0]?.leadId != null ? `/crm/leads/${topClients[0].leadId}` : "/crm/leads"} testId="kpi-top-customer" />
           </div>
         );
       })()}
