@@ -1,0 +1,29 @@
+What & Why
+The HR "New Employee / Labour" form only captures basic details today. HR needs richer hiring/profile information and the ability to edit any employee record after it's created (currently records are create-only).
+
+Done looks like
+The Add Employee dialog captures these additional fields alongside the existing ones:
+Academic level (e.g. High school / Diploma / Bachelor's / Master's / PhD)
+Years of experience (number)
+Last company (text)
+Reason for leaving last job (text / textarea)
+Last salary (number)
+Expected salary (number)
+Job type (Hybrid / On-site / Remote)
+Age (number)
+Gender (Male / Female / Other)
+Each row in the Employees & Labour table has an Edit action that opens the same form prefilled with the employee's current values; saving updates the record and the list refreshes.
+Edited values persist across reloads (saved to the database) and are returned by the list/detail endpoints.
+The new fields are visible on the employee detail/edit dialog; the table columns stay as they are today (no column changes required).
+Existing employees keep working — new fields are optional and default to empty/null for old records.
+Mobile HR screens are not broken by the schema change (they continue to load and display employees as before; new fields can simply be ignored there).
+Out of scope
+Redesigning the Employees list table or adding new columns to it.
+Adding new fields to any report, dashboard chart, or export.
+Surfacing the new fields in the mobile app UI (mobile only needs to keep working, not display them).
+Permissions / role gating changes for who can edit employees.
+Steps
+Extend the employees database schema — Add the new optional columns (academic level, years of experience, last company, reason for leaving, last salary, expected salary, job type, age, gender) to the employees table and update the insert/select Zod schemas. Generate and run the migration.
+Update the API contract and routes — Add the new fields to the OpenAPI employee schemas, add an updateEmployee (PATCH) endpoint alongside the existing list/create, regenerate the API client, and implement the route handler with Zod validation.
+Add new fields to the Add Employee dialog — Extend the form state, layout the new inputs in the existing 2-column grid (use Select for academic level, job type, gender; numeric inputs for years of experience, last/expected salary, age; textarea for reason for leaving), and submit them on create.
+Make employee rows editable — Add an Edit action on each table row that opens the same dialog prefilled with the employee's data, switches the submit button to "Save Changes", and calls the new update mutation; invalidate the employees query on success.
