@@ -47,3 +47,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Production env (never commit)
+.env.production
+.env.local
+.env.*.local
