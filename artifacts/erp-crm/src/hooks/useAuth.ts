@@ -8,13 +8,29 @@ export function useAuth() {
   const queryClient = useQueryClient();
   const token = localStorage.getItem("erp_token");
 
-  const { data: user, isLoading } = useGetMe({
+  const { data: user, isLoading, error } = useGetMe({
     query: {
       queryKey: getGetMeQueryKey(),
       enabled: !!token,
       retry: false,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
     }
   });
+
+  // If the stored token is rejected by the server, drop it immediately so the
+  // app stops looping on the auth check and the user is sent to /login.
+  useEffect(() => {
+    if (!error) return;
+    const status = (error as { status?: number; response?: { status?: number } })?.status
+      ?? (error as { response?: { status?: number } })?.response?.status;
+    if (status === 401 || status === 403) {
+      localStorage.removeItem("erp_token");
+      queryClient.clear();
+      if (window.location.pathname !== "/login") setLocation("/login");
+    }
+  }, [error, queryClient, setLocation]);
 
   const loginMutation = useLogin({
     mutation: {
