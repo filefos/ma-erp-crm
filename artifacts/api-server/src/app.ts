@@ -347,6 +347,22 @@ async function runMigrations() {
       (SELECT COALESCE(MAX(NULLIF(regexp_replace(letter_number, '[^0-9]', '', 'g'), '')::bigint), 0) FROM offer_letters),
       1
     ), true)`);
+    // Per-brand offer letter sequences so reference numbers carry the
+    // company prefix (PMOL- for Prime Max, EOL- for Elite). Each sequence
+    // is seeded from the highest existing numeric suffix on letters of
+    // that brand, preventing collisions on the unique letter_number col.
+    await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS offer_letter_number_seq_prime START 1`);
+    await db.execute(sql`SELECT setval('offer_letter_number_seq_prime', GREATEST(
+      (SELECT COALESCE(MAX(NULLIF(regexp_replace(letter_number, '[^0-9]', '', 'g'), '')::bigint), 0)
+         FROM offer_letters WHERE letter_number LIKE 'PMOL-%'),
+      1
+    ), true)`);
+    await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS offer_letter_number_seq_elite START 1`);
+    await db.execute(sql`SELECT setval('offer_letter_number_seq_elite', GREATEST(
+      (SELECT COALESCE(MAX(NULLIF(regexp_replace(letter_number, '[^0-9]', '', 'g'), '')::bigint), 0)
+         FROM offer_letters WHERE letter_number LIKE 'EOL-%'),
+      1
+    ), true)`);
     // Race-free employee id sequence — replaces count(*)+1 in convert-to-employee.
     // Initialize to max existing EMP-##### so it doesn't collide with seeded rows.
     await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS employee_number_seq START 1`);

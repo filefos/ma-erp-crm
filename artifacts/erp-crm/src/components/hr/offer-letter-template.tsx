@@ -91,30 +91,18 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
         boxSizing: "border-box",
       }}
     >
-      {/* Compact letterhead — small logo on the left, legal company name in
-          navy, Ref + Date right-aligned. Address / contact details live in
-          the footer. The whole header is intentionally short (~58px tall)
-          so the body has the maximum possible space. */}
+      {/* Minimal header — legal company name (left) + Ref/Date (right).
+          Per spec, only the company name is required in the header; the
+          logo and brand title were intentionally removed. */}
       <div style={{ borderBottom: "2px solid #0f2d5a", paddingBottom: 6 }}>
         <div style={{ display: "table", width: "100%" }}>
           <div style={{ display: "table-row" }}>
-            <div style={{ display: "table-cell", verticalAlign: "middle", width: 56, paddingRight: 12 }}>
-              <img
-                src="/erp-crm/prime-max-logo.png"
-                alt={legalName}
-                style={{ display: "block", height: 48, width: "auto" }}
-                crossOrigin="anonymous"
-              />
-            </div>
             <div style={{ display: "table-cell", verticalAlign: "middle" }}>
-              <div style={{ color: "#0f2d5a", fontSize: 16, fontWeight: 800, lineHeight: 1.1 }}>
-                PRIME MAX PREFAB
-              </div>
-              <div style={{ color: "#1e6ab0", fontSize: FS_SMALL, marginTop: 1 }}>
+              <div style={{ color: "#0f2d5a", fontSize: 16, fontWeight: 800, lineHeight: 1.2, letterSpacing: 0.3 }}>
                 {legalName}
               </div>
             </div>
-            <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL, width: 200 }}>
+            <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL, width: 220 }}>
               <div><strong>Ref:</strong> {doc.letterNumber}</div>
               <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
             </div>

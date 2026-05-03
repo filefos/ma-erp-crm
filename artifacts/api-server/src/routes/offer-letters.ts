@@ -40,14 +40,25 @@ async function enrichOffer(o: typeof offerLettersTable.$inferSelect): Promise<an
   return { ...o, companyName, createdByName };
 }
 
-async function nextLetterNumber(): Promise<string> {
+// Brand prefixes for the customer-facing reference number — `PMOL-` for
+// Prime Max, `EOL-` for Elite, `OL-` as a defensive fallback for any
+// company that doesn't match either brand. Per-brand sequences keep the
+// counters independent so each company gets its own monotonic numbering.
+function brandPrefix(brand: string | null): { prefix: string; seq: string } {
+  if (brand === "prime") return { prefix: "PMOL", seq: "offer_letter_number_seq_prime" };
+  if (brand === "elite") return { prefix: "EOL",  seq: "offer_letter_number_seq_elite" };
+  return { prefix: "OL", seq: "offer_letter_number_seq" };
+}
+
+async function nextLetterNumber(brand: string | null): Promise<string> {
   const year = new Date().getFullYear();
+  const { prefix, seq } = brandPrefix(brand);
   // Use a Postgres sequence so concurrent INSERTs cannot collide on the unique
   // letter_number constraint. Sequence is monotonic across years; the year
   // prefix is informational, not a per-year counter.
-  const result: any = await db.execute(sql`SELECT nextval('offer_letter_number_seq') AS n`);
+  const result: any = await db.execute(sql.raw(`SELECT nextval('${seq}') AS n`));
   const n = Number(result.rows?.[0]?.n ?? result[0]?.n ?? 1);
-  return `OL-${year}-${String(n).padStart(5, "0")}`;
+  return `${prefix}-${year}-${String(n).padStart(4, "0")}`;
 }
 
 async function snapshotLetterhead(companyId: number): Promise<{ letterheadBrand: string | null; companyLegalName: string | null }> {
@@ -86,8 +97,8 @@ router.post("/offer-letters", requirePermission("offer_letters", "create"), requ
   if (!body.companyId || !body.templateType || !body.candidateName) {
     res.status(400).json({ error: "companyId, templateType and candidateName are required" }); return;
   }
-  const letterNumber = await nextLetterNumber();
   const snap = await snapshotLetterhead(body.companyId);
+  const letterNumber = await nextLetterNumber(snap.letterheadBrand);
   const [row] = await db.insert(offerLettersTable).values({
     ...body,
     letterNumber,
@@ -156,10 +167,10 @@ router.post("/offer-letters/:id/reissue", requirePermission("offer_letters", "cr
   const [src] = await db.select().from(offerLettersTable).where(eq(offerLettersTable.id, id));
   if (!src) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [src]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  const letterNumber = await nextLetterNumber();
   // Re-snapshot the letterhead at re-issue time so a renamed/rebranded company
   // produces an updated, deterministic snapshot for the new draft.
   const snap = await snapshotLetterhead(src.companyId);
+  const letterNumber = await nextLetterNumber(snap.letterheadBrand);
   const [row] = await db.insert(offerLettersTable).values({
     letterNumber,
     companyId: src.companyId,
