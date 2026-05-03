@@ -186,8 +186,9 @@ router.post("/offer-letters/:id/convert-to-employee", requirePermission("offer_l
         const [emp] = await tx.select().from(employeesTable).where(eq(employeesTable.id, existingEmpId));
         if (emp) return { status: 200 as const, body: emp };
       }
-      const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` }).from(employeesTable);
-      const employeeId = `EMP-${String((count ?? 0) + 1).padStart(5, "0")}`;
+      const seqRes: any = await tx.execute(sql`SELECT nextval('employee_number_seq') AS n`);
+      const empN = Number(seqRes.rows?.[0]?.n ?? seqRes[0]?.n ?? 1);
+      const employeeId = `EMP-${String(empN).padStart(5, "0")}`;
       const [emp] = await tx.insert(employeesTable).values({
         employeeId,
         name: offer.candidate_name ?? offer.candidateName,

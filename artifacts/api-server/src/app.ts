@@ -329,6 +329,8 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS company_legal_name TEXT`);
     // Race-free letter number sequence — replaces fragile count(*)+1 numbering.
     await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS offer_letter_number_seq START 1`);
+    // Race-free employee id sequence — replaces count(*)+1 in convert-to-employee.
+    await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS employee_number_seq START 1`);
 
     // Grant default permissions on the new "offer_letters" module to existing
     // roles so HR users see the module without needing a re-seed. Idempotent.
