@@ -1,11 +1,24 @@
 import ExcelJS from "exceljs";
 
+function escapeHtml(value: string | number | null | undefined): string {
+  if (value == null) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
+function sanitizeCsvCell(cell: string | number | null | undefined): string {
+  const v = cell == null ? "" : String(cell);
+  const sanitized = /^[=+\-@\t\r]/.test(v) ? "\t" + v : v;
+  return `"${sanitized.replace(/"/g, '""')}"`;
+}
+
 export function downloadCSV(filename: string, rows: (string | number | null | undefined)[][]) {
   const csv = rows
-    .map(row => row.map(cell => {
-      const v = cell == null ? "" : String(cell);
-      return `"${v.replace(/"/g, '""')}"`;
-    }).join(","))
+    .map(row => row.map(cell => sanitizeCsvCell(cell)).join(","))
     .join("\n");
   const a = document.createElement("a");
   a.href = "data:text/csv;charset=utf-8,\uFEFF" + encodeURIComponent(csv);
@@ -74,12 +87,12 @@ export function downloadWord(
   const body = rows.slice(1);
 
   const headerCells = header.map(h =>
-    `<th style="background:#0f2d5a;color:#fff;padding:8px 10px;border:1px solid #ccc;text-align:left;font-weight:bold;">${h ?? ""}</th>`
+    `<th style="background:#0f2d5a;color:#fff;padding:8px 10px;border:1px solid #ccc;text-align:left;font-weight:bold;">${escapeHtml(h)}</th>`
   ).join("");
 
   const bodyRows = body.map(row => {
     const cells = row.map(cell =>
-      `<td style="padding:7px 10px;border:1px solid #ccc;">${cell ?? ""}</td>`
+      `<td style="padding:7px 10px;border:1px solid #ccc;">${escapeHtml(cell)}</td>`
     ).join("");
     return `<tr>${cells}</tr>`;
   }).join("");
@@ -90,7 +103,7 @@ export function downloadWord(
       xmlns="http://www.w3.org/TR/REC-html40">
 <head>
   <meta charset="utf-8">
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     body { font-family: Arial, sans-serif; font-size: 11pt; margin: 24px; }
     h2 { color: #0f2d5a; margin-bottom: 16px; }
@@ -100,7 +113,7 @@ export function downloadWord(
   </style>
 </head>
 <body>
-  <h2>${title}</h2>
+  <h2>${escapeHtml(title)}</h2>
   <table>
     <thead><tr>${headerCells}</tr></thead>
     <tbody>${bodyRows}</tbody>
@@ -131,12 +144,12 @@ export function printTable(
   });
 
   const headerCells = header.map(h =>
-    `<th>${h ?? ""}</th>`
+    `<th>${escapeHtml(h)}</th>`
   ).join("");
 
   const bodyRows = body.map((row, i) => {
     const cells = row.map(cell =>
-      `<td>${cell ?? ""}</td>`
+      `<td>${escapeHtml(cell)}</td>`
     ).join("");
     const cls = i % 2 === 0 ? "" : ' class="alt"';
     return `<tr${cls}>${cells}</tr>`;
@@ -149,7 +162,7 @@ export function printTable(
 <html>
 <head>
   <meta charset="utf-8">
-  <title>${title}</title>
+  <title>${escapeHtml(title)}</title>
   <style>
     @page { margin: 12mm 10mm; size: A4 ${landscape ? "landscape" : "portrait"}; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -242,7 +255,7 @@ export function printTable(
     </div>
   </div>
 
-  <div class="doc-title">${title}</div>
+  <div class="doc-title">${escapeHtml(title)}</div>
 
   <div class="meta">
     <span class="rec-count">${body.length} record${body.length !== 1 ? "s" : ""}</span>
