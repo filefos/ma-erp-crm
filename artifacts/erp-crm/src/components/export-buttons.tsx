@@ -121,13 +121,16 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     return captureElementToPdfBase64(el, `${docNumber}.pdf`);
   };
 
-  const downloadBase64Pdf = (base64: string, filename: string) => {
+  const base64ToPdfFile = (base64: string, filename: string): File => {
     const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    const blob = new Blob([bytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
+    return new File([bytes], filename, { type: "application/pdf" });
+  };
+
+  const downloadPdfFile = (file: File) => {
+    const url = URL.createObjectURL(file);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = file.name;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -144,12 +147,35 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     try {
       toast({ title: "Preparing PDF…", description: `Building ${label} ${docNumber}` });
       const { base64, filename } = await generatePdf();
-      downloadBase64Pdf(base64, filename);
+      const file = base64ToPdfFile(base64, filename);
+
+      // Mobile / supported browser: real share sheet with the PDF attached.
+      const shareData: ShareData = { files: [file], title: filename, text: waMessage };
+      const canShareFiles = typeof navigator !== "undefined"
+        && typeof navigator.canShare === "function"
+        && navigator.canShare(shareData);
+      if (canShareFiles && typeof navigator.share === "function") {
+        try {
+          await navigator.share(shareData);
+          toast({ title: "Shared ✓", description: `Pick WhatsApp from the share sheet to send to +${digits}.` });
+          setWaOpen(false);
+          return;
+        } catch (err) {
+          // User cancelled the share sheet — don't fall through, just stop.
+          if (err instanceof DOMException && err.name === "AbortError") {
+            return;
+          }
+          // Other share errors fall through to the wa.me fallback below.
+        }
+      }
+
+      // Desktop fallback: download the PDF and open WhatsApp with the message.
+      downloadPdfFile(file);
       const url = `https://wa.me/${digits}?text=${encodeURIComponent(waMessage)}`;
       window.open(url, "_blank", "noopener,noreferrer");
       toast({
         title: "WhatsApp opened ✓",
-        description: `PDF downloaded as ${filename}. Attach it in the WhatsApp chat that just opened.`,
+        description: `Browsers can't auto-attach files on desktop. PDF saved as ${filename} — drag it into the WhatsApp chat.`,
       });
       setWaOpen(false);
     } catch (err) {
@@ -169,12 +195,33 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     try {
       toast({ title: "Preparing PDF…", description: `Building ${label} ${docNumber}` });
       const { base64, filename } = await generatePdf();
-      downloadBase64Pdf(base64, filename);
+      const file = base64ToPdfFile(base64, filename);
+
+      // Mobile / supported browser: real share sheet with the PDF attached.
+      const shareData: ShareData = { files: [file], title: mailSubject, text: mailBody };
+      const canShareFiles = typeof navigator !== "undefined"
+        && typeof navigator.canShare === "function"
+        && navigator.canShare(shareData);
+      if (canShareFiles && typeof navigator.share === "function") {
+        try {
+          await navigator.share(shareData);
+          toast({ title: "Shared ✓", description: `Pick Outlook (or any mail app) from the share sheet to send to ${to}.` });
+          setMailOpen(false);
+          return;
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") {
+            return;
+          }
+        }
+      }
+
+      // Desktop fallback: download the PDF and open Outlook via mailto.
+      downloadPdfFile(file);
       const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
       window.location.href = url;
       toast({
-        title: "Email opened ✓",
-        description: `PDF downloaded as ${filename}. Attach it in the email that just opened in Outlook.`,
+        title: "Outlook opened ✓",
+        description: `Browsers can't auto-attach files on desktop. PDF saved as ${filename} — drag it into the Outlook email.`,
       });
       setMailOpen(false);
     } catch (err) {
