@@ -1201,6 +1201,22 @@ export interface Employee {
   nationality?: string;
   siteLocation?: string;
   joiningDate?: string;
+  photoObjectKey?: string;
+  photoSignedUrl?: string;
+  passportNo?: string;
+  passportExpiry?: string;
+  emiratesIdNo?: string;
+  emiratesIdExpiry?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  maritalStatus?: string;
+  homeAddress?: string;
+  personalEmail?: string;
+  personalPhone?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  basicSalary?: number;
+  allowances?: number;
   isActive: boolean;
   createdAt: string;
 }
@@ -1216,6 +1232,110 @@ export interface CreateEmployeeBody {
   nationality?: string;
   siteLocation?: string;
   joiningDate?: string;
+  photoObjectKey?: string;
+  passportNo?: string;
+  passportExpiry?: string;
+  emiratesIdNo?: string;
+  emiratesIdExpiry?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  maritalStatus?: string;
+  homeAddress?: string;
+  personalEmail?: string;
+  personalPhone?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  basicSalary?: number;
+  allowances?: number;
+  isActive?: boolean;
+}
+
+export interface EmployeeAttachment {
+  id: number;
+  employeeId: number;
+  category: string;
+  fileName: string;
+  objectKey: string;
+  signedUrl?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  notes?: string;
+  uploadedById?: number;
+  uploadedByName?: string;
+  uploadedAt: string;
+}
+
+export interface CreateEmployeeAttachmentBody {
+  category: string;
+  fileName: string;
+  objectKey: string;
+  contentType?: string;
+  sizeBytes?: number;
+  notes?: string;
+}
+
+export interface OfferLetter {
+  id: number;
+  letterNumber: string;
+  companyId: number;
+  companyName?: string;
+  templateType: string;
+  status: string;
+  employeeId?: number;
+  candidateName: string;
+  candidateNationality?: string;
+  candidatePassportNo?: string;
+  candidatePersonalEmail?: string;
+  candidatePersonalPhone?: string;
+  designation?: string;
+  joiningDate?: string;
+  basicSalary?: number;
+  allowances?: number;
+  workerType?: string;
+  notes?: string;
+  issuedAt?: string;
+  acceptedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
+  parentOfferId?: number;
+  version: number;
+  convertedEmployeeId?: number;
+  convertedAt?: string;
+  createdById?: number;
+  createdByName?: string;
+  createdAt: string;
+}
+
+export interface CreateOfferLetterBody {
+  companyId: number;
+  templateType: string;
+  employeeId?: number;
+  candidateName: string;
+  candidateNationality?: string;
+  candidatePassportNo?: string;
+  candidatePersonalEmail?: string;
+  candidatePersonalPhone?: string;
+  designation?: string;
+  joiningDate?: string;
+  basicSalary?: number;
+  allowances?: number;
+  workerType?: string;
+  notes?: string;
+}
+
+export type SetOfferLetterStatusBodyStatus =
+  (typeof SetOfferLetterStatusBodyStatus)[keyof typeof SetOfferLetterStatusBodyStatus];
+
+export const SetOfferLetterStatusBodyStatus = {
+  draft: "draft",
+  issued: "issued",
+  accepted: "accepted",
+  rejected: "rejected",
+} as const;
+
+export interface SetOfferLetterStatusBody {
+  status: SetOfferLetterStatusBodyStatus;
+  rejectionReason?: string;
 }
 
 export interface Attendance {
@@ -1977,6 +2097,13 @@ export type ListAttendanceParams = {
   date?: string;
   month?: string;
   companyId?: number;
+};
+
+export type ListOfferLettersParams = {
+  status?: string;
+  companyId?: number;
+  templateType?: string;
+  employeeId?: number;
 };
 
 export type ListExpensesParams = {

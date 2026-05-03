@@ -20,6 +20,22 @@ export interface Employee {
   nationality?: string;
   siteLocation?: string;
   joiningDate?: string;
+  photoObjectKey?: string;
+  photoSignedUrl?: string;
+  passportNo?: string;
+  passportExpiry?: string;
+  emiratesIdNo?: string;
+  emiratesIdExpiry?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  maritalStatus?: string;
+  homeAddress?: string;
+  personalEmail?: string;
+  personalPhone?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  basicSalary?: number;
+  allowances?: number;
   isActive: boolean;
   createdAt: string;
 }

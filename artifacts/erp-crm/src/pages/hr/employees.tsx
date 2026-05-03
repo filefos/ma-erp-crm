@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { useListEmployees, useCreateEmployee } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,11 +10,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CompanyField } from "@/components/CompanyField";
-import { useListCompanies } from "@workspace/api-client-react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, AlertTriangle } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListEmployeesQueryKey } from "@workspace/api-client-react";
+
+function daysUntil(dateStr?: string | null): number | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return Math.ceil((d.getTime() - Date.now()) / 86_400_000);
+}
+
+function ExpiryBadge({ label, dateStr }: { label: string; dateStr?: string | null }) {
+  const days = daysUntil(dateStr);
+  if (days === null) return null;
+  if (days < 0) return <Badge className="bg-red-100 text-red-800 text-[10px]"><AlertTriangle className="w-3 h-3 mr-1" />{label} expired</Badge>;
+  if (days <= 60) return <Badge className="bg-orange-100 text-orange-800 text-[10px]"><AlertTriangle className="w-3 h-3 mr-1" />{label} in {days}d</Badge>;
+  return null;
+}
 
 export function EmployeesList() {
   const [search, setSearch] = useState("");
@@ -24,7 +39,6 @@ export function EmployeesList() {
   const { data: employees, isLoading } = useListEmployees({ type: type === "all" ? undefined : type, search: search || undefined });
   const { filterByCompany } = useActiveCompany();
   const filtered = filterByCompany(employees ?? []);
-  const { data: companies } = useListCompanies();
   const create = useCreateEmployee({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey() }); setOpen(false); } } });
 
   return (
@@ -38,7 +52,7 @@ export function EmployeesList() {
           <ExportMenu
             data={filtered}
             columns={[
-              { header: "Emp. No.", key: "employeeNumber" },
+              { header: "Emp. No.", key: "employeeId" },
               { header: "Name", key: "name" },
               { header: "Type", key: "type" },
               { header: "Designation", key: "designation" },
@@ -46,36 +60,38 @@ export function EmployeesList() {
               { header: "Nationality", key: "nationality" },
               { header: "Site", key: "siteLocation" },
               { header: "Joining Date", key: "joiningDate" },
+              { header: "Passport Expiry", key: "passportExpiry" },
+              { header: "EID Expiry", key: "emiratesIdExpiry" },
             ]}
             filename="employees"
             title="Employees & Labour"
           />
           <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Employee</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>New Employee / Labour</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1 col-span-2"><Label>Full Name *</Label><Input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} /></div>
-              <div className="space-y-1"><Label>Type *</Label>
-                <Select value={form.type} onValueChange={v => setForm(p => ({...p, type: v}))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="staff">Staff</SelectItem><SelectItem value="labor">Labour</SelectItem></SelectContent>
-                </Select>
+            <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Employee</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>New Employee / Labour</DialogTitle></DialogHeader>
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="space-y-1 col-span-2"><Label>Full Name *</Label><Input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} /></div>
+                <div className="space-y-1"><Label>Type *</Label>
+                  <Select value={form.type} onValueChange={v => setForm(p => ({...p, type: v}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="staff">Staff</SelectItem><SelectItem value="labor">Labour</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1"><Label>Company *</Label>
+                  <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
+                </div>
+                <div className="space-y-1"><Label>Designation</Label><Input value={form.designation} onChange={e => setForm(p => ({...p, designation: e.target.value}))} /></div>
+                <div className="space-y-1"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value}))} /></div>
+                <div className="space-y-1"><Label>Nationality</Label><Input value={form.nationality} onChange={e => setForm(p => ({...p, nationality: e.target.value}))} /></div>
+                <div className="space-y-1"><Label>Site / Location</Label><Input value={form.siteLocation} onChange={e => setForm(p => ({...p, siteLocation: e.target.value}))} /></div>
+                <div className="space-y-1"><Label>Joining Date</Label><Input type="date" value={form.joiningDate} onChange={e => setForm(p => ({...p, joiningDate: e.target.value}))} /></div>
               </div>
-              <div className="space-y-1"><Label>Company *</Label>
-                <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
-              </div>
-              <div className="space-y-1"><Label>Designation</Label><Input value={form.designation} onChange={e => setForm(p => ({...p, designation: e.target.value}))} /></div>
-              <div className="space-y-1"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value}))} /></div>
-              <div className="space-y-1"><Label>Nationality</Label><Input value={form.nationality} onChange={e => setForm(p => ({...p, nationality: e.target.value}))} /></div>
-              <div className="space-y-1"><Label>Site / Location</Label><Input value={form.siteLocation} onChange={e => setForm(p => ({...p, siteLocation: e.target.value}))} /></div>
-              <div className="space-y-1"><Label>Joining Date</Label><Input type="date" value={form.joiningDate} onChange={e => setForm(p => ({...p, joiningDate: e.target.value}))} /></div>
-            </div>
-            <Button className="mt-4" onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId,10) } as any })} disabled={!form.name || !form.companyId || create.isPending}>
-              {create.isPending ? "Saving..." : "Add Employee"}
-            </Button>
-          </DialogContent>
-        </Dialog>
+              <Button className="mt-4" onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId,10) } as any })} disabled={!form.name || !form.companyId || create.isPending}>
+                {create.isPending ? "Saving..." : "Add Employee"}
+              </Button>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -103,21 +119,26 @@ export function EmployeesList() {
               <TableHead>Nationality</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Site</TableHead>
+              <TableHead>Documents</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No employees found.</TableCell></TableRow> :
-            filtered.map(e => (
-              <TableRow key={e.id}>
-                <TableCell className="font-mono text-xs text-primary">{e.employeeId}</TableCell>
-                <TableCell className="font-medium">{e.name}</TableCell>
+            {isLoading ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No employees found.</TableCell></TableRow> :
+            filtered.map((e: any) => (
+              <TableRow key={e.id} className="cursor-pointer hover:bg-muted/40" data-testid={`row-employee-${e.id}`}>
+                <TableCell className="font-mono text-xs"><Link href={`/hr/employees/${e.id}`} className="text-primary hover:underline">{e.employeeId}</Link></TableCell>
+                <TableCell className="font-medium"><Link href={`/hr/employees/${e.id}`} className="hover:underline">{e.name}</Link></TableCell>
                 <TableCell><Badge variant="secondary" className={e.type === "staff" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" : "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"}>{e.type}</Badge></TableCell>
                 <TableCell>{e.designation || "-"}</TableCell>
                 <TableCell>{e.nationality || "-"}</TableCell>
                 <TableCell>{e.phone || "-"}</TableCell>
                 <TableCell>{e.siteLocation || "-"}</TableCell>
+                <TableCell className="space-y-1">
+                  <ExpiryBadge label="Passport" dateStr={e.passportExpiry} />
+                  <ExpiryBadge label="EID" dateStr={e.emiratesIdExpiry} />
+                </TableCell>
                 <TableCell><Badge variant="secondary" className={e.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>{e.isActive ? "Active" : "Inactive"}</Badge></TableCell>
               </TableRow>
             ))}

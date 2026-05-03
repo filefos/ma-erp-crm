@@ -62,7 +62,10 @@ import { ProjectsList } from "@/pages/projects/index";
 import { ProjectDetail } from "@/pages/projects/detail";
 import { SalesPerformance } from "@/pages/projects/sales-performance";
 import { EmployeesList } from "@/pages/hr/employees";
+import { EmployeeDetail } from "@/pages/hr/employee-detail";
 import { AttendanceList } from "@/pages/hr/attendance";
+import { OfferLettersList } from "@/pages/hr/offer-letters";
+import { OfferLetterDetail } from "@/pages/hr/offer-letter-detail";
 import { AssetsList } from "@/pages/assets/index";
 import { ReportsHub } from "@/pages/reports/index";
 import { SalesPipelineReport } from "@/pages/reports/sales-pipeline";
@@ -307,8 +310,21 @@ function Router() {
       <Route path="/hr/employees">
         <ModuleGuard module="employees"><EmployeesList /></ModuleGuard>
       </Route>
+      <Route path="/hr/employees/:id">
+        {(params) => (
+          <ModuleGuard module="employees"><EmployeeDetail id={params.id} /></ModuleGuard>
+        )}
+      </Route>
       <Route path="/hr/attendance">
         <ModuleGuard module="attendance"><AttendanceList /></ModuleGuard>
+      </Route>
+      <Route path="/hr/offer-letters">
+        <ModuleGuard module="offer_letters"><OfferLettersList /></ModuleGuard>
+      </Route>
+      <Route path="/hr/offer-letters/:id">
+        {(params) => (
+          <ModuleGuard module="offer_letters"><OfferLetterDetail id={params.id} /></ModuleGuard>
+        )}
       </Route>
 
       {/* Assets */}

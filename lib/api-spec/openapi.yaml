@@ -46,6 +46,8 @@ tags:
   - name: payments-made
   - name: journal-entries
   - name: whatsapp
+  - name: employee-attachments
+  - name: offer-letters
 
 paths:
   /healthz:
@@ -2746,6 +2748,230 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RequestUploadUrlResponse"
+
+  # EMPLOYEE ATTACHMENTS
+  /employees/{id}/attachments:
+    get:
+      operationId: listEmployeeAttachments
+      tags: [employee-attachments]
+      summary: List attachments for an employee
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of attachments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmployeeAttachment"
+    post:
+      operationId: createEmployeeAttachment
+      tags: [employee-attachments]
+      summary: Register an uploaded file as an employee attachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeeAttachmentBody"
+      responses:
+        "201":
+          description: Attachment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeAttachment"
+
+  /employees/{id}/attachments/{attachmentId}:
+    delete:
+      operationId: deleteEmployeeAttachment
+      tags: [employee-attachments]
+      summary: Delete an employee attachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # OFFER LETTERS
+  /offer-letters:
+    get:
+      operationId: listOfferLetters
+      tags: [offer-letters]
+      summary: List offer letters
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: templateType
+          in: query
+          schema:
+            type: string
+        - name: employeeId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of offer letters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfferLetter"
+    post:
+      operationId: createOfferLetter
+      tags: [offer-letters]
+      summary: Create offer letter (defaults to draft)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOfferLetterBody"
+      responses:
+        "201":
+          description: Offer letter created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferLetter"
+
+  /offer-letters/{id}:
+    get:
+      operationId: getOfferLetter
+      tags: [offer-letters]
+      summary: Get an offer letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Offer letter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferLetter"
+    put:
+      operationId: updateOfferLetter
+      tags: [offer-letters]
+      summary: Update offer letter (draft fields)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOfferLetterBody"
+      responses:
+        "200":
+          description: Offer letter updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferLetter"
+
+  /offer-letters/{id}/status:
+    post:
+      operationId: setOfferLetterStatus
+      tags: [offer-letters]
+      summary: Transition offer letter status (draft → issued → accepted/rejected)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetOfferLetterStatusBody"
+      responses:
+        "200":
+          description: Updated offer letter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferLetter"
+
+  /offer-letters/{id}/reissue:
+    post:
+      operationId: reissueOfferLetter
+      tags: [offer-letters]
+      summary: Re-issue (creates a new version pointing back at the original)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: New offer letter version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferLetter"
+
+  /offer-letters/{id}/convert-to-employee:
+    post:
+      operationId: convertOfferLetterToEmployee
+      tags: [offer-letters]
+      summary: Create an employee from an accepted offer letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
 
   /attendance/{id}:
     put:
@@ -5871,6 +6097,38 @@ components:
           type: string
         joiningDate:
           type: string
+        photoObjectKey:
+          type: string
+        photoSignedUrl:
+          type: string
+        passportNo:
+          type: string
+        passportExpiry:
+          type: string
+        emiratesIdNo:
+          type: string
+        emiratesIdExpiry:
+          type: string
+        dateOfBirth:
+          type: string
+        gender:
+          type: string
+        maritalStatus:
+          type: string
+        homeAddress:
+          type: string
+        personalEmail:
+          type: string
+        personalPhone:
+          type: string
+        emergencyContactName:
+          type: string
+        emergencyContactPhone:
+          type: string
+        basicSalary:
+          type: number
+        allowances:
+          type: number
         isActive:
           type: boolean
         createdAt:
@@ -5900,7 +6158,191 @@ components:
           type: string
         joiningDate:
           type: string
+        photoObjectKey:
+          type: string
+        passportNo:
+          type: string
+        passportExpiry:
+          type: string
+        emiratesIdNo:
+          type: string
+        emiratesIdExpiry:
+          type: string
+        dateOfBirth:
+          type: string
+        gender:
+          type: string
+        maritalStatus:
+          type: string
+        homeAddress:
+          type: string
+        personalEmail:
+          type: string
+        personalPhone:
+          type: string
+        emergencyContactName:
+          type: string
+        emergencyContactPhone:
+          type: string
+        basicSalary:
+          type: number
+        allowances:
+          type: number
+        isActive:
+          type: boolean
       required: [name, type, companyId]
+
+    EmployeeAttachment:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeId:
+          type: integer
+        category:
+          type: string
+        fileName:
+          type: string
+        objectKey:
+          type: string
+        signedUrl:
+          type: string
+        contentType:
+          type: string
+        sizeBytes:
+          type: integer
+        notes:
+          type: string
+        uploadedById:
+          type: integer
+        uploadedByName:
+          type: string
+        uploadedAt:
+          type: string
+      required: [id, employeeId, category, fileName, objectKey, uploadedAt]
+
+    CreateEmployeeAttachmentBody:
+      type: object
+      properties:
+        category:
+          type: string
+        fileName:
+          type: string
+        objectKey:
+          type: string
+        contentType:
+          type: string
+        sizeBytes:
+          type: integer
+        notes:
+          type: string
+      required: [category, fileName, objectKey]
+
+    OfferLetter:
+      type: object
+      properties:
+        id:
+          type: integer
+        letterNumber:
+          type: string
+        companyId:
+          type: integer
+        companyName:
+          type: string
+        templateType:
+          type: string
+        status:
+          type: string
+        employeeId:
+          type: integer
+        candidateName:
+          type: string
+        candidateNationality:
+          type: string
+        candidatePassportNo:
+          type: string
+        candidatePersonalEmail:
+          type: string
+        candidatePersonalPhone:
+          type: string
+        designation:
+          type: string
+        joiningDate:
+          type: string
+        basicSalary:
+          type: number
+        allowances:
+          type: number
+        workerType:
+          type: string
+        notes:
+          type: string
+        issuedAt:
+          type: string
+        acceptedAt:
+          type: string
+        rejectedAt:
+          type: string
+        rejectionReason:
+          type: string
+        parentOfferId:
+          type: integer
+        version:
+          type: integer
+        convertedEmployeeId:
+          type: integer
+        convertedAt:
+          type: string
+        createdById:
+          type: integer
+        createdByName:
+          type: string
+        createdAt:
+          type: string
+      required: [id, letterNumber, companyId, templateType, status, candidateName, version, createdAt]
+
+    CreateOfferLetterBody:
+      type: object
+      properties:
+        companyId:
+          type: integer
+        templateType:
+          type: string
+        employeeId:
+          type: integer
+        candidateName:
+          type: string
+        candidateNationality:
+          type: string
+        candidatePassportNo:
+          type: string
+        candidatePersonalEmail:
+          type: string
+        candidatePersonalPhone:
+          type: string
+        designation:
+          type: string
+        joiningDate:
+          type: string
+        basicSalary:
+          type: number
+        allowances:
+          type: number
+        workerType:
+          type: string
+        notes:
+          type: string
+      required: [companyId, templateType, candidateName]
+
+    SetOfferLetterStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, issued, accepted, rejected]
+        rejectionReason:
+          type: string
+      required: [status]
 
     Attendance:
       type: object

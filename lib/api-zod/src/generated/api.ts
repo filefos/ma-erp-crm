@@ -4338,6 +4338,22 @@ export const ListEmployeesResponseItem = zod.object({
   nationality: zod.string().optional(),
   siteLocation: zod.string().optional(),
   joiningDate: zod.string().optional(),
+  photoObjectKey: zod.string().optional(),
+  photoSignedUrl: zod.string().optional(),
+  passportNo: zod.string().optional(),
+  passportExpiry: zod.string().optional(),
+  emiratesIdNo: zod.string().optional(),
+  emiratesIdExpiry: zod.string().optional(),
+  dateOfBirth: zod.string().optional(),
+  gender: zod.string().optional(),
+  maritalStatus: zod.string().optional(),
+  homeAddress: zod.string().optional(),
+  personalEmail: zod.string().optional(),
+  personalPhone: zod.string().optional(),
+  emergencyContactName: zod.string().optional(),
+  emergencyContactPhone: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -4357,6 +4373,22 @@ export const CreateEmployeeBody = zod.object({
   nationality: zod.string().optional(),
   siteLocation: zod.string().optional(),
   joiningDate: zod.string().optional(),
+  photoObjectKey: zod.string().optional(),
+  passportNo: zod.string().optional(),
+  passportExpiry: zod.string().optional(),
+  emiratesIdNo: zod.string().optional(),
+  emiratesIdExpiry: zod.string().optional(),
+  dateOfBirth: zod.string().optional(),
+  gender: zod.string().optional(),
+  maritalStatus: zod.string().optional(),
+  homeAddress: zod.string().optional(),
+  personalEmail: zod.string().optional(),
+  personalPhone: zod.string().optional(),
+  emergencyContactName: zod.string().optional(),
+  emergencyContactPhone: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  isActive: zod.boolean().optional(),
 });
 
 /**
@@ -4380,6 +4412,22 @@ export const GetEmployeeResponse = zod.object({
   nationality: zod.string().optional(),
   siteLocation: zod.string().optional(),
   joiningDate: zod.string().optional(),
+  photoObjectKey: zod.string().optional(),
+  photoSignedUrl: zod.string().optional(),
+  passportNo: zod.string().optional(),
+  passportExpiry: zod.string().optional(),
+  emiratesIdNo: zod.string().optional(),
+  emiratesIdExpiry: zod.string().optional(),
+  dateOfBirth: zod.string().optional(),
+  gender: zod.string().optional(),
+  maritalStatus: zod.string().optional(),
+  homeAddress: zod.string().optional(),
+  personalEmail: zod.string().optional(),
+  personalPhone: zod.string().optional(),
+  emergencyContactName: zod.string().optional(),
+  emergencyContactPhone: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -4402,6 +4450,22 @@ export const UpdateEmployeeBody = zod.object({
   nationality: zod.string().optional(),
   siteLocation: zod.string().optional(),
   joiningDate: zod.string().optional(),
+  photoObjectKey: zod.string().optional(),
+  passportNo: zod.string().optional(),
+  passportExpiry: zod.string().optional(),
+  emiratesIdNo: zod.string().optional(),
+  emiratesIdExpiry: zod.string().optional(),
+  dateOfBirth: zod.string().optional(),
+  gender: zod.string().optional(),
+  maritalStatus: zod.string().optional(),
+  homeAddress: zod.string().optional(),
+  personalEmail: zod.string().optional(),
+  personalPhone: zod.string().optional(),
+  emergencyContactName: zod.string().optional(),
+  emergencyContactPhone: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  isActive: zod.boolean().optional(),
 });
 
 export const UpdateEmployeeResponse = zod.object({
@@ -4418,6 +4482,22 @@ export const UpdateEmployeeResponse = zod.object({
   nationality: zod.string().optional(),
   siteLocation: zod.string().optional(),
   joiningDate: zod.string().optional(),
+  photoObjectKey: zod.string().optional(),
+  photoSignedUrl: zod.string().optional(),
+  passportNo: zod.string().optional(),
+  passportExpiry: zod.string().optional(),
+  emiratesIdNo: zod.string().optional(),
+  emiratesIdExpiry: zod.string().optional(),
+  dateOfBirth: zod.string().optional(),
+  gender: zod.string().optional(),
+  maritalStatus: zod.string().optional(),
+  homeAddress: zod.string().optional(),
+  personalEmail: zod.string().optional(),
+  personalPhone: zod.string().optional(),
+  emergencyContactName: zod.string().optional(),
+  emergencyContactPhone: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -4556,6 +4636,276 @@ export const RequestUploadUrlResponse = zod.object({
     size: zod.number(),
     contentType: zod.string(),
   }),
+});
+
+/**
+ * @summary List attachments for an employee
+ */
+export const ListEmployeeAttachmentsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListEmployeeAttachmentsResponseItem = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  category: zod.string(),
+  fileName: zod.string(),
+  objectKey: zod.string(),
+  signedUrl: zod.string().optional(),
+  contentType: zod.string().optional(),
+  sizeBytes: zod.number().optional(),
+  notes: zod.string().optional(),
+  uploadedById: zod.number().optional(),
+  uploadedByName: zod.string().optional(),
+  uploadedAt: zod.string(),
+});
+export const ListEmployeeAttachmentsResponse = zod.array(
+  ListEmployeeAttachmentsResponseItem,
+);
+
+/**
+ * @summary Register an uploaded file as an employee attachment
+ */
+export const CreateEmployeeAttachmentParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CreateEmployeeAttachmentBody = zod.object({
+  category: zod.string(),
+  fileName: zod.string(),
+  objectKey: zod.string(),
+  contentType: zod.string().optional(),
+  sizeBytes: zod.number().optional(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary Delete an employee attachment
+ */
+export const DeleteEmployeeAttachmentParams = zod.object({
+  id: zod.coerce.number(),
+  attachmentId: zod.coerce.number(),
+});
+
+export const DeleteEmployeeAttachmentResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary List offer letters
+ */
+export const ListOfferLettersQueryParams = zod.object({
+  status: zod.coerce.string().optional(),
+  companyId: zod.coerce.number().optional(),
+  templateType: zod.coerce.string().optional(),
+  employeeId: zod.coerce.number().optional(),
+});
+
+export const ListOfferLettersResponseItem = zod.object({
+  id: zod.number(),
+  letterNumber: zod.string(),
+  companyId: zod.number(),
+  companyName: zod.string().optional(),
+  templateType: zod.string(),
+  status: zod.string(),
+  employeeId: zod.number().optional(),
+  candidateName: zod.string(),
+  candidateNationality: zod.string().optional(),
+  candidatePassportNo: zod.string().optional(),
+  candidatePersonalEmail: zod.string().optional(),
+  candidatePersonalPhone: zod.string().optional(),
+  designation: zod.string().optional(),
+  joiningDate: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  workerType: zod.string().optional(),
+  notes: zod.string().optional(),
+  issuedAt: zod.string().optional(),
+  acceptedAt: zod.string().optional(),
+  rejectedAt: zod.string().optional(),
+  rejectionReason: zod.string().optional(),
+  parentOfferId: zod.number().optional(),
+  version: zod.number(),
+  convertedEmployeeId: zod.number().optional(),
+  convertedAt: zod.string().optional(),
+  createdById: zod.number().optional(),
+  createdByName: zod.string().optional(),
+  createdAt: zod.string(),
+});
+export const ListOfferLettersResponse = zod.array(ListOfferLettersResponseItem);
+
+/**
+ * @summary Create offer letter (defaults to draft)
+ */
+export const CreateOfferLetterBody = zod.object({
+  companyId: zod.number(),
+  templateType: zod.string(),
+  employeeId: zod.number().optional(),
+  candidateName: zod.string(),
+  candidateNationality: zod.string().optional(),
+  candidatePassportNo: zod.string().optional(),
+  candidatePersonalEmail: zod.string().optional(),
+  candidatePersonalPhone: zod.string().optional(),
+  designation: zod.string().optional(),
+  joiningDate: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  workerType: zod.string().optional(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary Get an offer letter
+ */
+export const GetOfferLetterParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetOfferLetterResponse = zod.object({
+  id: zod.number(),
+  letterNumber: zod.string(),
+  companyId: zod.number(),
+  companyName: zod.string().optional(),
+  templateType: zod.string(),
+  status: zod.string(),
+  employeeId: zod.number().optional(),
+  candidateName: zod.string(),
+  candidateNationality: zod.string().optional(),
+  candidatePassportNo: zod.string().optional(),
+  candidatePersonalEmail: zod.string().optional(),
+  candidatePersonalPhone: zod.string().optional(),
+  designation: zod.string().optional(),
+  joiningDate: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  workerType: zod.string().optional(),
+  notes: zod.string().optional(),
+  issuedAt: zod.string().optional(),
+  acceptedAt: zod.string().optional(),
+  rejectedAt: zod.string().optional(),
+  rejectionReason: zod.string().optional(),
+  parentOfferId: zod.number().optional(),
+  version: zod.number(),
+  convertedEmployeeId: zod.number().optional(),
+  convertedAt: zod.string().optional(),
+  createdById: zod.number().optional(),
+  createdByName: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update offer letter (draft fields)
+ */
+export const UpdateOfferLetterParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateOfferLetterBody = zod.object({
+  companyId: zod.number(),
+  templateType: zod.string(),
+  employeeId: zod.number().optional(),
+  candidateName: zod.string(),
+  candidateNationality: zod.string().optional(),
+  candidatePassportNo: zod.string().optional(),
+  candidatePersonalEmail: zod.string().optional(),
+  candidatePersonalPhone: zod.string().optional(),
+  designation: zod.string().optional(),
+  joiningDate: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  workerType: zod.string().optional(),
+  notes: zod.string().optional(),
+});
+
+export const UpdateOfferLetterResponse = zod.object({
+  id: zod.number(),
+  letterNumber: zod.string(),
+  companyId: zod.number(),
+  companyName: zod.string().optional(),
+  templateType: zod.string(),
+  status: zod.string(),
+  employeeId: zod.number().optional(),
+  candidateName: zod.string(),
+  candidateNationality: zod.string().optional(),
+  candidatePassportNo: zod.string().optional(),
+  candidatePersonalEmail: zod.string().optional(),
+  candidatePersonalPhone: zod.string().optional(),
+  designation: zod.string().optional(),
+  joiningDate: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  workerType: zod.string().optional(),
+  notes: zod.string().optional(),
+  issuedAt: zod.string().optional(),
+  acceptedAt: zod.string().optional(),
+  rejectedAt: zod.string().optional(),
+  rejectionReason: zod.string().optional(),
+  parentOfferId: zod.number().optional(),
+  version: zod.number(),
+  convertedEmployeeId: zod.number().optional(),
+  convertedAt: zod.string().optional(),
+  createdById: zod.number().optional(),
+  createdByName: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Transition offer letter status (draft → issued → accepted/rejected)
+ */
+export const SetOfferLetterStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SetOfferLetterStatusBody = zod.object({
+  status: zod.enum(["draft", "issued", "accepted", "rejected"]),
+  rejectionReason: zod.string().optional(),
+});
+
+export const SetOfferLetterStatusResponse = zod.object({
+  id: zod.number(),
+  letterNumber: zod.string(),
+  companyId: zod.number(),
+  companyName: zod.string().optional(),
+  templateType: zod.string(),
+  status: zod.string(),
+  employeeId: zod.number().optional(),
+  candidateName: zod.string(),
+  candidateNationality: zod.string().optional(),
+  candidatePassportNo: zod.string().optional(),
+  candidatePersonalEmail: zod.string().optional(),
+  candidatePersonalPhone: zod.string().optional(),
+  designation: zod.string().optional(),
+  joiningDate: zod.string().optional(),
+  basicSalary: zod.number().optional(),
+  allowances: zod.number().optional(),
+  workerType: zod.string().optional(),
+  notes: zod.string().optional(),
+  issuedAt: zod.string().optional(),
+  acceptedAt: zod.string().optional(),
+  rejectedAt: zod.string().optional(),
+  rejectionReason: zod.string().optional(),
+  parentOfferId: zod.number().optional(),
+  version: zod.number(),
+  convertedEmployeeId: zod.number().optional(),
+  convertedAt: zod.string().optional(),
+  createdById: zod.number().optional(),
+  createdByName: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Re-issue (creates a new version pointing back at the original)
+ */
+export const ReissueOfferLetterParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Create an employee from an accepted offer letter
+ */
+export const ConvertOfferLetterToEmployeeParams = zod.object({
+  id: zod.coerce.number(),
 });
 
 /**

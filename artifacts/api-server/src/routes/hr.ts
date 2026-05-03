@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, employeesTable, attendanceTable, departmentsTable } from "@workspace/db";
+import { db, employeesTable, attendanceTable, departmentsTable, employeeAttachmentsTable, usersTable } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 import { ObjectStorageService } from "../lib/objectStorage";
@@ -18,7 +18,7 @@ function nowTime(): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-async function signSelfie(objectKey: string | null | undefined): Promise<string | undefined> {
+async function signObjectKey(objectKey: string | null | undefined): Promise<string | undefined> {
   if (!objectKey || !objectKey.startsWith("/objects/")) return undefined;
   try {
     const file = await storageService.getObjectEntityFile(objectKey);
@@ -35,10 +35,20 @@ async function signSelfie(objectKey: string | null | undefined): Promise<string 
 
 async function enrichRow(row: typeof attendanceTable.$inferSelect & { employeeName?: string }) {
   const [selfieSignedUrl, checkOutSelfieSignedUrl] = await Promise.all([
-    signSelfie(row.selfieObjectKey),
-    signSelfie(row.checkOutSelfieObjectKey),
+    signObjectKey(row.selfieObjectKey),
+    signObjectKey(row.checkOutSelfieObjectKey),
   ]);
   return { ...row, selfieSignedUrl, checkOutSelfieSignedUrl };
+}
+
+async function enrichEmployee(e: typeof employeesTable.$inferSelect): Promise<any> {
+  let departmentName: string | undefined;
+  if (e.departmentId) {
+    const [dept] = await db.select({ name: departmentsTable.name }).from(departmentsTable).where(eq(departmentsTable.id, e.departmentId));
+    departmentName = dept?.name;
+  }
+  const photoSignedUrl = await signObjectKey(e.photoObjectKey);
+  return { ...e, departmentName, photoSignedUrl };
 }
 
 // Employees
@@ -53,14 +63,7 @@ router.get("/employees", requirePermission("employees", "view"), async (req, res
     const s = (search as string).toLowerCase();
     rows = rows.filter(r => r.name.toLowerCase().includes(s) || r.employeeId.toLowerCase().includes(s));
   }
-  const enriched = await Promise.all(rows.map(async (e) => {
-    let departmentName: string | undefined;
-    if (e.departmentId) {
-      const [dept] = await db.select({ name: departmentsTable.name }).from(departmentsTable).where(eq(departmentsTable.id, e.departmentId));
-      departmentName = dept?.name;
-    }
-    return { ...e, departmentName };
-  }));
+  const enriched = await Promise.all(rows.map(enrichEmployee));
   res.json(enriched);
 });
 
@@ -70,7 +73,7 @@ router.post("/employees", requirePermission("employees", "create"), requireBodyC
   const num = (count[0]?.count ?? 0) + 1;
   const employeeId = `EMP-${String(num).padStart(5, "0")}`;
   const [emp] = await db.insert(employeesTable).values({ ...data, employeeId }).returning();
-  res.status(201).json(emp);
+  res.status(201).json(await enrichEmployee(emp));
 });
 
 router.get("/employees/:id", requirePermission("employees", "view"), async (req, res): Promise<void> => {
@@ -78,7 +81,7 @@ router.get("/employees/:id", requirePermission("employees", "view"), async (req,
   const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, id));
   if (!emp) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [emp]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  res.json(emp);
+  res.json(await enrichEmployee(emp));
 });
 
 router.put("/employees/:id", requirePermission("employees", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
@@ -87,7 +90,69 @@ router.put("/employees/:id", requirePermission("employees", "edit"), requireBody
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [emp] = await db.update(employeesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(employeesTable.id, id)).returning();
-  res.json(emp);
+  res.json(await enrichEmployee(emp));
+});
+
+// ---- Employee attachments (passport, EID, photo, degree, etc.) ----
+async function loadEmployeeForRequest(req: any, res: any, id: number): Promise<typeof employeesTable.$inferSelect | null> {
+  const [emp] = await db.select().from(employeesTable).where(eq(employeesTable.id, id));
+  if (!emp) { res.status(404).json({ error: "Employee not found" }); return null; }
+  if (!scopeFilter(req, [emp]).length) { res.status(403).json({ error: "Forbidden" }); return null; }
+  return emp;
+}
+
+router.get("/employees/:id/attachments", requirePermission("employees", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const emp = await loadEmployeeForRequest(req, res, id);
+  if (!emp) return;
+  const rows = await db.select().from(employeeAttachmentsTable)
+    .where(eq(employeeAttachmentsTable.employeeId, id))
+    .orderBy(desc(employeeAttachmentsTable.uploadedAt));
+  const enriched = await Promise.all(rows.map(async (a) => {
+    const signedUrl = await signObjectKey(a.objectKey);
+    let uploadedByName: string | undefined;
+    if (a.uploadedById) {
+      const [u] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, a.uploadedById));
+      uploadedByName = u?.name;
+    }
+    return { ...a, signedUrl, uploadedByName };
+  }));
+  res.json(enriched);
+});
+
+router.post("/employees/:id/attachments", requirePermission("employees", "edit"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const emp = await loadEmployeeForRequest(req, res, id);
+  if (!emp) return;
+  const { category, fileName, objectKey, contentType, sizeBytes, notes } = req.body ?? {};
+  if (!category || !fileName || !objectKey) {
+    res.status(400).json({ error: "category, fileName and objectKey are required" }); return;
+  }
+  if (typeof objectKey !== "string" || !objectKey.startsWith("/objects/")) {
+    res.status(400).json({ error: "objectKey must reference an uploaded object" }); return;
+  }
+  const [row] = await db.insert(employeeAttachmentsTable).values({
+    employeeId: id,
+    category,
+    fileName,
+    objectKey,
+    contentType: contentType ?? null,
+    sizeBytes: sizeBytes ?? null,
+    notes: notes ?? null,
+    uploadedById: req.user?.id ?? null,
+  }).returning();
+  const signedUrl = await signObjectKey(row.objectKey);
+  res.status(201).json({ ...row, signedUrl });
+});
+
+router.delete("/employees/:id/attachments/:attachmentId", requirePermission("employees", "edit"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const aid = parseInt(Array.isArray(req.params.attachmentId) ? req.params.attachmentId[0] : req.params.attachmentId, 10);
+  const emp = await loadEmployeeForRequest(req, res, id);
+  if (!emp) return;
+  await db.delete(employeeAttachmentsTable)
+    .where(and(eq(employeeAttachmentsTable.id, aid), eq(employeeAttachmentsTable.employeeId, id)));
+  res.json({ success: true });
 });
 
 // Attendance (no companyId column — joins on employee)

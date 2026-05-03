@@ -258,6 +258,93 @@ async function runMigrations() {
     }
     await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS suppliers_code_company_idx ON suppliers(company_id, code) WHERE code IS NOT NULL`);
 
+    // --- Task #43: Employee profile expansion + attachments + offer letters ---
+    const employeeAdds: Array<[string, string]> = [
+      ["photo_object_key", "TEXT"],
+      ["passport_no", "TEXT"],
+      ["passport_expiry", "TEXT"],
+      ["emirates_id_no", "TEXT"],
+      ["emirates_id_expiry", "TEXT"],
+      ["date_of_birth", "TEXT"],
+      ["gender", "TEXT"],
+      ["marital_status", "TEXT"],
+      ["home_address", "TEXT"],
+      ["personal_email", "TEXT"],
+      ["personal_phone", "TEXT"],
+      ["emergency_contact_name", "TEXT"],
+      ["emergency_contact_phone", "TEXT"],
+      ["basic_salary", "DOUBLE PRECISION"],
+      ["allowances", "DOUBLE PRECISION"],
+    ];
+    for (const [col, def] of employeeAdds) {
+      await db.execute(sql.raw(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS ${col} ${def}`));
+    }
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS employee_attachments (
+      id SERIAL PRIMARY KEY,
+      employee_id INTEGER NOT NULL,
+      category TEXT NOT NULL,
+      file_name TEXT NOT NULL,
+      object_key TEXT NOT NULL,
+      content_type TEXT,
+      size_bytes INTEGER,
+      notes TEXT,
+      uploaded_by_id INTEGER,
+      uploaded_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS employee_attachments_employee_idx ON employee_attachments(employee_id)`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS offer_letters (
+      id SERIAL PRIMARY KEY,
+      letter_number TEXT NOT NULL UNIQUE,
+      company_id INTEGER NOT NULL,
+      template_type TEXT NOT NULL DEFAULT 'staff',
+      status TEXT NOT NULL DEFAULT 'draft',
+      employee_id INTEGER,
+      candidate_name TEXT NOT NULL,
+      candidate_nationality TEXT,
+      candidate_passport_no TEXT,
+      candidate_personal_email TEXT,
+      candidate_personal_phone TEXT,
+      designation TEXT,
+      joining_date TEXT,
+      basic_salary DOUBLE PRECISION,
+      allowances DOUBLE PRECISION,
+      worker_type TEXT,
+      notes TEXT,
+      issued_at TIMESTAMP,
+      accepted_at TIMESTAMP,
+      rejected_at TIMESTAMP,
+      rejection_reason TEXT,
+      parent_offer_id INTEGER,
+      version INTEGER NOT NULL DEFAULT 1,
+      converted_employee_id INTEGER,
+      converted_at TIMESTAMP,
+      created_by_id INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS offer_letters_company_status_idx ON offer_letters(company_id, status)`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS offer_letters_employee_idx ON offer_letters(employee_id)`);
+
+    // Grant default permissions on the new "offer_letters" module to existing
+    // roles so HR users see the module without needing a re-seed. Idempotent.
+    const offerLetterRoleGrants: Array<{ role: string; row: string }> = [
+      { role: "super_admin",      row: "(SELECT id FROM roles WHERE code='super_admin'),      'offer_letters', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE" },
+      { role: "company_admin",    row: "(SELECT id FROM roles WHERE code='company_admin'),    'offer_letters', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE" },
+      { role: "department_admin", row: "(SELECT id FROM roles WHERE code='department_admin'), 'offer_letters', TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, TRUE" },
+      { role: "manager",          row: "(SELECT id FROM roles WHERE code='manager'),          'offer_letters', TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE" },
+      { role: "user",             row: "(SELECT id FROM roles WHERE code='user'),             'offer_letters', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE" },
+      { role: "data_entry",       row: "(SELECT id FROM roles WHERE code='data_entry'),       'offer_letters', TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE" },
+      { role: "viewer",           row: "(SELECT id FROM roles WHERE code='viewer'),           'offer_letters', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE" },
+    ];
+    for (const g of offerLetterRoleGrants) {
+      await db.execute(sql.raw(`
+        INSERT INTO permissions (role_id, module, can_view, can_create, can_edit, can_approve, can_delete, can_export, can_print)
+        SELECT ${g.row}
+        WHERE EXISTS (SELECT 1 FROM roles WHERE code='${g.role}')
+        ON CONFLICT (role_id, module) DO NOTHING
+      `));
+    }
+
     // Seed the 18 prefab-construction supplier categories (per task spec).
     // These replace any earlier seed list; ON CONFLICT (name) DO NOTHING keeps
     // re-runs idempotent. Existing applications referencing the old names by

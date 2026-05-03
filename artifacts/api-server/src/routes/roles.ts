@@ -44,7 +44,7 @@ const MODULES = [
   "suppliers", "purchase_requests", "purchase_orders",
   "inventory_items", "stock_entries", "assets",
   "projects",
-  "employees", "attendance",
+  "employees", "attendance", "offer_letters",
   "users", "companies", "departments", "roles", "audit_logs",
   "emails", "whatsapp",
 ] as const;

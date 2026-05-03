@@ -116,6 +116,7 @@ const NAV: NavGroup[] = [
       { href: "/hr/dashboard", label: "HR Dashboard", icon: LayoutDashboard },
       { href: "/hr/employees", label: "Employees", icon: HardHat },
       { href: "/hr/attendance", label: "Attendance", icon: Clock },
+      { href: "/hr/offer-letters", label: "Offer Letters", icon: Mail },
     ],
   },
   {
