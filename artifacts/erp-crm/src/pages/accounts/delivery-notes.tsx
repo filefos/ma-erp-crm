@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Search, Plus, Truck } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
@@ -89,10 +90,7 @@ export function DeliveryNotesList() {
                 <div className="space-y-1"><Label>Driver Name</Label><Input value={form.driverName} onChange={e => setForm(p => ({...p, driverName: e.target.value}))} /></div>
                 <div className="space-y-1"><Label>Vehicle No.</Label><Input value={form.vehicleNumber} onChange={e => setForm(p => ({...p, vehicleNumber: e.target.value}))} placeholder="Dubai A 12345" /></div>
                 <div className="space-y-1 col-span-2"><Label>Company *</Label>
-                  <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
                 </div>
               </div>
               <Button

@@ -1,20 +1,35 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { db, contactsTable, leadsTable } from "@workspace/db";
-import { eq, sql, inArray } from "drizzle-orm";
+import { eq, sql, inArray, and } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
 
-/** For restricted scopes, return the set of `companyName` values from leads the user owns. */
-async function ownedClientNames(scope: { kind: "all" } | { kind: "users"; userIds: Set<number> }): Promise<Set<string> | null> {
+/**
+ * For restricted scopes, return the set of `companyName` values from leads the user owns.
+ * Always restricted to the caller's company scope so cross-company assignments cannot
+ * leak contact visibility.
+ */
+async function ownedClientNames(
+  req: Request,
+  scope: { kind: "all" } | { kind: "users"; userIds: Set<number> },
+): Promise<Set<string> | null> {
   if (scope.kind === "all") return null;
   const ids = Array.from(scope.userIds);
   if (ids.length === 0) return new Set();
+  const conds = [inArray(leadsTable.assignedToId, ids)];
+  const companyIds = req.companyScope;
+  if (companyIds && companyIds.length > 0) {
+    conds.push(inArray(leadsTable.companyId, companyIds));
+  } else if (companyIds && companyIds.length === 0) {
+    // Caller has no company access at all → no owned leads.
+    return new Set();
+  }
   const ownLeads = await db
     .select({ companyName: leadsTable.companyName })
     .from(leadsTable)
-    .where(inArray(leadsTable.assignedToId, ids));
+    .where(and(...conds));
   const names = new Set<string>();
   for (const l of ownLeads) {
     const n = (l.companyName ?? "").trim().toLowerCase();
@@ -27,7 +42,7 @@ router.get("/contacts", requirePermission("contacts", "view"), async (req, res):
   let rows = await db.select().from(contactsTable).orderBy(contactsTable.name);
   rows = scopeFilter(req, rows);
   const ownerScope = await getOwnerScope(req);
-  const allowedNames = await ownedClientNames(ownerScope);
+  const allowedNames = await ownedClientNames(req, ownerScope);
   if (allowedNames !== null) {
     rows = rows.filter(r => {
       const n = (r.companyName ?? "").trim().toLowerCase();
@@ -62,7 +77,7 @@ router.get("/contacts/:id", requirePermission("contacts", "view"), async (req, r
     res.status(403).json({ error: "Forbidden" }); return;
   }
   const ownerScope = await getOwnerScope(req);
-  const allowedNames = await ownedClientNames(ownerScope);
+  const allowedNames = await ownedClientNames(req, ownerScope);
   if (!contactInOwnerNames(contact, allowedNames)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(contact);
 });
@@ -73,7 +88,7 @@ router.put("/contacts/:id", requirePermission("contacts", "edit"), requireBodyCo
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const ownerScope = await getOwnerScope(req);
-  const allowedNames = await ownedClientNames(ownerScope);
+  const allowedNames = await ownedClientNames(req, ownerScope);
   if (!contactInOwnerNames(existing, allowedNames)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [contact] = await db.update(contactsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(contactsTable.id, id)).returning();
   res.json(contact);
@@ -85,7 +100,7 @@ router.delete("/contacts/:id", requirePermission("contacts", "delete"), async (r
   if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   if (existing) {
     const ownerScope = await getOwnerScope(req);
-    const allowedNames = await ownedClientNames(ownerScope);
+    const allowedNames = await ownedClientNames(req, ownerScope);
     if (!contactInOwnerNames(existing, allowedNames)) { res.status(403).json({ error: "Forbidden" }); return; }
   }
   await db.delete(contactsTable).where(eq(contactsTable.id, id));

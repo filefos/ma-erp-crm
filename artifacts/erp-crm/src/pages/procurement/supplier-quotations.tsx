@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { localDayKey } from "@/components/crm/premium";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -269,10 +270,7 @@ export function SupplierQuotationsList() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Company</Label>
-                <Select value={String(form.companyId)} onValueChange={v => setForm(f => ({ ...f, companyId: Number(v) }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{companies.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+                <CompanyField value={String(form.companyId)} onChange={v => setForm(f => ({ ...f, companyId: Number(v) }))} />
               </div>
               <div>
                 <Label>Linked RFQ (optional)</Label>

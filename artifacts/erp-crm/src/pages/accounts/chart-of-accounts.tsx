@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, BookOpen, Library, Loader2 } from "lucide-react";
@@ -296,10 +297,7 @@ export function ChartOfAccountsList() {
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="space-y-1 col-span-2">
               <Label>Company *</Label>
-              <Select value={form.companyId} onValueChange={v => setForm(p => ({ ...p, companyId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-                <SelectContent>{companies.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <CompanyField value={form.companyId} onChange={v => setForm(p => ({ ...p, companyId: v }))} />
             </div>
             <div className="space-y-1">
               <Label>Account Code *</Label>

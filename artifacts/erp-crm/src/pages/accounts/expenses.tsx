@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useListCompanies } from "@workspace/api-client-react";
+import { CompanyField } from "@/components/CompanyField";
 import { Plus, Search } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
@@ -27,7 +27,6 @@ export function ExpensesList() {
   const [form, setForm] = useState({ category: "office", description: "", amount: "", vatAmount: "0", paymentMethod: "cash", paymentDate: "", companyId: "" });
   const queryClient = useQueryClient();
   const { data: expenses, isLoading } = useListExpenses();
-  const { data: companies } = useListCompanies();
   const create = useCreateExpense({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() }); setOpen(false); } } });
 
   const { filterByCompany } = useActiveCompany();
@@ -63,10 +62,7 @@ export function ExpensesList() {
             <div className="space-y-4 pt-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1"><Label>Company *</Label>
-                  <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
                 </div>
                 <div className="space-y-1"><Label>Category *</Label>
                   <Select value={form.category} onValueChange={v => setForm(p => ({...p, category: v}))}>

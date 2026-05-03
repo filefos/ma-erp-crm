@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Search, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
@@ -92,10 +93,7 @@ export function ChequesList() {
                 <div className="space-y-1"><Label>Cheque Date *</Label><Input type="date" value={form.chequeDate} onChange={e => setForm(p => ({...p, chequeDate: e.target.value}))} /></div>
                 <div className="space-y-1"><Label>Amount (AED) *</Label><Input type="number" value={form.amount} onChange={e => setForm(p => ({...p, amount: e.target.value}))} /></div>
                 <div className="space-y-1"><Label>Company</Label>
-                  <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                    <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
                 </div>
                 <div className="space-y-1 col-span-2"><Label>Bank Account</Label>
                   <Select value={form.bankAccountId} onValueChange={v => setForm(p => ({...p, bankAccountId: v}))}>

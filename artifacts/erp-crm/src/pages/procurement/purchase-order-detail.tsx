@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
@@ -165,10 +166,7 @@ export function PurchaseOrderDetail({ id }: Props) {
               </Select>
             </div>
             <div className="space-y-1"><Label>Company</Label>
-              <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-              </Select>
+              <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
             </div>
             <div className="space-y-1"><Label>Delivery Date</Label>
               <Input type="date" value={form.deliveryDate} onChange={e => setForm(p => ({...p, deliveryDate: e.target.value}))} />

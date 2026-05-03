@@ -58,6 +58,18 @@ router.get("/proforma-invoices/:id", requirePermission("proforma_invoices", "vie
   res.json(parsePiItems(pi));
 });
 
+router.delete("/proforma-invoices/:id", requirePermission("proforma_invoices", "delete"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
+  if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (existing) {
+    const ownerScope = await getOwnerScope(req);
+    if (!inOwnerScope(ownerScope, existing.preparedById)) { res.status(403).json({ error: "Forbidden" }); return; }
+  }
+  await db.delete(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
+  res.json({ success: true });
+});
+
 router.put("/proforma-invoices/:id", requirePermission("proforma_invoices", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
@@ -270,6 +282,23 @@ router.put("/lpos/:id", requirePermission("lpos", "edit"), requireBodyCompanyAcc
   }
   const [lpo] = await db.update(lposTable).set({ ...req.body, updatedAt: new Date() }).where(eq(lposTable.id, id)).returning();
   res.json(lpo);
+});
+
+router.delete("/lpos/:id", requirePermission("lpos", "delete"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(lposTable).where(eq(lposTable.id, id));
+  if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (existing) {
+    const ownerScope = await getOwnerScope(req);
+    if (ownerScope.kind !== "all") {
+      const owners = await lpoOwnerIds(existing);
+      if (!inOwnerScope(ownerScope, owners.preparedById) && !inOwnerScope(ownerScope, owners.approvedById)) {
+        res.status(403).json({ error: "Forbidden" }); return;
+      }
+    }
+  }
+  await db.delete(lposTable).where(eq(lposTable.id, id));
+  res.json({ success: true });
 });
 
 export default router;

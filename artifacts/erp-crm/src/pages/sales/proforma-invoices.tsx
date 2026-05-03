@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, Plus, Trash2 } from "lucide-react";
@@ -128,10 +129,7 @@ export function ProformaInvoicesList() {
                 <CardContent className="grid grid-cols-2 gap-3">
                   <div className="space-y-1 col-span-2 sm:col-span-1">
                     <Label>Company *</Label>
-                    <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                      <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-                      <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
+                    <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
                   </div>
                   <div className="space-y-1"><Label>Client Name *</Label><Input value={form.clientName} onChange={e => setForm(p => ({...p, clientName: e.target.value}))} /></div>
                   <div className="space-y-1"><Label>Client Email</Label><Input type="email" value={form.clientEmail} onChange={e => setForm(p => ({...p, clientEmail: e.target.value}))} /></div>

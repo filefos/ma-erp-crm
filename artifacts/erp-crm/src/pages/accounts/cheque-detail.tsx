@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, Pencil, Check, X, Printer, Download } from "lucide-react";
@@ -190,10 +191,7 @@ export function ChequeDetail({ id }: Props) {
                 </Select>
               </div>
               <div className="space-y-1"><Label>Company</Label>
-                <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>{companies?.map(co => <SelectItem key={co.id} value={String(co.id)}>{co.shortName}</SelectItem>)}</SelectContent>
-                </Select>
+                <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
               </div>
               <div className="space-y-1 col-span-2"><Label>Memo / Voucher Reference</Label><Input value={form.voucherReference} onChange={e => setForm(p => ({...p, voucherReference: e.target.value}))} /></div>
             </>

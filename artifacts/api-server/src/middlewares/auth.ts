@@ -141,6 +141,11 @@ export async function getOwnerScope(req: Request): Promise<OwnerScope> {
     const ids = new Set<number>([u.id]);
     if (u.departmentId != null) {
       const companyIds = req.companyScope ?? null;
+      // Empty array means caller has no company access — never widen to all
+      // companies; restrict the team lookup to the leader themselves.
+      if (companyIds !== null && companyIds.length === 0) {
+        return { kind: "users", userIds: ids };
+      }
       const conds = [eq(usersTable.departmentId, u.departmentId)];
       if (companyIds && companyIds.length > 0) {
         conds.push(inArray(usersTable.companyId, companyIds));

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Landmark, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
@@ -80,10 +81,7 @@ export function BankAccountsList() {
               <div className="space-y-1"><Label>SWIFT Code</Label><Input value={form.swiftCode} onChange={e => setForm(p => ({...p, swiftCode: e.target.value}))} placeholder="EBILAEAD" /></div>
               <div className="space-y-1"><Label>Branch</Label><Input value={form.branch} onChange={e => setForm(p => ({...p, branch: e.target.value}))} placeholder="Main Branch" /></div>
               <div className="space-y-1 col-span-2"><Label>Company *</Label>
-                <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                  <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-                  <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
+                <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
               </div>
             </div>
             <Button

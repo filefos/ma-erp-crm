@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Filter, X, CheckSquare, Upload, UserPlus, Phone, Mail, Calendar as CalendarIcon, Users, Flame } from "lucide-react";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
@@ -156,10 +157,7 @@ export function LeadsList() {
                 </Select>
               </div>
               <div className="space-y-1"><Label>Company *</Label>
-                <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                  <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
-                  <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-                </Select>
+                <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
               </div>
               <div className="space-y-1"><Label>Next Follow-up</Label><Input type="date" value={form.nextFollowUp} onChange={e => setForm(p => ({...p, nextFollowUp: e.target.value}))} /></div>
               <div className="space-y-1 col-span-2"><Label>Notes</Label><Textarea value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} rows={3} placeholder="Additional notes about the lead..." /></div>

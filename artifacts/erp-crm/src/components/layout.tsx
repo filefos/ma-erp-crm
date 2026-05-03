@@ -156,7 +156,7 @@ const ADMIN_LEVELS = new Set(["super_admin", "company_admin"]);
 // Every non-admin user gets Email — it's a personal productivity surface
 // available to everyone from their dashboard panel.
 const DEPT_GROUPS: Record<string, string[]> = {
-  Sales:        ["CRM", "Sales", "Email"],
+  Sales:        ["CRM", "Sales"],
   Accounts:     ["Accounts", "Email"],
   Finance:      ["Accounts", "Reports", "Email"],
   Procurement:  ["Procurement", "Inventory", "Assets", "Email"],
@@ -172,7 +172,7 @@ const DEPT_GROUPS: Record<string, string[]> = {
 // Fallback by role code (for users with role-driven access when department is missing).
 // Specific role codes take precedence over generic department mappings.
 const ROLE_GROUPS: Record<string, string[]> = {
-  sales:                ["CRM", "Sales", "Email"],
+  sales:                ["CRM", "Sales"],
   accounts:             ["Accounts", "Email"],
   accountant:           ["Accounts", "Email"],
   accounts_manager:     ["Accounts", "Email"],

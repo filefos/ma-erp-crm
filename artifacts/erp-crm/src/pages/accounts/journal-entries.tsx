@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, CheckCircle, BookOpen, X } from "lucide-react";
@@ -253,10 +254,7 @@ export function JournalEntriesList() {
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label>Company *</Label>
-                <Select value={form.companyId} onValueChange={v => setForm(p => ({ ...p, companyId: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>{companies.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-                </Select>
+                <CompanyField value={form.companyId} onChange={v => setForm(p => ({ ...p, companyId: v }))} />
               </div>
               <div className="space-y-1">
                 <Label>Entry Date *</Label>

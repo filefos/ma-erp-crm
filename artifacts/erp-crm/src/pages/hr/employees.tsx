@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { useListCompanies } from "@workspace/api-client-react";
 import { Search, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
@@ -62,10 +63,7 @@ export function EmployeesList() {
                 </Select>
               </div>
               <div className="space-y-1"><Label>Company *</Label>
-                <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-                </Select>
+                <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
               </div>
               <div className="space-y-1"><Label>Designation</Label><Input value={form.designation} onChange={e => setForm(p => ({...p, designation: e.target.value}))} /></div>
               <div className="space-y-1"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(p => ({...p, phone: e.target.value}))} /></div>

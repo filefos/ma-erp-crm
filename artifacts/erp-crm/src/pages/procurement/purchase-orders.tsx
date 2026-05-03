@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
@@ -94,10 +95,7 @@ export function PurchaseOrdersList() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1"><Label>Company *</Label>
-                    <Select value={form.companyId} onValueChange={v => setForm(p => ({...p, companyId: v}))}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>{companies?.map(c => <SelectItem key={c.id} value={String(c.id)}>{c.shortName}</SelectItem>)}</SelectContent>
-                    </Select>
+                    <CompanyField value={form.companyId} onChange={v => setForm(p => ({...p, companyId: v}))} />
                   </div>
                   <div className="space-y-1"><Label>Delivery Date</Label><Input type="date" value={form.deliveryDate} onChange={e => setForm(p => ({...p, deliveryDate: e.target.value}))} /></div>
                 </div>
