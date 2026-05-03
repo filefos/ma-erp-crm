@@ -41,8 +41,12 @@ const COMPANY_RULES = [
   "Salary is paid every month between the 1st and 10th of the following month.",
   "Taking leave / off without prior written permission will result in a deduction of three (3) days' salary per occurrence.",
   "Any damage or loss of company material is fully recoverable from the employee's salary.",
-  "Unsatisfactory performance or misconduct is grounds for warning, deduction or termination at management's discretion.",
-  "Verbal abuse, fighting or theft will result in disciplinary action and may be reported to the UAE authorities.",
+  "Emergency leave is allowed only after discussion with and approval from higher management.",
+  "Unsatisfactory performance or lack of focus on assigned work is grounds for warning, deduction or termination at management's discretion.",
+  "Verbal abuse or fighting with any colleague will result in salary deduction and disciplinary action.",
+  "Any physical fight will be reported directly to the police and the employee handed over to the authorities.",
+  "Any attempt to steal company material will result in an immediate police case against the employee.",
+  "After completion of two (2) continuous years of service, the employee is entitled to annual leave with leave salary and a one-side economy class air ticket to home country.",
   "Cooking facility and company-provided residence are available.",
 ];
 
@@ -118,7 +122,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
       <div style={{ height: 2, background: SKY }} />
 
       {/* Header — legal company name (left) + Ref/Date (right) */}
-      <div style={{ padding: "16px 44px 8px", borderBottom: `1.5px solid ${NAVY}` }}>
+      <div style={{ padding: "16px 44px 8px", borderBottom: `2px solid ${NAVY}` }}>
         <div style={{ display: "table", width: "100%" }}>
           <div style={{ display: "table-row" }}>
             <div style={{ display: "table-cell", verticalAlign: "middle" }}>
@@ -249,7 +253,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
       </div>
 
       {/* Footer — official address and contact details. */}
-      <div style={{ borderTop: `1.5px solid ${NAVY}`, paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: NAVY, textAlign: "center", lineHeight: 1.4, background: `${SKY}10` }}>
+      <div style={{ borderTop: `2px solid ${NAVY}`, paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: NAVY, textAlign: "center", lineHeight: 1.4, background: `${SKY}10` }}>
         <div>Plot # 2040, Sajja Industrial Area, Sharjah, UAE</div>
         <div>Tel: 0566163555 &nbsp;·&nbsp; Email: hr@primemaxprefab.com &nbsp;·&nbsp; Web: www.primemaxprefab.com</div>
       </div>
