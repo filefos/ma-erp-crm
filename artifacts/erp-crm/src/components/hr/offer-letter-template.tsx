@@ -69,30 +69,48 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
 
   return (
     <div ref={ref} className="bg-white text-black mx-auto" style={{ width: "794px", minHeight: "1123px", padding: "48px 56px", fontFamily: "Georgia, 'Times New Roman', serif" }}>
-      {/* Letterhead */}
-      <div className="flex items-center gap-4 pb-4 border-b-4" style={{ borderColor: "#0f2d5a" }}>
-        {doc.companyLogoUrl ? (
-          <img src={doc.companyLogoUrl} alt={legalName} className="h-20 w-auto object-contain" crossOrigin="anonymous" />
-        ) : isPrime ? (
-          <img src="/erp-crm/prime-max-logo.png" alt="Prime Max" className="h-20 w-auto" crossOrigin="anonymous" />
+      {/* Letterhead — for Prime Max we use the official branded banner image
+          supplied by the company. Other companies fall back to a simple
+          logo + name layout that mirrors the same dimensions. */}
+      <div className="pb-3 border-b-4" style={{ borderColor: "#0f2d5a" }}>
+        {isPrime && !doc.companyLogoUrl ? (
+          <>
+            <img src="/erp-crm/prime-max-letterhead.png" alt={legalName} style={{ display: "block", width: "100%", height: "auto" }} crossOrigin="anonymous" />
+            <div className="flex justify-between items-end" style={{ marginTop: 6, fontSize: 11 }}>
+              <div style={{ color: "#1e6ab0" }}>Industrial Area · Sharjah · United Arab Emirates · TRN ____________</div>
+              <div className="text-right">
+                <div><strong>Ref:</strong> {doc.letterNumber}</div>
+                <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
+              </div>
+            </div>
+          </>
         ) : (
-          <div className="h-20 w-20 flex items-center justify-center rounded-lg" style={{ background: "linear-gradient(135deg,#0f2d5a,#1e6ab0)", color: "white", fontWeight: 800, fontSize: 18, textAlign: "center", lineHeight: 1.1 }}>
-            ELITE<br />LOGO
+          <div style={{ display: "table", width: "100%" }}>
+            <div style={{ display: "table-row" }}>
+              <div style={{ display: "table-cell", verticalAlign: "middle", width: 100, paddingRight: 12 }}>
+                {doc.companyLogoUrl ? (
+                  <img src={doc.companyLogoUrl} alt={legalName} style={{ height: 80, width: "auto", maxWidth: 100, objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+                ) : (
+                  <div style={{ height: 80, width: 80, background: "linear-gradient(135deg,#0f2d5a,#1e6ab0)", color: "white", fontWeight: 800, fontSize: 18, textAlign: "center", lineHeight: "80px", borderRadius: 8 }}>ELITE</div>
+                )}
+              </div>
+              <div style={{ display: "table-cell", verticalAlign: "middle" }}>
+                <div style={{ color: "#0f2d5a", fontSize: 20, fontWeight: 800, lineHeight: 1.15 }}>{legalName}</div>
+                <div style={{ color: "#1e6ab0", fontSize: 12, marginTop: 4 }}>Industrial Area · Sharjah · United Arab Emirates</div>
+                <div style={{ color: "#1e6ab0", fontSize: 12 }}>P.O.&nbsp;Box · Tel · Email · TRN</div>
+              </div>
+              <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: 11, width: 160 }}>
+                <div><strong>Ref:</strong> {doc.letterNumber}</div>
+                <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
+              </div>
+            </div>
           </div>
         )}
-        <div className="flex-1">
-          <div style={{ color: "#0f2d5a", fontSize: 20, fontWeight: 800, lineHeight: 1.1, letterSpacing: 0.5 }}>{legalName}</div>
-          <div style={{ color: "#1e6ab0", fontSize: 12, marginTop: 4 }}>Industrial Area · Sharjah · United Arab Emirates</div>
-          <div style={{ color: "#1e6ab0", fontSize: 12 }}>P.O. Box · Tel · Email · TRN</div>
-        </div>
-        <div className="text-right" style={{ fontSize: 11 }}>
-          <div><strong>Ref:</strong> {doc.letterNumber}</div>
-          <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
-        </div>
       </div>
 
-      {/* Subject */}
-      <h1 className="text-center mt-8 mb-4" style={{ color: "#0f2d5a", fontWeight: 700, fontSize: 18, letterSpacing: 2 }}>OFFER OF EMPLOYMENT</h1>
+      {/* Subject — letter-spacing removed because html2canvas-pro renders it
+          with mismatched advance widths, causing characters to collide. */}
+      <h1 className="text-center mt-8 mb-4" style={{ color: "#0f2d5a", fontWeight: 700, fontSize: 18 }}>OFFER OF EMPLOYMENT</h1>
 
       {/* Addressee */}
       <div style={{ fontSize: 13 }} className="space-y-1">

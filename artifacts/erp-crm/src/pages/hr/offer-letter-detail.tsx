@@ -365,7 +365,6 @@ export function OfferLetterDetail({ id }: Props) {
             <div className="border rounded-lg overflow-auto bg-muted/30 p-2" style={{ maxHeight: 700 }}>
               <div style={{ transform: "scale(0.6)", transformOrigin: "top left", width: "794px" }}>
                 <OfferLetterTemplate
-                  ref={previewRef}
                   doc={{
                     letterNumber: offer.letterNumber,
                     candidateName: editing && canEdit ? (draft.candidateName || offer.candidateName) : offer.candidateName,
@@ -397,6 +396,48 @@ export function OfferLetterDetail({ id }: Props) {
                   }}
                 />
               </div>
+            </div>
+            {/*
+              Off-screen, untransformed full-size copy used as the source for
+              PDF capture. html2canvas-pro mis-measures text widths when its
+              ancestor uses `transform: scale(...)`, which caused horizontal
+              text overlap in the exported PDF. Rendering an unscaled clone
+              here and capturing from `previewRef` instead fixes that without
+              affecting the visible scaled preview above.
+            */}
+            <div aria-hidden="true" style={{ position: "fixed", left: "-10000px", top: 0, width: "794px", pointerEvents: "none", zIndex: -1 }}>
+              <OfferLetterTemplate
+                ref={previewRef}
+                doc={{
+                  letterNumber: offer.letterNumber,
+                  candidateName: editing && canEdit ? (draft.candidateName || offer.candidateName) : offer.candidateName,
+                  candidateNationality: editing && canEdit ? draft.candidateNationality : (offer as any).candidateNationality,
+                  candidatePassportNo: editing && canEdit ? draft.candidatePassportNo : (offer as any).candidatePassportNo,
+                  designation: editing && canEdit ? draft.designation : offer.designation,
+                  joiningDate: editing && canEdit ? draft.joiningDate : offer.joiningDate,
+                  basicSalary: editing && canEdit ? Number(draft.basicSalary || 0) : (offer as any).basicSalary,
+                  allowances: editing && canEdit ? Number(draft.allowances || 0) : (offer as any).allowances,
+                  templateType: editing && canEdit ? draft.templateType : offer.templateType,
+                  workerType: editing && canEdit ? draft.workerType : (offer as any).workerType,
+                  companyName: snapshotLegalName ?? (offer as any).companyName,
+                  companyId: offer.companyId,
+                  letterhead: resolvedLetterhead,
+                  companyLogoUrl,
+                  issuedAt: offer.issuedAt,
+                  notes: editing && canEdit ? draft.notes : offer.notes,
+                  commissionEnabled: editing && canEdit ? !!draft.commissionEnabled : !!offer.commissionEnabled,
+                  commissionTargetAmount: editing && canEdit ? Number(draft.commissionTargetAmount || 0) : offer.commissionTargetAmount,
+                  commissionCurrency: editing && canEdit ? draft.commissionCurrency : offer.commissionCurrency,
+                  commissionBaseRatePct: editing && canEdit ? Number(draft.commissionBaseRatePct || 0) : offer.commissionBaseRatePct,
+                  commissionBonusPerStepAmount: editing && canEdit ? Number(draft.commissionBonusPerStepAmount || 0) : offer.commissionBonusPerStepAmount,
+                  commissionBonusStepSize: editing && canEdit ? Number(draft.commissionBonusStepSize || 0) : offer.commissionBonusStepSize,
+                  commissionShortfallTier1Pct: editing && canEdit ? Number(draft.commissionShortfallTier1Pct || 0) : offer.commissionShortfallTier1Pct,
+                  commissionShortfallTier1DeductionPct: editing && canEdit ? Number(draft.commissionShortfallTier1DeductionPct || 0) : offer.commissionShortfallTier1DeductionPct,
+                  commissionShortfallTier2Pct: editing && canEdit ? Number(draft.commissionShortfallTier2Pct || 0) : offer.commissionShortfallTier2Pct,
+                  commissionShortfallTier2DeductionPct: editing && canEdit ? Number(draft.commissionShortfallTier2DeductionPct || 0) : offer.commissionShortfallTier2DeductionPct,
+                  commissionNotes: editing && canEdit ? draft.commissionNotes : offer.commissionNotes,
+                }}
+              />
             </div>
           </CardContent>
         </Card>
