@@ -1,10 +1,11 @@
 import {
   useGetDeliveryNote, getGetDeliveryNoteQueryKey,
+  useGetTaxInvoice, getGetTaxInvoiceQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Receipt } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";

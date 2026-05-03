@@ -20,6 +20,7 @@ import {
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
   scoreLead, suggestNextAction, generateFollowUpMessage, generateWhatsAppMessage, summarizeClient,
   predictDealSuccess, analyzeLostDeal, improveNotes,
@@ -77,9 +78,15 @@ export function LeadDetail({ id }: Props) {
         setEditing(false);
         toast({ title: "Lead updated" });
         if (resp?.createdQuotation && resp?.quotationId) {
+          const newQid = resp.quotationId as number;
           toast({
             title: "Draft Quotation auto-created",
             description: "Open the new quotation to add line items and send it.",
+            action: (
+              <ToastAction altText="Open quotation" onClick={() => navigate(`/sales/quotations/${newQid}`)}>
+                Open
+              </ToastAction>
+            ),
           });
           queryClient.invalidateQueries({ queryKey: ["/quotations"] });
         }

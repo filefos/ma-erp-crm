@@ -6,7 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Package, Pencil } from "lucide-react";
+import { ArrowLeft, Package, Pencil, FileText } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -100,6 +100,18 @@ export function InvoiceDetail({ id }: Props) {
         <Badge className={`capitalize ${PAYMENT_COLORS[inv.paymentStatus] ?? "bg-gray-100"}`}>
           {inv.paymentStatus}
         </Badge>
+        {qid ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/sales/quotations/${qid}`}>
+              <FileText className="w-4 h-4 mr-1" />Quotation {(quotation as any)?.quotationNumber ?? `#${qid}`}
+            </Link>
+          </Button>
+        ) : null}
+        {(quotation as any)?.leadId ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/crm/leads/${(quotation as any).leadId}`}>Lead</Link>
+          </Button>
+        ) : null}
         <div className="ml-auto flex gap-2">
           <Button size="sm" variant="outline" asChild>
             <Link href={`/accounts/invoices/${invId}/edit`}>

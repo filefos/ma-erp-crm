@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { ToastAction } from "@/components/ui/toast";
 import { useListDeals, useUpdateDeal, getListDealsQueryKey } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ const STAGES: Stage[] = [
 export function SalesPipeline() {
   const { data: dealsRaw, isLoading } = useListDeals();
   const { filterByCompany } = useActiveCompany();
+  const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
@@ -45,7 +47,20 @@ export function SalesPipeline() {
           if (resp.createdProformaInvoice) parts.push("Proforma Invoice");
           if (resp.createdTaxInvoice) parts.push("Tax Invoice");
           if (resp.createdDeliveryNote) parts.push("Delivery Note");
-          toast({ title: "Closing documents auto-created", description: parts.join(" + ") + " ready in Accounts." });
+          const targetPath =
+            resp.createdDeliveryNote && resp.deliveryNoteId ? `/accounts/delivery-notes/${resp.deliveryNoteId}` :
+            resp.createdTaxInvoice && resp.taxInvoiceId ? `/accounts/invoices/${resp.taxInvoiceId}` :
+            resp.createdProformaInvoice && resp.proformaInvoiceId ? `/sales/proforma-invoices/${resp.proformaInvoiceId}` :
+            null;
+          toast({
+            title: "Closing documents auto-created",
+            description: parts.join(" + ") + " ready in Accounts.",
+            action: targetPath ? (
+              <ToastAction altText="Open document" onClick={() => navigate(targetPath)}>
+                Open
+              </ToastAction>
+            ) : undefined,
+          });
           queryClient.invalidateQueries({ queryKey: ["/proforma-invoices"] });
           queryClient.invalidateQueries({ queryKey: ["/tax-invoices"] });
           queryClient.invalidateQueries({ queryKey: ["/delivery-notes"] });
