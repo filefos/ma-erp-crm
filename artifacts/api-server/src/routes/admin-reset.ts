@@ -31,7 +31,7 @@ router.post(
         userName: req.user!.name,
         action: "factory_reset",
         entity: "system",
-        details: `Super admin ${req.user!.email} initiated FACTORY RESET — all data will be wiped and demo seed restored`,
+        details: `Main admin ${req.user!.email} initiated FACTORY RESET — all data will be wiped and demo seed restored`,
         ipAddress: req.ip ?? null,
       });
     } catch (e) {

@@ -129,7 +129,7 @@ function PermissionMatrixDialog({
         <DialogFooter className="border-t pt-3">
           {!isSuperAdmin && (
             <p className="text-xs text-muted-foreground mr-auto self-center">
-              Only super admins can modify role permissions.
+              Only main admins can modify role permissions.
             </p>
           )}
           <Button variant="outline" onClick={() => { setDraft(null); onClose(); }}>Cancel</Button>

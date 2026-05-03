@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
 const PERMISSION_LEVELS = [
-  { value: "super_admin", label: "Super Admin", color: "bg-red-100 text-red-800" },
+  { value: "super_admin", label: "Main Admin", color: "bg-red-100 text-red-800" },
   { value: "company_admin", label: "Company Admin", color: "bg-purple-100 text-purple-800" },
   { value: "department_admin", label: "Department Admin", color: "bg-indigo-100 text-indigo-800" },
   { value: "manager", label: "Manager", color: "bg-blue-100 text-blue-800" },
@@ -337,7 +337,7 @@ function UserPermissionsDialog({
         <DialogFooter className="border-t pt-3">
           {!isSuperAdmin && (
             <p className="text-xs text-muted-foreground mr-auto self-center">
-              Only super admins can modify per-user permission overrides.
+              Only main admins can modify per-user permission overrides.
             </p>
           )}
           <Button variant="outline" onClick={onClose}>Cancel</Button>

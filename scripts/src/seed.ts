@@ -319,7 +319,7 @@ async function seed() {
   const sa = userByEmail("admin@erp.com");
   const cm = userByEmail("manager@primemax.ae");
   await db.insert(auditLogsTable).values([
-    { userId: sa.id, userName: sa.name, action: "login", entity: "auth", details: "Super admin signed in", ipAddress: "127.0.0.1" },
+    { userId: sa.id, userName: sa.name, action: "login", entity: "auth", details: "Main admin signed in", ipAddress: "127.0.0.1" },
     { userId: sa.id, userName: sa.name, action: "create", entity: "company", entityId: pm.id, details: "Created company PRIME MAX PREFAB HOUSES IND. LLC." },
     { userId: sa.id, userName: sa.name, action: "create", entity: "company", entityId: ep.id, details: "Created company Elite Pre-Fabricated Houses Trading Co. LLC" },
     { userId: sa.id, userName: sa.name, action: "create", entity: "user", entityId: cm.id, details: `Created user ${cm.email} with role company_admin` },

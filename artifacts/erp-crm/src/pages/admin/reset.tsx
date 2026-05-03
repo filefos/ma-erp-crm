@@ -202,7 +202,7 @@ function UserResetSection() {
                     .map(u => (
                       <SelectItem key={u.id} value={String(u.id)}>
                         {u.name} — {u.email}
-                        {u.permissionLevel === "super_admin" ? " (super admin)" : ""}
+                        {u.permissionLevel === "super_admin" ? " (main admin)" : ""}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -320,8 +320,9 @@ function UserPasswordSection() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Set a specific new password for any user (other than yourself or another super admin).
-          Useful when a user wants to choose a new password and you're updating it for them.
+          Set a specific new password for any user. As main admin, you can reset
+          anyone's password — useful when a user wants to choose a new password
+          and you're updating it for them.
         </p>
         <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1.5">
@@ -336,7 +337,7 @@ function UserPasswordSection() {
                   .map(u => (
                     <SelectItem key={u.id} value={String(u.id)}>
                       {u.name} — {u.email}
-                      {u.permissionLevel === "super_admin" ? " (super admin)" : ""}
+                      {u.permissionLevel === "super_admin" ? " (main admin)" : ""}
                     </SelectItem>
                   ))}
               </SelectContent>
@@ -441,7 +442,7 @@ function FreezeSection() {
                 .map(u => (
                   <SelectItem key={u.id} value={String(u.id)}>
                     {u.name} — {u.email}
-                    {u.permissionLevel === "super_admin" ? " (super admin)" : ""}
+                    {u.permissionLevel === "super_admin" ? " (main admin)" : ""}
                     {(u.isActive === false || u.status === "inactive") ? " — FROZEN" : ""}
                   </SelectItem>
                 ))}
@@ -489,7 +490,7 @@ export function AdminResetCenter() {
     return (
       <Card>
         <CardContent className="p-6 text-sm text-muted-foreground">
-          The Reset Center is restricted to super administrators.
+          The Reset Center is restricted to main administrators.
         </CardContent>
       </Card>
     );
@@ -499,7 +500,7 @@ export function AdminResetCenter() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Reset Center</h1>
         <p className="text-muted-foreground text-sm">
-          Factory reset, user account reset, and user password change — super admin tools.
+          Factory reset, user account reset, and user password change — main admin tools.
         </p>
       </div>
       <UserPasswordSection />

@@ -16,7 +16,7 @@ export function AdminEmailPanel() {
   if (!isSuperAdmin) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
-        Access restricted to Super Admin only.
+        Access restricted to Main Admin only.
       </div>
     );
   }
