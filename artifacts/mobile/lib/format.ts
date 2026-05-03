@@ -216,6 +216,84 @@ export function paymentMethodLabel(t?: string): string {
   return PAYMENT_METHODS.find(x => x.value === (t ?? "").toLowerCase())?.label ?? (t ?? "—");
 }
 
+// ---------------------------------------------------------------------------
+// Procurement / Inventory / Assets statuses
+// ---------------------------------------------------------------------------
+
+export const SUPPLIER_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "active",   label: "Active",   tone: "success" },
+  { value: "inactive", label: "Inactive", tone: "muted" },
+  { value: "blocked",  label: "Blocked",  tone: "destructive" },
+];
+
+export const PR_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "draft",     label: "Draft",     tone: "muted" },
+  { value: "submitted", label: "Submitted", tone: "blue" },
+  { value: "approved",  label: "Approved",  tone: "success" },
+  { value: "rejected",  label: "Rejected",  tone: "destructive" },
+];
+
+export const PR_PRIORITIES: { value: string; label: string; tone: Tone }[] = [
+  { value: "low",    label: "Low",    tone: "muted" },
+  { value: "normal", label: "Normal", tone: "blue" },
+  { value: "high",   label: "High",   tone: "orange" },
+  { value: "urgent", label: "Urgent", tone: "destructive" },
+];
+
+export const RFQ_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "draft",              label: "Draft",              tone: "muted" },
+  { value: "sent",               label: "Sent",               tone: "blue" },
+  { value: "quotation_received", label: "Quotation received", tone: "orange" },
+  { value: "closed",             label: "Closed",             tone: "muted" },
+];
+
+export const SQ_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "received", label: "Received", tone: "blue" },
+  { value: "selected", label: "Selected", tone: "success" },
+  { value: "rejected", label: "Rejected", tone: "destructive" },
+];
+
+export const PO_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "draft",     label: "Draft",     tone: "muted" },
+  { value: "submitted", label: "Submitted", tone: "blue" },
+  { value: "approved",  label: "Approved",  tone: "success" },
+  { value: "rejected",  label: "Rejected",  tone: "destructive" },
+  { value: "received",  label: "Received",  tone: "navy" },
+  { value: "closed",    label: "Closed",    tone: "muted" },
+];
+
+export const STOCK_ENTRY_TYPES: { value: string; label: string; tone: Tone }[] = [
+  { value: "stock_in",         label: "Stock in",         tone: "success" },
+  { value: "stock_out",        label: "Stock out",        tone: "destructive" },
+  { value: "material_return",  label: "Return",           tone: "blue" },
+  { value: "adjustment",       label: "Adjustment",       tone: "muted" },
+];
+
+export const ASSET_CONDITIONS: { value: string; label: string; tone: Tone }[] = [
+  { value: "excellent", label: "Excellent", tone: "success" },
+  { value: "good",      label: "Good",      tone: "blue" },
+  { value: "fair",      label: "Fair",      tone: "orange" },
+  { value: "poor",      label: "Poor",      tone: "destructive" },
+];
+
+export const ASSET_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "active",       label: "In use",       tone: "success" },
+  { value: "in_use",       label: "In use",       tone: "success" },
+  { value: "maintenance",  label: "Maintenance",  tone: "orange" },
+  { value: "retired",      label: "Retired",      tone: "muted" },
+  { value: "disposed",     label: "Disposed",     tone: "destructive" },
+];
+
+export function supplierStatusMeta(s?: string): StatusMeta { return find(SUPPLIER_STATUSES, s); }
+export function prStatusMeta(s?: string): StatusMeta { return find(PR_STATUSES, s); }
+export function prPriorityMeta(s?: string): StatusMeta { return find(PR_PRIORITIES, s); }
+export function rfqStatusMeta(s?: string): StatusMeta { return find(RFQ_STATUSES, s); }
+export function sqStatusMeta(s?: string): StatusMeta { return find(SQ_STATUSES, s); }
+export function poStatusMeta(s?: string): StatusMeta { return find(PO_STATUSES, s); }
+export function stockEntryTypeMeta(s?: string): StatusMeta { return find(STOCK_ENTRY_TYPES, s); }
+export function assetConditionMeta(s?: string): StatusMeta { return find(ASSET_CONDITIONS, s); }
+export function assetStatusMeta(s?: string): StatusMeta { return find(ASSET_STATUSES, s); }
+
 export function activityTypeIcon(t?: string): "phone" | "mail" | "users" | "map-pin" | "rotate-cw" | "check-square" | "edit-3" | "circle" {
   switch ((t ?? "").toLowerCase()) {
     case "call":       return "phone";
