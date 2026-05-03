@@ -313,21 +313,29 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     <>
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 8mm; }
+          @page { size: A4 portrait; margin: 12mm 10mm; }
+          html, body { background: white !important; }
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
           .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
-            box-shadow: none !important; border: none !important; padding: 4mm !important;
+            box-shadow: none !important; border: none !important; padding: 0 !important;
             margin: 0 !important; border-radius: 0 !important; }
+          .print-doc { orphans: 3; widows: 3; }
+          /* Forced section break only between the three quotation pages */
           .print-page-break {
             page-break-before: always !important; break-before: page !important;
-            page-break-inside: avoid !important; break-inside: avoid !important;
           }
+          /* Keep critical blocks together so they never split awkwardly */
+          table { page-break-inside: avoid !important; break-inside: avoid !important; }
+          tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; }
+          .print-tc-text > div { page-break-inside: avoid !important; break-inside: avoid !important; }
+          h1, h2, h3, h4 { page-break-after: avoid !important; break-after: avoid !important; }
+          /* Spec / TC density tweaks so they fill the page without overflowing */
           .print-spec-table td, .print-spec-table th {
             font-size: 7.5pt !important; padding: 1.5pt 4pt !important; line-height: 1.25 !important;
           }
           .print-tc-text {
-            font-size: 8pt !important; line-height: 1.4 !important; padding: 6pt 8pt !important;
+            font-size: 8pt !important; line-height: 1.45 !important; padding: 6pt 8pt !important;
           }
           .print-page-break .text-\\[22px\\] { font-size: 14pt !important; }
           .print-page-break .text-\\[11px\\] { font-size: 7.5pt !important; }
