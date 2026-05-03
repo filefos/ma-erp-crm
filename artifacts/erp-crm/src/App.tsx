@@ -83,6 +83,7 @@ import { CompaniesAdmin } from "@/pages/admin/companies";
 import { DepartmentsAdmin } from "@/pages/admin/departments";
 import { RolesAdmin } from "@/pages/admin/roles";
 import { AdminEmailPanel } from "@/pages/admin/emails";
+import { AdminResetCenter } from "@/pages/admin/reset";
 import { AdminGuard } from "@/components/AdminGuard";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { NotificationsList } from "@/pages/notifications/index";
@@ -389,6 +390,9 @@ function Router() {
       </Route>
       <Route path="/admin/emails">
         <AdminGuard><AdminEmailPanel /></AdminGuard>
+      </Route>
+      <Route path="/admin/reset">
+        <AdminGuard><AdminResetCenter /></AdminGuard>
       </Route>
 
       <Route path="/accounts/cheques/:id">

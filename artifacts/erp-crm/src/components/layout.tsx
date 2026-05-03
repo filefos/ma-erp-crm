@@ -16,7 +16,7 @@ import {
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
   BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft, TrendingUp,
-  MessageCircle, Wallet,
+  MessageCircle, Wallet, RotateCcw,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -155,6 +155,7 @@ const NAV: NavGroup[] = [
       { href: "/admin/roles", label: "Roles & Permissions", icon: KeyRound },
       { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
       { href: "/admin/emails", label: "All Company Emails", icon: Mail },
+      { href: "/admin/reset", label: "Reset Center", icon: RotateCcw },
     ],
   },
 ];

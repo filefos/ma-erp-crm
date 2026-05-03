@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { Building2, Users, Folders, ScrollText, ShieldCheck, ShieldAlert, Activity, ArrowRight } from "lucide-react";
-import { FactoryResetCard } from "@/components/admin/factory-reset-card";
 
 function StatCard({ icon: Icon, label, value, sub, tone = "primary" }: { icon: React.ComponentType<{ className?: string }>; label: string; value: number | string; sub?: string; tone?: "primary" | "success" | "warning" | "neutral" }) {
   const tones: Record<string, string> = {
@@ -131,8 +130,6 @@ export function AdminDashboard() {
           ))}
         </div>
       </div>
-
-      {isSuperAdmin && <FactoryResetCard />}
 
       {recent && recent.length > 0 && (
         <Card>

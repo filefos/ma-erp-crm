@@ -1,13 +1,16 @@
 import { Router } from "express";
 import { spawn } from "node:child_process";
 import path from "node:path";
-import { db, auditLogsTable } from "@workspace/db";
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { db, auditLogsTable, usersTable, notificationsTable } from "@workspace/db";
 import { requireAuth, requirePermissionLevel } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
 
 const CONFIRM_PHRASE = "FACTORY RESET";
+const DEFAULT_TEMP_PASSWORD = "Reset@2026";
 
 router.post(
   "/admin/factory-reset",
@@ -75,6 +78,63 @@ router.post(
           stdout: stdout.slice(-2000),
         });
       }
+    });
+  },
+);
+
+router.post(
+  "/admin/users/:id/reset-account",
+  requirePermissionLevel("super_admin"),
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) {
+      res.status(400).json({ error: "Invalid user id" });
+      return;
+    }
+
+    const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+    if (!target) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    if (target.permissionLevel === "super_admin" && target.id !== req.user!.id) {
+      res.status(403).json({ error: "Cannot reset another super_admin account" });
+      return;
+    }
+
+    const tempPassword = (req.body?.tempPassword ?? DEFAULT_TEMP_PASSWORD).toString();
+    if (tempPassword.length < 8) {
+      res.status(400).json({ error: "Temp password must be at least 8 characters" });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    await db
+      .update(usersTable)
+      .set({ passwordHash, isActive: true, status: "active", updatedAt: new Date() })
+      .where(eq(usersTable.id, id));
+
+    const cleared = await db
+      .delete(notificationsTable)
+      .where(eq(notificationsTable.userId, id))
+      .returning({ id: notificationsTable.id });
+
+    await db.insert(auditLogsTable).values({
+      userId: req.user!.id,
+      userName: req.user!.name,
+      action: "reset_account",
+      entity: "user",
+      entityId: id,
+      details: `Account reset by ${req.user!.email} for user ${target.email} — password reset, account reactivated, ${cleared.length} notifications cleared`,
+      ipAddress: req.ip ?? null,
+    });
+
+    res.json({
+      ok: true,
+      tempPassword,
+      notificationsCleared: cleared.length,
+      message: `Account for ${target.email} has been reset.`,
     });
   },
 );
