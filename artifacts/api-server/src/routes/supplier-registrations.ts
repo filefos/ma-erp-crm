@@ -47,9 +47,19 @@ function toResponse(reg: typeof supplierRegistrationsTable.$inferSelect) {
   };
 }
 
-async function nextRefNumber(): Promise<string> {
+/**
+ * Generate the next REG-YYYY-#### reference number. MUST be called inside a
+ * transaction; takes a postgres advisory transaction lock keyed on the year so
+ * concurrent submissions cannot mint duplicate ref numbers (the table also has
+ * a unique constraint on `ref_number` as the last-line-of-defence).
+ */
+async function nextRefNumberTx(tx: Tx): Promise<string> {
   const yr = new Date().getFullYear();
-  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(supplierRegistrationsTable);
+  // Advisory lock per-year — auto-released at tx end.
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(${sql.raw(String(yr))})`);
+  const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` })
+    .from(supplierRegistrationsTable)
+    .where(sql`ref_number LIKE ${`REG-${yr}-%`}`);
   const seq = (count ?? 0) + 1;
   return `REG-${yr}-${String(seq).padStart(4, "0")}`;
 }
@@ -224,77 +234,82 @@ router.post("/supplier-register", submitLimiter, async (req, res): Promise<void>
     }
   }
 
-  const refNumber = await nextRefNumber();
   const ip = (req.ip ?? "").slice(0, 64);
   const refClients = Array.isArray(b.referenceClients) ? b.referenceClients.slice(0, 3) : [];
 
-  const [reg] = await db.insert(supplierRegistrationsTable).values({
-    refNumber,
-    companyId: Number(b.companyId),
-    status: "pending_review",
-    companyName: String(b.companyName).slice(0, 500),
-    tradeName: b.tradeName ?? null,
-    tradeLicenseNo: b.tradeLicenseNo ?? null,
-    licenseAuthority: b.licenseAuthority ?? null,
-    licenseExpiry: b.licenseExpiry ?? null,
-    establishedYear: b.establishedYear ?? null,
-    companySize: b.companySize ?? null,
-    country: b.country ?? null,
-    city: b.city ?? null,
-    emirate: b.emirate ?? null,
-    poBox: b.poBox ?? null,
-    address: b.address ?? null,
-    website: b.website ?? null,
-    contactPerson: String(b.contactPerson).slice(0, 200),
-    designation: b.designation ?? null,
-    email: String(b.email).slice(0, 200),
-    phone: b.phone ?? null,
-    whatsapp: b.whatsapp ?? null,
-    tenderContactName: b.tenderContactName ?? null,
-    tenderContactMobile: b.tenderContactMobile ?? null,
-    tenderContactEmail: b.tenderContactEmail ?? null,
-    trn: b.trn ?? null,
-    vatRegistered: Boolean(b.vatRegistered),
-    vatCertificateExpiry: b.vatCertificateExpiry ?? null,
-    chamberMembership: b.chamberMembership ?? null,
-    bankName: b.bankName ?? null,
-    bankBranch: b.bankBranch ?? null,
-    bankAccountName: b.bankAccountName ?? null,
-    bankAccountNumber: b.bankAccountNumber ?? null,
-    iban: b.iban ?? null,
-    swift: b.swift ?? null,
-    currency: b.currency ?? "AED",
-    categories: JSON.stringify(b.categories),
-    categoriesOther: b.categoriesOther ?? null,
-    paymentTerms: b.paymentTerms ?? null,
-    deliveryTerms: b.deliveryTerms ?? null,
-    yearsExperience: b.yearsExperience ?? null,
-    turnoverBand: b.turnoverBand ?? null,
-    employeeBand: b.employeeBand ?? null,
-    referenceClients: JSON.stringify(refClients),
-    majorClients: b.majorClients ?? null,
-    attachments: JSON.stringify(attachments),
-    agreedTerms: Boolean(b.agreedTerms),
-    agreedCodeOfConduct: Boolean(b.agreedCodeOfConduct),
-    ipAddress: ip || null,
-  }).returning();
+  // Mint ref_number and insert in a single transaction so a unique-constraint
+  // collision can never escape and so the advisory lock covers both reads.
+  const reg = await db.transaction(async (tx) => {
+    const refNumber = await nextRefNumberTx(tx);
+    const [row] = await tx.insert(supplierRegistrationsTable).values({
+      refNumber,
+      companyId: Number(b.companyId),
+      status: "pending_review",
+      companyName: String(b.companyName).slice(0, 500),
+      tradeName: b.tradeName ?? null,
+      tradeLicenseNo: b.tradeLicenseNo ?? null,
+      licenseAuthority: b.licenseAuthority ?? null,
+      licenseExpiry: b.licenseExpiry ?? null,
+      establishedYear: b.establishedYear ?? null,
+      companySize: b.companySize ?? null,
+      country: b.country ?? null,
+      city: b.city ?? null,
+      emirate: b.emirate ?? null,
+      poBox: b.poBox ?? null,
+      address: b.address ?? null,
+      website: b.website ?? null,
+      contactPerson: String(b.contactPerson).slice(0, 200),
+      designation: b.designation ?? null,
+      email: String(b.email).slice(0, 200),
+      phone: b.phone ?? null,
+      whatsapp: b.whatsapp ?? null,
+      tenderContactName: b.tenderContactName ?? null,
+      tenderContactMobile: b.tenderContactMobile ?? null,
+      tenderContactEmail: b.tenderContactEmail ?? null,
+      trn: b.trn ?? null,
+      vatRegistered: Boolean(b.vatRegistered),
+      vatCertificateExpiry: b.vatCertificateExpiry ?? null,
+      chamberMembership: b.chamberMembership ?? null,
+      bankName: b.bankName ?? null,
+      bankBranch: b.bankBranch ?? null,
+      bankAccountName: b.bankAccountName ?? null,
+      bankAccountNumber: b.bankAccountNumber ?? null,
+      iban: b.iban ?? null,
+      swift: b.swift ?? null,
+      currency: b.currency ?? "AED",
+      categories: JSON.stringify(b.categories),
+      categoriesOther: b.categoriesOther ?? null,
+      paymentTerms: b.paymentTerms ?? null,
+      deliveryTerms: b.deliveryTerms ?? null,
+      yearsExperience: b.yearsExperience ?? null,
+      turnoverBand: b.turnoverBand ?? null,
+      employeeBand: b.employeeBand ?? null,
+      referenceClients: JSON.stringify(refClients),
+      majorClients: b.majorClients ?? null,
+      attachments: JSON.stringify(attachments),
+      agreedTerms: Boolean(b.agreedTerms),
+      agreedCodeOfConduct: Boolean(b.agreedCodeOfConduct),
+      ipAddress: ip || null,
+    }).returning();
+    return row;
+  });
 
   // Acknowledge applicant
   await sendEmail({
     companyId: reg.companyId,
     toEmail: reg.email,
     toName: reg.contactPerson,
-    subject: `Application received — ${refNumber}`,
-    body: `Dear ${reg.contactPerson},\n\nThank you for registering ${reg.companyName} as a supplier with ${target.name}.\n\nYour reference number is ${refNumber}. Our procurement team will review your application and get back to you shortly. Please retain this reference for any follow-up correspondence.\n\nKind regards,\n${target.name} Procurement Team`,
+    subject: `Application received — ${reg.refNumber}`,
+    body: `Dear ${reg.contactPerson},\n\nThank you for registering ${reg.companyName} as a supplier with ${target.name}.\n\nYour reference number is ${reg.refNumber}. Our procurement team will review your application and get back to you shortly. Please retain this reference for any follow-up correspondence.\n\nKind regards,\n${target.name} Procurement Team`,
   });
 
   // Notify procurement (email to company inbox + in-app to suppliers:view users)
   await notifyProcurement({
     companyId: reg.companyId,
     entityId: reg.id,
-    refNumber,
-    subject: `New supplier application — ${refNumber}`,
-    body: `A new supplier application has been submitted via the public portal.\n\nReference: ${refNumber}\nCompany: ${reg.companyName}\nContact: ${reg.contactPerson} <${reg.email}>\nCategories: ${(parseJson<string[]>(reg.categories, [])).join(", ")}\n\nReview at /procurement/applications.`,
+    refNumber: reg.refNumber,
+    subject: `New supplier application — ${reg.refNumber}`,
+    body: `A new supplier application has been submitted via the public portal.\n\nReference: ${reg.refNumber}\nCompany: ${reg.companyName}\nContact: ${reg.contactPerson} <${reg.email}>\nCategories: ${(parseJson<string[]>(reg.categories, [])).join(", ")}\n\nReview at /procurement/applications.`,
   });
 
   res.status(201).json(toResponse(reg));
