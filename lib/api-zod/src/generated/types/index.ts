@@ -168,6 +168,8 @@ export * from "./user";
 export * from "./userModulePermission";
 export * from "./userModulePermissionRoleDefault";
 export * from "./whatsappAccount";
+export * from "./whatsappAccountTestResult";
+export * from "./whatsappAccountTestResultError";
 export * from "./whatsappLinkSearchHit";
 export * from "./whatsappLinkSearchResponse";
 export * from "./whatsappMessage";

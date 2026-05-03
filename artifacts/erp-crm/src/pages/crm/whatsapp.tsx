@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   useListWhatsappAccounts,
   useCreateWhatsappAccount,
+  useTestWhatsappAccount,
   useListWhatsappThreads,
   useListWhatsappMessages,
   useSendWhatsappMessage,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { suggestWhatsAppReply } from "@/lib/ai-client";
+import { formatWhatsappError } from "@/lib/whatsapp-errors";
 
 type LinkKind = "lead" | "deal" | "contact" | "project";
 
@@ -112,8 +114,7 @@ export function WhatsAppInbox() {
         queryClient.invalidateQueries({ queryKey: getListWhatsappThreadsQueryKey() });
       },
       onError: (err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Failed to send";
-        toast({ title: "Send failed", description: msg, variant: "destructive" });
+        toast({ title: "Send failed", description: formatWhatsappError(err), variant: "destructive" });
       },
     },
   });
@@ -597,26 +598,117 @@ function AccountsPanel({ onChanged }: { onChanged: () => void }) {
         {accountsQ.isLoading ? <div className="p-4 text-sm text-muted-foreground">Loading…</div>
           : accounts.length === 0 ? <div className="p-4 text-sm text-muted-foreground">No accounts yet.</div>
           : accounts.map(a => (
-          <div key={a.id} className="p-3 flex items-center justify-between">
-            <div>
-              <div className="font-medium text-sm">
-                {a.name}
-                {a.isDefault && <Badge className="ml-2 bg-[#0f2d5a] text-white text-[10px]">Default</Badge>}
-                {!a.isActive && <Badge variant="secondary" className="ml-2 text-[10px]">Inactive</Badge>}
-              </div>
-              <div className="text-xs text-muted-foreground font-mono">
-                phone_number_id: {a.phoneNumberId}{a.wabaId ? ` · waba_id: ${a.wabaId}` : ""}{a.displayPhone ? ` · ${a.displayPhone}` : ""}
-              </div>
-              <div className="text-xs">
-                Token env <code>{a.accessTokenEnv}</code>:{" "}
-                {a.tokenConfigured
-                  ? <span className="text-green-700 font-medium">configured</span>
-                  : <span className="text-red-600 font-medium">not set</span>}
-              </div>
-            </div>
-          </div>
+          <AccountRow key={a.id} account={a} />
         ))}
       </div>
+    </div>
+  );
+}
+
+interface AccountRowProps {
+  account: {
+    id: number;
+    name: string;
+    phoneNumberId: string;
+    wabaId?: string;
+    displayPhone?: string;
+    accessTokenEnv: string;
+    isDefault: boolean;
+    isActive: boolean;
+    tokenConfigured?: boolean;
+  };
+}
+
+interface TestResult {
+  ok: boolean;
+  envVarName: string;
+  envVarSet: boolean;
+  displayPhoneNumber?: string;
+  verifiedName?: string;
+  qualityRating?: string;
+  codeVerificationStatus?: string;
+  nameStatus?: string;
+  error?: { status?: number; message?: string; code?: number; subcode?: number; type?: string; fbtraceId?: string };
+}
+
+function AccountRow({ account: a }: AccountRowProps) {
+  const test = useTestWhatsappAccount();
+  const [result, setResult] = useState<TestResult | null>(null);
+  const { toast } = useToast();
+
+  const runTest = () => {
+    setResult(null);
+    test.mutate({ id: a.id }, {
+      onSuccess: (data) => setResult(data as unknown as TestResult),
+      onError: (err: unknown) => {
+        toast({ title: "Could not test", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
+      },
+    });
+  };
+
+  return (
+    <div className="p-3 space-y-2">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-medium text-sm">
+            {a.name}
+            {a.isDefault && <Badge className="ml-2 bg-[#0f2d5a] text-white text-[10px]">Default</Badge>}
+            {!a.isActive && <Badge variant="secondary" className="ml-2 text-[10px]">Inactive</Badge>}
+          </div>
+          <div className="text-xs text-muted-foreground font-mono">
+            phone_number_id: {a.phoneNumberId}{a.wabaId ? ` · waba_id: ${a.wabaId}` : ""}{a.displayPhone ? ` · ${a.displayPhone}` : ""}
+          </div>
+          <div className="text-xs">
+            Token env <code>{a.accessTokenEnv}</code>:{" "}
+            {a.tokenConfigured
+              ? <span className="text-green-700 font-medium">configured</span>
+              : <span className="text-red-600 font-medium">not set</span>}
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 shrink-0"
+          onClick={runTest}
+          disabled={test.isPending}
+          data-testid={`button-wa-test-${a.id}`}
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${test.isPending ? "animate-spin" : ""}`} />
+          {test.isPending ? "Testing…" : "Test connection"}
+        </Button>
+      </div>
+
+      {result && result.ok && (
+        <div className="text-xs rounded-md border border-green-200 bg-green-50 text-green-900 p-2 space-y-0.5">
+          <div className="font-medium flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Connected to Meta</div>
+          {result.displayPhoneNumber && <div>Display number: <span className="font-mono">{result.displayPhoneNumber}</span></div>}
+          {result.verifiedName && <div>Verified name: {result.verifiedName}</div>}
+          {result.qualityRating && <div>Quality rating: {result.qualityRating}</div>}
+          {(result.codeVerificationStatus || result.nameStatus) && (
+            <div className="text-green-800/80">
+              {result.codeVerificationStatus && `code: ${result.codeVerificationStatus}`}
+              {result.codeVerificationStatus && result.nameStatus && " · "}
+              {result.nameStatus && `name: ${result.nameStatus}`}
+            </div>
+          )}
+        </div>
+      )}
+      {result && !result.ok && (
+        <div className="text-xs rounded-md border border-red-200 bg-red-50 text-red-900 p-2 space-y-0.5">
+          <div className="font-medium flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Connection failed</div>
+          {!result.envVarSet && <div>Token env <code>{result.envVarName}</code> is not set in this Replit. Add it under Tools → Secrets.</div>}
+          {result.error?.message && <div>{result.error.message}</div>}
+          {(result.error?.code != null || result.error?.subcode != null || result.error?.type) && (
+            <div className="font-mono text-[11px] text-red-800/80">
+              {result.error?.code != null && `code ${result.error.code}`}
+              {result.error?.subcode != null && ` · subcode ${result.error.subcode}`}
+              {result.error?.type && ` · ${result.error.type}`}
+              {result.error?.status != null && ` · HTTP ${result.error.status}`}
+            </div>
+          )}
+          {result.error?.fbtraceId && <div className="font-mono text-[11px] text-red-800/80">fbtrace_id: {result.error.fbtraceId}</div>}
+        </div>
+      )}
     </div>
   );
 }

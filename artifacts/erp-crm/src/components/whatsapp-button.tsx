@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Send, ExternalLink, AlertTriangle, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { formatWhatsappError } from "@/lib/whatsapp-errors";
 import {
   buildWaUrl,
   normalizeWaPhone,
@@ -155,7 +156,7 @@ export function WhatsAppButton({
         // Fall back to wa.me if the API call failed.
         toast({
           title: "Cloud API send failed — opening WhatsApp Web",
-          description: err instanceof Error ? err.message : undefined,
+          description: formatWhatsappError(err),
           variant: "destructive",
         });
       }

@@ -156,6 +156,7 @@ import type {
   User,
   UserModulePermission,
   WhatsappAccount,
+  WhatsappAccountTestResult,
   WhatsappLinkSearchResponse,
   WhatsappMessage,
   WhatsappTemplate,
@@ -15060,6 +15061,90 @@ export const useDeleteWhatsappAccount = <
   TContext
 > => {
   return useMutation(getDeleteWhatsappAccountMutationOptions(options));
+};
+
+/**
+ * @summary Diagnostic ping to verify phone_number_id + access token
+ */
+export const getTestWhatsappAccountUrl = (id: number) => {
+  return `/api/whatsapp/accounts/${id}/test`;
+};
+
+export const testWhatsappAccount = async (
+  id: number,
+  options?: RequestInit,
+): Promise<WhatsappAccountTestResult> => {
+  return customFetch<WhatsappAccountTestResult>(getTestWhatsappAccountUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getTestWhatsappAccountMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testWhatsappAccount>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof testWhatsappAccount>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["testWhatsappAccount"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof testWhatsappAccount>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return testWhatsappAccount(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TestWhatsappAccountMutationResult = NonNullable<
+  Awaited<ReturnType<typeof testWhatsappAccount>>
+>;
+
+export type TestWhatsappAccountMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Diagnostic ping to verify phone_number_id + access token
+ */
+export const useTestWhatsappAccount = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof testWhatsappAccount>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof testWhatsappAccount>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getTestWhatsappAccountMutationOptions(options));
 };
 
 /**

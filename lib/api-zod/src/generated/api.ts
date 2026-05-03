@@ -5278,6 +5278,34 @@ export const DeleteWhatsappAccountResponse = zod.object({
 });
 
 /**
+ * @summary Diagnostic ping to verify phone_number_id + access token
+ */
+export const TestWhatsappAccountParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const TestWhatsappAccountResponse = zod.object({
+  ok: zod.boolean(),
+  envVarName: zod.string(),
+  envVarSet: zod.boolean(),
+  displayPhoneNumber: zod.string().optional(),
+  verifiedName: zod.string().optional(),
+  qualityRating: zod.string().optional(),
+  codeVerificationStatus: zod.string().optional(),
+  nameStatus: zod.string().optional(),
+  error: zod
+    .object({
+      status: zod.number().optional(),
+      message: zod.string().optional(),
+      code: zod.number().optional(),
+      subcode: zod.number().optional(),
+      type: zod.string().optional(),
+      fbtraceId: zod.string().optional(),
+    })
+    .optional(),
+});
+
+/**
  * @summary List WhatsApp threads
  */
 export const ListWhatsappThreadsQueryParams = zod.object({

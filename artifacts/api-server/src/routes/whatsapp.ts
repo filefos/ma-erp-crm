@@ -29,6 +29,34 @@ function normalizeWa(raw: string | undefined | null): string {
   return digits;
 }
 
+interface MetaErrorShape {
+  code?: number;
+  subcode?: number;
+  type?: string;
+  message?: string;
+  fbtraceId?: string;
+}
+
+interface MetaErrorJson {
+  error?: { code?: number; error_subcode?: number; type?: string; message?: string; fbtrace_id?: string };
+}
+
+function parseMetaError(json: MetaErrorJson | null | undefined, httpStatus: number): MetaErrorShape {
+  const e = json?.error ?? {};
+  return {
+    code: typeof e.code === "number" ? e.code : httpStatus,
+    subcode: typeof e.error_subcode === "number" ? e.error_subcode : undefined,
+    type: e.type,
+    message: e.message ?? `HTTP ${httpStatus}`,
+    fbtraceId: e.fbtrace_id,
+  };
+}
+
+function formatMetaErrorText(m: MetaErrorShape): string {
+  const tag = `[code:${m.code ?? "?"}${m.subcode != null ? ` sub:${m.subcode}` : ""}${m.type ? ` ${m.type}` : ""}]`;
+  return `${tag} ${m.message ?? ""}`.trim();
+}
+
 async function defaultAccount(companyId?: number | null) {
   const rows = await db.select().from(whatsappAccountsTable).where(eq(whatsappAccountsTable.isActive, true));
   if (companyId != null) {
@@ -98,6 +126,78 @@ router.delete("/whatsapp/accounts/:id", requirePermission("whatsapp", "delete"),
   await db.delete(whatsappAccountsTable).where(eq(whatsappAccountsTable.id, id));
   await audit(req, { action: "delete", entity: "whatsapp_account", entityId: id });
   res.json({ success: true });
+});
+
+// ==================== TEST CONNECTION ====================
+
+// Diagnostic ping that calls Meta GET /{phoneNumberId}?fields=display_phone_number,verified_name,quality_rating
+// Lets the operator verify the phone_number_id + access token before sending a real message.
+router.post("/whatsapp/accounts/:id/test", requirePermission("whatsapp", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  const [account] = await db.select().from(whatsappAccountsTable).where(eq(whatsappAccountsTable.id, id));
+  if (!account) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [account]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const envVarName = account.accessTokenEnv || "WHATSAPP_ACCESS_TOKEN";
+  const token = getAccountToken(account);
+  if (!token) {
+    res.json({
+      ok: false,
+      envVarName,
+      envVarSet: false,
+      error: { message: `Access token env "${envVarName}" is not set in this Replit. Add it under Tools → Secrets.` },
+    });
+    return;
+  }
+
+  const url = `https://graph.facebook.com/${GRAPH_VERSION}/${account.phoneNumberId}?fields=display_phone_number,verified_name,quality_rating,code_verification_status,name_status`;
+  let response: Response;
+  try {
+    response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to reach WhatsApp Cloud API";
+    req.log.warn({ accountId: account.id, envVarName }, "WhatsApp test connection network error");
+    res.json({ ok: false, envVarName, envVarSet: true, error: { message, status: 502 } });
+    return;
+  }
+
+  const json = await response.json().catch(() => ({})) as MetaErrorJson & {
+    display_phone_number?: string;
+    verified_name?: string;
+    quality_rating?: string;
+    code_verification_status?: string;
+    name_status?: string;
+  };
+
+  if (!response.ok) {
+    const meta = parseMetaError(json, response.status);
+    req.log.warn({ accountId: account.id, envVarName, status: response.status, metaError: meta }, "WhatsApp test connection rejected by Meta");
+    res.json({
+      ok: false,
+      envVarName,
+      envVarSet: true,
+      error: {
+        status: response.status,
+        message: meta.message,
+        code: meta.code,
+        subcode: meta.subcode,
+        type: meta.type,
+        fbtraceId: meta.fbtraceId,
+      },
+    });
+    return;
+  }
+
+  res.json({
+    ok: true,
+    envVarName,
+    envVarSet: true,
+    displayPhoneNumber: json.display_phone_number,
+    verifiedName: json.verified_name,
+    qualityRating: json.quality_rating,
+    codeVerificationStatus: json.code_verification_status,
+    nameStatus: json.name_status,
+  });
 });
 
 // ==================== THREADS ====================
@@ -299,18 +399,26 @@ router.post("/whatsapp/send", requirePermission("whatsapp", "create"), async (re
     return;
   }
 
-  const respJson = await response.json().catch(() => ({})) as {
+  const respJson = await response.json().catch(() => ({})) as MetaErrorJson & {
     messages?: Array<{ id: string }>;
-    error?: { code?: number; message?: string };
   };
 
   if (!response.ok) {
+    const meta = parseMetaError(respJson, response.status);
+    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: response.status, metaError: meta }, "WhatsApp send rejected by Meta");
     await db.update(whatsappMessagesTable).set({
       status: "failed",
-      errorCode: respJson.error?.code ?? response.status,
-      errorText: respJson.error?.message ?? `HTTP ${response.status}`,
+      errorCode: meta.code ?? response.status,
+      errorText: formatMetaErrorText(meta),
     }).where(eq(whatsappMessagesTable.id, queued.id));
-    res.status(response.status).json({ error: "WhatsApp send failed", message: respJson.error?.message ?? `HTTP ${response.status}` });
+    res.status(response.status).json({
+      error: "WhatsApp send failed",
+      message: meta.message,
+      code: meta.code,
+      subcode: meta.subcode,
+      type: meta.type,
+      fbtraceId: meta.fbtraceId,
+    });
     return;
   }
 
@@ -401,11 +509,17 @@ router.post("/whatsapp/send-document", requirePermission("whatsapp", "create"), 
     res.status(502).json({ error: "Bad gateway", message: err instanceof Error ? err.message : "Failed to reach WhatsApp media API" });
     return;
   }
-  const mediaJson = await mediaResp.json().catch(() => ({})) as { id?: string; error?: { message?: string; code?: number } };
+  const mediaJson = await mediaResp.json().catch(() => ({})) as MetaErrorJson & { id?: string };
   if (!mediaResp.ok || !mediaJson.id) {
+    const meta = parseMetaError(mediaJson, mediaResp.status);
+    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: mediaResp.status, metaError: meta }, "WhatsApp media upload rejected by Meta");
     res.status(mediaResp.status || 502).json({
       error: "WhatsApp media upload failed",
-      message: mediaJson.error?.message ?? `HTTP ${mediaResp.status}`,
+      message: meta.message,
+      code: meta.code,
+      subcode: meta.subcode,
+      type: meta.type,
+      fbtraceId: meta.fbtraceId,
     });
     return;
   }
@@ -471,17 +585,25 @@ router.post("/whatsapp/send-document", requirePermission("whatsapp", "create"), 
     res.status(502).json({ error: "Bad gateway", message: "Failed to reach WhatsApp Cloud API" });
     return;
   }
-  const sendJson = await sendResp.json().catch(() => ({})) as {
+  const sendJson = await sendResp.json().catch(() => ({})) as MetaErrorJson & {
     messages?: Array<{ id: string }>;
-    error?: { code?: number; message?: string };
   };
   if (!sendResp.ok) {
+    const meta = parseMetaError(sendJson, sendResp.status);
+    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: sendResp.status, metaError: meta }, "WhatsApp document send rejected by Meta");
     await db.update(whatsappMessagesTable).set({
       status: "failed",
-      errorCode: sendJson.error?.code ?? sendResp.status,
-      errorText: sendJson.error?.message ?? `HTTP ${sendResp.status}`,
+      errorCode: meta.code ?? sendResp.status,
+      errorText: formatMetaErrorText(meta),
     }).where(eq(whatsappMessagesTable.id, queued.id));
-    res.status(sendResp.status).json({ error: "WhatsApp send failed", message: sendJson.error?.message ?? `HTTP ${sendResp.status}` });
+    res.status(sendResp.status).json({
+      error: "WhatsApp send failed",
+      message: meta.message,
+      code: meta.code,
+      subcode: meta.subcode,
+      type: meta.type,
+      fbtraceId: meta.fbtraceId,
+    });
     return;
   }
 

@@ -1491,6 +1491,27 @@ export interface SendWhatsappResponse {
   waMessageId?: string;
 }
 
+export type WhatsappAccountTestResultError = {
+  status?: number;
+  message?: string;
+  code?: number;
+  subcode?: number;
+  type?: string;
+  fbtraceId?: string;
+};
+
+export interface WhatsappAccountTestResult {
+  ok: boolean;
+  envVarName: string;
+  envVarSet: boolean;
+  displayPhoneNumber?: string;
+  verifiedName?: string;
+  qualityRating?: string;
+  codeVerificationStatus?: string;
+  nameStatus?: string;
+  error?: WhatsappAccountTestResultError;
+}
+
 export interface WhatsappTemplate {
   name?: string;
   language?: string;

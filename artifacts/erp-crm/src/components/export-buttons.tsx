@@ -143,9 +143,20 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
           caption: waMessage,
         }),
       });
-      const json = await resp.json().catch(() => ({}));
+      const json = await resp.json().catch(() => ({})) as {
+        message?: string; code?: number; subcode?: number; type?: string; fbtraceId?: string;
+      };
       if (!resp.ok) {
-        toast({ title: "WhatsApp send failed", description: json?.message ?? `HTTP ${resp.status}`, variant: "destructive" });
+        const parts: string[] = [];
+        if (json.code != null) parts.push(`code ${json.code}`);
+        if (json.subcode != null) parts.push(`subcode ${json.subcode}`);
+        if (json.type) parts.push(json.type);
+        const tag = parts.length ? `[${parts.join(" · ")}] ` : "";
+        toast({
+          title: "WhatsApp send failed",
+          description: `${tag}${json.message ?? `HTTP ${resp.status}`}`,
+          variant: "destructive",
+        });
         return;
       }
       toast({ title: "Sent via WhatsApp ✓", description: `Delivered to +${digits}` });

@@ -3568,6 +3568,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  /whatsapp/accounts/{id}/test:
+    post:
+      operationId: testWhatsappAccount
+      tags: [whatsapp]
+      summary: Diagnostic ping to verify phone_number_id + access token
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Test result (ok or error breakdown)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappAccountTestResult"
+
   /whatsapp/threads:
     get:
       operationId: listWhatsappThreads
@@ -6314,6 +6332,28 @@ components:
         threadId: { type: integer }
         waMessageId: { type: string }
       required: [message, threadId]
+
+    WhatsappAccountTestResult:
+      type: object
+      properties:
+        ok: { type: boolean }
+        envVarName: { type: string }
+        envVarSet: { type: boolean }
+        displayPhoneNumber: { type: string }
+        verifiedName: { type: string }
+        qualityRating: { type: string }
+        codeVerificationStatus: { type: string }
+        nameStatus: { type: string }
+        error:
+          type: object
+          properties:
+            status: { type: integer }
+            message: { type: string }
+            code: { type: number }
+            subcode: { type: number }
+            type: { type: string }
+            fbtraceId: { type: string }
+      required: [ok, envVarName, envVarSet]
 
     WhatsappTemplate:
       type: object
