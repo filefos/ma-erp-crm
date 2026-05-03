@@ -131,9 +131,21 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     try {
       toast({ title: "Preparing PDF…", description: `Building ${label} ${docNumber}` });
       const { base64, filename } = await generatePdf();
+      const token = localStorage.getItem("erp_token");
+      const activeCompany = (() => {
+        try {
+          const raw = localStorage.getItem("erp_active_company_id");
+          return raw ? Number(raw) : null;
+        } catch { return null; }
+      })();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (activeCompany != null && Number.isFinite(activeCompany)) {
+        headers["X-Active-Company-Id"] = String(activeCompany);
+      }
       const resp = await fetch("/api/whatsapp/send-document", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         credentials: "include",
         body: JSON.stringify({
           to: digits,
