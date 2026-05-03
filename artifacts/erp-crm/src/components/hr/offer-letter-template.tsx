@@ -13,6 +13,17 @@ export interface OfferLetterDoc {
   workerType?: string | null;
   companyName?: string | null;
   companyId: number;
+  commissionEnabled?: boolean | null;
+  commissionTargetAmount?: number | null;
+  commissionCurrency?: string | null;
+  commissionBaseRatePct?: number | null;
+  commissionBonusPerStepAmount?: number | null;
+  commissionBonusStepSize?: number | null;
+  commissionShortfallTier1Pct?: number | null;
+  commissionShortfallTier1DeductionPct?: number | null;
+  commissionShortfallTier2Pct?: number | null;
+  commissionShortfallTier2DeductionPct?: number | null;
+  commissionNotes?: string | null;
   // Explicit letterhead choice resolved by the caller from companyId — preferred
   // over name-based detection so historical letters render deterministically
   // even if a company is later renamed.
@@ -105,8 +116,39 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
       <p style={{ fontSize: 12, lineHeight: 1.6 }}><strong>Joining Date:</strong> {doc.joiningDate ? new Date(doc.joiningDate).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" }) : "To be agreed"}</p>
       <p style={{ fontSize: 12, lineHeight: 1.6 }}>{dutyLine}</p>
 
+      {/* Commission (only for sales roles) — slots in as section 3 when enabled */}
+      {doc.commissionEnabled && (() => {
+        const cur = doc.commissionCurrency || "AED";
+        const target = doc.commissionTargetAmount ?? 0;
+        const baseRate = doc.commissionBaseRatePct ?? 0;
+        const bonus = doc.commissionBonusPerStepAmount ?? 0;
+        const step = doc.commissionBonusStepSize ?? 0;
+        const t1 = doc.commissionShortfallTier1Pct ?? 0;
+        const t1Ded = doc.commissionShortfallTier1DeductionPct ?? 0;
+        const t2 = doc.commissionShortfallTier2Pct ?? 0;
+        const t2Ded = doc.commissionShortfallTier2DeductionPct ?? 0;
+        const baseAtTarget = (target * baseRate) / 100;
+        return (
+          <>
+            <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>3. Sales Target & Commission</h2>
+            <p style={{ fontSize: 12, lineHeight: 1.6 }}>
+              You are assigned a monthly sales target of <strong>{cur} {target.toLocaleString()}</strong>. On achievement of the target you are entitled to a base commission of <strong>{baseRate}%</strong> of total sales (i.e. {cur} {baseAtTarget.toLocaleString()} at target).
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.6 }}>
+              For every additional <strong>{cur} {step.toLocaleString()}</strong> in sales above the target, an additional bonus of <strong>{cur} {bonus.toLocaleString()}</strong> will be paid.
+            </p>
+            <p style={{ fontSize: 12, lineHeight: 1.6 }}>
+              If sales fall short of the target by <strong>{t1}%</strong> or more, a <strong>{t1Ded}%</strong> deduction will be applied to that month's salary. If achievement is <strong>{t2}%</strong> or less of the target, the deduction increases to <strong>{t2Ded}%</strong> of that month's salary.
+            </p>
+            {doc.commissionNotes && (
+              <p style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: "pre-wrap" }}><em>{doc.commissionNotes}</em></p>
+            )}
+          </>
+        );
+      })()}
+
       {/* Rules */}
-      <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>3. Company Rules & Code of Conduct</h2>
+      <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>{doc.commissionEnabled ? 4 : 3}. Company Rules & Code of Conduct</h2>
       <p style={{ fontSize: 12, lineHeight: 1.55 }}>The following rules form part of this agreement and the employee is required to read, understand and sign them as a condition of employment:</p>
       <ol style={{ fontSize: 12, lineHeight: 1.55, paddingLeft: 18, marginTop: 6 }}>
         {COMPANY_RULES.map((r, i) => (
@@ -116,7 +158,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
 
       {doc.notes && (
         <>
-          <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>4. Additional Notes</h2>
+          <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>{doc.commissionEnabled ? 5 : 4}. Additional Notes</h2>
           <p style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{doc.notes}</p>
         </>
       )}

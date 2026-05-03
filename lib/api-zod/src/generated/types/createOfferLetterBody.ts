@@ -21,4 +21,15 @@ export interface CreateOfferLetterBody {
   allowances?: number;
   workerType?: string;
   notes?: string;
+  commissionEnabled?: boolean;
+  commissionTargetAmount?: number;
+  commissionCurrency?: string;
+  commissionBaseRatePct?: number;
+  commissionBonusPerStepAmount?: number;
+  commissionBonusStepSize?: number;
+  commissionShortfallTier1Pct?: number;
+  commissionShortfallTier1DeductionPct?: number;
+  commissionShortfallTier2Pct?: number;
+  commissionShortfallTier2DeductionPct?: number;
+  commissionNotes?: string;
 }

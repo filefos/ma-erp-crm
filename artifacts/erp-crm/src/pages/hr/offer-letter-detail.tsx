@@ -13,11 +13,24 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft, Pencil, Save, X, Send, FileDown, Printer, RefreshCcw, UserPlus, CheckCircle2, XCircle,
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+
+const COMMISSION_DEFAULTS = {
+  commissionTargetAmount: 200000,
+  commissionCurrency: "AED",
+  commissionBaseRatePct: 1,
+  commissionBonusPerStepAmount: 1000,
+  commissionBonusStepSize: 100000,
+  commissionShortfallTier1Pct: 25,
+  commissionShortfallTier1DeductionPct: 15,
+  commissionShortfallTier2Pct: 50,
+  commissionShortfallTier2DeductionPct: 35,
+};
 
 interface Props { id: string }
 
@@ -86,6 +99,17 @@ export function OfferLetterDetail({ id }: Props) {
         templateType: offer.templateType ?? "staff",
         workerType: (offer as any).workerType ?? "staff",
         notes: offer.notes ?? "",
+        commissionEnabled: !!(offer as any).commissionEnabled,
+        commissionTargetAmount: (offer as any).commissionTargetAmount ?? "",
+        commissionCurrency: (offer as any).commissionCurrency ?? "AED",
+        commissionBaseRatePct: (offer as any).commissionBaseRatePct ?? "",
+        commissionBonusPerStepAmount: (offer as any).commissionBonusPerStepAmount ?? "",
+        commissionBonusStepSize: (offer as any).commissionBonusStepSize ?? "",
+        commissionShortfallTier1Pct: (offer as any).commissionShortfallTier1Pct ?? "",
+        commissionShortfallTier1DeductionPct: (offer as any).commissionShortfallTier1DeductionPct ?? "",
+        commissionShortfallTier2Pct: (offer as any).commissionShortfallTier2Pct ?? "",
+        commissionShortfallTier2DeductionPct: (offer as any).commissionShortfallTier2DeductionPct ?? "",
+        commissionNotes: (offer as any).commissionNotes ?? "",
       });
     }
   }, [offer, editing]);
@@ -105,8 +129,31 @@ export function OfferLetterDetail({ id }: Props) {
     const patch: any = { ...draft };
     if (patch.basicSalary === "") delete patch.basicSalary; else patch.basicSalary = Number(patch.basicSalary);
     if (patch.allowances === "") delete patch.allowances; else patch.allowances = Number(patch.allowances);
+    const numKeys = [
+      "commissionTargetAmount","commissionBaseRatePct","commissionBonusPerStepAmount","commissionBonusStepSize",
+      "commissionShortfallTier1Pct","commissionShortfallTier1DeductionPct",
+      "commissionShortfallTier2Pct","commissionShortfallTier2DeductionPct",
+    ];
+    if (!patch.commissionEnabled) {
+      // Persist the disabled flag but null out numeric fields so we don't write garbage.
+      for (const k of numKeys) patch[k] = null;
+      patch.commissionNotes = null;
+    } else {
+      for (const k of numKeys) {
+        patch[k] = patch[k] === "" || patch[k] == null ? null : Number(patch[k]);
+      }
+    }
     update.mutate({ id: oid, data: { ...patch, companyId: offer.companyId } as any });
     setEditing(false);
+  };
+
+  const enableCommissionWithDefaults = () => {
+    setDraft((p: any) => ({
+      ...p,
+      commissionEnabled: true,
+      ...Object.fromEntries(Object.entries(COMMISSION_DEFAULTS).map(([k, v]) =>
+        [k, p[k] === "" || p[k] == null ? v : p[k]])),
+    }));
   };
 
   const downloadPdf = async () => {
@@ -225,6 +272,50 @@ export function OfferLetterDetail({ id }: Props) {
                 <div className="text-sm whitespace-pre-wrap">{offer.notes || <span className="text-muted-foreground">—</span>}</div>
               )}
             </div>
+
+            <div className="col-span-2 mt-2 border rounded-lg p-3 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-semibold">Salesman Commission</Label>
+                  <p className="text-[11px] text-muted-foreground">Sales target, base rate, per-step bonus and shortfall salary deductions printed on the letter.</p>
+                </div>
+                {editing && isDraft ? (
+                  <Switch
+                    checked={!!draft.commissionEnabled}
+                    onCheckedChange={(v) => v ? enableCommissionWithDefaults() : setDraft((p: any) => ({ ...p, commissionEnabled: false }))}
+                    data-testid="switch-detail-commission-enabled"
+                  />
+                ) : (
+                  <Badge variant="outline">{(offer as any).commissionEnabled ? "Enabled" : "Disabled"}</Badge>
+                )}
+              </div>
+              {editing && isDraft && draft.commissionEnabled && (
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <CField label={`Sales Target (${draft.commissionCurrency || "AED"})`} k="commissionTargetAmount" type="number" draft={draft} setDraft={setDraft} />
+                  <CField label="Currency" k="commissionCurrency" draft={draft} setDraft={setDraft} />
+                  <CField label="Base Commission Rate (%)" k="commissionBaseRatePct" type="number" draft={draft} setDraft={setDraft} />
+                  <CField label={`Bonus per Step (${draft.commissionCurrency || "AED"})`} k="commissionBonusPerStepAmount" type="number" draft={draft} setDraft={setDraft} />
+                  <CField label={`Step Size above target (${draft.commissionCurrency || "AED"})`} k="commissionBonusStepSize" type="number" draft={draft} setDraft={setDraft} />
+                  <div />
+                  <CField label="Tier 1 Shortfall (%)" k="commissionShortfallTier1Pct" type="number" draft={draft} setDraft={setDraft} />
+                  <CField label="Tier 1 Salary Deduction (%)" k="commissionShortfallTier1DeductionPct" type="number" draft={draft} setDraft={setDraft} />
+                  <CField label="Tier 2 Achievement ≤ (%)" k="commissionShortfallTier2Pct" type="number" draft={draft} setDraft={setDraft} />
+                  <CField label="Tier 2 Salary Deduction (%)" k="commissionShortfallTier2DeductionPct" type="number" draft={draft} setDraft={setDraft} />
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs">Commission Notes</Label>
+                    <Textarea rows={2} value={draft.commissionNotes ?? ""} onChange={e => setDraft((p: any) => ({ ...p, commissionNotes: e.target.value }))} />
+                  </div>
+                </div>
+              )}
+              {!(editing && isDraft) && (offer as any).commissionEnabled && (
+                <div className="text-xs text-muted-foreground mt-2 grid grid-cols-2 gap-1">
+                  <div>Target: {(offer as any).commissionCurrency ?? "AED"} {Number((offer as any).commissionTargetAmount ?? 0).toLocaleString()}</div>
+                  <div>Base rate: {(offer as any).commissionBaseRatePct ?? 0}%</div>
+                  <div>Bonus: {(offer as any).commissionCurrency ?? "AED"} {Number((offer as any).commissionBonusPerStepAmount ?? 0).toLocaleString()} / {(offer as any).commissionCurrency ?? "AED"} {Number((offer as any).commissionBonusStepSize ?? 0).toLocaleString()} above target</div>
+                  <div>Shortfall: {(offer as any).commissionShortfallTier1DeductionPct ?? 0}% @ {(offer as any).commissionShortfallTier1Pct ?? 0}% short, {(offer as any).commissionShortfallTier2DeductionPct ?? 0}% @ ≤{(offer as any).commissionShortfallTier2Pct ?? 0}% achievement</div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -255,6 +346,17 @@ export function OfferLetterDetail({ id }: Props) {
                     letterhead: resolvedLetterhead,
                     issuedAt: offer.issuedAt,
                     notes: editing && isDraft ? draft.notes : offer.notes,
+                    commissionEnabled: editing && isDraft ? !!draft.commissionEnabled : !!(offer as any).commissionEnabled,
+                    commissionTargetAmount: editing && isDraft ? Number(draft.commissionTargetAmount || 0) : (offer as any).commissionTargetAmount,
+                    commissionCurrency: editing && isDraft ? draft.commissionCurrency : (offer as any).commissionCurrency,
+                    commissionBaseRatePct: editing && isDraft ? Number(draft.commissionBaseRatePct || 0) : (offer as any).commissionBaseRatePct,
+                    commissionBonusPerStepAmount: editing && isDraft ? Number(draft.commissionBonusPerStepAmount || 0) : (offer as any).commissionBonusPerStepAmount,
+                    commissionBonusStepSize: editing && isDraft ? Number(draft.commissionBonusStepSize || 0) : (offer as any).commissionBonusStepSize,
+                    commissionShortfallTier1Pct: editing && isDraft ? Number(draft.commissionShortfallTier1Pct || 0) : (offer as any).commissionShortfallTier1Pct,
+                    commissionShortfallTier1DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier1DeductionPct || 0) : (offer as any).commissionShortfallTier1DeductionPct,
+                    commissionShortfallTier2Pct: editing && isDraft ? Number(draft.commissionShortfallTier2Pct || 0) : (offer as any).commissionShortfallTier2Pct,
+                    commissionShortfallTier2DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier2DeductionPct || 0) : (offer as any).commissionShortfallTier2DeductionPct,
+                    commissionNotes: editing && isDraft ? draft.commissionNotes : (offer as any).commissionNotes,
                   }}
                 />
               </div>
@@ -262,6 +364,15 @@ export function OfferLetterDetail({ id }: Props) {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function CField({ label, k, draft, setDraft, type = "text" }: { label: string; k: string; draft: any; setDraft: (fn: any) => void; type?: string }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs">{label}</Label>
+      <Input type={type} value={draft[k] ?? ""} onChange={e => setDraft((p: any) => ({ ...p, [k]: e.target.value }))} data-testid={`input-${k}`} />
     </div>
   );
 }

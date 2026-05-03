@@ -39,5 +39,16 @@ export interface OfferLetter {
   letterheadBrand?: string;
   /** Snapshot of the company's legal name at issue time. */
   companyLegalName?: string;
+  commissionEnabled?: boolean;
+  commissionTargetAmount?: number;
+  commissionCurrency?: string;
+  commissionBaseRatePct?: number;
+  commissionBonusPerStepAmount?: number;
+  commissionBonusStepSize?: number;
+  commissionShortfallTier1Pct?: number;
+  commissionShortfallTier1DeductionPct?: number;
+  commissionShortfallTier2Pct?: number;
+  commissionShortfallTier2DeductionPct?: number;
+  commissionNotes?: string;
   createdAt: string;
 }

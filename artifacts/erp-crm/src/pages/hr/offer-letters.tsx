@@ -15,7 +15,26 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CompanyField } from "@/components/CompanyField";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { FileText, Plus, Search, User } from "lucide-react";
+
+const COMMISSION_DEFAULTS = {
+  commissionTargetAmount: "200000",
+  commissionCurrency: "AED",
+  commissionBaseRatePct: "1",
+  commissionBonusPerStepAmount: "1000",
+  commissionBonusStepSize: "100000",
+  commissionShortfallTier1Pct: "25",
+  commissionShortfallTier1DeductionPct: "15",
+  commissionShortfallTier2Pct: "50",
+  commissionShortfallTier2DeductionPct: "35",
+  commissionNotes: "",
+};
+const isSalesRole = (s: string | undefined | null): boolean => {
+  const t = (s ?? "").toLowerCase();
+  return /\bsales(man|person|woman|\s+executive)?\b/.test(t) || t.includes("salesman") || t.includes("sales executive") || t.includes("sales");
+};
 
 const STATUS_TONE: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -32,6 +51,8 @@ const EMPTY_FORM = {
   candidateName: "", companyId: "", templateType: "staff", workerType: "staff",
   designation: "", joiningDate: "", basicSalary: "", allowances: "",
   candidateNationality: "", candidatePassportNo: "", candidatePersonalEmail: "", candidatePersonalPhone: "",
+  commissionEnabled: false,
+  ...COMMISSION_DEFAULTS,
 };
 
 export function OfferLettersList() {
@@ -106,6 +127,7 @@ export function OfferLettersList() {
   });
 
   const submit = () => {
+    const num = (s: string) => (s === "" || s == null ? undefined : Number(s));
     create.mutate({
       data: {
         candidateName: form.candidateName,
@@ -121,9 +143,30 @@ export function OfferLettersList() {
         candidatePassportNo: form.candidatePassportNo || undefined,
         candidatePersonalEmail: form.candidatePersonalEmail || undefined,
         candidatePersonalPhone: form.candidatePersonalPhone || undefined,
+        commissionEnabled: form.commissionEnabled,
+        ...(form.commissionEnabled ? {
+          commissionTargetAmount: num(form.commissionTargetAmount),
+          commissionCurrency: form.commissionCurrency || "AED",
+          commissionBaseRatePct: num(form.commissionBaseRatePct),
+          commissionBonusPerStepAmount: num(form.commissionBonusPerStepAmount),
+          commissionBonusStepSize: num(form.commissionBonusStepSize),
+          commissionShortfallTier1Pct: num(form.commissionShortfallTier1Pct),
+          commissionShortfallTier1DeductionPct: num(form.commissionShortfallTier1DeductionPct),
+          commissionShortfallTier2Pct: num(form.commissionShortfallTier2Pct),
+          commissionShortfallTier2DeductionPct: num(form.commissionShortfallTier2DeductionPct),
+          commissionNotes: form.commissionNotes || undefined,
+        } : {}),
       } as any,
     });
   };
+
+  // Auto-suggest the commission toggle when the designation looks like a sales role.
+  // Only flips OFF→ON automatically; never disables a manually-enabled flag.
+  useEffect(() => {
+    if (!form.commissionEnabled && isSalesRole(form.designation)) {
+      setForm(p => ({ ...p, commissionEnabled: true }));
+    }
+  }, [form.designation]);
 
   return (
     <div className="space-y-4">
@@ -175,6 +218,31 @@ export function OfferLettersList() {
               <div className="space-y-1"><Label>Passport No.</Label><Input value={form.candidatePassportNo} onChange={e => setForm(p => ({ ...p, candidatePassportNo: e.target.value }))} /></div>
               <div className="space-y-1"><Label>Personal Email</Label><Input value={form.candidatePersonalEmail} onChange={e => setForm(p => ({ ...p, candidatePersonalEmail: e.target.value }))} /></div>
               <div className="space-y-1"><Label>Personal Phone</Label><Input value={form.candidatePersonalPhone} onChange={e => setForm(p => ({ ...p, candidatePersonalPhone: e.target.value }))} /></div>
+
+              <div className="col-span-2 mt-2 border rounded-lg p-3 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-semibold">Salesman Commission</Label>
+                    <p className="text-[11px] text-muted-foreground">Enable to attach a sales target, base rate, bonus and shortfall deductions to this letter.{isSalesRole(form.designation) && !form.commissionEnabled ? " Suggested for sales roles." : ""}</p>
+                  </div>
+                  <Switch checked={form.commissionEnabled} onCheckedChange={v => setForm(p => ({ ...p, commissionEnabled: v }))} data-testid="switch-commission-enabled" />
+                </div>
+                {form.commissionEnabled && (
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    <div className="space-y-1"><Label className="text-xs">Sales Target ({form.commissionCurrency || "AED"})</Label><Input type="number" value={form.commissionTargetAmount} onChange={e => setForm(p => ({ ...p, commissionTargetAmount: e.target.value }))} data-testid="input-commission-target" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Currency</Label><Input value={form.commissionCurrency} onChange={e => setForm(p => ({ ...p, commissionCurrency: e.target.value }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Base Commission Rate (%)</Label><Input type="number" step="0.01" value={form.commissionBaseRatePct} onChange={e => setForm(p => ({ ...p, commissionBaseRatePct: e.target.value }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Bonus per Step ({form.commissionCurrency || "AED"})</Label><Input type="number" value={form.commissionBonusPerStepAmount} onChange={e => setForm(p => ({ ...p, commissionBonusPerStepAmount: e.target.value }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Step Size (above target, {form.commissionCurrency || "AED"})</Label><Input type="number" value={form.commissionBonusStepSize} onChange={e => setForm(p => ({ ...p, commissionBonusStepSize: e.target.value }))} /></div>
+                    <div className="hidden md:block" />
+                    <div className="space-y-1"><Label className="text-xs">Tier 1 Shortfall (%)</Label><Input type="number" value={form.commissionShortfallTier1Pct} onChange={e => setForm(p => ({ ...p, commissionShortfallTier1Pct: e.target.value }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Tier 1 Salary Deduction (%)</Label><Input type="number" value={form.commissionShortfallTier1DeductionPct} onChange={e => setForm(p => ({ ...p, commissionShortfallTier1DeductionPct: e.target.value }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Tier 2 Achievement ≤ (%)</Label><Input type="number" value={form.commissionShortfallTier2Pct} onChange={e => setForm(p => ({ ...p, commissionShortfallTier2Pct: e.target.value }))} /></div>
+                    <div className="space-y-1"><Label className="text-xs">Tier 2 Salary Deduction (%)</Label><Input type="number" value={form.commissionShortfallTier2DeductionPct} onChange={e => setForm(p => ({ ...p, commissionShortfallTier2DeductionPct: e.target.value }))} /></div>
+                    <div className="space-y-1 col-span-2"><Label className="text-xs">Commission Notes (optional)</Label><Textarea rows={2} value={form.commissionNotes} onChange={e => setForm(p => ({ ...p, commissionNotes: e.target.value }))} /></div>
+                  </div>
+                )}
+              </div>
             </div>
             <Button className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.candidateName || !form.companyId || create.isPending} data-testid="button-create-offer">
               {create.isPending ? "Creating…" : "Create Draft"}

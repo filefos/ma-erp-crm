@@ -6303,6 +6303,28 @@ components:
         companyLegalName:
           type: string
           description: Snapshot of the company's legal name at issue time.
+        commissionEnabled:
+          type: boolean
+        commissionTargetAmount:
+          type: number
+        commissionCurrency:
+          type: string
+        commissionBaseRatePct:
+          type: number
+        commissionBonusPerStepAmount:
+          type: number
+        commissionBonusStepSize:
+          type: number
+        commissionShortfallTier1Pct:
+          type: number
+        commissionShortfallTier1DeductionPct:
+          type: number
+        commissionShortfallTier2Pct:
+          type: number
+        commissionShortfallTier2DeductionPct:
+          type: number
+        commissionNotes:
+          type: string
         createdAt:
           type: string
       required: [id, letterNumber, companyId, templateType, status, candidateName, version, createdAt]
@@ -6337,6 +6359,28 @@ components:
         workerType:
           type: string
         notes:
+          type: string
+        commissionEnabled:
+          type: boolean
+        commissionTargetAmount:
+          type: number
+        commissionCurrency:
+          type: string
+        commissionBaseRatePct:
+          type: number
+        commissionBonusPerStepAmount:
+          type: number
+        commissionBonusStepSize:
+          type: number
+        commissionShortfallTier1Pct:
+          type: number
+        commissionShortfallTier1DeductionPct:
+          type: number
+        commissionShortfallTier2Pct:
+          type: number
+        commissionShortfallTier2DeductionPct:
+          type: number
+        commissionNotes:
           type: string
       required: [companyId, templateType, candidateName]
 

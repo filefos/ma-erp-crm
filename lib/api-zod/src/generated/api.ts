@@ -4741,6 +4741,17 @@ export const ListOfferLettersResponseItem = zod.object({
     .string()
     .optional()
     .describe("Snapshot of the company's legal name at issue time."),
+  commissionEnabled: zod.boolean().optional(),
+  commissionTargetAmount: zod.number().optional(),
+  commissionCurrency: zod.string().optional(),
+  commissionBaseRatePct: zod.number().optional(),
+  commissionBonusPerStepAmount: zod.number().optional(),
+  commissionBonusStepSize: zod.number().optional(),
+  commissionShortfallTier1Pct: zod.number().optional(),
+  commissionShortfallTier1DeductionPct: zod.number().optional(),
+  commissionShortfallTier2Pct: zod.number().optional(),
+  commissionShortfallTier2DeductionPct: zod.number().optional(),
+  commissionNotes: zod.string().optional(),
   createdAt: zod.string(),
 });
 export const ListOfferLettersResponse = zod.array(ListOfferLettersResponseItem);
@@ -4763,6 +4774,17 @@ export const CreateOfferLetterBody = zod.object({
   allowances: zod.number().optional(),
   workerType: zod.string().optional(),
   notes: zod.string().optional(),
+  commissionEnabled: zod.boolean().optional(),
+  commissionTargetAmount: zod.number().optional(),
+  commissionCurrency: zod.string().optional(),
+  commissionBaseRatePct: zod.number().optional(),
+  commissionBonusPerStepAmount: zod.number().optional(),
+  commissionBonusStepSize: zod.number().optional(),
+  commissionShortfallTier1Pct: zod.number().optional(),
+  commissionShortfallTier1DeductionPct: zod.number().optional(),
+  commissionShortfallTier2Pct: zod.number().optional(),
+  commissionShortfallTier2DeductionPct: zod.number().optional(),
+  commissionNotes: zod.string().optional(),
 });
 
 /**
@@ -4811,6 +4833,17 @@ export const GetOfferLetterResponse = zod.object({
     .string()
     .optional()
     .describe("Snapshot of the company's legal name at issue time."),
+  commissionEnabled: zod.boolean().optional(),
+  commissionTargetAmount: zod.number().optional(),
+  commissionCurrency: zod.string().optional(),
+  commissionBaseRatePct: zod.number().optional(),
+  commissionBonusPerStepAmount: zod.number().optional(),
+  commissionBonusStepSize: zod.number().optional(),
+  commissionShortfallTier1Pct: zod.number().optional(),
+  commissionShortfallTier1DeductionPct: zod.number().optional(),
+  commissionShortfallTier2Pct: zod.number().optional(),
+  commissionShortfallTier2DeductionPct: zod.number().optional(),
+  commissionNotes: zod.string().optional(),
   createdAt: zod.string(),
 });
 
@@ -4836,6 +4869,17 @@ export const UpdateOfferLetterBody = zod.object({
   allowances: zod.number().optional(),
   workerType: zod.string().optional(),
   notes: zod.string().optional(),
+  commissionEnabled: zod.boolean().optional(),
+  commissionTargetAmount: zod.number().optional(),
+  commissionCurrency: zod.string().optional(),
+  commissionBaseRatePct: zod.number().optional(),
+  commissionBonusPerStepAmount: zod.number().optional(),
+  commissionBonusStepSize: zod.number().optional(),
+  commissionShortfallTier1Pct: zod.number().optional(),
+  commissionShortfallTier1DeductionPct: zod.number().optional(),
+  commissionShortfallTier2Pct: zod.number().optional(),
+  commissionShortfallTier2DeductionPct: zod.number().optional(),
+  commissionNotes: zod.string().optional(),
 });
 
 export const UpdateOfferLetterResponse = zod.object({
@@ -4877,6 +4921,17 @@ export const UpdateOfferLetterResponse = zod.object({
     .string()
     .optional()
     .describe("Snapshot of the company's legal name at issue time."),
+  commissionEnabled: zod.boolean().optional(),
+  commissionTargetAmount: zod.number().optional(),
+  commissionCurrency: zod.string().optional(),
+  commissionBaseRatePct: zod.number().optional(),
+  commissionBonusPerStepAmount: zod.number().optional(),
+  commissionBonusStepSize: zod.number().optional(),
+  commissionShortfallTier1Pct: zod.number().optional(),
+  commissionShortfallTier1DeductionPct: zod.number().optional(),
+  commissionShortfallTier2Pct: zod.number().optional(),
+  commissionShortfallTier2DeductionPct: zod.number().optional(),
+  commissionNotes: zod.string().optional(),
   createdAt: zod.string(),
 });
 
@@ -4931,6 +4986,17 @@ export const SetOfferLetterStatusResponse = zod.object({
     .string()
     .optional()
     .describe("Snapshot of the company's legal name at issue time."),
+  commissionEnabled: zod.boolean().optional(),
+  commissionTargetAmount: zod.number().optional(),
+  commissionCurrency: zod.string().optional(),
+  commissionBaseRatePct: zod.number().optional(),
+  commissionBonusPerStepAmount: zod.number().optional(),
+  commissionBonusStepSize: zod.number().optional(),
+  commissionShortfallTier1Pct: zod.number().optional(),
+  commissionShortfallTier1DeductionPct: zod.number().optional(),
+  commissionShortfallTier2Pct: zod.number().optional(),
+  commissionShortfallTier2DeductionPct: zod.number().optional(),
+  commissionNotes: zod.string().optional(),
   createdAt: zod.string(),
 });
 

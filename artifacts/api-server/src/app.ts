@@ -327,6 +327,18 @@ async function runMigrations() {
     // Letterhead snapshot — back-fill columns for older rows
     await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS letterhead_brand TEXT`);
     await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS company_legal_name TEXT`);
+    // Salesman commission module — additive, all nullable.
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_enabled BOOLEAN DEFAULT FALSE`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_target_amount DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_currency TEXT DEFAULT 'AED'`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_base_rate_pct DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_bonus_per_step_amount DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_bonus_step_size DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_shortfall_tier1_pct DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_shortfall_tier1_deduction_pct DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_shortfall_tier2_pct DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_shortfall_tier2_deduction_pct DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS commission_notes TEXT`);
     // Race-free letter number sequence — replaces fragile count(*)+1 numbering.
     // Initialize to max existing letter_number suffix so legacy rows don't
     // collide on the unique constraint.

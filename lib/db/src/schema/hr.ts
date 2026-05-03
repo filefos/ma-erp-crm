@@ -102,6 +102,18 @@ export const offerLettersTable = pgTable("offer_letters", {
   // deterministic even if the company is later renamed.
   letterheadBrand: text("letterhead_brand"),    // "prime" | "elite"
   companyLegalName: text("company_legal_name"), // legal name as of issue
+  // Salesman commission module — all optional, only rendered when enabled.
+  commissionEnabled: boolean("commission_enabled").default(false),
+  commissionTargetAmount: doublePrecision("commission_target_amount"),
+  commissionCurrency: text("commission_currency").default("AED"),
+  commissionBaseRatePct: doublePrecision("commission_base_rate_pct"),
+  commissionBonusPerStepAmount: doublePrecision("commission_bonus_per_step_amount"),
+  commissionBonusStepSize: doublePrecision("commission_bonus_step_size"),
+  commissionShortfallTier1Pct: doublePrecision("commission_shortfall_tier1_pct"),
+  commissionShortfallTier1DeductionPct: doublePrecision("commission_shortfall_tier1_deduction_pct"),
+  commissionShortfallTier2Pct: doublePrecision("commission_shortfall_tier2_pct"),
+  commissionShortfallTier2DeductionPct: doublePrecision("commission_shortfall_tier2_deduction_pct"),
+  commissionNotes: text("commission_notes"),
   // Status-stamps
   issuedAt: timestamp("issued_at"),
   acceptedAt: timestamp("accepted_at"),
