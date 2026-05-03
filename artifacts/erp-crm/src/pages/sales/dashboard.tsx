@@ -322,6 +322,59 @@ export function SalesDashboard() {
         <KPIWidget icon={Calendar}   tone="amber"  label="Quotes Expiring"    value={expiringQuotes.length}  sub="Within 7 days"                                                  href="/sales/quotations" testId="kpi-expiring" />
       </div>
 
+      {/* Top Customers row */}
+      <PanelCard
+        title="Top Customers"
+        subtitle="Ranked by total quotation value"
+        icon={Users}
+        data-testid="panel-top-customers"
+      >
+        {topClients.length === 0 ? (
+          <Empty>No customer quotations yet.</Empty>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" data-testid="grid-top-customers">
+            {topClients.map((c: any, i: number) => {
+              const href = c.leadId != null ? `/crm/leads/${c.leadId}` : "/crm/leads";
+              const pct = topClients[0].value > 0 ? Math.min(100, (c.value / topClients[0].value) * 100) : 0;
+              return (
+                <Link key={c.name} href={href} className="block group" data-testid={`card-customer-${i}`}>
+                  <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
+                    <div className="flex items-center gap-2.5 mb-2.5">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-[#1e6ab0] to-[#0f2d5a]" : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : "bg-[#1e6ab0]"}`}>
+                        {i + 1}
+                      </div>
+                      <Avatar name={c.name} size={32} />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold truncate text-[#0f2d5a] dark:text-white">{c.name}</div>
+                        <div className="text-[10px] text-muted-foreground">Customer</div>
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5 p-2.5 mb-2">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Quoted</div>
+                      <div className="text-lg font-bold text-[#0f2d5a] dark:text-white truncate">{fmtAED(c.value)}</div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mt-1.5">
+                        <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">
+                        {c.count} quote{c.count === 1 ? "" : "s"}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {c.lastDate ? new Date(c.lastDate).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-end text-[10px] text-[#1e6ab0] group-hover:underline">
+                      View <ArrowRight className="w-3 h-3 ml-0.5" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </PanelCard>
+
       {/* Salesperson Performance row */}
       <PanelCard
         title="Salesperson Performance"
@@ -333,7 +386,7 @@ export function SalesDashboard() {
           <Empty>No salesperson activity yet.</Empty>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" data-testid="grid-salesperson-performance">
-            {salesPerformance.map((row: any, i: number) => (
+            {salesPerformance.slice(0, 3).map((row: any, i: number) => (
               <Link
                 key={row.id}
                 href={`/crm/leaderboard#sp-${row.id}`}
@@ -388,59 +441,6 @@ export function SalesDashboard() {
                 </div>
               </Link>
             ))}
-          </div>
-        )}
-      </PanelCard>
-
-      {/* Top Customers row */}
-      <PanelCard
-        title="Top Customers"
-        subtitle="Ranked by total quotation value"
-        icon={Users}
-        data-testid="panel-top-customers"
-      >
-        {topClients.length === 0 ? (
-          <Empty>No customer quotations yet.</Empty>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" data-testid="grid-top-customers">
-            {topClients.map((c: any, i: number) => {
-              const href = c.leadId != null ? `/crm/leads/${c.leadId}` : "/crm/leads";
-              const pct = topClients[0].value > 0 ? Math.min(100, (c.value / topClients[0].value) * 100) : 0;
-              return (
-                <Link key={c.name} href={href} className="block group" data-testid={`card-customer-${i}`}>
-                  <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
-                    <div className="flex items-center gap-2.5 mb-2.5">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-[#1e6ab0] to-[#0f2d5a]" : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : "bg-[#1e6ab0]"}`}>
-                        {i + 1}
-                      </div>
-                      <Avatar name={c.name} size={32} />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-semibold truncate text-[#0f2d5a] dark:text-white">{c.name}</div>
-                        <div className="text-[10px] text-muted-foreground">Customer</div>
-                      </div>
-                    </div>
-                    <div className="rounded-lg bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5 p-2.5 mb-2">
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Quoted</div>
-                      <div className="text-lg font-bold text-[#0f2d5a] dark:text-white truncate">{fmtAED(c.value)}</div>
-                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mt-1.5">
-                        <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-muted-foreground">
-                        {c.count} quote{c.count === 1 ? "" : "s"}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {c.lastDate ? new Date(c.lastDate).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-end text-[10px] text-[#1e6ab0] group-hover:underline">
-                      View <ArrowRight className="w-3 h-3 ml-0.5" />
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
           </div>
         )}
       </PanelCard>
