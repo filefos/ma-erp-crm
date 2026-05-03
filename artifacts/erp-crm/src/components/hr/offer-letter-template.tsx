@@ -67,143 +67,157 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
   const totalSalary = (doc.basicSalary ?? 0) + (doc.allowances ?? 0);
   const dutyLine = doc.templateType === "labour" ? LABOUR_DUTY : STAFF_DUTY;
 
+  // Compact spacing tokens — the goal is to fit a full offer letter
+  // (compensation + commission + 11 company rules + signatures) into a
+  // single A4 page. All vertical rhythm flows through these constants.
+  const FS_BODY = 10.5;
+  const FS_SMALL = 9.5;
+  const FS_H2 = 12;
+  const LH = 1.35;
+  const headingStyle = { color: "#0f2d5a", fontSize: FS_H2, fontWeight: 700 as const, marginTop: 10, marginBottom: 4 };
+  const paraStyle = { fontSize: FS_BODY, lineHeight: LH, margin: 0 };
+
   return (
-    <div ref={ref} className="bg-white text-black mx-auto" style={{ width: "794px", minHeight: "1123px", padding: "48px 56px", fontFamily: "Georgia, 'Times New Roman', serif" }}>
-      {/* Letterhead — for Prime Max we use the official branded banner image
-          supplied by the company. Other companies fall back to a simple
-          logo + name layout that mirrors the same dimensions. */}
-      <div className="pb-3 border-b-4" style={{ borderColor: "#0f2d5a" }}>
-        {isPrime && !doc.companyLogoUrl ? (
-          <>
-            <img src="/erp-crm/prime-max-letterhead.png" alt={legalName} style={{ display: "block", width: "100%", height: "auto" }} crossOrigin="anonymous" />
-            <div className="flex justify-between items-end" style={{ marginTop: 6, fontSize: 11 }}>
-              <div style={{ color: "#1e6ab0" }}>Industrial Area · Sharjah · United Arab Emirates · TRN ____________</div>
-              <div className="text-right">
-                <div><strong>Ref:</strong> {doc.letterNumber}</div>
-                <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
-              </div>
+    <div
+      ref={ref}
+      className="bg-white text-black mx-auto"
+      style={{
+        width: "794px",
+        height: "1123px", // strict A4 — single page
+        padding: "28px 44px 0",
+        fontFamily: "Georgia, 'Times New Roman', serif",
+        display: "flex",
+        flexDirection: "column",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* Letterhead banner — strictly the official Prime Max letterhead.
+          The company name and contact details that previously sat next to
+          the logo have been moved to the footer so they don't compete with
+          the letter body. */}
+      <div style={{ borderBottom: "3px solid #0f2d5a", paddingBottom: 6 }}>
+        <img
+          src="/erp-crm/prime-max-letterhead.png"
+          alt={legalName}
+          style={{ display: "block", height: 78, width: "auto", margin: "0 auto" }}
+          crossOrigin="anonymous"
+        />
+        <div style={{ display: "table", width: "100%", marginTop: 4 }}>
+          <div style={{ display: "table-row" }}>
+            <div style={{ display: "table-cell", fontSize: FS_SMALL, color: "#1e6ab0" }}>
+              {legalName}
             </div>
-          </>
-        ) : (
-          <div style={{ display: "table", width: "100%" }}>
-            <div style={{ display: "table-row" }}>
-              <div style={{ display: "table-cell", verticalAlign: "middle", width: 100, paddingRight: 12 }}>
-                {doc.companyLogoUrl ? (
-                  <img src={doc.companyLogoUrl} alt={legalName} style={{ height: 80, width: "auto", maxWidth: 100, objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
-                ) : (
-                  <div style={{ height: 80, width: 80, background: "linear-gradient(135deg,#0f2d5a,#1e6ab0)", color: "white", fontWeight: 800, fontSize: 18, textAlign: "center", lineHeight: "80px", borderRadius: 8 }}>ELITE</div>
-                )}
-              </div>
-              <div style={{ display: "table-cell", verticalAlign: "middle" }}>
-                <div style={{ color: "#0f2d5a", fontSize: 20, fontWeight: 800, lineHeight: 1.15 }}>{legalName}</div>
-                <div style={{ color: "#1e6ab0", fontSize: 12, marginTop: 4 }}>Industrial Area · Sharjah · United Arab Emirates</div>
-                <div style={{ color: "#1e6ab0", fontSize: 12 }}>P.O.&nbsp;Box · Tel · Email · TRN</div>
-              </div>
-              <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: 11, width: 160 }}>
-                <div><strong>Ref:</strong> {doc.letterNumber}</div>
-                <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
-              </div>
+            <div style={{ display: "table-cell", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL }}>
+              <strong>Ref:</strong> {doc.letterNumber}&nbsp;&nbsp;·&nbsp;&nbsp;
+              <strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Subject — letter-spacing removed because html2canvas-pro renders it
-          with mismatched advance widths, causing characters to collide. */}
-      <h1 className="text-center mt-8 mb-4" style={{ color: "#0f2d5a", fontWeight: 700, fontSize: 18 }}>OFFER OF EMPLOYMENT</h1>
+      {/* Body wrapper — flex-1 pushes the footer to the bottom of the A4 page. */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 8 }}>
+        {/* Subject */}
+        <h1 style={{ textAlign: "center", color: "#0f2d5a", fontWeight: 700, fontSize: 14, margin: "4px 0 6px" }}>OFFER OF EMPLOYMENT</h1>
 
-      {/* Addressee */}
-      <div style={{ fontSize: 13 }} className="space-y-1">
-        <div><strong>To:</strong> {doc.candidateName}</div>
-        {doc.candidateNationality && <div><strong>Nationality:</strong> {doc.candidateNationality}</div>}
-        {doc.candidatePassportNo && <div><strong>Passport No:</strong> {doc.candidatePassportNo}</div>}
-      </div>
+        {/* Addressee — collapsed onto one line to save vertical space */}
+        <div style={{ fontSize: FS_BODY, lineHeight: LH }}>
+          <strong>To:</strong> {doc.candidateName}
+          {doc.candidateNationality && <> &nbsp;·&nbsp; <strong>Nationality:</strong> {doc.candidateNationality}</>}
+          {doc.candidatePassportNo && <> &nbsp;·&nbsp; <strong>Passport No:</strong> {doc.candidatePassportNo}</>}
+        </div>
 
-      <p className="mt-4" style={{ fontSize: 13, lineHeight: 1.6 }}>Dear {doc.candidateName.split(" ")[0]},</p>
-      <p style={{ fontSize: 13, lineHeight: 1.6 }}>
-        We are pleased to offer you the position of <strong>{doc.designation ?? "—"}</strong> with{" "}
-        <strong>{legalName}</strong>, on the terms and conditions set out below.
-      </p>
+        <p style={{ ...paraStyle, marginTop: 6 }}>Dear {doc.candidateName.split(" ")[0]},</p>
+        <p style={{ ...paraStyle, marginTop: 2 }}>
+          We are pleased to offer you the position of <strong>{doc.designation ?? "—"}</strong> with{" "}
+          <strong>{legalName}</strong>, on the terms and conditions set out below.
+        </p>
 
-      {/* Compensation */}
-      <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>1. Compensation</h2>
-      <table className="w-full mt-2" style={{ fontSize: 12, borderCollapse: "collapse" }}>
-        <tbody>
-          <tr><td style={{ padding: "6px 8px", border: "1px solid #ccd" }}>Basic Salary</td><td style={{ padding: "6px 8px", border: "1px solid #ccd", textAlign: "right" }}>AED {(doc.basicSalary ?? 0).toLocaleString()}</td></tr>
-          <tr><td style={{ padding: "6px 8px", border: "1px solid #ccd" }}>Allowances</td><td style={{ padding: "6px 8px", border: "1px solid #ccd", textAlign: "right" }}>AED {(doc.allowances ?? 0).toLocaleString()}</td></tr>
-          <tr style={{ background: "#f1f5fa" }}><td style={{ padding: "6px 8px", border: "1px solid #ccd", fontWeight: 700 }}>Gross Monthly Salary</td><td style={{ padding: "6px 8px", border: "1px solid #ccd", textAlign: "right", fontWeight: 700 }}>AED {totalSalary.toLocaleString()}</td></tr>
-        </tbody>
-      </table>
+        {/* Compensation */}
+        <h2 style={headingStyle}>1. Compensation</h2>
+        <table style={{ width: "100%", fontSize: FS_BODY, borderCollapse: "collapse" }}>
+          <tbody>
+            <tr><td style={{ padding: "3px 6px", border: "1px solid #ccd" }}>Basic Salary</td><td style={{ padding: "3px 6px", border: "1px solid #ccd", textAlign: "right" }}>AED {(doc.basicSalary ?? 0).toLocaleString()}</td></tr>
+            <tr><td style={{ padding: "3px 6px", border: "1px solid #ccd" }}>Allowances</td><td style={{ padding: "3px 6px", border: "1px solid #ccd", textAlign: "right" }}>AED {(doc.allowances ?? 0).toLocaleString()}</td></tr>
+            <tr style={{ background: "#f1f5fa" }}><td style={{ padding: "3px 6px", border: "1px solid #ccd", fontWeight: 700 }}>Gross Monthly Salary</td><td style={{ padding: "3px 6px", border: "1px solid #ccd", textAlign: "right", fontWeight: 700 }}>AED {totalSalary.toLocaleString()}</td></tr>
+          </tbody>
+        </table>
 
-      {/* Joining + duty timing */}
-      <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>2. Joining Date & Duty Timing</h2>
-      <p style={{ fontSize: 12, lineHeight: 1.6 }}><strong>Joining Date:</strong> {doc.joiningDate ? new Date(doc.joiningDate).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" }) : "To be agreed"}</p>
-      <p style={{ fontSize: 12, lineHeight: 1.6 }}>{dutyLine}</p>
+        {/* Joining + duty — single combined paragraph */}
+        <h2 style={headingStyle}>2. Joining Date &amp; Duty Timing</h2>
+        <p style={paraStyle}>
+          <strong>Joining Date:</strong> {doc.joiningDate ? new Date(doc.joiningDate).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" }) : "To be agreed"}. {dutyLine}
+        </p>
 
-      {/* Commission (only for sales roles) — slots in as section 3 when enabled */}
-      {doc.commissionEnabled && (() => {
-        const cur = doc.commissionCurrency || "AED";
-        const target = doc.commissionTargetAmount ?? 0;
-        const baseRate = doc.commissionBaseRatePct ?? 0;
-        const bonus = doc.commissionBonusPerStepAmount ?? 0;
-        const step = doc.commissionBonusStepSize ?? 0;
-        const t1 = doc.commissionShortfallTier1Pct ?? 0;
-        const t1Ded = doc.commissionShortfallTier1DeductionPct ?? 0;
-        const t2 = doc.commissionShortfallTier2Pct ?? 0;
-        const t2Ded = doc.commissionShortfallTier2DeductionPct ?? 0;
-        const baseAtTarget = (target * baseRate) / 100;
-        return (
+        {/* Commission */}
+        {doc.commissionEnabled && (() => {
+          const cur = doc.commissionCurrency || "AED";
+          const target = doc.commissionTargetAmount ?? 0;
+          const baseRate = doc.commissionBaseRatePct ?? 0;
+          const bonus = doc.commissionBonusPerStepAmount ?? 0;
+          const step = doc.commissionBonusStepSize ?? 0;
+          const t1 = doc.commissionShortfallTier1Pct ?? 0;
+          const t1Ded = doc.commissionShortfallTier1DeductionPct ?? 0;
+          const t2 = doc.commissionShortfallTier2Pct ?? 0;
+          const t2Ded = doc.commissionShortfallTier2DeductionPct ?? 0;
+          const baseAtTarget = (target * baseRate) / 100;
+          return (
+            <>
+              <h2 style={headingStyle}>3. Sales Target &amp; Commission</h2>
+              <p style={paraStyle}>
+                Monthly sales target of <strong>{cur} {target.toLocaleString()}</strong>. On achievement, base commission of <strong>{baseRate}%</strong> of total sales ({cur} {baseAtTarget.toLocaleString()} at target). For every additional <strong>{cur} {step.toLocaleString()}</strong> above target, a bonus of <strong>{cur} {bonus.toLocaleString()}</strong> is paid. Shortfall of <strong>{t1}%</strong> or more triggers a <strong>{t1Ded}%</strong> deduction; achievement of <strong>{t2}%</strong> or less triggers a <strong>{t2Ded}%</strong> deduction.
+              </p>
+              {doc.commissionNotes && (
+                <p style={{ ...paraStyle, marginTop: 2, whiteSpace: "pre-wrap" }}><em>{doc.commissionNotes}</em></p>
+              )}
+            </>
+          );
+        })()}
+
+        {/* Rules — compressed list */}
+        <h2 style={headingStyle}>{doc.commissionEnabled ? 4 : 3}. Company Rules &amp; Code of Conduct</h2>
+        <ol style={{ fontSize: FS_SMALL, lineHeight: LH, paddingLeft: 16, margin: 0 }}>
+          {COMPANY_RULES.map((r, i) => (
+            <li key={i} style={{ marginBottom: 1 }}>{r}</li>
+          ))}
+        </ol>
+
+        {doc.notes && (
           <>
-            <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>3. Sales Target & Commission</h2>
-            <p style={{ fontSize: 12, lineHeight: 1.6 }}>
-              You are assigned a monthly sales target of <strong>{cur} {target.toLocaleString()}</strong>. On achievement of the target you are entitled to a base commission of <strong>{baseRate}%</strong> of total sales (i.e. {cur} {baseAtTarget.toLocaleString()} at target).
-            </p>
-            <p style={{ fontSize: 12, lineHeight: 1.6 }}>
-              For every additional <strong>{cur} {step.toLocaleString()}</strong> in sales above the target, an additional bonus of <strong>{cur} {bonus.toLocaleString()}</strong> will be paid.
-            </p>
-            <p style={{ fontSize: 12, lineHeight: 1.6 }}>
-              If sales fall short of the target by <strong>{t1}%</strong> or more, a <strong>{t1Ded}%</strong> deduction will be applied to that month's salary. If achievement is <strong>{t2}%</strong> or less of the target, the deduction increases to <strong>{t2Ded}%</strong> of that month's salary.
-            </p>
-            {doc.commissionNotes && (
-              <p style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: "pre-wrap" }}><em>{doc.commissionNotes}</em></p>
-            )}
+            <h2 style={headingStyle}>{doc.commissionEnabled ? 5 : 4}. Additional Notes</h2>
+            <p style={{ ...paraStyle, whiteSpace: "pre-wrap" }}>{doc.notes}</p>
           </>
-        );
-      })()}
+        )}
 
-      {/* Rules */}
-      <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>{doc.commissionEnabled ? 4 : 3}. Company Rules & Code of Conduct</h2>
-      <p style={{ fontSize: 12, lineHeight: 1.55 }}>The following rules form part of this agreement and the employee is required to read, understand and sign them as a condition of employment:</p>
-      <ol style={{ fontSize: 12, lineHeight: 1.55, paddingLeft: 18, marginTop: 6 }}>
-        {COMPANY_RULES.map((r, i) => (
-          <li key={i} className="mb-1.5"><span style={{ fontWeight: 600 }}>{i + 1}.</span> {r}</li>
-        ))}
-      </ol>
+        {/* Acceptance + Signatures */}
+        <p style={{ ...paraStyle, marginTop: 8 }}>
+          Kindly sign and return a copy of this letter within seven (7) days of receipt to confirm your acceptance of this offer and the Company Rules above.
+        </p>
 
-      {doc.notes && (
-        <>
-          <h2 className="mt-5" style={{ color: "#0f2d5a", fontSize: 14, fontWeight: 700 }}>{doc.commissionEnabled ? 5 : 4}. Additional Notes</h2>
-          <p style={{ fontSize: 12, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{doc.notes}</p>
-        </>
-      )}
-
-      {/* Acceptance */}
-      <p className="mt-6" style={{ fontSize: 12, lineHeight: 1.55 }}>
-        Kindly sign and return a copy of this letter within seven (7) days of receipt to confirm your acceptance of this offer and the Company Rules & Code of Conduct above.
-      </p>
-
-      {/* Signatures */}
-      <div className="grid grid-cols-2 gap-12 mt-10" style={{ fontSize: 12 }}>
-        <div>
-          <div style={{ borderTop: "1px solid #555", paddingTop: 6 }}>For and on behalf of</div>
-          <div style={{ fontWeight: 700, color: "#0f2d5a" }}>{legalName}</div>
-          <div className="mt-12" style={{ borderTop: "1px solid #555", paddingTop: 6 }}>Authorised Signatory</div>
+        <div style={{ display: "table", width: "100%", marginTop: 14, fontSize: FS_BODY }}>
+          <div style={{ display: "table-row" }}>
+            <div style={{ display: "table-cell", width: "50%", paddingRight: 24, verticalAlign: "top" }}>
+              <div style={{ borderTop: "1px solid #555", paddingTop: 4 }}>For and on behalf of</div>
+              <div style={{ fontWeight: 700, color: "#0f2d5a" }}>{legalName}</div>
+              <div style={{ borderTop: "1px solid #555", paddingTop: 4, marginTop: 28 }}>Authorised Signatory</div>
+            </div>
+            <div style={{ display: "table-cell", width: "50%", paddingLeft: 24, verticalAlign: "top" }}>
+              <div style={{ borderTop: "1px solid #555", paddingTop: 4 }}>Accepted by</div>
+              <div style={{ fontWeight: 700 }}>{doc.candidateName}</div>
+              <div style={{ borderTop: "1px solid #555", paddingTop: 4, marginTop: 28 }}>Signature &amp; Date</div>
+            </div>
+          </div>
         </div>
-        <div>
-          <div style={{ borderTop: "1px solid #555", paddingTop: 6 }}>Accepted by</div>
-          <div style={{ fontWeight: 700 }}>{doc.candidateName}</div>
-          <div className="mt-12" style={{ borderTop: "1px solid #555", paddingTop: 6 }}>Signature & Date</div>
-        </div>
+
+        {/* Spacer pushes footer to the bottom of the page */}
+        <div style={{ flex: 1, minHeight: 8 }} />
+      </div>
+
+      {/* Footer — address, contact and TRN moved here per request so the
+          header stays clean and the body has more vertical room. */}
+      <div style={{ borderTop: "2px solid #0f2d5a", paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: "#1e6ab0", textAlign: "center", lineHeight: 1.3 }}>
+        <div>Industrial Area · Sharjah · United Arab Emirates &nbsp;·&nbsp; P.O. Box ____________ &nbsp;·&nbsp; TRN ____________</div>
+        <div>Tel: +971 ____________ &nbsp;·&nbsp; Email: info@primemaxprefab.ae &nbsp;·&nbsp; Web: www.primemaxprefab.ae</div>
       </div>
     </div>
   );
