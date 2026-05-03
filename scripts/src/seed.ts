@@ -24,7 +24,7 @@ const MODULES = [
   "projects",
   "employees", "attendance",
   "users", "companies", "departments", "roles", "audit_logs",
-  "emails", "whatsapp",
+  "emails", "whatsapp", "email_settings",
 ] as const;
 
 type PermSet = { canView?: boolean; canCreate?: boolean; canEdit?: boolean; canApprove?: boolean; canDelete?: boolean; canExport?: boolean; canPrint?: boolean };
@@ -133,7 +133,7 @@ async function seed() {
     permRows.push({ roleId: roleByCode("viewer").id, module: m, ...viewOnly() });
   }
   // Lock down admin-only modules for non-admin roles
-  const adminOnly = ["users", "companies", "departments", "roles", "audit_logs"];
+  const adminOnly = ["users", "companies", "departments", "roles", "audit_logs", "email_settings"];
   for (const r of permRows) {
     if (adminOnly.includes(r.module) && !["super_admin", "company_admin"].includes(roles.find(x => x.id === r.roleId)!.code)) {
       r.canCreate = false; r.canEdit = false; r.canDelete = false; r.canApprove = false;

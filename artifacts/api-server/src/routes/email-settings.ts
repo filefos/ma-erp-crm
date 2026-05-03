@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, emailSettingsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { requireAuth, inScope } from "../middlewares/auth";
+import { requireAuth, inScope, requirePermission } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 import nodemailer from "nodemailer";
 
@@ -26,7 +26,7 @@ function resolveCompanyId(req: any, res: any): number | null {
   return id;
 }
 
-router.get("/email-settings", async (req, res): Promise<void> => {
+router.get("/email-settings", requirePermission("email_settings", "view"), async (req, res): Promise<void> => {
   const companyId = resolveCompanyId(req, res);
   if (companyId == null) return;
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
@@ -35,7 +35,7 @@ router.get("/email-settings", async (req, res): Promise<void> => {
   res.json(masked);
 });
 
-router.post("/email-settings", async (req, res): Promise<void> => {
+router.post("/email-settings", requirePermission("email_settings", "edit"), async (req, res): Promise<void> => {
   const companyId = resolveCompanyId(req, res);
   if (companyId == null) return;
   const payload = {
@@ -65,7 +65,7 @@ router.post("/email-settings", async (req, res): Promise<void> => {
   res.json(masked);
 });
 
-router.post("/email-settings/test-smtp", async (req, res): Promise<void> => {
+router.post("/email-settings/test-smtp", requirePermission("email_settings", "view"), async (req, res): Promise<void> => {
   const companyId = resolveCompanyId(req, res);
   if (companyId == null) return;
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
@@ -80,7 +80,6 @@ router.post("/email-settings/test-smtp", async (req, res): Promise<void> => {
       secure: settings.smtpSecure === "ssl",
       requireTLS: settings.smtpSecure === "starttls",
       auth: { user: settings.smtpUser, pass: settings.smtpPass },
-      tls: { rejectUnauthorized: false },
     });
     await transport.verify();
     res.json({ success: true, message: "SMTP connection successful!" });
@@ -89,7 +88,7 @@ router.post("/email-settings/test-smtp", async (req, res): Promise<void> => {
   }
 });
 
-router.post("/email-settings/test-imap", async (req, res): Promise<void> => {
+router.post("/email-settings/test-imap", requirePermission("email_settings", "view"), async (req, res): Promise<void> => {
   const companyId = resolveCompanyId(req, res);
   if (companyId == null) return;
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
@@ -105,7 +104,6 @@ router.post("/email-settings/test-imap", async (req, res): Promise<void> => {
       secure: settings.imapSecure === "ssl",
       auth: { user: settings.imapUser, pass: settings.imapPass },
       logger: false,
-      tls: { rejectUnauthorized: false },
     });
     await client.connect();
     await client.logout();
@@ -115,7 +113,7 @@ router.post("/email-settings/test-imap", async (req, res): Promise<void> => {
   }
 });
 
-router.delete("/email-settings", async (req, res): Promise<void> => {
+router.delete("/email-settings", requirePermission("email_settings", "delete"), async (req, res): Promise<void> => {
   const companyId = resolveCompanyId(req, res);
   if (companyId == null) return;
   await db.delete(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));

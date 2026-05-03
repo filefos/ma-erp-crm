@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, emailsTable, emailSettingsTable } from "@workspace/db";
 import { eq, sql, and, or } from "drizzle-orm";
-import { requireAuth, scopeFilter, inScope, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, scopeFilter, inScope, requireBodyCompanyAccess, requirePermission } from "../middlewares/auth";
 import nodemailer from "nodemailer";
 import { logger } from "../lib/logger";
 
@@ -17,11 +17,10 @@ function getTransporter() {
   return nodemailer.createTransport({
     host, port, secure: port === 465,
     auth: { user, pass },
-    tls: { rejectUnauthorized: false },
   });
 }
 
-router.get("/emails", requireAuth, async (req, res): Promise<void> => {
+router.get("/emails", requirePermission("emails", "view"), async (req, res): Promise<void> => {
   const { folder, companyId, search } = req.query;
   let rows = await db.select().from(emailsTable).orderBy(sql`${emailsTable.createdAt} desc`);
 
@@ -44,7 +43,7 @@ router.get("/emails", requireAuth, async (req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/emails", requireAuth, requireBodyCompanyAccess(), async (req, res): Promise<void> => {
+router.post("/emails", requirePermission("emails", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const userId = req.user?.id;
   const isSend = data.action === "send";
@@ -68,7 +67,6 @@ router.post("/emails", requireAuth, requireBodyCompanyAccess(), async (req, res)
           secure: settings.smtpSecure === "ssl",
           requireTLS: settings.smtpSecure === "starttls",
           auth: { user: settings.smtpUser, pass: settings.smtpPass },
-          tls: { rejectUnauthorized: false },
         });
         // override fromAddress/fromName from saved settings
         Object.assign(data, {
@@ -148,7 +146,7 @@ router.post("/emails", requireAuth, requireBodyCompanyAccess(), async (req, res)
   res.status(201).json(email);
 });
 
-router.get("/emails/:id/attachments/:idx", requireAuth, async (req, res): Promise<void> => {
+router.get("/emails/:id/attachments/:idx", requirePermission("emails", "view"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   const idx = parseInt(req.params.idx, 10);
   const [email] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
@@ -165,7 +163,7 @@ router.get("/emails/:id/attachments/:idx", requireAuth, async (req, res): Promis
   res.send(buf);
 });
 
-router.get("/emails/:id", requireAuth, async (req, res): Promise<void> => {
+router.get("/emails/:id", requirePermission("emails", "view"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [email] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!email) { res.status(404).json({ error: "Not found" }); return; }
@@ -173,7 +171,7 @@ router.get("/emails/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(email);
 });
 
-router.patch("/emails/:id", requireAuth, async (req, res): Promise<void> => {
+router.patch("/emails/:id", requirePermission("emails", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
@@ -187,7 +185,7 @@ router.patch("/emails/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(email);
 });
 
-router.delete("/emails/:id", requireAuth, async (req, res): Promise<void> => {
+router.delete("/emails/:id", requirePermission("emails", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
@@ -200,7 +198,7 @@ router.delete("/emails/:id", requireAuth, async (req, res): Promise<void> => {
   res.json({ success: true });
 });
 
-router.post("/emails/sync", requireAuth, requireBodyCompanyAccess(), async (req, res): Promise<void> => {
+router.post("/emails/sync", requirePermission("emails", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const companyId = req.body.companyId ?? (req.user as any)?.companyId ?? 1;
   if (!inScope(req, companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
@@ -217,7 +215,6 @@ router.post("/emails/sync", requireAuth, requireBodyCompanyAccess(), async (req,
       secure: settings.imapSecure === "ssl",
       auth: { user: settings.imapUser, pass: settings.imapPass },
       logger: false,
-      tls: { rejectUnauthorized: false },
     });
 
     await client.connect();

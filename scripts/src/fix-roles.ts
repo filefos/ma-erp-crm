@@ -10,6 +10,7 @@ const MODULES = [
   "projects",
   "employees", "attendance",
   "users", "companies", "departments", "roles", "audit_logs",
+  "emails", "whatsapp", "email_settings",
 ] as const;
 
 type PermSet = { canView?: boolean; canCreate?: boolean; canEdit?: boolean; canApprove?: boolean; canDelete?: boolean; canExport?: boolean; canPrint?: boolean };
@@ -44,7 +45,7 @@ async function main() {
 
   await db.delete(permissionsTable);
 
-  const adminOnly = ["users", "companies", "departments", "roles", "audit_logs"];
+  const adminOnly = ["users", "companies", "departments", "roles", "audit_logs", "email_settings"];
   const permRows: Array<{ roleId: number; module: string } & PermSet> = [];
 
   for (const m of MODULES) {
