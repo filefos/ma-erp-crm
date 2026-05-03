@@ -99,17 +99,17 @@ export function OfferLetterDetail({ id }: Props) {
         templateType: offer.templateType ?? "staff",
         workerType: (offer as any).workerType ?? "staff",
         notes: offer.notes ?? "",
-        commissionEnabled: !!(offer as any).commissionEnabled,
-        commissionTargetAmount: (offer as any).commissionTargetAmount ?? "",
-        commissionCurrency: (offer as any).commissionCurrency ?? "AED",
-        commissionBaseRatePct: (offer as any).commissionBaseRatePct ?? "",
-        commissionBonusPerStepAmount: (offer as any).commissionBonusPerStepAmount ?? "",
-        commissionBonusStepSize: (offer as any).commissionBonusStepSize ?? "",
-        commissionShortfallTier1Pct: (offer as any).commissionShortfallTier1Pct ?? "",
-        commissionShortfallTier1DeductionPct: (offer as any).commissionShortfallTier1DeductionPct ?? "",
-        commissionShortfallTier2Pct: (offer as any).commissionShortfallTier2Pct ?? "",
-        commissionShortfallTier2DeductionPct: (offer as any).commissionShortfallTier2DeductionPct ?? "",
-        commissionNotes: (offer as any).commissionNotes ?? "",
+        commissionEnabled: !!offer.commissionEnabled,
+        commissionTargetAmount: offer.commissionTargetAmount ?? "",
+        commissionCurrency: offer.commissionCurrency ?? "AED",
+        commissionBaseRatePct: offer.commissionBaseRatePct ?? "",
+        commissionBonusPerStepAmount: offer.commissionBonusPerStepAmount ?? "",
+        commissionBonusStepSize: offer.commissionBonusStepSize ?? "",
+        commissionShortfallTier1Pct: offer.commissionShortfallTier1Pct ?? "",
+        commissionShortfallTier1DeductionPct: offer.commissionShortfallTier1DeductionPct ?? "",
+        commissionShortfallTier2Pct: offer.commissionShortfallTier2Pct ?? "",
+        commissionShortfallTier2DeductionPct: offer.commissionShortfallTier2DeductionPct ?? "",
+        commissionNotes: offer.commissionNotes ?? "",
       });
     }
   }, [offer, editing]);
@@ -155,6 +155,17 @@ export function OfferLetterDetail({ id }: Props) {
         [k, p[k] === "" || p[k] == null ? v : p[k]])),
     }));
   };
+
+  // Auto-suggest the commission toggle when designation looks like a sales role.
+  // Mirrors the create dialog: only flips OFF -> ON, never disables.
+  useEffect(() => {
+    if (!editing || !isDraft) return;
+    const t = String(draft.designation ?? "").toLowerCase();
+    const looksLikeSales = /\bsales(man|person|woman|\s+executive)?\b/.test(t) || t.includes("sales");
+    if (looksLikeSales && !draft.commissionEnabled) {
+      enableCommissionWithDefaults();
+    }
+  }, [draft.designation, editing, isDraft]);
 
   const downloadPdf = async () => {
     if (!previewRef.current) return;
@@ -286,7 +297,7 @@ export function OfferLetterDetail({ id }: Props) {
                     data-testid="switch-detail-commission-enabled"
                   />
                 ) : (
-                  <Badge variant="outline">{(offer as any).commissionEnabled ? "Enabled" : "Disabled"}</Badge>
+                  <Badge variant="outline">{offer.commissionEnabled ? "Enabled" : "Disabled"}</Badge>
                 )}
               </div>
               {editing && isDraft && draft.commissionEnabled && (
@@ -307,12 +318,12 @@ export function OfferLetterDetail({ id }: Props) {
                   </div>
                 </div>
               )}
-              {!(editing && isDraft) && (offer as any).commissionEnabled && (
+              {!(editing && isDraft) && offer.commissionEnabled && (
                 <div className="text-xs text-muted-foreground mt-2 grid grid-cols-2 gap-1">
-                  <div>Target: {(offer as any).commissionCurrency ?? "AED"} {Number((offer as any).commissionTargetAmount ?? 0).toLocaleString()}</div>
-                  <div>Base rate: {(offer as any).commissionBaseRatePct ?? 0}%</div>
-                  <div>Bonus: {(offer as any).commissionCurrency ?? "AED"} {Number((offer as any).commissionBonusPerStepAmount ?? 0).toLocaleString()} / {(offer as any).commissionCurrency ?? "AED"} {Number((offer as any).commissionBonusStepSize ?? 0).toLocaleString()} above target</div>
-                  <div>Shortfall: {(offer as any).commissionShortfallTier1DeductionPct ?? 0}% @ {(offer as any).commissionShortfallTier1Pct ?? 0}% short, {(offer as any).commissionShortfallTier2DeductionPct ?? 0}% @ ≤{(offer as any).commissionShortfallTier2Pct ?? 0}% achievement</div>
+                  <div>Target: {offer.commissionCurrency ?? "AED"} {Number(offer.commissionTargetAmount ?? 0).toLocaleString()}</div>
+                  <div>Base rate: {offer.commissionBaseRatePct ?? 0}%</div>
+                  <div>Bonus: {offer.commissionCurrency ?? "AED"} {Number(offer.commissionBonusPerStepAmount ?? 0).toLocaleString()} / {offer.commissionCurrency ?? "AED"} {Number(offer.commissionBonusStepSize ?? 0).toLocaleString()} above target</div>
+                  <div>Shortfall: {offer.commissionShortfallTier1DeductionPct ?? 0}% @ {offer.commissionShortfallTier1Pct ?? 0}% short, {offer.commissionShortfallTier2DeductionPct ?? 0}% @ ≤{offer.commissionShortfallTier2Pct ?? 0}% achievement</div>
                 </div>
               )}
             </div>
@@ -346,17 +357,17 @@ export function OfferLetterDetail({ id }: Props) {
                     letterhead: resolvedLetterhead,
                     issuedAt: offer.issuedAt,
                     notes: editing && isDraft ? draft.notes : offer.notes,
-                    commissionEnabled: editing && isDraft ? !!draft.commissionEnabled : !!(offer as any).commissionEnabled,
-                    commissionTargetAmount: editing && isDraft ? Number(draft.commissionTargetAmount || 0) : (offer as any).commissionTargetAmount,
-                    commissionCurrency: editing && isDraft ? draft.commissionCurrency : (offer as any).commissionCurrency,
-                    commissionBaseRatePct: editing && isDraft ? Number(draft.commissionBaseRatePct || 0) : (offer as any).commissionBaseRatePct,
-                    commissionBonusPerStepAmount: editing && isDraft ? Number(draft.commissionBonusPerStepAmount || 0) : (offer as any).commissionBonusPerStepAmount,
-                    commissionBonusStepSize: editing && isDraft ? Number(draft.commissionBonusStepSize || 0) : (offer as any).commissionBonusStepSize,
-                    commissionShortfallTier1Pct: editing && isDraft ? Number(draft.commissionShortfallTier1Pct || 0) : (offer as any).commissionShortfallTier1Pct,
-                    commissionShortfallTier1DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier1DeductionPct || 0) : (offer as any).commissionShortfallTier1DeductionPct,
-                    commissionShortfallTier2Pct: editing && isDraft ? Number(draft.commissionShortfallTier2Pct || 0) : (offer as any).commissionShortfallTier2Pct,
-                    commissionShortfallTier2DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier2DeductionPct || 0) : (offer as any).commissionShortfallTier2DeductionPct,
-                    commissionNotes: editing && isDraft ? draft.commissionNotes : (offer as any).commissionNotes,
+                    commissionEnabled: editing && isDraft ? !!draft.commissionEnabled : !!offer.commissionEnabled,
+                    commissionTargetAmount: editing && isDraft ? Number(draft.commissionTargetAmount || 0) : offer.commissionTargetAmount,
+                    commissionCurrency: editing && isDraft ? draft.commissionCurrency : offer.commissionCurrency,
+                    commissionBaseRatePct: editing && isDraft ? Number(draft.commissionBaseRatePct || 0) : offer.commissionBaseRatePct,
+                    commissionBonusPerStepAmount: editing && isDraft ? Number(draft.commissionBonusPerStepAmount || 0) : offer.commissionBonusPerStepAmount,
+                    commissionBonusStepSize: editing && isDraft ? Number(draft.commissionBonusStepSize || 0) : offer.commissionBonusStepSize,
+                    commissionShortfallTier1Pct: editing && isDraft ? Number(draft.commissionShortfallTier1Pct || 0) : offer.commissionShortfallTier1Pct,
+                    commissionShortfallTier1DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier1DeductionPct || 0) : offer.commissionShortfallTier1DeductionPct,
+                    commissionShortfallTier2Pct: editing && isDraft ? Number(draft.commissionShortfallTier2Pct || 0) : offer.commissionShortfallTier2Pct,
+                    commissionShortfallTier2DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier2DeductionPct || 0) : offer.commissionShortfallTier2DeductionPct,
+                    commissionNotes: editing && isDraft ? draft.commissionNotes : offer.commissionNotes,
                   }}
                 />
               </div>
