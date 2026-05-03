@@ -1717,24 +1717,32 @@ export interface WhatsappLinkSearchResponse {
 }
 
 export type LeadUpdateResponse = Lead & {
-  /** Quotation auto-created (or pre-existing) when status flipped to "won". */
-  generatedQuotationId?: number;
-  /** Soft warnings about auto-creation (e.g. missing company). */
+  /** Linked quotation id — set whether newly created or pre-existing. */
+  quotationId?: number;
+  /** True if a new quotation was created during this update. */
+  createdQuotation?: boolean;
+  /** Soft warnings about auto-creation (e.g. missing company / contact info). */
   warnings?: string[];
 };
 
 export type DealUpdateResponse = Deal & {
-  generatedProformaInvoiceId?: number;
-  generatedTaxInvoiceId?: number;
-  generatedDeliveryNoteId?: number;
+  /** Linked Proforma Invoice id (newly created or pre-existing). */
+  proformaInvoiceId?: number;
+  /** Linked Tax Invoice id (newly created or pre-existing). */
+  taxInvoiceId?: number;
+  /** Linked Delivery Note id (newly created or pre-existing). */
+  deliveryNoteId?: number;
+  createdProformaInvoice?: boolean;
+  createdTaxInvoice?: boolean;
+  createdDeliveryNote?: boolean;
   warnings?: string[];
 };
 
 export type QuotationApproveResponse = Quotation & {
-  /** Deal auto-created on approval (only set when a new deal was created). */
-  generatedDealId?: number;
   /** Resolved deal id linked to this quotation (newly created or pre-existing). */
   dealId?: number;
+  /** True if a new deal was created on this approval. */
+  createdDeal?: boolean;
   warnings?: string[];
 };
 

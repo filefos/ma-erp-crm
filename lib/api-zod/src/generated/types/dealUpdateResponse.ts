@@ -8,8 +8,14 @@
 import type { Deal } from "./deal";
 
 export type DealUpdateResponse = Deal & {
-  generatedProformaInvoiceId?: number;
-  generatedTaxInvoiceId?: number;
-  generatedDeliveryNoteId?: number;
+  /** Linked Proforma Invoice id (newly created or pre-existing). */
+  proformaInvoiceId?: number;
+  /** Linked Tax Invoice id (newly created or pre-existing). */
+  taxInvoiceId?: number;
+  /** Linked Delivery Note id (newly created or pre-existing). */
+  deliveryNoteId?: number;
+  createdProformaInvoice?: boolean;
+  createdTaxInvoice?: boolean;
+  createdDeliveryNote?: boolean;
   warnings?: string[];
 };

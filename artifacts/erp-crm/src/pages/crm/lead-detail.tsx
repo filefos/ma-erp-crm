@@ -76,7 +76,7 @@ export function LeadDetail({ id }: Props) {
         queryClient.invalidateQueries({ queryKey: getGetLeadQueryKey(lid) });
         setEditing(false);
         toast({ title: "Lead updated" });
-        if (resp?.generatedQuotationId) {
+        if (resp?.createdQuotation && resp?.quotationId) {
           toast({
             title: "Draft Quotation auto-created",
             description: "Open the new quotation to add line items and send it.",

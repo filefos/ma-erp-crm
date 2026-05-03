@@ -8,9 +8,9 @@
 import type { Quotation } from "./quotation";
 
 export type QuotationApproveResponse = Quotation & {
-  /** Deal auto-created on approval (only set when a new deal was created). */
-  generatedDealId?: number;
   /** Resolved deal id linked to this quotation (newly created or pre-existing). */
   dealId?: number;
+  /** True if a new deal was created on this approval. */
+  createdDeal?: boolean;
   warnings?: string[];
 };

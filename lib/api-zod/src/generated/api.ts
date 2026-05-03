@@ -548,16 +548,22 @@ export const UpdateLeadResponse = zod
   })
   .and(
     zod.object({
-      generatedQuotationId: zod
+      quotationId: zod
         .number()
         .optional()
         .describe(
-          'Quotation auto-created (or pre-existing) when status flipped to \"won\".',
+          "Linked quotation id — set whether newly created or pre-existing.",
         ),
+      createdQuotation: zod
+        .boolean()
+        .optional()
+        .describe("True if a new quotation was created during this update."),
       warnings: zod
         .array(zod.string())
         .optional()
-        .describe("Soft warnings about auto-creation (e.g. missing company)."),
+        .describe(
+          "Soft warnings about auto-creation (e.g. missing company \/ contact info).",
+        ),
     }),
   );
 
@@ -1037,9 +1043,23 @@ export const UpdateDealResponse = zod
   })
   .and(
     zod.object({
-      generatedProformaInvoiceId: zod.number().optional(),
-      generatedTaxInvoiceId: zod.number().optional(),
-      generatedDeliveryNoteId: zod.number().optional(),
+      proformaInvoiceId: zod
+        .number()
+        .optional()
+        .describe(
+          "Linked Proforma Invoice id (newly created or pre-existing).",
+        ),
+      taxInvoiceId: zod
+        .number()
+        .optional()
+        .describe("Linked Tax Invoice id (newly created or pre-existing)."),
+      deliveryNoteId: zod
+        .number()
+        .optional()
+        .describe("Linked Delivery Note id (newly created or pre-existing)."),
+      createdProformaInvoice: zod.boolean().optional(),
+      createdTaxInvoice: zod.boolean().optional(),
+      createdDeliveryNote: zod.boolean().optional(),
       warnings: zod.array(zod.string()).optional(),
     }),
   );
@@ -1453,18 +1473,16 @@ export const ApproveQuotationResponse = zod
   })
   .and(
     zod.object({
-      generatedDealId: zod
-        .number()
-        .optional()
-        .describe(
-          "Deal auto-created on approval (only set when a new deal was created).",
-        ),
       dealId: zod
         .number()
         .optional()
         .describe(
           "Resolved deal id linked to this quotation (newly created or pre-existing).",
         ),
+      createdDeal: zod
+        .boolean()
+        .optional()
+        .describe("True if a new deal was created on this approval."),
       warnings: zod.array(zod.string()).optional(),
     }),
   );

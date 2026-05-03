@@ -462,7 +462,7 @@ paths:
               $ref: "#/components/schemas/CreateLeadBody"
       responses:
         "200":
-          description: Lead updated. When status transitions to "won", a draft quotation is auto-created (idempotent) and its id returned in generatedQuotationId.
+          description: Lead updated. When status transitions to "won", a draft quotation is auto-created (idempotent) and its id returned in quotationId.
           content:
             application/json:
               schema:
@@ -6707,26 +6707,38 @@ components:
         - $ref: "#/components/schemas/Lead"
         - type: object
           properties:
-            generatedQuotationId:
+            quotationId:
               type: integer
-              description: Quotation auto-created (or pre-existing) when status flipped to "won".
+              description: Linked quotation id — set whether newly created or pre-existing.
+            createdQuotation:
+              type: boolean
+              description: True if a new quotation was created during this update.
             warnings:
               type: array
               items:
                 type: string
-              description: Soft warnings about auto-creation (e.g. missing company).
+              description: Soft warnings about auto-creation (e.g. missing company / contact info).
 
     DealUpdateResponse:
       allOf:
         - $ref: "#/components/schemas/Deal"
         - type: object
           properties:
-            generatedProformaInvoiceId:
+            proformaInvoiceId:
               type: integer
-            generatedTaxInvoiceId:
+              description: Linked Proforma Invoice id (newly created or pre-existing).
+            taxInvoiceId:
               type: integer
-            generatedDeliveryNoteId:
+              description: Linked Tax Invoice id (newly created or pre-existing).
+            deliveryNoteId:
               type: integer
+              description: Linked Delivery Note id (newly created or pre-existing).
+            createdProformaInvoice:
+              type: boolean
+            createdTaxInvoice:
+              type: boolean
+            createdDeliveryNote:
+              type: boolean
             warnings:
               type: array
               items:
@@ -6737,12 +6749,12 @@ components:
         - $ref: "#/components/schemas/Quotation"
         - type: object
           properties:
-            generatedDealId:
-              type: integer
-              description: Deal auto-created on approval (only set when a new deal was created).
             dealId:
               type: integer
               description: Resolved deal id linked to this quotation (newly created or pre-existing).
+            createdDeal:
+              type: boolean
+              description: True if a new deal was created on this approval.
             warnings:
               type: array
               items:

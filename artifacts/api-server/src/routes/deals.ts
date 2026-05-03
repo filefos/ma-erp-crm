@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   db, dealsTable, usersTable, companiesTable,
-  quotationsTable, quotationItemsTable,
+  quotationsTable, quotationItemsTable, leadsTable,
   proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable,
 } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
@@ -10,56 +10,73 @@ import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, 
 const router = Router();
 router.use(requireAuth);
 
+// Tx-aware sequential document number, mirroring the genDocNumber helper in
+// routes/invoices.ts. Kept inline so the count + insert run in the same tx.
+async function genDocNum(tx: any, companyId: number, type: string, table: any) {
+  const [co] = await tx.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, companyId));
+  const prefix = co?.prefix ?? "PM";
+  const count = await tx.select({ count: sql<number>`count(*)::int` }).from(table);
+  const num = (count[0]?.count ?? 0) + 1;
+  return `${prefix}-${type}-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
+}
+
+export type ClosingDocsResult = {
+  // Always-present linkage IDs (whether the row was just created or already existed).
+  proformaInvoiceId?: number;
+  taxInvoiceId?: number;
+  deliveryNoteId?: number;
+  // Flags identifying which rows this call newly created (for UI toasts / audit).
+  createdProformaInvoice: boolean;
+  createdTaxInvoice: boolean;
+  createdDeliveryNote: boolean;
+  warnings: string[];
+};
+
 // Auto-create downstream documents (PI + Tax Invoice + Delivery Note) when a deal closes won.
-// Idempotent: each document is only created if not already present for the source quotation.
+// Idempotent: each document is only created if not already present for the source quotation,
+// and the existing IDs are returned regardless so callers can always link to them.
 async function autoCreateClosingDocs(
   deal: typeof dealsTable.$inferSelect,
   preparedById: number | undefined,
-): Promise<{
-  generatedProformaInvoiceId?: number;
-  generatedTaxInvoiceId?: number;
-  generatedDeliveryNoteId?: number;
-  warnings: string[];
-}> {
+): Promise<ClosingDocsResult> {
   return await db.transaction(async (tx) => {
-    const warnings: string[] = [];
-    const result: {
-      generatedProformaInvoiceId?: number;
-      generatedTaxInvoiceId?: number;
-      generatedDeliveryNoteId?: number;
-      warnings: string[];
-    } = { warnings };
+    const result: ClosingDocsResult = {
+      createdProformaInvoice: false,
+      createdTaxInvoice: false,
+      createdDeliveryNote: false,
+      warnings: [],
+    };
 
     const [q] = await tx.select().from(quotationsTable)
       .where(eq(quotationsTable.dealId, deal.id))
       .orderBy(sql`${quotationsTable.createdAt} desc`).limit(1);
     if (!q) {
-      warnings.push("No quotation linked to this deal — closing documents not created.");
+      result.warnings.push("No quotation linked to this deal — closing documents not created.");
       return result;
     }
     if (!q.companyId) {
-      warnings.push("Quotation has no company — closing documents not created.");
+      result.warnings.push("Quotation has no company — closing documents not created.");
       return result;
     }
     const items = await tx.select().from(quotationItemsTable)
       .where(eq(quotationItemsTable.quotationId, q.id)).orderBy(quotationItemsTable.sortOrder);
     if (items.length === 0) {
-      warnings.push("Quotation has no items — closing documents may be empty.");
+      result.warnings.push("Quotation has no items — closing documents may be empty.");
     }
 
-    const [co] = await tx.select({ prefix: companiesTable.prefix, trn: companiesTable.trn })
+    const [co] = await tx.select({ trn: companiesTable.trn })
       .from(companiesTable).where(eq(companiesTable.id, q.companyId));
-    const prefix = co?.prefix ?? "PM";
-    const year = new Date().getFullYear();
     const today = new Date().toISOString().split("T")[0];
+    // Traceability suffix written into notes/items so docs always reference back to deal+lead.
+    const traceTag = `[deal:${deal.id}${deal.leadId ? ` lead:${deal.leadId}` : ""}]`;
 
-    // Proforma Invoice (idempotent on quotationId)
+    // -- Proforma Invoice (idempotent on quotationId) --
     const [existingPi] = await tx.select({ id: proformaInvoicesTable.id })
       .from(proformaInvoicesTable).where(eq(proformaInvoicesTable.quotationId, q.id)).limit(1);
-    if (!existingPi) {
-      const piCount = await tx.select({ count: sql<number>`count(*)::int` }).from(proformaInvoicesTable);
-      const piNum = (piCount[0]?.count ?? 0) + 1;
-      const piNumber = `${prefix}-PI-${year}-${String(piNum).padStart(4, "0")}`;
+    if (existingPi) {
+      result.proformaInvoiceId = existingPi.id;
+    } else {
+      const piNumber = await genDocNum(tx, q.companyId, "PI", proformaInvoicesTable);
       const [pi] = await tx.insert(proformaInvoicesTable).values({
         piNumber, companyId: q.companyId, clientName: q.clientName,
         clientEmail: q.clientEmail, clientPhone: q.clientPhone,
@@ -67,23 +84,22 @@ async function autoCreateClosingDocs(
         quotationId: q.id, subtotal: q.subtotal ?? 0, vatPercent: q.vatPercent ?? 5,
         vatAmount: q.vatAmount ?? 0, total: q.grandTotal ?? 0,
         paymentTerms: q.paymentTerms, status: "draft", preparedById: preparedById ?? undefined,
+        notes: `Auto-created from quotation ${q.quotationNumber} on deal ${deal.dealNumber}. ${traceTag}`,
         items: JSON.stringify(items.map(i => ({
           description: i.description, quantity: i.quantity, unit: i.unit, rate: i.rate, amount: i.amount,
         }))),
       }).returning();
-      result.generatedProformaInvoiceId = pi.id;
+      result.proformaInvoiceId = pi.id;
+      result.createdProformaInvoice = true;
     }
 
-    // Tax Invoice (idempotent on quotationId)
-    let taxInvoiceId: number | undefined;
+    // -- Tax Invoice (idempotent on quotationId) --
     const [existingTax] = await tx.select({ id: taxInvoicesTable.id })
       .from(taxInvoicesTable).where(eq(taxInvoicesTable.quotationId, q.id)).limit(1);
     if (existingTax) {
-      taxInvoiceId = existingTax.id;
+      result.taxInvoiceId = existingTax.id;
     } else {
-      const txCount = await tx.select({ count: sql<number>`count(*)::int` }).from(taxInvoicesTable);
-      const txNum = (txCount[0]?.count ?? 0) + 1;
-      const invoiceNumber = `${prefix}-INV-${year}-${String(txNum).padStart(4, "0")}`;
+      const invoiceNumber = await genDocNum(tx, q.companyId, "INV", taxInvoicesTable);
       const grandTotal = q.grandTotal ?? 0;
       const [taxInv] = await tx.insert(taxInvoicesTable).values({
         invoiceNumber, companyId: q.companyId, companyTrn: co?.trn ?? null,
@@ -93,27 +109,29 @@ async function autoCreateClosingDocs(
         vatAmount: q.vatAmount ?? 0, grandTotal, amountPaid: 0, balance: grandTotal,
         paymentStatus: "unpaid", status: "active",
       }).returning();
-      taxInvoiceId = taxInv.id;
-      result.generatedTaxInvoiceId = taxInv.id;
+      result.taxInvoiceId = taxInv.id;
+      result.createdTaxInvoice = true;
     }
 
-    // Delivery Note (idempotent on taxInvoiceId)
-    if (taxInvoiceId) {
+    // -- Delivery Note (idempotent on taxInvoiceId) --
+    if (result.taxInvoiceId) {
       const [existingDn] = await tx.select({ id: deliveryNotesTable.id })
-        .from(deliveryNotesTable).where(eq(deliveryNotesTable.taxInvoiceId, taxInvoiceId)).limit(1);
-      if (!existingDn) {
-        const dnCount = await tx.select({ count: sql<number>`count(*)::int` }).from(deliveryNotesTable);
-        const dnNum = (dnCount[0]?.count ?? 0) + 1;
-        const dnNumber = `${prefix}-DN-${year}-${String(dnNum).padStart(4, "0")}`;
+        .from(deliveryNotesTable).where(eq(deliveryNotesTable.taxInvoiceId, result.taxInvoiceId)).limit(1);
+      if (existingDn) {
+        result.deliveryNoteId = existingDn.id;
+      } else {
+        const dnNumber = await genDocNum(tx, q.companyId, "DN", deliveryNotesTable);
         const [dn] = await tx.insert(deliveryNotesTable).values({
           dnNumber, companyId: q.companyId, clientName: q.clientName,
-          projectName: q.projectName, deliveryLocation: q.projectLocation,
-          deliveryDate: today, status: "pending", taxInvoiceId,
+          projectName: q.projectName ? `${q.projectName} ${traceTag}` : traceTag,
+          deliveryLocation: q.projectLocation,
+          deliveryDate: today, status: "pending", taxInvoiceId: result.taxInvoiceId,
           items: JSON.stringify(items.map(i => ({
             description: i.description, quantity: i.quantity, unit: i.unit,
           }))),
         }).returning();
-        result.generatedDeliveryNoteId = dn.id;
+        result.deliveryNoteId = dn.id;
+        result.createdDeliveryNote = true;
       }
     }
 
@@ -174,12 +192,11 @@ router.put("/deals/:id", requirePermission("deals", "edit"), requireBodyCompanyA
   if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [deal] = await db.update(dealsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(dealsTable.id, id)).returning();
   // Auto-create downstream documents when stage transitions to "won".
-  let auto: {
-    generatedProformaInvoiceId?: number;
-    generatedTaxInvoiceId?: number;
-    generatedDeliveryNoteId?: number;
-    warnings: string[];
-  } = { warnings: [] };
+  // Note: this codebase consistently uses the literal "won" (see lead status,
+  // notifications, dashboard, jobs/follow-ups). There is no separate "closed_won".
+  let auto: ClosingDocsResult = {
+    createdProformaInvoice: false, createdTaxInvoice: false, createdDeliveryNote: false, warnings: [],
+  };
   if (existing.stage !== "won" && deal.stage === "won") {
     auto = await autoCreateClosingDocs(deal, req.user?.id);
   }

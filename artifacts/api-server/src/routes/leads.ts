@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leadsTable, usersTable, notificationsTable, quotationsTable, companiesTable } from "@workspace/db";
+import { db, leadsTable, usersTable, notificationsTable, quotationsTable, quotationItemsTable, companiesTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
@@ -9,19 +9,21 @@ router.use(requireAuth);
 // Auto-create a draft quotation from a lead when its status flips to "won".
 // Idempotent: if any quotation already exists for this lead, return that one.
 // Wrapped in a transaction so the read-modify-write is atomic.
+// Returns the linked quotation id (always — whether newly created or pre-existing)
+// plus a `created` flag and warnings for any soft issues.
 async function autoCreateQuotationForLead(
   lead: typeof leadsTable.$inferSelect,
   preparedById: number | undefined,
-): Promise<{ generatedQuotationId?: number; warnings: string[] }> {
+): Promise<{ quotationId?: number; createdQuotation: boolean; warnings: string[] }> {
   const warnings: string[] = [];
   if (!lead.companyId) {
     warnings.push("Lead has no company assigned — quotation not created.");
-    return { warnings };
+    return { createdQuotation: false, warnings };
   }
   return await db.transaction(async (tx) => {
     const [existing] = await tx.select({ id: quotationsTable.id })
       .from(quotationsTable).where(eq(quotationsTable.leadId, lead.id)).limit(1);
-    if (existing) return { generatedQuotationId: existing.id, warnings };
+    if (existing) return { quotationId: existing.id, createdQuotation: false, warnings };
 
     const [co] = await tx.select({ prefix: companiesTable.prefix })
       .from(companiesTable).where(eq(companiesTable.id, lead.companyId!));
@@ -30,6 +32,17 @@ async function autoCreateQuotationForLead(
       .from(quotationsTable).where(eq(quotationsTable.companyId, lead.companyId!));
     const num = (count[0]?.count ?? 0) + 1;
     const quotationNumber = `${prefix}-QTN-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
+
+    // Seed a placeholder line item so downstream PI/INV/DN are never empty.
+    // If the lead has quantity + budget, derive a rate; otherwise leave at 0
+    // so the user can edit before sending.
+    const qty = lead.quantity && lead.quantity > 0 ? lead.quantity : 1;
+    const rate = lead.budget && qty > 0 ? lead.budget / qty : 0;
+    const amount = qty * rate;
+    const subtotal = amount;
+    const vatPercent = 5;
+    const vatAmount = +(subtotal * vatPercent / 100).toFixed(2);
+    const grandTotal = subtotal + vatAmount;
 
     const clientName = lead.companyName || lead.leadName || "Unknown Client";
     const [q] = await tx.insert(quotationsTable).values({
@@ -44,11 +57,28 @@ async function autoCreateQuotationForLead(
       status: "draft",
       leadId: lead.id,
       preparedById: preparedById ?? undefined,
+      subtotal, vatPercent, vatAmount, grandTotal,
     }).returning();
+
+    await tx.insert(quotationItemsTable).values({
+      quotationId: q.id,
+      description: lead.requirementType
+        ? `${lead.requirementType} (TBD — please refine)`
+        : `Prefab requirement for ${clientName} (TBD — please refine)`,
+      quantity: qty,
+      unit: "nos",
+      rate,
+      amount,
+      sortOrder: 0,
+    });
+
     if (!lead.email && !lead.phone) {
       warnings.push("Lead has no email or phone — quotation client contact details may be incomplete.");
     }
-    return { generatedQuotationId: q.id, warnings };
+    if (!lead.requirementType || !lead.budget || !lead.quantity) {
+      warnings.push("Quotation seeded with a placeholder line item — please review before sending.");
+    }
+    return { quotationId: q.id, createdQuotation: true, warnings };
   });
 }
 
@@ -197,7 +227,8 @@ router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyA
   if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [lead] = await db.update(leadsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
   // Auto-create draft quotation when lead status transitions to "won".
-  let auto: { generatedQuotationId?: number; warnings: string[] } = { warnings: [] };
+  let auto: { quotationId?: number; createdQuotation: boolean; warnings: string[] } =
+    { createdQuotation: false, warnings: [] };
   if (existing.status !== "won" && lead.status === "won") {
     auto = await autoCreateQuotationForLead(lead, req.user?.id);
   }

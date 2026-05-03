@@ -40,15 +40,17 @@ export function SalesPipeline() {
     mutation: {
       onSuccess: (resp: any) => {
         queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() });
-        if (resp?.generatedProformaInvoiceId || resp?.generatedTaxInvoiceId || resp?.generatedDeliveryNoteId) {
+        if (resp?.createdProformaInvoice || resp?.createdTaxInvoice || resp?.createdDeliveryNote) {
           const parts: string[] = [];
-          if (resp.generatedProformaInvoiceId) parts.push("Proforma Invoice");
-          if (resp.generatedTaxInvoiceId) parts.push("Tax Invoice");
-          if (resp.generatedDeliveryNoteId) parts.push("Delivery Note");
+          if (resp.createdProformaInvoice) parts.push("Proforma Invoice");
+          if (resp.createdTaxInvoice) parts.push("Tax Invoice");
+          if (resp.createdDeliveryNote) parts.push("Delivery Note");
           toast({ title: "Closing documents auto-created", description: parts.join(" + ") + " ready in Accounts." });
           queryClient.invalidateQueries({ queryKey: ["/proforma-invoices"] });
           queryClient.invalidateQueries({ queryKey: ["/tax-invoices"] });
           queryClient.invalidateQueries({ queryKey: ["/delivery-notes"] });
+        } else if (resp?.proformaInvoiceId || resp?.taxInvoiceId || resp?.deliveryNoteId) {
+          // Stage transitioned again but docs already existed — no-op toast suppressed.
         }
         for (const w of (resp?.warnings ?? []) as string[]) {
           toast({ title: "Heads-up", description: w });

@@ -8,8 +8,10 @@
 import type { Lead } from "./lead";
 
 export type LeadUpdateResponse = Lead & {
-  /** Quotation auto-created (or pre-existing) when status flipped to "won". */
-  generatedQuotationId?: number;
-  /** Soft warnings about auto-creation (e.g. missing company). */
+  /** Linked quotation id — set whether newly created or pre-existing. */
+  quotationId?: number;
+  /** True if a new quotation was created during this update. */
+  createdQuotation?: boolean;
+  /** Soft warnings about auto-creation (e.g. missing company / contact info). */
   warnings?: string[];
 };

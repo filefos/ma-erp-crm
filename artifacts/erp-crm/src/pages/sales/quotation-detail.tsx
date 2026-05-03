@@ -62,14 +62,15 @@ export function QuotationDetail({ id }: Props) {
       onSuccess: (resp: any) => {
         queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(qid) });
         toast({ title: "Quotation approved." });
-        if (resp?.generatedDealId) {
+        if (resp?.createdDeal && resp?.dealId) {
           toast({
             title: "Deal auto-created",
             description: "A new deal has been added to the sales pipeline.",
           });
           queryClient.invalidateQueries({ queryKey: ["/deals"] });
         } else if (resp?.dealId) {
-          toast({ title: "Quotation linked to existing deal" });
+          toast({ title: "Quotation linked to existing deal", description: "The deal value & probability were updated." });
+          queryClient.invalidateQueries({ queryKey: ["/deals"] });
         }
         for (const w of (resp?.warnings ?? []) as string[]) {
           toast({ title: "Heads-up", description: w });
