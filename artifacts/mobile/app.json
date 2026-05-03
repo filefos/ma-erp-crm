@@ -41,6 +41,13 @@
           "cameraPermission": "MA ERP-CRM uses the camera to capture an on-site selfie for verified attendance.",
           "photosPermission": "MA ERP-CRM uses your photos to attach receipts and supporting documents."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#0066FF"
+        }
       ]
     ],
     "experiments": {

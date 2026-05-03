@@ -244,3 +244,16 @@ Final shipped behavior (supersedes any earlier descriptions in this file):
 - After codegen, run `printf 'export * from "./generated/api";\n' > lib/api-zod/src/index.ts`
 - The custom-fetch.ts `setAuthTokenGetter` is called in `main.tsx` to inject JWT into all requests
 - `logout({})` — TanStack Query v5 mutate with empty object for no-variable mutations
+
+### Task #28 — Push notifications (Expo) for approvals & overdue invoices
+
+- Mobile registers an Expo push token after login via `artifacts/mobile/lib/push.ts`; the token is upserted server-side via `POST /api/device-tokens` (and deactivated on sign-out).
+- Backend helper `artifacts/api-server/src/lib/push.ts` exposes `sendPushToUsers()` and `notifyUsers()` (writes the in-app `notifications` row and pushes via Expo's `https://exp.host/--/api/v2/push/send`). Tokens that come back with `DeviceNotRegistered` are auto-deactivated.
+- Triggers wired:
+  - **Lead assigned / reassigned** in `routes/leads.ts` (POST + PUT).
+  - **Expense awaiting approval** in `routes/finance.ts` (POST `/expenses` when status=pending) — recipients are super_admin + scoped company_admin.
+  - **Overdue invoice >30d** in `jobs/follow-ups.ts` `scanInvoices()` — push runs alongside the existing `notify` insert (which dedupes per-day).
+  - **Low-stock alert** in `routes/inventory.ts` (POST `/stock-entries` when current stock crosses the minimum threshold downward).
+- Tap deep-linking: `_layout.tsx` listens for `addNotificationResponseReceivedListener` + `getLastNotificationResponseAsync` (cold-start) and routes via `notificationDataToPath` → `/crm/leads/:id`, `/accounts/expenses/:id`, `/accounts/invoices/:id`, `/inventory/items/:id`.
+- New schema: `device_tokens` (id, user_id, token unique, platform, device_name, is_active, last_seen_at, created_at). Migration runs in-process from `app.ts` `runMigrations()`.
+- Optional `EXPO_ACCESS_TOKEN` env var — used as bearer if set; not required for the public Expo push endpoint.

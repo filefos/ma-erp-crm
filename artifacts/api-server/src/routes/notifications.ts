@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, notificationsTable, auditLogsTable, leadsTable } from "@workspace/db";
+import { db, notificationsTable, auditLogsTable, leadsTable, deviceTokensTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { requireAuth, requirePermissionLevel } from "../middlewares/auth";
 
@@ -78,6 +78,47 @@ router.post("/notifications/:id/read", async (req, res): Promise<void> => {
 router.post("/notifications/read-all", async (req, res): Promise<void> => {
   const userId = req.user!.id;
   await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.userId, userId));
+  res.json({ success: true });
+});
+
+// Device tokens for Expo push notifications. Tokens are upserted by token
+// value so the same physical device that re-installs / re-registers replaces
+// the prior row instead of accumulating dead entries.
+router.post("/device-tokens", async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  const token = typeof req.body?.token === "string" ? req.body.token.trim() : "";
+  const platform = typeof req.body?.platform === "string" ? req.body.platform : null;
+  const deviceName = typeof req.body?.deviceName === "string" ? req.body.deviceName : null;
+  if (!token || !/^Expo(nent)?PushToken\[[^\]]+\]$/.test(token)) {
+    res.status(400).json({ error: "Invalid Expo push token" });
+    return;
+  }
+  const now = new Date();
+  const [existing] = await db.select().from(deviceTokensTable).where(eq(deviceTokensTable.token, token));
+  if (existing) {
+    const [updated] = await db.update(deviceTokensTable).set({
+      userId,
+      platform: platform ?? existing.platform,
+      deviceName: deviceName ?? existing.deviceName,
+      isActive: true,
+      lastSeenAt: now,
+    }).where(eq(deviceTokensTable.id, existing.id)).returning();
+    res.json(updated);
+    return;
+  }
+  const [created] = await db.insert(deviceTokensTable).values({
+    userId, token, platform, deviceName, isActive: true,
+  }).returning();
+  res.status(201).json(created);
+});
+
+router.delete("/device-tokens", async (req, res): Promise<void> => {
+  const userId = req.user!.id;
+  const token = typeof req.body?.token === "string" ? req.body.token.trim() : "";
+  if (!token) { res.status(400).json({ error: "token required" }); return; }
+  await db.update(deviceTokensTable)
+    .set({ isActive: false })
+    .where(and(eq(deviceTokensTable.userId, userId), eq(deviceTokensTable.token, token)));
   res.json({ success: true });
 });
 

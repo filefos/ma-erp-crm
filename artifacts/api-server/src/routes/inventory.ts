@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, inventoryItemsTable, stockEntriesTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, inScope } from "../middlewares/auth";
+import { notifyUsers } from "../lib/push";
 
 const router = Router();
 router.use(requireAuth);
@@ -91,12 +92,42 @@ router.post("/stock-entries", requirePermission("stock_entries", "create"), requ
   }).returning();
 
   const delta = ["stock_in", "material_return"].includes(data.type) ? data.quantity : -Math.abs(data.quantity);
+  const newStock = Math.max(0, targetItem.currentStock + delta);
   await db.update(inventoryItemsTable).set({
-    currentStock: Math.max(0, targetItem.currentStock + delta),
+    currentStock: newStock,
     updatedAt: new Date(),
   }).where(eq(inventoryItemsTable.id, data.itemId));
 
   const [itemRecord] = await db.select({ name: inventoryItemsTable.name }).from(inventoryItemsTable).where(eq(inventoryItemsTable.id, data.itemId));
+
+  // Low-stock push: fired only when this entry crossed below the minimum
+  // threshold (above-or-equal -> below). Avoids spamming once an item is
+  // already known-low and trickles further down.
+  if (
+    targetItem.minimumStock > 0 &&
+    targetItem.currentStock >= targetItem.minimumStock &&
+    newStock < targetItem.minimumStock
+  ) {
+    void (async () => {
+      try {
+        const candidates = await db.select().from(usersTable).where(eq(usersTable.isActive, true));
+        const recipients = candidates
+          .filter(u => u.permissionLevel === "super_admin" || (u.permissionLevel === "company_admin" && u.companyId === targetItem.companyId))
+          .map(u => u.id);
+        if (recipients.length === 0) return;
+        await notifyUsers({
+          userIds: recipients,
+          title: "Low stock alert",
+          message: `${itemRecord?.name ?? `Item #${targetItem.id}`} dropped to ${newStock} (minimum ${targetItem.minimumStock}).`,
+          type: "warning",
+          entityType: "inventory_item",
+          entityId: targetItem.id,
+          data: { module: "inventory", id: targetItem.id },
+        });
+      } catch { /* best effort */ }
+    })();
+  }
+
   res.status(201).json({ ...entry, itemName: itemRecord?.name });
 });
 

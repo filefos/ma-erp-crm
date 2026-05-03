@@ -8,7 +8,9 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import * as Notifications from "expo-notifications";
 import React, { useEffect } from "react";
+import { notificationDataToPath } from "@/lib/push";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -40,6 +42,27 @@ function AuthGate() {
       router.replace("/");
     }
   }, [ready, token, segments, router]);
+
+  // Deep-link push notifications: when the user taps a notification, route to
+  // the relevant module screen. Also handles the cold-start case via
+  // getLastNotificationResponseAsync so taps that launch the app still land.
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const last = await Notifications.getLastNotificationResponseAsync();
+        if (cancelled || !last) return;
+        const path = notificationDataToPath(last.notification.request.content.data);
+        if (path) router.push(path as never);
+      } catch { /* ignore */ }
+    })();
+    const sub = Notifications.addNotificationResponseReceivedListener((resp) => {
+      const path = notificationDataToPath(resp.notification.request.content.data);
+      if (path) router.push(path as never);
+    });
+    return () => { cancelled = true; sub.remove(); };
+  }, [token, router]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

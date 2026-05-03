@@ -24,6 +24,7 @@ import {
 import { and, eq, sql, desc, gte } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { aiAvailable, chat, aiModelName } from "../lib/ai";
+import { sendPushToUsers } from "../lib/push";
 
 const GRAPH_VERSION = process.env.WHATSAPP_GRAPH_VERSION ?? "v20.0";
 const SCAN_INTERVAL_MS = Number(process.env.FOLLOWUP_SCAN_INTERVAL_MS ?? 60 * 60 * 1000); // hourly default
@@ -74,9 +75,10 @@ async function alreadyNotifiedToday(userId: number, entityType: string, entityId
   return rows.length > 0;
 }
 
-async function notify(userId: number, title: string, message: string, entityType: string, entityId: number, type = "info"): Promise<void> {
-  if (await alreadyNotifiedToday(userId, entityType, entityId)) return;
+async function notify(userId: number, title: string, message: string, entityType: string, entityId: number, type = "info"): Promise<boolean> {
+  if (await alreadyNotifiedToday(userId, entityType, entityId)) return false;
   await db.insert(notificationsTable).values({ userId, title, message, type, entityType, entityId });
+  return true;
 }
 
 async function autoLog(action: string, entity: string, entityId: number | null, details: string): Promise<void> {
@@ -412,7 +414,7 @@ async function scanInvoices(): Promise<void> {
       ? `${inv.clientName} — AED ${Number(balance).toLocaleString()} is ${days} day${days === 1 ? "" : "s"} past the 30-day term. Auto-sent reminder via WhatsApp.\n\nMessage preview:\n${draft}`
       : `${inv.clientName} — AED ${Number(balance).toLocaleString()} is ${days} day${days === 1 ? "" : "s"} past the 30-day term.\n\nDraft message:\n${draft}`;
 
-    await notify(
+    const inserted = await notify(
       userId,
       `Overdue invoice: ${inv.invoiceNumber}`,
       noticeBody,
@@ -420,6 +422,15 @@ async function scanInvoices(): Promise<void> {
       inv.id,
       autoSent ? "success" : "warning",
     );
+    // Only push when `notify` actually inserted a new row — otherwise the
+    // hourly scan would re-push the same overdue invoice all day long.
+    if (inserted) {
+      void sendPushToUsers([userId], {
+        title: `Overdue invoice: ${inv.invoiceNumber}`,
+        body: `${inv.clientName} — AED ${Number(balance).toLocaleString()} · ${days}d overdue`,
+        data: { module: "invoices", entityType: "tax_invoice", id: inv.id },
+      });
+    }
     await autoLog(autoSent ? "auto_send_invoice_followup" : "scan_overdue_invoice", "tax_invoice", inv.id, JSON.stringify({
       days,
       balance,

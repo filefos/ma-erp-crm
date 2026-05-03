@@ -407,6 +407,19 @@ async function runMigrations() {
       `);
     }
 
+    // Push notification device tokens (one row per Expo push token, per user/device).
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS device_tokens (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      platform TEXT,
+      device_name TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      last_seen_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS device_tokens_user_idx ON device_tokens(user_id)`);
+
     logger.info("Schema migrations applied");
   } catch (err) {
     logger.warn({ err }, "Migration warning (non-fatal)");

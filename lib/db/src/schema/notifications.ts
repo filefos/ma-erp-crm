@@ -26,8 +26,21 @@ export const auditLogsTable = pgTable("audit_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const deviceTokensTable = pgTable("device_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  platform: text("platform"),
+  deviceName: text("device_name"),
+  isActive: boolean("is_active").notNull().default(true),
+  lastSeenAt: timestamp("last_seen_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertNotificationSchema = createInsertSchema(notificationsTable).omit({ id: true, createdAt: true });
 export const insertAuditLogSchema = createInsertSchema(auditLogsTable).omit({ id: true, createdAt: true });
+export const insertDeviceTokenSchema = createInsertSchema(deviceTokensTable).omit({ id: true, createdAt: true, lastSeenAt: true });
 
 export type Notification = typeof notificationsTable.$inferSelect;
 export type AuditLog = typeof auditLogsTable.$inferSelect;
+export type DeviceToken = typeof deviceTokensTable.$inferSelect;

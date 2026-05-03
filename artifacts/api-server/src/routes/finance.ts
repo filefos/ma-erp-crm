@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { notifyUsers } from "../lib/push";
 
 const router = Router();
 router.use(requireAuth);
@@ -102,6 +103,29 @@ router.post("/expenses", requirePermission("expenses", "create"), requireBodyCom
   const num = (count[0]?.count ?? 0) + 1;
   const expenseNumber = `EXP-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
   const [expense] = await db.insert(expensesTable).values({ ...data, expenseNumber, createdById: req.user?.id }).returning();
+  // Notify approvers (company_admin / super_admin in scope) when a new
+  // expense is created in pending state.
+  if (expense.status === "pending") {
+    void (async () => {
+      try {
+        const candidates = await db.select().from(usersTable).where(eq(usersTable.isActive, true));
+        const approvers = candidates
+          .filter(u => u.id !== req.user?.id)
+          .filter(u => u.permissionLevel === "super_admin" || (u.permissionLevel === "company_admin" && u.companyId === expense.companyId))
+          .map(u => u.id);
+        if (approvers.length === 0) return;
+        await notifyUsers({
+          userIds: approvers,
+          title: "Expense awaiting approval",
+          message: `${expense.expenseNumber} — ${expense.category} · AED ${Number(expense.total ?? 0).toLocaleString()}`,
+          type: "warning",
+          entityType: "expense",
+          entityId: expense.id,
+          data: { module: "expenses", id: expense.id },
+        });
+      } catch { /* best effort */ }
+    })();
+  }
   res.status(201).json(expense);
 });
 

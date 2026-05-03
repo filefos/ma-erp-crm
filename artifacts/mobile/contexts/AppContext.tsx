@@ -7,6 +7,7 @@ import {
   type User,
 } from "@workspace/api-client-react";
 import { authStorage } from "@/lib/storage";
+import { registerForPushNotifications, unregisterPushToken } from "@/lib/push";
 
 export interface CompanyInfo {
   id: number;
@@ -68,6 +69,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setActiveCompanyGetter(() => activeCompanyId);
   }, [token, activeCompanyId]);
 
+  const [pushToken, setPushToken] = useState<string | null>(null);
+
   const setSession = useCallback(async (newToken: string, newUser: User, companyId: number | null) => {
     await authStorage.setToken(newToken);
     if (companyId != null) {
@@ -79,15 +82,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUserState(newUser);
     setActiveCompanyId(companyId);
     queryClient.clear();
+    // Fire-and-forget: registers an Expo push token with the API for this
+    // user/device so the backend can push notifications. Failures (no
+    // permission, simulator, web) are swallowed inside the helper.
+    void registerForPushNotifications().then((tok) => { if (tok) setPushToken(tok); });
   }, [queryClient]);
 
   const signOut = useCallback(async () => {
+    // Best-effort: deactivate the push token before clearing the auth token,
+    // since the API call needs the bearer token to identify the device.
+    await unregisterPushToken(pushToken);
+    setPushToken(null);
     await Promise.all([authStorage.clearToken(), authStorage.clearCompanyId()]);
     setToken(null);
     setUserState(null);
     setActiveCompanyId(null);
     queryClient.clear();
-  }, [queryClient]);
+  }, [queryClient, pushToken]);
 
   const setActiveCompany = useCallback(async (id: number) => {
     await authStorage.setCompanyId(id);

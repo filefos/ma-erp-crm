@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, leadsTable, usersTable, notificationsTable, quotationsTable, quotationItemsTable, companiesTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
+import { notifyUsers } from "../lib/push";
 
 const router = Router();
 router.use(requireAuth);
@@ -210,6 +211,17 @@ router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAc
     leadScore: data.leadScore ?? "cold",
     companyId: data.companyId,
   }).returning();
+  if (lead.assignedToId && lead.assignedToId !== req.user?.id) {
+    void notifyUsers({
+      userIds: [lead.assignedToId],
+      title: "New lead assigned",
+      message: `${lead.leadName}${lead.companyName ? ` — ${lead.companyName}` : ""}${lead.requirementType ? ` (${lead.requirementType})` : ""}`,
+      type: "info",
+      entityType: "lead",
+      entityId: lead.id,
+      data: { module: "leads", id: lead.id },
+    });
+  }
   res.status(201).json(await enrichLead(lead));
 });
 
@@ -252,6 +264,17 @@ router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyA
     }
     return { lead, auto };
   });
+  if (lead.assignedToId && lead.assignedToId !== existing.assignedToId && lead.assignedToId !== req.user?.id) {
+    void notifyUsers({
+      userIds: [lead.assignedToId],
+      title: "Lead reassigned to you",
+      message: `${lead.leadName}${lead.companyName ? ` — ${lead.companyName}` : ""}${lead.requirementType ? ` (${lead.requirementType})` : ""}`,
+      type: "info",
+      entityType: "lead",
+      entityId: lead.id,
+      data: { module: "leads", id: lead.id },
+    });
+  }
   const enriched = await enrichLead(lead);
   res.json({ ...enriched, ...auto });
 });
