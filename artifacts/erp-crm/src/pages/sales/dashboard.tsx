@@ -276,36 +276,14 @@ export function SalesDashboard() {
         });
         const lpoMtdVal = lpoMtd.reduce((s: number, l: any) => s + Number(l.lpoValue ?? 0), 0);
         const conversionRate = quotations.length > 0 ? Math.round((lpos.length / quotations.length) * 100) : 0;
-        const topSP = leaderboard[0];
-        const topCust = topClients[0];
         return (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3" data-testid="primary-sales-kpi-strip">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" data-testid="primary-sales-kpi-strip">
             <KPIWidget icon={FileText}      tone="blue"   label="Open Quotations"  value={openQuotations}      sub={`${sentQuotations} sent · ${pendingApprovalQ} pending`}                              href="/sales/quotations"        testId="kpi-open-quotations" />
             <KPIWidget icon={FileText}      tone="indigo" label="Quotation Value"  value={fmtAED(quotationValue)} sub={`${quotations.length} total quotations`}                                          href="/sales/quotations"        testId="kpi-quotation-value" />
             <KPIWidget icon={FileCheck}     tone="amber"  label="Proforma Pending" value={pendingPIs}          sub={`${proformas.length} total proforma`}                                                href="/sales/proforma-invoices" testId="kpi-proforma-pending" />
             <KPIWidget icon={Target}        tone="teal"   label="Conversion Rate"  value={`${conversionRate}%`} sub={`${lpos.length} LPOs from ${quotations.length} quotes`}                              href="/sales/lpos"              testId="kpi-conversion-rate" />
             <KPIWidget icon={Trophy}        tone="green"  label="Win Rate"         value={`${winRate}%`}        sub={`${acceptedQuotes} of ${quotations.length} quotes won`}                              href="/sales/quotations"        testId="kpi-win-rate" />
             <KPIWidget icon={ClipboardList} tone="purple" label="LPOs This Month"  value={lpoMtd.length}        sub={lpoMtd.length > 0 ? `${fmtAED(lpoMtdVal)} value` : "No LPOs this month"}             href="/sales/lpos"              testId="kpi-lpos-mtd" />
-            <Link href="/crm/leaderboard" className="block group" data-testid="kpi-top-salesperson">
-              <div className="h-full rounded-2xl border bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white p-3 shadow-sm group-hover:shadow-lg transition-all">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Crown className="w-3.5 h-3.5 text-orange-300" />
-                  <span className="text-[10px] uppercase tracking-wide opacity-80">Top Salesperson</span>
-                </div>
-                <div className="text-base font-bold truncate">{topSP?.name ?? "—"}</div>
-                <div className="text-[11px] opacity-90 mt-0.5 truncate">{topSP ? `${fmtAED(topSP.won)} won` : "No data yet"}</div>
-              </div>
-            </Link>
-            <Link href="/crm/leads" className="block group" data-testid="kpi-top-customer">
-              <div className="h-full rounded-2xl border bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:border-[#1e6ab0]/40 transition-all">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Users className="w-3.5 h-3.5 text-[#1e6ab0]" />
-                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Top Customer</span>
-                </div>
-                <div className="text-base font-bold text-[#0f2d5a] dark:text-white truncate">{topCust?.name ?? "—"}</div>
-                <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{topCust ? `${fmtAED(topCust.value)} · ${topCust.count} quote${topCust.count === 1 ? "" : "s"}` : "No quotations yet"}</div>
-              </div>
-            </Link>
           </div>
         );
       })()}
