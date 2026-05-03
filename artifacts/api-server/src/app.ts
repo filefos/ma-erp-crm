@@ -328,9 +328,20 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS letterhead_brand TEXT`);
     await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS company_legal_name TEXT`);
     // Race-free letter number sequence — replaces fragile count(*)+1 numbering.
+    // Initialize to max existing letter_number suffix so legacy rows don't
+    // collide on the unique constraint.
     await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS offer_letter_number_seq START 1`);
+    await db.execute(sql`SELECT setval('offer_letter_number_seq', GREATEST(
+      (SELECT COALESCE(MAX(NULLIF(regexp_replace(letter_number, '[^0-9]', '', 'g'), '')::bigint), 0) FROM offer_letters),
+      1
+    ), true)`);
     // Race-free employee id sequence — replaces count(*)+1 in convert-to-employee.
+    // Initialize to max existing EMP-##### so it doesn't collide with seeded rows.
     await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS employee_number_seq START 1`);
+    await db.execute(sql`SELECT setval('employee_number_seq', GREATEST(
+      (SELECT COALESCE(MAX(NULLIF(regexp_replace(employee_id, '[^0-9]', '', 'g'), '')::bigint), 0) FROM employees),
+      1
+    ), true)`);
 
     // Grant default permissions on the new "offer_letters" module to existing
     // roles so HR users see the module without needing a re-seed. Idempotent.
