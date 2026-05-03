@@ -79,7 +79,7 @@ export function Login() {
           <div className="lg:hidden flex items-center gap-3 mb-4">
             <img
               src="/prime-max-logo.png"
-              alt="MA ERP-CRM"
+              alt="PRIME ERP SYSTEMS"
               className="h-10 w-auto object-contain"
             />
           </div>

@@ -698,13 +698,13 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {isQuotation && (
           <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-            <span>MA ERP-CRM</span>
+            <span>PRIME ERP SYSTEMS</span>
             <span className="font-semibold text-gray-500">Page 1 of 3</span>
           </div>
         )}
         {!isQuotation && (
           <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-            <span>MA ERP-CRM</span>
+            <span>PRIME ERP SYSTEMS</span>
             <span className="font-semibold text-gray-500">Page 1 of 1</span>
           </div>
         )}
@@ -765,7 +765,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </table>
 
             <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span>MA ERP-CRM</span>
+              <span>PRIME ERP SYSTEMS</span>
               <span className="font-semibold text-gray-500">Page 2 of 3</span>
             </div>
           </div>
@@ -829,7 +829,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </div>
 
             <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span>MA ERP-CRM</span>
+              <span>PRIME ERP SYSTEMS</span>
               <span className="font-semibold text-gray-500">Page 3 of 3</span>
             </div>
           </div>
