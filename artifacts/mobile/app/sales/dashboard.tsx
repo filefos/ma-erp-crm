@@ -42,7 +42,7 @@ export default function SalesDashboard() {
     () => myEmployee ? (attendance.data ?? []).find(r => r.employeeId === myEmployee.id && r.date === todayKey()) : null,
     [attendance.data, myEmployee],
   );
-  const recent = useMemo(
+  const recentAttendance = useMemo(
     () => (attendance.data ?? [])
       .filter(r => r.employeeId === myEmployee?.id)
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
@@ -101,7 +101,7 @@ export default function SalesDashboard() {
     return { totalValue, draft, sent, approved, lpoValue };
   }, [quotes.data, lpos.data]);
 
-  const recent = useMemo(
+  const recentQuotes = useMemo(
     () => [...(quotes.data ?? [])].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 5),
     [quotes.data],
   );
@@ -167,10 +167,10 @@ export default function SalesDashboard() {
               GPS location and a quick selfie are required to verify on-site attendance.
             </Text>
           ) : null}
-          {recent.length > 1 ? (
+          {recentAttendance.length > 1 ? (
             <View style={{ marginTop: 6, gap: 4 }}>
               <Text style={{ color: c.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>Recent</Text>
-              {recent.slice(0, 3).map(r => (
+              {recentAttendance.slice(0, 3).map(r => (
                 <Text key={r.id} style={{ color: c.foreground, fontFamily: "Inter_500Medium", fontSize: 12 }} numberOfLines={1}>
                   {r.date} · in {r.checkIn ?? "—"} · out {r.checkOut ?? "—"}{r.address ? ` · ${r.address}` : ""}
                 </Text>
@@ -213,8 +213,8 @@ export default function SalesDashboard() {
       ))}
 
       <SectionHeading title="Recent quotations" />
-      {recent.length === 0 ? <EmptyState icon="file-text" title="No quotations yet" hint="Create your first quote to populate the pipeline." /> : null}
-      {recent.map(q => {
+      {recentQuotes.length === 0 ? <EmptyState icon="file-text" title="No quotations yet" hint="Create your first quote to populate the pipeline." /> : null}
+      {recentQuotes.map(q => {
         const sm = quotationStatusMeta(q.status);
         return (
           <Card key={q.id}>
