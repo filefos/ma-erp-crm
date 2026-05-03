@@ -153,34 +153,76 @@ const NAV: NavGroup[] = [
 
 const ADMIN_LEVELS = new Set(["super_admin", "company_admin"]);
 // Department/role admins see their own department's groups in full.
-// Email is a personal productivity surface — every non-admin role gets it
-// in addition to their domain groups so they can read/send mail and view
-// their own engagement metrics.
+// Every non-admin user gets Email — it's a personal productivity surface
+// available to everyone from their dashboard panel.
 const DEPT_GROUPS: Record<string, string[]> = {
-  Sales:        ["CRM", "Sales"],
+  Sales:        ["CRM", "Sales", "Email"],
   Accounts:     ["Accounts", "Email"],
   Finance:      ["Accounts", "Reports", "Email"],
-  Procurement:  ["Procurement", "Email"],
+  Procurement:  ["Procurement", "Inventory", "Assets", "Email"],
   Store:        ["Inventory", "Email"],
   Inventory:    ["Inventory", "Email"],
   Assets:       ["Assets", "Email"],
   HR:           ["HR", "Email"],
   Production:   ["Projects", "Assets", "Email"],
+  Projects:     ["Projects", "Email"],
   Management:   ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
   "Main Admin": ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
 };
 // Fallback by role code (for users with role-driven access when department is missing).
+// Specific role codes take precedence over generic department mappings.
 const ROLE_GROUPS: Record<string, string[]> = {
-  sales:       ["CRM", "Sales"],
-  accounts:    ["Accounts", "Email"],
-  finance:     ["Accounts", "Reports", "Email"],
-  procurement: ["Procurement", "Email"],
-  store:       ["Inventory", "Email"],
-  inventory:   ["Inventory", "Email"],
-  hr:          ["HR", "Email"],
-  production:  ["Projects", "Assets", "Email"],
-  management:  ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
+  sales:                ["CRM", "Sales", "Email"],
+  accounts:             ["Accounts", "Email"],
+  accountant:           ["Accounts", "Email"],
+  accounts_manager:     ["Accounts", "Email"],
+  finance:              ["Accounts", "Reports", "Email"],
+  procurement:          ["Procurement", "Inventory", "Assets", "Email"],
+  procurement_manager:  ["Procurement", "Inventory", "Assets", "Email"],
+  procurement_assistant:["Procurement", "Inventory", "Assets", "Email"],
+  store:                ["Inventory", "Email"],
+  store_keeper:         ["Inventory", "Email"],
+  main_store_keeper:    ["Inventory", "Email"],
+  inventory:            ["Inventory", "Email"],
+  hr:                   ["HR", "Email"],
+  hr_manager:           ["HR", "Email"],
+  hr_person:            ["HR", "Email"],
+  project_manager:      ["Projects", "Email"],
+  production:           ["Projects", "Assets", "Email"],
+  management:           ["CRM", "Sales", "Accounts", "Procurement", "Inventory", "Projects", "HR", "Assets", "Reports", "Email"],
 };
+
+// Per-item allow-list inside a group, keyed by role code.
+// Use this to give a role narrower access than the full group (e.g. an
+// accountant only sees a subset of the Accounts group's items).
+// Values are exact NavItem.href strings.
+const ROLE_ITEM_ALLOWLIST: Record<string, Record<string, string[]>> = {
+  accountant: {
+    Accounts: [
+      "/accounts",                  // Accounts Dashboard
+      "/accounts/invoices",         // Tax Invoices
+      "/accounts/delivery-notes",   // Delivery Notes
+      "/accounts/expenses",         // Expenses
+      // Proforma invoices live under Sales group, but accountants need them too —
+      // exposed below via extra item injection.
+    ],
+  },
+};
+
+// Roles that should have additional individual items pulled in from other
+// groups. Each entry is { groupLabel, hrefs[] } — items matched by href are
+// added to the role's view of that group.
+const ROLE_EXTRA_ITEMS: Record<string, { group: string; hrefs: string[] }[]> = {
+  accountant: [
+    { group: "Sales", hrefs: ["/sales/proforma-invoices"] },
+  ],
+};
+
+function filterGroupItems(group: NavGroup, allowedHrefs: string[] | undefined): NavGroup {
+  if (!allowedHrefs) return group;
+  const allow = new Set(allowedHrefs);
+  return { ...group, items: group.items.filter(i => allow.has(i.href)) };
+}
 
 function visibleGroupsFor(
   user: { permissionLevel?: string; role?: string; departmentName?: string } | undefined,
@@ -193,14 +235,40 @@ function visibleGroupsFor(
   const nonAdminNav = NAV.filter(g => !g.adminOnly);
   const dept = user?.departmentName ?? "";
   const role = (user?.role ?? "").toLowerCase();
-  const allowedLabels = new Set<string>(DEPT_GROUPS[dept] ?? ROLE_GROUPS[role] ?? []);
+  // Role-specific mapping takes precedence over the generic department mapping.
+  const allowedLabels = new Set<string>(ROLE_GROUPS[role] ?? DEPT_GROUPS[dept] ?? []);
   if (allowedLabels.size === 0) {
     allowedLabels.add("CRM");
   }
   // Gate Email nav by the actual `emails` module permission so it stays
   // consistent with the route guard in App.tsx.
   if (!canEmails) allowedLabels.delete("Email");
-  return nonAdminNav.filter(g => allowedLabels.has(g.label));
+
+  const itemAllow = ROLE_ITEM_ALLOWLIST[role] ?? {};
+  const extras = ROLE_EXTRA_ITEMS[role] ?? [];
+
+  // Build the visible groups: filter by group label, then narrow items per role.
+  const visible = nonAdminNav
+    .filter(g => allowedLabels.has(g.label))
+    .map(g => filterGroupItems(g, itemAllow[g.label]))
+    .filter(g => g.items.length > 0);
+
+  // Inject extra cross-group items for roles that need them.
+  for (const extra of extras) {
+    const sourceGroup = nonAdminNav.find(g => g.label === extra.group);
+    if (!sourceGroup) continue;
+    const items = sourceGroup.items.filter(i => extra.hrefs.includes(i.href));
+    if (items.length === 0) continue;
+    const target = visible.find(g => g.label === extra.group);
+    if (target) {
+      const existing = new Set(target.items.map(i => i.href));
+      target.items = [...target.items, ...items.filter(i => !existing.has(i.href))];
+    } else {
+      visible.push({ ...sourceGroup, items });
+    }
+  }
+
+  return visible;
 }
 
 function NavGroupItem({ group }: { group: NavGroup }) {
