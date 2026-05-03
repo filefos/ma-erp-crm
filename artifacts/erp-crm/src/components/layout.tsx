@@ -166,8 +166,8 @@ const ADMIN_LEVELS = new Set(["super_admin", "company_admin"]);
 // available to everyone from their dashboard panel.
 const DEPT_GROUPS: Record<string, string[]> = {
   Sales:        ["CRM", "Sales"],
-  Accounts:     ["Accounts", "Email"],
-  Finance:      ["Accounts", "Reports", "Email"],
+  Accounts:     ["CRM", "Sales", "Accounts", "Inventory", "Projects", "HR", "Reports", "Email"],
+  Finance:      ["CRM", "Sales", "Accounts", "Inventory", "Projects", "HR", "Reports", "Email"],
   Procurement:  ["Procurement", "Inventory", "Assets", "Email"],
   Store:        ["Inventory", "Email"],
   Inventory:    ["Inventory", "Email"],
@@ -182,10 +182,10 @@ const DEPT_GROUPS: Record<string, string[]> = {
 // Specific role codes take precedence over generic department mappings.
 const ROLE_GROUPS: Record<string, string[]> = {
   sales:                ["CRM", "Sales"],
-  accounts:             ["Accounts", "Email"],
-  accountant:           ["Accounts", "Email"],
-  accounts_manager:     ["Accounts", "Email"],
-  finance:              ["Accounts", "Reports", "Email"],
+  accounts:             ["CRM", "Sales", "Accounts", "Inventory", "Projects", "HR", "Reports", "Email"],
+  accountant:           ["CRM", "Sales", "Accounts", "Inventory", "Projects", "HR", "Reports", "Email"],
+  accounts_manager:     ["CRM", "Sales", "Accounts", "Inventory", "Projects", "HR", "Reports", "Email"],
+  finance:              ["CRM", "Sales", "Accounts", "Inventory", "Projects", "HR", "Reports", "Email"],
   procurement:          ["Procurement", "Inventory", "Assets", "Email"],
   procurement_manager:  ["Procurement", "Inventory", "Assets", "Email"],
   procurement_assistant:["Procurement", "Inventory", "Assets", "Email"],
@@ -206,25 +206,23 @@ const ROLE_GROUPS: Record<string, string[]> = {
 // accountant only sees a subset of the Accounts group's items).
 // Values are exact NavItem.href strings.
 const ROLE_ITEM_ALLOWLIST: Record<string, Record<string, string[]>> = {
-  accountant: {
-    Accounts: [
-      "/accounts",                  // Accounts Dashboard
-      "/accounts/invoices",         // Tax Invoices
-      "/accounts/delivery-notes",   // Delivery Notes
-      "/accounts/expenses",         // Expenses
-      // Proforma invoices live under Sales group, but accountants need them too —
-      // exposed below via extra item injection.
-    ],
-  },
+  // Accountants now get the full Accounts group plus cross-panel access —
+  // no narrowing here. Sales/Procurement/HR managers can be added later.
 };
 
 // Roles that should have additional individual items pulled in from other
 // groups. Each entry is { groupLabel, hrefs[] } — items matched by href are
-// added to the role's view of that group.
+// added to the role's view of that group. Accountants need direct access to
+// LPOs and Proforma Invoices from the Accounts panel even though those items
+// live under the Sales group.
+const LPO_INTAKE_EXTRAS = [
+  { group: "Accounts", hrefs: ["/sales/proforma-invoices", "/sales/lpos"] },
+];
 const ROLE_EXTRA_ITEMS: Record<string, { group: string; hrefs: string[] }[]> = {
-  accountant: [
-    { group: "Sales", hrefs: ["/sales/proforma-invoices"] },
-  ],
+  accountant:       LPO_INTAKE_EXTRAS,
+  accounts:         LPO_INTAKE_EXTRAS,
+  accounts_manager: LPO_INTAKE_EXTRAS,
+  finance:          LPO_INTAKE_EXTRAS,
 };
 
 function filterGroupItems(group: NavGroup, allowedHrefs: string[] | undefined): NavGroup {

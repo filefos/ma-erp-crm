@@ -1,10 +1,54 @@
 import { Router } from "express";
-import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable } from "@workspace/db";
-import { eq, sql, inArray } from "drizzle-orm";
+import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, usersTable, notificationsTable, departmentsTable } from "@workspace/db";
+import { and, eq, or, sql, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
+
+// Notify everyone with accounts-side responsibilities about a new/updated LPO
+// so the accountant sees it immediately on their dashboard. Best-effort —
+// failures are logged but never block the LPO write.
+async function notifyAccountsOfLpo(req: any, lpo: any, kind: "created" | "attachment_added") {
+  try {
+    const recipients = await db
+      .selectDistinct({ id: usersTable.id })
+      .from(usersTable)
+      .leftJoin(departmentsTable, eq(usersTable.departmentId, departmentsTable.id))
+      .where(
+        and(
+          eq(usersTable.isActive, true),
+          or(
+            inArray(sql`lower(coalesce(${usersTable.role}, ''))`, [
+              "accountant", "accounts", "accounts_manager", "finance",
+            ]),
+            inArray(sql`lower(coalesce(${departmentsTable.name}, ''))`, ["accounts", "finance"]),
+            eq(usersTable.permissionLevel, "company_admin"),
+            eq(usersTable.permissionLevel, "super_admin"),
+          ),
+        ),
+      );
+    if (!recipients.length) return;
+    const actor = req.user?.name ?? "Someone";
+    const title = kind === "created" ? "New LPO uploaded" : "LPO attachment added";
+    const message =
+      kind === "created"
+        ? `${actor} uploaded LPO ${lpo.lpoNumber} from ${lpo.clientName}.`
+        : `${actor} added an attachment to LPO ${lpo.lpoNumber} (${lpo.clientName}).`;
+    await db.insert(notificationsTable).values(
+      recipients.map((r) => ({
+        userId: r.id,
+        title,
+        message,
+        type: "lpo",
+        entityType: "lpo",
+        entityId: lpo.id,
+      })),
+    );
+  } catch (err) {
+    req.log?.warn({ err }, "Failed to notify accounts of LPO event");
+  }
+}
 
 async function genDocNumber(companyId: number, type: string, table: any) {
   const [co] = await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, companyId));
@@ -225,6 +269,7 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
   const data = req.body;
   const lpoNumber = await genDocNumber(data.companyId, "LPO", lposTable);
   const [lpo] = await db.insert(lposTable).values({ ...data, lpoNumber }).returning();
+  await notifyAccountsOfLpo(req, lpo, "created");
   res.status(201).json(lpo);
 });
 
@@ -281,6 +326,13 @@ router.put("/lpos/:id", requirePermission("lpos", "edit"), requireBodyCompanyAcc
     }
   }
   const [lpo] = await db.update(lposTable).set({ ...req.body, updatedAt: new Date() }).where(eq(lposTable.id, id)).returning();
+  // Re-notify accountants only when attachments grew (someone uploaded the
+  // client LPO file after the initial save).
+  const oldCount = Array.isArray(existing.attachments) ? (existing.attachments as unknown[]).length : 0;
+  const newCount = Array.isArray(lpo.attachments) ? (lpo.attachments as unknown[]).length : 0;
+  if (newCount > oldCount) {
+    await notifyAccountsOfLpo(req, lpo, "attachment_added");
+  }
   res.json(lpo);
 });
 
