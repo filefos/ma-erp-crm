@@ -195,8 +195,6 @@ const STANDARD_TC = `1. COMMERCIAL BASIS
 
 3. Commercial basis: Ex-factory.
 
-4. All cheques shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
-
 
 2. EXCLUSIONS
 
@@ -219,9 +217,7 @@ const STANDARD_TC = `1. COMMERCIAL BASIS
 
 2. 25% balance payment before delivery.
 
-3. Cheque shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
-
-4. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
+3. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
 
 
 4. TECHNICAL & GENERAL NOTES
