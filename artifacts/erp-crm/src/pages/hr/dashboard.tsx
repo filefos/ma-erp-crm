@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
-import { useListEmployees, useListAttendance, useListUsers } from "@workspace/api-client-react";
+import { useListEmployees, useListAttendance, useListUsers, useListOfferLetters } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import {
 import {
   HardHat, Users, Clock, CheckCircle2, XCircle, AlertTriangle, MapPin,
   TrendingUp, ArrowRight, Sparkles, UserCheck, UserPlus, Award, Globe2,
+  FileText, ShieldAlert,
 } from "lucide-react";
 import {
   ExecutiveHeader, KPIWidget, Avatar, weeklyValues, trendPct,
@@ -30,8 +31,31 @@ export function HrDashboard() {
   const { data: employeesRaw }   = useListEmployees({});
   const { data: attendanceRaw }  = useListAttendance({});
   const { data: usersRaw }       = useListUsers();
+  const { data: offerLettersRaw } = useListOfferLetters({});
 
   const employees  = useMemo(() => filterByCompany(employeesRaw ?? []), [employeesRaw, filterByCompany]);
+  const offerLetters = useMemo(() => filterByCompany(offerLettersRaw ?? []), [offerLettersRaw, filterByCompany]);
+
+  // ---- Expiring documents (passport / Emirates ID within 60 days, or already expired) ----
+  const expiringDocs = useMemo(() => {
+    const out: { id: number; name: string; doc: "Passport" | "Emirates ID"; expiry: string; days: number }[] = [];
+    const now = Date.now();
+    for (const e of employees as any[]) {
+      const push = (label: "Passport" | "Emirates ID", raw?: string | null) => {
+        if (!raw) return;
+        const t = new Date(raw).getTime();
+        if (isNaN(t)) return;
+        const days = Math.ceil((t - now) / 86_400_000);
+        if (days <= 60) out.push({ id: e.id, name: e.name, doc: label, expiry: raw, days });
+      };
+      push("Passport", e.passportExpiry);
+      push("Emirates ID", e.emiratesIdExpiry);
+    }
+    return out.sort((a, b) => a.days - b.days);
+  }, [employees]);
+  const expiredCount    = expiringDocs.filter(d => d.days < 0).length;
+  const expiringSoonCount = expiringDocs.filter(d => d.days >= 0).length;
+  const pendingOffers   = (offerLetters as any[]).filter(o => o.status === "issued").length;
   const attendance = useMemo(() => attendanceRaw ?? [], [attendanceRaw]);
   const users      = usersRaw ?? [];
 
@@ -248,7 +272,45 @@ export function HrDashboard() {
         <KPIWidget icon={Clock}        tone="purple" label="Overtime Hours"     value={overtimeToday.toFixed(1)} sub="Today's total"                            href="/hr/attendance" testId="kpi-overtime" />
         <KPIWidget icon={UserPlus}     tone="teal"   label="New Joiners (MTD)"  value={newJoinersThisMonth}  sub="This month"                                  href="/hr/employees" testId="kpi-joiners" />
         <KPIWidget icon={Globe2}       tone="indigo" label="Nationalities"      value={nationalityMix.length} sub="Diverse workforce"                          testId="kpi-nationalities" />
+        <KPIWidget icon={ShieldAlert}  tone={expiredCount > 0 ? "red" : expiringSoonCount > 0 ? "amber" : "slate"} label="Expiring Documents" value={expiringDocs.length} sub={`${expiredCount} expired · ${expiringSoonCount} ≤ 60 days`} href="/hr/employees" testId="kpi-expiring-docs" />
+        <KPIWidget icon={FileText}     tone={pendingOffers > 0 ? "navy" : "slate"} label="Pending Offer Letters" value={pendingOffers} sub="Awaiting accept / reject" href="/hr/offer-letters?status=issued" testId="kpi-pending-offers" />
       </div>
+
+      {/* Expiring documents widget */}
+      {expiringDocs.length > 0 && (
+        <div className="bg-card border rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow">
+                <ShieldAlert className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold">Expiring Documents</div>
+                <div className="text-[11px] text-muted-foreground">Passports and Emirates IDs expiring within 60 days</div>
+              </div>
+            </div>
+            <Link href="/hr/employees" className="text-[11px] text-primary hover:underline flex items-center gap-1">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2" data-testid="list-expiring-docs">
+            {expiringDocs.slice(0, 9).map((d, idx) => (
+              <Link key={`${d.id}-${d.doc}-${idx}`} href={`/hr/employees/${d.id}`} className="block">
+                <div className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
+                  <Avatar name={d.name} size={28} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{d.name}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">{d.doc} · expires {new Date(d.expiry).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" })}</div>
+                  </div>
+                  <Badge className={d.days < 0 ? "bg-red-100 text-red-700" : d.days <= 30 ? "bg-orange-100 text-orange-700" : "bg-amber-100 text-amber-700"}>
+                    {d.days < 0 ? `${Math.abs(d.days)}d ago` : `in ${d.days}d`}
+                  </Badge>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Attendance trend */}
       <div className="bg-card border rounded-2xl p-4 space-y-3 shadow-sm">

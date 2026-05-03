@@ -20,8 +20,8 @@ import { uploadFile } from "@/lib/upload";
 interface Props { id: string }
 
 const ATTACHMENT_CATEGORIES = [
-  "passport", "visa", "emirates_id", "photo", "degree_certificate",
-  "experience_certificate", "labour_card", "offer_letter_signed", "other",
+  "passport", "visa", "emirates_id", "photo", "degree_diploma",
+  "experience_certificate", "other_academic", "other_personal",
 ] as const;
 
 function expiryClass(dateStr?: string | null): string {

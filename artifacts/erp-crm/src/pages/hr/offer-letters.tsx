@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   useListOfferLetters, useCreateOfferLetter, useListEmployees, useGetEmployee,
+  useListCompanies,
   getListOfferLettersQueryKey, getGetEmployeeQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ export function OfferLettersList() {
   const [, setLocation] = useLocation();
   const [status, setStatus] = useState<string>("all");
   const [templateType, setTemplateType] = useState<string>("all");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -44,7 +46,9 @@ export function OfferLettersList() {
   const qc = useQueryClient();
   const { filterByCompany } = useActiveCompany();
   const { data: offers, isLoading } = useListOfferLetters({ status: status === "all" ? undefined : status, templateType: templateType === "all" ? undefined : templateType });
+  const { data: companies } = useListCompanies();
   const filtered = (filterByCompany(offers ?? []) as any[]).filter(o => {
+    if (companyFilter !== "all" && String(o.companyId) !== companyFilter) return false;
     const s = search.toLowerCase();
     return !s || o.candidateName.toLowerCase().includes(s) || o.letterNumber.toLowerCase().includes(s);
   });
@@ -199,6 +203,15 @@ export function OfferLettersList() {
             <SelectItem value="labour">Labour</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={companyFilter} onValueChange={setCompanyFilter}>
+          <SelectTrigger className="w-48" data-testid="select-company-filter"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Companies</SelectItem>
+            {(companies ?? []).map((c: any) => (
+              <SelectItem key={c.id} value={String(c.id)}>{c.shortName ?? c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="border rounded-lg bg-card">
@@ -212,12 +225,13 @@ export function OfferLettersList() {
               <TableHead>Template</TableHead>
               <TableHead>Joining</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Issued</TableHead>
               <TableHead>Created</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow> :
-            filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No offer letters.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow> :
+            filtered.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No offer letters.</TableCell></TableRow> :
             filtered.map(o => (
               <TableRow key={o.id} className="cursor-pointer hover:bg-muted/40" data-testid={`row-offer-${o.id}`}>
                 <TableCell className="font-mono text-xs"><Link href={`/hr/offer-letters/${o.id}`} className="text-primary hover:underline">{o.letterNumber}</Link><div className="text-[10px] text-muted-foreground">v{o.version}</div></TableCell>
@@ -227,6 +241,7 @@ export function OfferLettersList() {
                 <TableCell><Badge variant="outline">{o.templateType}</Badge></TableCell>
                 <TableCell>{o.joiningDate || "-"}</TableCell>
                 <TableCell><Badge className={STATUS_TONE[o.status] ?? ""}>{o.status}</Badge></TableCell>
+                <TableCell className="text-xs text-muted-foreground">{o.issuedAt ? new Date(o.issuedAt).toLocaleDateString("en-AE") : "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{new Date(o.createdAt).toLocaleDateString("en-AE")}</TableCell>
               </TableRow>
             ))}
