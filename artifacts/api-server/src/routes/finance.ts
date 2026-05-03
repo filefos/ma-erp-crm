@@ -148,7 +148,7 @@ router.post("/chart-of-accounts", requirePermission("expenses", "create"), requi
 });
 
 router.put("/chart-of-accounts/:id", requirePermission("expenses", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(chartOfAccountsTable).where(eq(chartOfAccountsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -157,7 +157,7 @@ router.put("/chart-of-accounts/:id", requirePermission("expenses", "edit"), requ
 });
 
 router.delete("/chart-of-accounts/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(chartOfAccountsTable).where(eq(chartOfAccountsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -192,7 +192,7 @@ router.post("/payments-received", requirePermission("expenses", "create"), requi
 });
 
 router.put("/payments-received/:id", requirePermission("expenses", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(paymentsReceivedTable).where(eq(paymentsReceivedTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -202,7 +202,7 @@ router.put("/payments-received/:id", requirePermission("expenses", "edit"), requ
 });
 
 router.delete("/payments-received/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(paymentsReceivedTable).where(eq(paymentsReceivedTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -237,7 +237,7 @@ router.post("/payments-made", requirePermission("expenses", "create"), requireBo
 });
 
 router.put("/payments-made/:id", requirePermission("expenses", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(paymentsMadeTable).where(eq(paymentsMadeTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -247,7 +247,7 @@ router.put("/payments-made/:id", requirePermission("expenses", "edit"), requireB
 });
 
 router.delete("/payments-made/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(paymentsMadeTable).where(eq(paymentsMadeTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -297,7 +297,7 @@ router.post("/journal-entries", requirePermission("expenses", "create"), require
 });
 
 router.get("/journal-entries/:id", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [journal] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
   if (!journal) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [journal]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -305,7 +305,7 @@ router.get("/journal-entries/:id", requirePermission("expenses", "view"), async 
 });
 
 router.put("/journal-entries/:id", requirePermission("expenses", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -323,7 +323,7 @@ router.put("/journal-entries/:id", requirePermission("expenses", "edit"), requir
 });
 
 router.delete("/journal-entries/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -333,7 +333,7 @@ router.delete("/journal-entries/:id", requirePermission("expenses", "delete"), a
 });
 
 router.post("/journal-entries/:id/approve", requirePermission("expenses", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }

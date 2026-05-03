@@ -125,7 +125,7 @@ router.post("/suppliers", requirePermission("suppliers", "create"), requireBodyC
 });
 
 router.get("/suppliers/:id", requirePermission("suppliers", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [supplier] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id));
   if (!supplier) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [supplier]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -133,7 +133,7 @@ router.get("/suppliers/:id", requirePermission("suppliers", "view"), async (req,
 });
 
 router.put("/suppliers/:id", requirePermission("suppliers", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -142,7 +142,7 @@ router.put("/suppliers/:id", requirePermission("suppliers", "edit"), requireBody
 });
 
 router.delete("/suppliers/:id", requirePermission("suppliers", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -177,7 +177,7 @@ router.post("/purchase-requests", requirePermission("purchase_requests", "create
 });
 
 router.get("/purchase-requests/:id", requirePermission("purchase_requests", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [pr] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
   if (!pr) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [pr]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -185,7 +185,7 @@ router.get("/purchase-requests/:id", requirePermission("purchase_requests", "vie
 });
 
 router.put("/purchase-requests/:id", requirePermission("purchase_requests", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -198,7 +198,7 @@ router.put("/purchase-requests/:id", requirePermission("purchase_requests", "edi
 });
 
 router.post("/purchase-requests/:id/submit", requirePermission("purchase_requests", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -207,7 +207,7 @@ router.post("/purchase-requests/:id/submit", requirePermission("purchase_request
 });
 
 router.post("/purchase-requests/:id/approve", requirePermission("purchase_requests", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -216,7 +216,7 @@ router.post("/purchase-requests/:id/approve", requirePermission("purchase_reques
 });
 
 router.post("/purchase-requests/:id/reject", requirePermission("purchase_requests", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -252,7 +252,7 @@ router.post("/rfqs", requirePermission("purchase_requests", "create"), requireBo
 });
 
 router.get("/rfqs/:id", requirePermission("purchase_requests", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [rfq] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
   if (!rfq) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [rfq]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -260,7 +260,7 @@ router.get("/rfqs/:id", requirePermission("purchase_requests", "view"), async (r
 });
 
 router.put("/rfqs/:id", requirePermission("purchase_requests", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -276,7 +276,7 @@ router.put("/rfqs/:id", requirePermission("purchase_requests", "edit"), requireB
 });
 
 router.delete("/rfqs/:id", requirePermission("purchase_requests", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -285,7 +285,7 @@ router.delete("/rfqs/:id", requirePermission("purchase_requests", "delete"), asy
 });
 
 router.post("/rfqs/:id/send", requirePermission("purchase_requests", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -294,7 +294,7 @@ router.post("/rfqs/:id/send", requirePermission("purchase_requests", "edit"), as
 });
 
 router.post("/rfqs/:id/close", requirePermission("purchase_requests", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -334,7 +334,7 @@ router.post("/supplier-quotations", requirePermission("purchase_requests", "crea
 });
 
 router.get("/supplier-quotations/:id", requirePermission("purchase_requests", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [sq] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!sq) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [sq]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -342,7 +342,7 @@ router.get("/supplier-quotations/:id", requirePermission("purchase_requests", "v
 });
 
 router.put("/supplier-quotations/:id", requirePermission("purchase_requests", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -360,7 +360,7 @@ router.put("/supplier-quotations/:id", requirePermission("purchase_requests", "e
 });
 
 router.delete("/supplier-quotations/:id", requirePermission("purchase_requests", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -369,7 +369,7 @@ router.delete("/supplier-quotations/:id", requirePermission("purchase_requests",
 });
 
 router.post("/supplier-quotations/:id/select", requirePermission("purchase_requests", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const { reason } = req.body;
   const [sq] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!sq) { res.status(404).json({ error: "Not found" }); return; }
@@ -388,7 +388,7 @@ router.post("/supplier-quotations/:id/select", requirePermission("purchase_reque
 });
 
 router.post("/supplier-quotations/:id/reject", requirePermission("purchase_requests", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -428,7 +428,7 @@ router.post("/purchase-orders", requirePermission("purchase_orders", "create"), 
 });
 
 router.get("/purchase-orders/:id", requirePermission("purchase_orders", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [po] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!po) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [po]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -436,7 +436,7 @@ router.get("/purchase-orders/:id", requirePermission("purchase_orders", "view"),
 });
 
 router.put("/purchase-orders/:id", requirePermission("purchase_orders", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -455,7 +455,7 @@ router.put("/purchase-orders/:id", requirePermission("purchase_orders", "edit"),
 });
 
 router.delete("/purchase-orders/:id", requirePermission("purchase_orders", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -465,7 +465,7 @@ router.delete("/purchase-orders/:id", requirePermission("purchase_orders", "dele
 });
 
 router.post("/purchase-orders/:id/submit", requirePermission("purchase_orders", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -474,7 +474,7 @@ router.post("/purchase-orders/:id/submit", requirePermission("purchase_orders", 
 });
 
 router.post("/purchase-orders/:id/approve", requirePermission("purchase_orders", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -483,7 +483,7 @@ router.post("/purchase-orders/:id/approve", requirePermission("purchase_orders",
 });
 
 router.post("/purchase-orders/:id/reject", requirePermission("purchase_orders", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -493,7 +493,7 @@ router.post("/purchase-orders/:id/reject", requirePermission("purchase_orders", 
 });
 
 router.post("/purchase-orders/:id/issue", requirePermission("purchase_orders", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -503,7 +503,7 @@ router.post("/purchase-orders/:id/issue", requirePermission("purchase_orders", "
 });
 
 router.post("/purchase-orders/:id/cancel", requirePermission("purchase_orders", "approve"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const { reason } = req.body;
   if (!reason) { res.status(400).json({ error: "Cancellation reason required" }); return; }
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));

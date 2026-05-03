@@ -204,8 +204,8 @@ const loginRateLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req, res) => {
-    const ip = ipKeyGenerator(req, res);
+  keyGenerator: (req) => {
+    const ip = ipKeyGenerator(req.ip ?? "");
     const email = typeof req.body?.email === "string" ? req.body.email.toLowerCase().trim() : "";
     return `${ip}:${email}`;
   },

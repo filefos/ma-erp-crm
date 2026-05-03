@@ -147,8 +147,8 @@ router.post("/emails", requirePermission("emails", "create"), requireBodyCompany
 });
 
 router.get("/emails/:id/attachments/:idx", requirePermission("emails", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-  const idx = parseInt(req.params.idx, 10);
+  const id = parseInt(String(req.params.id), 10);
+  const idx = parseInt(String(req.params.idx), 10);
   const [email] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!email) { res.status(404).json({ error: "Not found" }); return; }
   if (!inScope(req, email.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -229,6 +229,7 @@ router.post("/emails/sync", requirePermission("emails", "edit"), requireBodyComp
 
       for await (const msg of client.fetch(`${fetchFrom}:*`, { envelope: true, source: true, flags: true })) {
         const env = msg.envelope;
+        if (!env) { skipped++; continue; }
         const fromAddr = env.from?.[0]?.address ?? "";
         const fromName = env.from?.[0]?.name ?? "";
         const toAddr = env.to?.[0]?.address ?? settings.imapUser;

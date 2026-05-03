@@ -229,8 +229,8 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
 });
 
 router.get("/lpos/:id/attachments/:idx", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
-  const idx = parseInt(req.params.idx, 10);
+  const id = parseInt(String(req.params.id), 10);
+  const idx = parseInt(String(req.params.idx), 10);
   const [lpo] = await db.select().from(lposTable).where(eq(lposTable.id, id));
   if (!lpo) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [lpo]).length) { res.status(403).json({ error: "Forbidden" }); return; }
