@@ -91,25 +91,32 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
         boxSizing: "border-box",
       }}
     >
-      {/* Letterhead banner — strictly the official Prime Max letterhead.
-          The company name and contact details that previously sat next to
-          the logo have been moved to the footer so they don't compete with
-          the letter body. */}
-      <div style={{ borderBottom: "3px solid #0f2d5a", paddingBottom: 6 }}>
-        <img
-          src="/erp-crm/prime-max-letterhead.png"
-          alt={legalName}
-          style={{ display: "block", height: 78, width: "auto", margin: "0 auto" }}
-          crossOrigin="anonymous"
-        />
-        <div style={{ display: "table", width: "100%", marginTop: 4 }}>
+      {/* Compact letterhead — small logo on the left, legal company name in
+          navy, Ref + Date right-aligned. Address / contact details live in
+          the footer. The whole header is intentionally short (~58px tall)
+          so the body has the maximum possible space. */}
+      <div style={{ borderBottom: "2px solid #0f2d5a", paddingBottom: 6 }}>
+        <div style={{ display: "table", width: "100%" }}>
           <div style={{ display: "table-row" }}>
-            <div style={{ display: "table-cell", fontSize: FS_SMALL, color: "#1e6ab0" }}>
-              {legalName}
+            <div style={{ display: "table-cell", verticalAlign: "middle", width: 56, paddingRight: 12 }}>
+              <img
+                src="/erp-crm/prime-max-logo.png"
+                alt={legalName}
+                style={{ display: "block", height: 48, width: "auto" }}
+                crossOrigin="anonymous"
+              />
             </div>
-            <div style={{ display: "table-cell", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL }}>
-              <strong>Ref:</strong> {doc.letterNumber}&nbsp;&nbsp;·&nbsp;&nbsp;
-              <strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}
+            <div style={{ display: "table-cell", verticalAlign: "middle" }}>
+              <div style={{ color: "#0f2d5a", fontSize: 16, fontWeight: 800, lineHeight: 1.1 }}>
+                PRIME MAX PREFAB
+              </div>
+              <div style={{ color: "#1e6ab0", fontSize: FS_SMALL, marginTop: 1 }}>
+                {legalName}
+              </div>
+            </div>
+            <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL, width: 200 }}>
+              <div><strong>Ref:</strong> {doc.letterNumber}</div>
+              <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
             </div>
           </div>
         </div>
@@ -213,11 +220,11 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
         <div style={{ flex: 1, minHeight: 8 }} />
       </div>
 
-      {/* Footer — address, contact and TRN moved here per request so the
-          header stays clean and the body has more vertical room. */}
-      <div style={{ borderTop: "2px solid #0f2d5a", paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: "#1e6ab0", textAlign: "center", lineHeight: 1.3 }}>
-        <div>Industrial Area · Sharjah · United Arab Emirates &nbsp;·&nbsp; P.O. Box ____________ &nbsp;·&nbsp; TRN ____________</div>
-        <div>Tel: +971 ____________ &nbsp;·&nbsp; Email: info@primemaxprefab.ae &nbsp;·&nbsp; Web: www.primemaxprefab.ae</div>
+      {/* Footer — official address and contact details. Dark navy top
+          border to match the header. No TRN, no P.O. Box per request. */}
+      <div style={{ borderTop: "2px solid #0f2d5a", paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: "#0f2d5a", textAlign: "center", lineHeight: 1.35 }}>
+        <div>Plot # 2040, Sajja Industrial Area, Sharjah, United Arab Emirates</div>
+        <div>Tel: 0566163555 &nbsp;·&nbsp; Email: hr@primemaxprefab.com &nbsp;·&nbsp; Web: www.primemaxprefab.com</div>
       </div>
     </div>
   );

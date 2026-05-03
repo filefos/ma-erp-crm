@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
-  db, offerLettersTable, employeesTable, companiesTable, usersTable,
+  db, offerLettersTable, offerLetterAttachmentsTable,
+  employeesTable, companiesTable, usersTable,
 } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
@@ -55,7 +56,7 @@ router.get("/offer-letters", requirePermission("offer_letters", "view"), async (
 
 // GET ONE
 router.get("/offer-letters/:id", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const [row] = await db.select().from(offerLettersTable).where(eq(offerLettersTable.id, id));
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [row]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -86,7 +87,7 @@ router.post("/offer-letters", requirePermission("offer_letters", "create"), requ
 // employee record. HR needs to be able to fix typos / correct salary lines on
 // already-issued letters without going through a full re-issue cycle.
 router.put("/offer-letters/:id", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const [existing] = await db.select().from(offerLettersTable).where(eq(offerLettersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -106,7 +107,7 @@ router.put("/offer-letters/:id", requirePermission("offer_letters", "edit"), asy
 
 // STATUS TRANSITION
 router.post("/offer-letters/:id/status", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const [existing] = await db.select().from(offerLettersTable).where(eq(offerLettersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -134,7 +135,7 @@ router.post("/offer-letters/:id/status", requirePermission("offer_letters", "edi
 
 // REISSUE — clones the letter as a new draft, version+1, parent_offer_id=this
 router.post("/offer-letters/:id/reissue", requirePermission("offer_letters", "create"), async (req, res): Promise<void> => {
-  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const [src] = await db.select().from(offerLettersTable).where(eq(offerLettersTable.id, id));
   if (!src) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [src]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -182,7 +183,7 @@ router.post("/offer-letters/:id/reissue", requirePermission("offer_letters", "cr
 // CONVERT TO EMPLOYEE — creates an employees row from the accepted offer
 // Wrapped in a transaction with row-level lock for idempotency under concurrency.
 router.post("/offer-letters/:id/convert-to-employee", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   try {
     const result = await db.transaction(async (tx) => {
       const locked = await tx.execute(sql`SELECT * FROM offer_letters WHERE id = ${id} FOR UPDATE`);
@@ -229,6 +230,100 @@ router.post("/offer-letters/:id/convert-to-employee", requirePermission("offer_l
     req.log?.error({ err }, "convert-to-employee failed");
     res.status(500).json({ error: "Conversion failed" });
   }
+});
+
+// --- Attachments (academic / supporting documents) ---------------------------
+// Files are stored inline as base64 to keep this self-contained and avoid an
+// object-storage dep. 8 MB cap per file is enforced here.
+const ATTACHMENT_MAX_BYTES = 8 * 1024 * 1024;
+
+type OfferGuard =
+  | { ok: true; row: typeof offerLettersTable.$inferSelect }
+  | { ok: false; status: 404 | 403 };
+async function loadOfferOr403(req: any, id: number): Promise<OfferGuard> {
+  const [row] = await db.select().from(offerLettersTable).where(eq(offerLettersTable.id, id));
+  if (!row) return { ok: false, status: 404 };
+  if (!scopeFilter(req, [row]).length) return { ok: false, status: 403 };
+  return { ok: true, row };
+}
+
+// LIST attachments (metadata only — no base64 payload)
+router.get("/offer-letters/:id/attachments", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+  const guard = await loadOfferOr403(req, id);
+  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+  const rows = await db.select({
+    id: offerLetterAttachmentsTable.id,
+    offerLetterId: offerLetterAttachmentsTable.offerLetterId,
+    fileName: offerLetterAttachmentsTable.fileName,
+    contentType: offerLetterAttachmentsTable.contentType,
+    sizeBytes: offerLetterAttachmentsTable.sizeBytes,
+    uploadedById: offerLetterAttachmentsTable.uploadedById,
+    uploadedAt: offerLetterAttachmentsTable.uploadedAt,
+  }).from(offerLetterAttachmentsTable)
+    .where(eq(offerLetterAttachmentsTable.offerLetterId, id))
+    .orderBy(desc(offerLetterAttachmentsTable.uploadedAt));
+  res.json(rows);
+});
+
+// CREATE attachment — body: { fileName, contentType, contentBase64 }
+router.post("/offer-letters/:id/attachments", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+  const guard = await loadOfferOr403(req, id);
+  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+  const { fileName, contentType, contentBase64 } = req.body ?? {};
+  if (!fileName || !contentBase64 || typeof contentBase64 !== "string") {
+    res.status(400).json({ error: "fileName and contentBase64 are required" }); return;
+  }
+  // Approx byte size from base64 (3/4 ratio), enforce cap before insert.
+  const approxBytes = Math.floor(contentBase64.length * 0.75);
+  if (approxBytes > ATTACHMENT_MAX_BYTES) {
+    res.status(413).json({ error: `File exceeds ${ATTACHMENT_MAX_BYTES / 1024 / 1024} MB limit` }); return;
+  }
+  const [row] = await db.insert(offerLetterAttachmentsTable).values({
+    offerLetterId: id,
+    fileName: String(fileName).slice(0, 255),
+    contentType: contentType ? String(contentType).slice(0, 120) : null,
+    sizeBytes: approxBytes,
+    contentBase64,
+    uploadedById: req.user?.id ?? null,
+  }).returning({
+    id: offerLetterAttachmentsTable.id,
+    offerLetterId: offerLetterAttachmentsTable.offerLetterId,
+    fileName: offerLetterAttachmentsTable.fileName,
+    contentType: offerLetterAttachmentsTable.contentType,
+    sizeBytes: offerLetterAttachmentsTable.sizeBytes,
+    uploadedById: offerLetterAttachmentsTable.uploadedById,
+    uploadedAt: offerLetterAttachmentsTable.uploadedAt,
+  });
+  res.status(201).json(row);
+});
+
+// DOWNLOAD attachment payload (auth-gated, served as raw bytes)
+router.get("/offer-letters/:id/attachments/:attId/download", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+  const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);
+  const guard = await loadOfferOr403(req, id);
+  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+  const [att] = await db.select().from(offerLetterAttachmentsTable)
+    .where(and(eq(offerLetterAttachmentsTable.id, attId), eq(offerLetterAttachmentsTable.offerLetterId, id)));
+  if (!att) { res.status(404).json({ error: "Attachment not found" }); return; }
+  const buf = Buffer.from(att.contentBase64, "base64");
+  res.setHeader("Content-Type", att.contentType || "application/octet-stream");
+  res.setHeader("Content-Length", String(buf.length));
+  res.setHeader("Content-Disposition", `attachment; filename="${att.fileName.replace(/"/g, "")}"`);
+  res.send(buf);
+});
+
+// DELETE attachment
+router.delete("/offer-letters/:id/attachments/:attId", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+  const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);
+  const guard = await loadOfferOr403(req, id);
+  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+  await db.delete(offerLetterAttachmentsTable)
+    .where(and(eq(offerLetterAttachmentsTable.id, attId), eq(offerLetterAttachmentsTable.offerLetterId, id)));
+  res.json({ ok: true });
 });
 
 export default router;

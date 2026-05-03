@@ -407,6 +407,19 @@ async function runMigrations() {
       `);
     }
 
+    // Per-offer-letter attachments (academic / supporting documents).
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS offer_letter_attachments (
+      id SERIAL PRIMARY KEY,
+      offer_letter_id INTEGER NOT NULL,
+      file_name TEXT NOT NULL,
+      content_type TEXT,
+      size_bytes INTEGER,
+      content_base64 TEXT NOT NULL,
+      uploaded_by_id INTEGER,
+      uploaded_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS offer_letter_attachments_offer_idx ON offer_letter_attachments(offer_letter_id)`);
+
     // Push notification device tokens (one row per Expo push token, per user/device).
     await db.execute(sql`CREATE TABLE IF NOT EXISTS device_tokens (
       id SERIAL PRIMARY KEY,

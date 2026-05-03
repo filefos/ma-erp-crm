@@ -131,12 +131,28 @@ export const offerLettersTable = pgTable("offer_letters", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Per-offer-letter attachments (academic certificates, ID copies, etc.).
+// Files are stored inline as base64 to avoid a hard dep on object storage and
+// keep operations simple. 8 MB per-file cap is enforced server-side.
+export const offerLetterAttachmentsTable = pgTable("offer_letter_attachments", {
+  id: serial("id").primaryKey(),
+  offerLetterId: integer("offer_letter_id").notNull(),
+  fileName: text("file_name").notNull(),
+  contentType: text("content_type"),
+  sizeBytes: integer("size_bytes"),
+  contentBase64: text("content_base64").notNull(),
+  uploadedById: integer("uploaded_by_id"),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+});
+
 export const insertEmployeeSchema = createInsertSchema(employeesTable).omit({ id: true, employeeId: true, createdAt: true, updatedAt: true });
 export const insertAttendanceSchema = createInsertSchema(attendanceTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertEmployeeAttachmentSchema = createInsertSchema(employeeAttachmentsTable).omit({ id: true, uploadedAt: true });
 export const insertOfferLetterSchema = createInsertSchema(offerLettersTable).omit({ id: true, letterNumber: true, createdAt: true, updatedAt: true });
+export const insertOfferLetterAttachmentSchema = createInsertSchema(offerLetterAttachmentsTable).omit({ id: true, uploadedAt: true });
 
 export type Employee = typeof employeesTable.$inferSelect;
 export type Attendance = typeof attendanceTable.$inferSelect;
 export type EmployeeAttachment = typeof employeeAttachmentsTable.$inferSelect;
 export type OfferLetter = typeof offerLettersTable.$inferSelect;
+export type OfferLetterAttachment = typeof offerLetterAttachmentsTable.$inferSelect;

@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import {
+  listOfferLetterAttachments, uploadOfferLetterAttachment,
+  deleteOfferLetterAttachment, downloadOfferLetterAttachment,
+  type OfferLetterAttachment,
+} from "@/lib/offer-letter-attachments";
+import { Paperclip, Upload, Trash2, Download } from "lucide-react";
 
 const COMMISSION_DEFAULTS = {
   commissionTargetAmount: 200000,
@@ -115,8 +121,42 @@ export function OfferLetterDetail({ id }: Props) {
   }, [offer, editing]);
 
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [downloading, setDownloading] = useState(false);
+  const [attachments, setAttachments] = useState<OfferLetterAttachment[]>([]);
+  const [attLoading, setAttLoading] = useState(false);
+  const [attError, setAttError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const reloadAttachments = async () => {
+    if (!oid) return;
+    setAttLoading(true);
+    setAttError(null);
+    try { setAttachments(await listOfferLetterAttachments(oid)); }
+    catch (e: any) { setAttError(e?.message ?? "Failed to load"); }
+    finally { setAttLoading(false); }
+  };
+  useEffect(() => { if (oid) void reloadAttachments(); }, [oid]);
+  const onPickFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setAttError(null);
+    try {
+      for (const f of Array.from(files)) {
+        if (f.size > 8 * 1024 * 1024) {
+          setAttError(`"${f.name}" exceeds 8 MB limit`);
+          continue;
+        }
+        await uploadOfferLetterAttachment(oid, f);
+      }
+      await reloadAttachments();
+    } catch (e: any) {
+      setAttError(e?.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   // NOTE: All hook calls must happen before the early returns below to satisfy
   // the rules of hooks (React throws "Rendered more hooks than during the
@@ -442,6 +482,76 @@ export function OfferLetterDetail({ id }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Academic / Supporting Documents */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="flex items-center gap-2">
+            <Paperclip className="w-4 h-4" /> Academic &amp; Supporting Documents
+          </CardTitle>
+          {canEdit && (
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                className="hidden"
+                onChange={(e) => onPickFiles(e.target.files)}
+                data-testid="input-offer-attachment-file"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                data-testid="button-upload-offer-attachment"
+              >
+                <Upload className="w-4 h-4 mr-1" />{uploading ? "Uploading…" : "Upload"}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          {attError && <div className="text-xs text-red-600 mb-2" data-testid="text-attachment-error">{attError}</div>}
+          {attLoading ? (
+            <div className="text-sm text-muted-foreground">Loading…</div>
+          ) : attachments.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No documents uploaded yet. Accepted: PDF, JPG, PNG, DOC/DOCX (max 8&nbsp;MB each).</div>
+          ) : (
+            <ul className="divide-y rounded border">
+              {attachments.map((a) => (
+                <li key={a.id} className="flex items-center gap-3 px-3 py-2" data-testid={`row-attachment-${a.id}`}>
+                  <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm truncate" title={a.fileName}>{a.fileName}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {a.contentType || "file"} · {a.sizeBytes ? `${(a.sizeBytes / 1024).toFixed(1)} KB` : "—"} · {new Date(a.uploadedAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => downloadOfferLetterAttachment(oid, a)} data-testid={`button-download-attachment-${a.id}`}>
+                    <Download className="w-4 h-4" />
+                  </Button>
+                  {canEdit && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={async () => {
+                        if (!confirm(`Delete "${a.fileName}"?`)) return;
+                        try { await deleteOfferLetterAttachment(oid, a.id); await reloadAttachments(); }
+                        catch (e: any) { setAttError(e?.message ?? "Delete failed"); }
+                      }}
+                      data-testid={`button-delete-attachment-${a.id}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
