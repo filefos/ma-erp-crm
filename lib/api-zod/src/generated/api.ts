@@ -5187,3 +5187,306 @@ export const ApproveJournalEntryResponse = zod.object({
   createdAt: zod.string().optional(),
   updatedAt: zod.string().optional(),
 });
+
+/**
+ * @summary List WhatsApp accounts
+ */
+export const ListWhatsappAccountsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phoneNumberId: zod.string(),
+  wabaId: zod.string().optional(),
+  displayPhone: zod.string().optional(),
+  accessTokenEnv: zod.string(),
+  companyId: zod.number().optional(),
+  isDefault: zod.boolean(),
+  isActive: zod.boolean(),
+  tokenConfigured: zod.boolean().optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+export const ListWhatsappAccountsResponse = zod.array(
+  ListWhatsappAccountsResponseItem,
+);
+
+/**
+ * @summary Register a WhatsApp account
+ */
+export const CreateWhatsappAccountBody = zod.object({
+  name: zod.string(),
+  phoneNumberId: zod.string(),
+  wabaId: zod.string().optional(),
+  displayPhone: zod.string().optional(),
+  accessTokenEnv: zod.string().optional(),
+  companyId: zod.number().optional(),
+  isDefault: zod.boolean().optional(),
+  isActive: zod.boolean().optional(),
+});
+
+/**
+ * @summary Update WhatsApp account
+ */
+export const UpdateWhatsappAccountParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateWhatsappAccountBody = zod.object({
+  name: zod.string(),
+  phoneNumberId: zod.string(),
+  wabaId: zod.string().optional(),
+  displayPhone: zod.string().optional(),
+  accessTokenEnv: zod.string().optional(),
+  companyId: zod.number().optional(),
+  isDefault: zod.boolean().optional(),
+  isActive: zod.boolean().optional(),
+});
+
+export const UpdateWhatsappAccountResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  phoneNumberId: zod.string(),
+  wabaId: zod.string().optional(),
+  displayPhone: zod.string().optional(),
+  accessTokenEnv: zod.string(),
+  companyId: zod.number().optional(),
+  isDefault: zod.boolean(),
+  isActive: zod.boolean(),
+  tokenConfigured: zod.boolean().optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete WhatsApp account
+ */
+export const DeleteWhatsappAccountParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteWhatsappAccountResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary List WhatsApp threads
+ */
+export const ListWhatsappThreadsQueryParams = zod.object({
+  search: zod.coerce.string().optional(),
+  leadId: zod.coerce.number().optional(),
+  dealId: zod.coerce.number().optional(),
+  contactId: zod.coerce.number().optional(),
+  projectId: zod.coerce.number().optional(),
+  accountId: zod.coerce.number().optional(),
+});
+
+export const ListWhatsappThreadsResponseItem = zod.object({
+  id: zod.number(),
+  accountId: zod.number(),
+  peerWaId: zod.string(),
+  peerName: zod.string().optional(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  projectId: zod.number().optional(),
+  lastMessageAt: zod.string().optional(),
+  lastMessagePreview: zod.string().optional(),
+  lastDirection: zod.string().optional(),
+  unreadCount: zod.number(),
+  companyId: zod.number().optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+export const ListWhatsappThreadsResponse = zod.array(
+  ListWhatsappThreadsResponseItem,
+);
+
+/**
+ * @summary Get WhatsApp thread
+ */
+export const GetWhatsappThreadParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetWhatsappThreadResponse = zod.object({
+  id: zod.number(),
+  accountId: zod.number(),
+  peerWaId: zod.string(),
+  peerName: zod.string().optional(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  projectId: zod.number().optional(),
+  lastMessageAt: zod.string().optional(),
+  lastMessagePreview: zod.string().optional(),
+  lastDirection: zod.string().optional(),
+  unreadCount: zod.number(),
+  companyId: zod.number().optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Update WhatsApp thread (link to entity)
+ */
+export const UpdateWhatsappThreadParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateWhatsappThreadBody = zod.object({
+  peerName: zod.string().optional(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  projectId: zod.number().optional(),
+  unreadCount: zod.number().optional(),
+  companyId: zod.number().optional(),
+});
+
+export const UpdateWhatsappThreadResponse = zod.object({
+  id: zod.number(),
+  accountId: zod.number(),
+  peerWaId: zod.string(),
+  peerName: zod.string().optional(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  projectId: zod.number().optional(),
+  lastMessageAt: zod.string().optional(),
+  lastMessagePreview: zod.string().optional(),
+  lastDirection: zod.string().optional(),
+  unreadCount: zod.number(),
+  companyId: zod.number().optional(),
+  createdAt: zod.string().optional(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary List messages in a thread
+ */
+export const ListWhatsappMessagesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListWhatsappMessagesResponseItem = zod.object({
+  id: zod.number(),
+  threadId: zod.number(),
+  accountId: zod.number(),
+  direction: zod.string(),
+  waMessageId: zod.string().optional(),
+  fromWa: zod.string().optional(),
+  toWa: zod.string().optional(),
+  messageType: zod.string(),
+  body: zod.string().optional(),
+  mediaUrl: zod.string().optional(),
+  mediaCaption: zod.string().optional(),
+  templateName: zod.string().optional(),
+  templateLanguage: zod.string().optional(),
+  templateVars: zod.string().optional(),
+  status: zod.string(),
+  errorCode: zod.number().optional(),
+  errorText: zod.string().optional(),
+  sentAt: zod.string().optional(),
+  deliveredAt: zod.string().optional(),
+  readAt: zod.string().optional(),
+  receivedAt: zod.string().optional(),
+  sentById: zod.number().optional(),
+  createdAt: zod.string(),
+});
+export const ListWhatsappMessagesResponse = zod.array(
+  ListWhatsappMessagesResponseItem,
+);
+
+/**
+ * @summary Mark thread as read
+ */
+export const MarkWhatsappThreadReadParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const MarkWhatsappThreadReadResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Send a WhatsApp message via Cloud API
+ */
+export const SendWhatsappMessageBody = zod.object({
+  accountId: zod.number().optional(),
+  threadId: zod.number().optional(),
+  to: zod.string().optional(),
+  body: zod.string().optional(),
+  templateName: zod.string().optional(),
+  templateLanguage: zod.string().optional(),
+  templateComponents: zod.unknown().optional(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  projectId: zod.number().optional(),
+});
+
+/**
+ * @summary List approved Cloud API message templates
+ */
+export const ListWhatsappTemplatesQueryParams = zod.object({
+  accountId: zod.coerce.number().optional(),
+});
+
+export const ListWhatsappTemplatesResponseItem = zod.object({
+  name: zod.string().optional(),
+  language: zod.string().optional(),
+  status: zod.string().optional(),
+  category: zod.string().optional(),
+  id: zod.string().optional(),
+  components: zod.array(zod.unknown()).optional(),
+});
+export const ListWhatsappTemplatesResponse = zod.array(
+  ListWhatsappTemplatesResponseItem,
+);
+
+/**
+ * @summary Search leads/deals/contacts/projects to link a thread to
+ */
+export const SearchWhatsappLinkTargetsQueryParams = zod.object({
+  q: zod.coerce.string().optional(),
+});
+
+export const SearchWhatsappLinkTargetsResponse = zod.object({
+  leads: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        label: zod.string(),
+        secondary: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  deals: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        label: zod.string(),
+        secondary: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  contacts: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        label: zod.string(),
+        secondary: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  projects: zod
+    .array(
+      zod.object({
+        id: zod.number(),
+        label: zod.string(),
+        secondary: zod.string().optional(),
+      }),
+    )
+    .optional(),
+});

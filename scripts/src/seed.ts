@@ -24,6 +24,7 @@ const MODULES = [
   "projects",
   "employees", "attendance",
   "users", "companies", "departments", "roles", "audit_logs",
+  "whatsapp",
 ] as const;
 
 type PermSet = { canView?: boolean; canCreate?: boolean; canEdit?: boolean; canApprove?: boolean; canDelete?: boolean; canExport?: boolean; canPrint?: boolean };

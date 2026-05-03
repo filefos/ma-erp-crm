@@ -11,6 +11,7 @@ import {
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
   BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft, TrendingUp,
+  MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -41,6 +42,7 @@ const NAV: NavGroup[] = [
       { href: "/crm/contacts", label: "Contacts", icon: HardHat },
       { href: "/crm/deals", label: "Deals", icon: Briefcase },
       { href: "/crm/activities", label: "Activities", icon: Calendar },
+      { href: "/crm/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle },
     ],
   },
   {

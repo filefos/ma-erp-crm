@@ -22,6 +22,8 @@ import dashboardRouter from "./dashboard";
 import rolesRouter from "./roles";
 import emailsRouter from "./emails";
 import emailSettingsRouter from "./email-settings";
+import whatsappRouter from "./whatsapp";
+import whatsappWebhookRouter from "./whatsapp-webhook";
 
 const router: IRouter = Router();
 
@@ -48,5 +50,9 @@ router.use(notificationsRouter);
 router.use(dashboardRouter);
 router.use(emailsRouter);
 router.use(emailSettingsRouter);
+// Webhook router does NOT require auth — Meta calls it directly.
+// Mount before the authed whatsapp router so its route wins.
+router.use(whatsappWebhookRouter);
+router.use(whatsappRouter);
 
 export default router;

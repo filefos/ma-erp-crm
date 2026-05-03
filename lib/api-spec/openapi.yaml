@@ -45,6 +45,7 @@ tags:
   - name: payments-received
   - name: payments-made
   - name: journal-entries
+  - name: whatsapp
 
 paths:
   /healthz:
@@ -3494,6 +3495,230 @@ paths:
               schema:
                 $ref: "#/components/schemas/JournalEntry"
 
+  # WHATSAPP
+  /whatsapp/accounts:
+    get:
+      operationId: listWhatsappAccounts
+      tags: [whatsapp]
+      summary: List WhatsApp accounts
+      responses:
+        "200":
+          description: Accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WhatsappAccount"
+    post:
+      operationId: createWhatsappAccount
+      tags: [whatsapp]
+      summary: Register a WhatsApp account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWhatsappAccountBody"
+      responses:
+        "201":
+          description: Account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappAccount"
+
+  /whatsapp/accounts/{id}:
+    put:
+      operationId: updateWhatsappAccount
+      tags: [whatsapp]
+      summary: Update WhatsApp account
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWhatsappAccountBody"
+      responses:
+        "200":
+          description: Account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappAccount"
+    delete:
+      operationId: deleteWhatsappAccount
+      tags: [whatsapp]
+      summary: Delete WhatsApp account
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /whatsapp/threads:
+    get:
+      operationId: listWhatsappThreads
+      tags: [whatsapp]
+      summary: List WhatsApp threads
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: leadId, in: query, schema: { type: integer } }
+        - { name: dealId, in: query, schema: { type: integer } }
+        - { name: contactId, in: query, schema: { type: integer } }
+        - { name: projectId, in: query, schema: { type: integer } }
+        - { name: accountId, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: Threads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WhatsappThread"
+
+  /whatsapp/threads/{id}:
+    get:
+      operationId: getWhatsappThread
+      tags: [whatsapp]
+      summary: Get WhatsApp thread
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappThread"
+    put:
+      operationId: updateWhatsappThread
+      tags: [whatsapp]
+      summary: Update WhatsApp thread (link to entity)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWhatsappThreadBody"
+      responses:
+        "200":
+          description: Thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappThread"
+
+  /whatsapp/threads/{id}/messages:
+    get:
+      operationId: listWhatsappMessages
+      tags: [whatsapp]
+      summary: List messages in a thread
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WhatsappMessage"
+
+  /whatsapp/threads/{id}/mark-read:
+    post:
+      operationId: markWhatsappThreadRead
+      tags: [whatsapp]
+      summary: Mark thread as read
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /whatsapp/send:
+    post:
+      operationId: sendWhatsappMessage
+      tags: [whatsapp]
+      summary: Send a WhatsApp message via Cloud API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendWhatsappBody"
+      responses:
+        "201":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendWhatsappResponse"
+
+  /whatsapp/templates:
+    get:
+      operationId: listWhatsappTemplates
+      tags: [whatsapp]
+      summary: List approved Cloud API message templates
+      parameters:
+        - { name: accountId, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: Templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WhatsappTemplate"
+
+  /whatsapp/link-search:
+    get:
+      operationId: searchWhatsappLinkTargets
+      tags: [whatsapp]
+      summary: Search leads/deals/contacts/projects to link a thread to
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Matches
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WhatsappLinkSearchResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -5970,3 +6195,152 @@ components:
           items:
             $ref: "#/components/schemas/JournalEntryLine"
       required: [companyId, entryDate, description]
+
+    WhatsappAccount:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        phoneNumberId: { type: string }
+        wabaId: { type: string }
+        displayPhone: { type: string }
+        accessTokenEnv: { type: string }
+        companyId: { type: integer }
+        isDefault: { type: boolean }
+        isActive: { type: boolean }
+        tokenConfigured: { type: boolean }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+      required: [id, name, phoneNumberId, accessTokenEnv, isDefault, isActive]
+
+    CreateWhatsappAccountBody:
+      type: object
+      properties:
+        name: { type: string }
+        phoneNumberId: { type: string }
+        wabaId: { type: string }
+        displayPhone: { type: string }
+        accessTokenEnv: { type: string }
+        companyId: { type: integer }
+        isDefault: { type: boolean }
+        isActive: { type: boolean }
+      required: [name, phoneNumberId]
+
+    WhatsappThread:
+      type: object
+      properties:
+        id: { type: integer }
+        accountId: { type: integer }
+        peerWaId: { type: string }
+        peerName: { type: string }
+        leadId: { type: integer }
+        dealId: { type: integer }
+        contactId: { type: integer }
+        projectId: { type: integer }
+        lastMessageAt: { type: string }
+        lastMessagePreview: { type: string }
+        lastDirection: { type: string }
+        unreadCount: { type: integer }
+        companyId: { type: integer }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+      required: [id, accountId, peerWaId, unreadCount]
+
+    UpdateWhatsappThreadBody:
+      type: object
+      properties:
+        peerName: { type: string }
+        leadId: { type: integer }
+        dealId: { type: integer }
+        contactId: { type: integer }
+        projectId: { type: integer }
+        unreadCount: { type: integer }
+        companyId: { type: integer }
+
+    WhatsappMessage:
+      type: object
+      properties:
+        id: { type: integer }
+        threadId: { type: integer }
+        accountId: { type: integer }
+        direction: { type: string }
+        waMessageId: { type: string }
+        fromWa: { type: string }
+        toWa: { type: string }
+        messageType: { type: string }
+        body: { type: string }
+        mediaUrl: { type: string }
+        mediaCaption: { type: string }
+        templateName: { type: string }
+        templateLanguage: { type: string }
+        templateVars: { type: string }
+        status: { type: string }
+        errorCode: { type: number }
+        errorText: { type: string }
+        sentAt: { type: string }
+        deliveredAt: { type: string }
+        readAt: { type: string }
+        receivedAt: { type: string }
+        sentById: { type: integer }
+        createdAt: { type: string }
+      required: [id, threadId, accountId, direction, messageType, status, createdAt]
+
+    SendWhatsappBody:
+      type: object
+      properties:
+        accountId: { type: integer }
+        threadId: { type: integer }
+        to: { type: string }
+        body: { type: string }
+        templateName: { type: string }
+        templateLanguage: { type: string }
+        templateComponents: {}
+        leadId: { type: integer }
+        dealId: { type: integer }
+        contactId: { type: integer }
+        projectId: { type: integer }
+
+    SendWhatsappResponse:
+      type: object
+      properties:
+        message:
+          $ref: "#/components/schemas/WhatsappMessage"
+        threadId: { type: integer }
+        waMessageId: { type: string }
+      required: [message, threadId]
+
+    WhatsappTemplate:
+      type: object
+      properties:
+        name: { type: string }
+        language: { type: string }
+        status: { type: string }
+        category: { type: string }
+        id: { type: string }
+        components:
+          type: array
+          items: {}
+
+    WhatsappLinkSearchHit:
+      type: object
+      properties:
+        id: { type: integer }
+        label: { type: string }
+        secondary: { type: string }
+      required: [id, label]
+
+    WhatsappLinkSearchResponse:
+      type: object
+      properties:
+        leads:
+          type: array
+          items: { $ref: "#/components/schemas/WhatsappLinkSearchHit" }
+        deals:
+          type: array
+          items: { $ref: "#/components/schemas/WhatsappLinkSearchHit" }
+        contacts:
+          type: array
+          items: { $ref: "#/components/schemas/WhatsappLinkSearchHit" }
+        projects:
+          type: array
+          items: { $ref: "#/components/schemas/WhatsappLinkSearchHit" }

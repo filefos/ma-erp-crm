@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
-import { useCreateActivity, getListActivitiesQueryKey } from "@workspace/api-client-react";
+import {
+  useCreateActivity,
+  getListActivitiesQueryKey,
+  useListWhatsappAccounts,
+  useSendWhatsappMessage,
+  getListWhatsappThreadsQueryKey,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -82,6 +88,11 @@ export function WhatsAppButton({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createActivity = useCreateActivity();
+  const accountsQ = useListWhatsappAccounts();
+  const apiAccount = (accountsQ.data ?? []).find(a => a.isActive && a.tokenConfigured && a.isDefault)
+    ?? (accountsQ.data ?? []).find(a => a.isActive && a.tokenConfigured);
+  const apiAvailable = Boolean(apiAccount);
+  const sendApi = useSendWhatsappMessage();
 
   const selectedTemplate = templates.find(t => t.id === templateId) || initialTemplate;
 
@@ -101,31 +112,59 @@ export function WhatsAppButton({
 
   const phoneOk = isValidWaPhone(phoneInput);
 
-  const doSend = async () => {
-    const url = buildWaUrl(phoneInput, message);
-    window.open(url, "_blank", "noopener,noreferrer");
+  const logActivityIfNeeded = async (note: string) => {
+    if (!logActivity || !(leadId || dealId || contactId)) return;
+    try {
+      await createActivity.mutateAsync({
+        data: {
+          type: WA_ACTIVITY_TYPE,
+          subject: buildActivitySubject(context, selectedTemplate, baseVars),
+          description: `${note}\n\n${previewActivityDescription(message, phoneInput)}`,
+          isDone: true,
+          leadId,
+          dealId,
+          contactId,
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() });
+    } catch {
+      toast({ title: "Activity log failed", description: "Message was sent but couldn't log the timeline entry.", variant: "destructive" });
+    }
+  };
 
-    if (logActivity && (leadId || dealId || contactId)) {
+  const doSend = async () => {
+    // Prefer the Cloud API path if an active, token-configured account exists.
+    if (apiAvailable && phoneOk) {
       try {
-        await createActivity.mutateAsync({
+        await sendApi.mutateAsync({
           data: {
-            type: WA_ACTIVITY_TYPE,
-            subject: buildActivitySubject(context, selectedTemplate, baseVars),
-            description: previewActivityDescription(message, phoneInput),
-            isDone: true,
+            accountId: apiAccount!.id,
+            to: phoneInput,
+            body: message,
             leadId,
             dealId,
             contactId,
           },
         });
-        queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() });
-        toast({ title: "WhatsApp opened", description: "Activity logged in the timeline." });
-      } catch {
-        toast({ title: "WhatsApp opened", description: "Could not log the activity (continued anyway).", variant: "destructive" });
+        queryClient.invalidateQueries({ queryKey: getListWhatsappThreadsQueryKey() });
+        await logActivityIfNeeded("Sent via WhatsApp Cloud API");
+        toast({ title: "WhatsApp sent", description: `Delivered via Cloud API to +${normalizeWaPhone(phoneInput)}.` });
+        setOpen(false);
+        return;
+      } catch (err) {
+        // Fall back to wa.me if the API call failed.
+        toast({
+          title: "Cloud API send failed — opening WhatsApp Web",
+          description: err instanceof Error ? err.message : undefined,
+          variant: "destructive",
+        });
       }
-    } else {
-      toast({ title: "WhatsApp opened", description: phoneOk ? `Sending to +${normalizeWaPhone(phoneInput)}` : "Pick a contact in WhatsApp to send." });
     }
+    // wa.me fallback
+    const url = buildWaUrl(phoneInput, message);
+    window.open(url, "_blank", "noopener,noreferrer");
+    await logActivityIfNeeded("Opened in WhatsApp Web");
+    toast({ title: "WhatsApp opened", description: phoneOk ? `Sending to +${normalizeWaPhone(phoneInput)}` : "Pick a contact in WhatsApp to send." });
     setOpen(false);
   };
 
@@ -241,10 +280,14 @@ export function WhatsAppButton({
                 type="button"
                 onClick={doSend}
                 className="bg-green-600 hover:bg-green-700 text-white gap-2"
-                disabled={!message.trim() || createActivity.isPending}
+                disabled={!message.trim() || createActivity.isPending || sendApi.isPending}
                 data-testid="button-wa-send"
               >
-                {createActivity.isPending ? "Sending…" : <>Open WhatsApp <ExternalLink className="w-4 h-4" /></>}
+                {sendApi.isPending || createActivity.isPending
+                  ? "Sending…"
+                  : apiAvailable && phoneOk
+                    ? <>Send via Cloud API <Send className="w-4 h-4" /></>
+                    : <>Open WhatsApp <ExternalLink className="w-4 h-4" /></>}
               </Button>
             </div>
           </div>

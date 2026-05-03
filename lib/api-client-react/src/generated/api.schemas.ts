@@ -1388,6 +1388,128 @@ export interface CreateJournalEntryBody {
   lines?: JournalEntryLine[];
 }
 
+export interface WhatsappAccount {
+  id: number;
+  name: string;
+  phoneNumberId: string;
+  wabaId?: string;
+  displayPhone?: string;
+  accessTokenEnv: string;
+  companyId?: number;
+  isDefault: boolean;
+  isActive: boolean;
+  tokenConfigured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateWhatsappAccountBody {
+  name: string;
+  phoneNumberId: string;
+  wabaId?: string;
+  displayPhone?: string;
+  accessTokenEnv?: string;
+  companyId?: number;
+  isDefault?: boolean;
+  isActive?: boolean;
+}
+
+export interface WhatsappThread {
+  id: number;
+  accountId: number;
+  peerWaId: string;
+  peerName?: string;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  projectId?: number;
+  lastMessageAt?: string;
+  lastMessagePreview?: string;
+  lastDirection?: string;
+  unreadCount: number;
+  companyId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateWhatsappThreadBody {
+  peerName?: string;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  projectId?: number;
+  unreadCount?: number;
+  companyId?: number;
+}
+
+export interface WhatsappMessage {
+  id: number;
+  threadId: number;
+  accountId: number;
+  direction: string;
+  waMessageId?: string;
+  fromWa?: string;
+  toWa?: string;
+  messageType: string;
+  body?: string;
+  mediaUrl?: string;
+  mediaCaption?: string;
+  templateName?: string;
+  templateLanguage?: string;
+  templateVars?: string;
+  status: string;
+  errorCode?: number;
+  errorText?: string;
+  sentAt?: string;
+  deliveredAt?: string;
+  readAt?: string;
+  receivedAt?: string;
+  sentById?: number;
+  createdAt: string;
+}
+
+export interface SendWhatsappBody {
+  accountId?: number;
+  threadId?: number;
+  to?: string;
+  body?: string;
+  templateName?: string;
+  templateLanguage?: string;
+  templateComponents?: unknown;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  projectId?: number;
+}
+
+export interface SendWhatsappResponse {
+  message: WhatsappMessage;
+  threadId: number;
+  waMessageId?: string;
+}
+
+export interface WhatsappTemplate {
+  name?: string;
+  language?: string;
+  status?: string;
+  category?: string;
+  id?: string;
+  components?: unknown[];
+}
+
+export interface WhatsappLinkSearchHit {
+  id: number;
+  label: string;
+  secondary?: string;
+}
+
+export interface WhatsappLinkSearchResponse {
+  leads?: WhatsappLinkSearchHit[];
+  deals?: WhatsappLinkSearchHit[];
+  contacts?: WhatsappLinkSearchHit[];
+  projects?: WhatsappLinkSearchHit[];
+}
+
 export type ListUsersParams = {
   departmentId?: number;
   companyId?: number;
@@ -1625,4 +1747,21 @@ export type ListJournalEntriesParams = {
 
 export type DeleteJournalEntry200 = {
   success?: boolean;
+};
+
+export type ListWhatsappThreadsParams = {
+  search?: string;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  projectId?: number;
+  accountId?: number;
+};
+
+export type ListWhatsappTemplatesParams = {
+  accountId?: number;
+};
+
+export type SearchWhatsappLinkTargetsParams = {
+  q?: string;
 };
