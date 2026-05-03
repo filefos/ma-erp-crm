@@ -344,9 +344,14 @@ function useMyCompanies() {
 }
 
 function CompanySwitcher() {
+  const { user } = useAuth();
+  const level = (user as { permissionLevel?: string } | undefined)?.permissionLevel ?? "user";
   const { data: companies } = useMyCompanies();
   const { activeCompanyId, companyShort, setActiveCompany } = useActiveCompany();
 
+  // Only super admins can switch between companies; everyone else stays
+  // locked to their assigned workspace.
+  if (level !== "super_admin") return null;
   if (!companies || companies.length <= 1) return null;
 
   return (
