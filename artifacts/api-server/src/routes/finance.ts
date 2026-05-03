@@ -186,12 +186,16 @@ router.put("/payments-received/:id", requirePermission("expenses", "edit"), requ
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(paymentsReceivedTable).where(eq(paymentsReceivedTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [payment] = await db.update(paymentsReceivedTable).set({ ...req.body, updatedAt: new Date() }).where(eq(paymentsReceivedTable.id, id)).returning();
   res.json(payment);
 });
 
 router.delete("/payments-received/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(paymentsReceivedTable).where(eq(paymentsReceivedTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(paymentsReceivedTable).where(eq(paymentsReceivedTable.id, id));
   res.json({ success: true });
 });
@@ -226,12 +230,16 @@ router.put("/payments-made/:id", requirePermission("expenses", "edit"), requireB
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(paymentsMadeTable).where(eq(paymentsMadeTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [payment] = await db.update(paymentsMadeTable).set({ ...req.body, updatedAt: new Date() }).where(eq(paymentsMadeTable.id, id)).returning();
   res.json(payment);
 });
 
 router.delete("/payments-made/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(paymentsMadeTable).where(eq(paymentsMadeTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(paymentsMadeTable).where(eq(paymentsMadeTable.id, id));
   res.json({ success: true });
 });
@@ -281,6 +289,7 @@ router.get("/journal-entries/:id", requirePermission("expenses", "view"), async 
   const id = parseInt(req.params.id, 10);
   const [journal] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
   if (!journal) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [journal]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichJournal(journal));
 });
 
@@ -288,6 +297,7 @@ router.put("/journal-entries/:id", requirePermission("expenses", "edit"), requir
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   if (existing.status === "approved") { res.status(400).json({ error: "Cannot edit approved journal entry" }); return; }
   const data = req.body;
   const lines = data.lines ?? [];
@@ -303,6 +313,9 @@ router.put("/journal-entries/:id", requirePermission("expenses", "edit"), requir
 
 router.delete("/journal-entries/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(journalEntryLinesTable).where(eq(journalEntryLinesTable.journalId, id));
   await db.delete(journalEntriesTable).where(eq(journalEntriesTable.id, id));
   res.json({ success: true });
@@ -310,8 +323,10 @@ router.delete("/journal-entries/:id", requirePermission("expenses", "delete"), a
 
 router.post("/journal-entries/:id/approve", requirePermission("expenses", "approve"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [journal] = await db.update(journalEntriesTable).set({ status: "approved", approvedById: req.user?.id, updatedAt: new Date() }).where(eq(journalEntriesTable.id, id)).returning();
-  if (!journal) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichJournal(journal));
 });
 

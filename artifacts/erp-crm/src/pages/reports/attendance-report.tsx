@@ -1,4 +1,5 @@
 import { useListAttendance, useListEmployees } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -20,9 +21,15 @@ export function AttendanceReport() {
   const [fromDate, setFromDate] = useState(firstOfMonth);
   const [toDate, setToDate] = useState(today);
 
-  const { data: employees } = useListEmployees();
-  const { data: attendanceToday } = useListAttendance({ date: today });
-  const { data: attendanceAll } = useListAttendance();
+  const { data: rawEmployees } = useListEmployees();
+  const { data: rawAttToday } = useListAttendance({ date: today });
+  const { data: rawAttAll } = useListAttendance();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const employees = rawEmployees ? filterByCompany(rawEmployees) : rawEmployees;
+  const allowedEmpIds = new Set((employees ?? []).map((e: any) => e.id));
+  const attendanceToday = rawAttToday ? rawAttToday.filter((a: any) => allowedEmpIds.has(a.employeeId)) : rawAttToday;
+  const attendanceAll = rawAttAll ? rawAttAll.filter((a: any) => allowedEmpIds.has(a.employeeId)) : rawAttAll;
+  void activeCompanyId;
 
   const totalEmployees = employees?.length ?? 0;
   const presentToday = attendanceToday?.filter(a => a.status === "present").length ?? 0;

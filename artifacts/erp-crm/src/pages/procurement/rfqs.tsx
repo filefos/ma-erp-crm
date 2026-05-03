@@ -48,7 +48,9 @@ export function RfqsList() {
 
   const { data: rfqs = [], isLoading } = useListRfqs({ companyId: activeCompanyId });
   const { data: prs = [] } = useListPurchaseRequests({ status: "approved", companyId: activeCompanyId });
-  const { data: suppliers = [] } = useListSuppliers();
+  const { data: rawSuppliers = [] } = useListSuppliers();
+  const { filterByCompany } = useActiveCompany();
+  const suppliers = filterByCompany(rawSuppliers);
   const { data: companies = [] } = useListCompanies();
 
   const createRfq = useCreateRfq({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: ["/rfqs"] }); setDialogOpen(false); toast.success("RFQ created"); } } });

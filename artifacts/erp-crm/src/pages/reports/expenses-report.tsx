@@ -1,4 +1,5 @@
 import { useListExpenses, useListCompanies } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -16,8 +17,10 @@ const CATEGORY_COLORS = ["bg-blue-500","bg-purple-500","bg-green-500","bg-orange
 
 export function ExpensesReport() {
   const [companyFilter, setCompanyFilter] = useState("all");
-  const { data: expenses, isLoading } = useListExpenses();
+  const { data: rawExpenses, isLoading } = useListExpenses();
   const { data: companies } = useListCompanies();
+  const { filterByCompany } = useActiveCompany();
+  const expenses = rawExpenses ? filterByCompany(rawExpenses) : rawExpenses;
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading report...</div>;
 

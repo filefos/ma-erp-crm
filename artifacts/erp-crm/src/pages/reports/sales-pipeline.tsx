@@ -1,4 +1,5 @@
 import { useListLeads } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -23,7 +24,9 @@ const scoreColors: Record<string, string> = {
 };
 
 export function SalesPipelineReport() {
-  const { data: leads, isLoading } = useListLeads();
+  const { data: rawLeads, isLoading } = useListLeads();
+  const { filterByCompany } = useActiveCompany();
+  const leads = rawLeads ? filterByCompany(rawLeads) : rawLeads;
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading report...</div>;
 

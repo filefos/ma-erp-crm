@@ -1,15 +1,34 @@
 import { Router } from "express";
 import { db, emailSettingsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, inScope } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 import nodemailer from "nodemailer";
 
 const router = Router();
 router.use(requireAuth);
 
+function resolveCompanyId(req: any, res: any): number | null {
+  const raw = req.query.companyId ?? req.body?.companyId ?? (req.user as any)?.companyId ?? null;
+  if (raw == null) {
+    res.status(400).json({ error: "companyId required" });
+    return null;
+  }
+  const id = parseInt(String(raw), 10);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "Invalid companyId" });
+    return null;
+  }
+  if (!inScope(req, id)) {
+    res.status(403).json({ error: "Forbidden", message: "You do not have access to that company" });
+    return null;
+  }
+  return id;
+}
+
 router.get("/email-settings", async (req, res): Promise<void> => {
-  const companyId = req.query.companyId ? parseInt(req.query.companyId as string, 10) : (req.user as any)?.companyId ?? 1;
+  const companyId = resolveCompanyId(req, res);
+  if (companyId == null) return;
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
   if (!settings) { res.json(null); return; }
   const masked = { ...settings, smtpPass: settings.smtpPass ? "••••••••" : "", imapPass: settings.imapPass ? "••••••••" : "" };
@@ -17,7 +36,8 @@ router.get("/email-settings", async (req, res): Promise<void> => {
 });
 
 router.post("/email-settings", async (req, res): Promise<void> => {
-  const companyId = req.body.companyId ?? (req.user as any)?.companyId ?? 1;
+  const companyId = resolveCompanyId(req, res);
+  if (companyId == null) return;
   const payload = {
     companyId,
     smtpHost: req.body.smtpHost ?? null,
@@ -46,7 +66,8 @@ router.post("/email-settings", async (req, res): Promise<void> => {
 });
 
 router.post("/email-settings/test-smtp", async (req, res): Promise<void> => {
-  const companyId = req.body.companyId ?? (req.user as any)?.companyId ?? 1;
+  const companyId = resolveCompanyId(req, res);
+  if (companyId == null) return;
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
   if (!settings?.smtpHost || !settings?.smtpUser || !settings?.smtpPass) {
     res.status(400).json({ error: "SMTP settings not configured" });
@@ -69,7 +90,8 @@ router.post("/email-settings/test-smtp", async (req, res): Promise<void> => {
 });
 
 router.post("/email-settings/test-imap", async (req, res): Promise<void> => {
-  const companyId = req.body.companyId ?? (req.user as any)?.companyId ?? 1;
+  const companyId = resolveCompanyId(req, res);
+  if (companyId == null) return;
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
   if (!settings?.imapHost || !settings?.imapUser || !settings?.imapPass) {
     res.status(400).json({ error: "IMAP settings not configured" });
@@ -94,7 +116,8 @@ router.post("/email-settings/test-imap", async (req, res): Promise<void> => {
 });
 
 router.delete("/email-settings", async (req, res): Promise<void> => {
-  const companyId = req.query.companyId ? parseInt(req.query.companyId as string, 10) : (req.user as any)?.companyId ?? 1;
+  const companyId = resolveCompanyId(req, res);
+  if (companyId == null) return;
   await db.delete(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
   res.json({ success: true });
 });

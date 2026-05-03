@@ -1,12 +1,16 @@
 import { useListInventoryItems, useListStockEntries } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { ArrowLeft, Package, AlertTriangle } from "lucide-react";
 
 export function InventoryReport() {
-  const { data: items, isLoading } = useListInventoryItems();
-  const { data: entries } = useListStockEntries();
+  const { data: rawItems, isLoading } = useListInventoryItems();
+  const { data: rawEntries } = useListStockEntries();
+  const { filterByCompany } = useActiveCompany();
+  const items = rawItems ? filterByCompany(rawItems) : rawItems;
+  const entries = rawEntries ? filterByCompany(rawEntries) : rawEntries;
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading report...</div>;
 

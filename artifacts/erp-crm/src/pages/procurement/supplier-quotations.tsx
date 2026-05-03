@@ -59,7 +59,9 @@ export function SupplierQuotationsList() {
 
   const { data: sqs = [], isLoading } = useListSupplierQuotations({ companyId: activeCompanyId });
   const { data: rfqs = [] } = useListRfqs({ companyId: activeCompanyId });
-  const { data: suppliers = [] } = useListSuppliers();
+  const { data: rawSuppliers = [] } = useListSuppliers();
+  const { filterByCompany: filterSup } = useActiveCompany();
+  const suppliers = filterSup(rawSuppliers);
   const { data: companies = [] } = useListCompanies();
 
   const createSq = useCreateSupplierQuotation({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: ["/supplier-quotations"] }); setDialogOpen(false); toast.success("Quotation recorded"); } } });

@@ -1,4 +1,5 @@
 import { useListQuotations } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -13,7 +14,9 @@ const statusColors: Record<string, string> = {
 };
 
 export function QuotationsReport() {
-  const { data: quotations, isLoading } = useListQuotations();
+  const { data: rawQuotations, isLoading } = useListQuotations();
+  const { filterByCompany } = useActiveCompany();
+  const quotations = rawQuotations ? filterByCompany(rawQuotations) : rawQuotations;
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading report...</div>;
 

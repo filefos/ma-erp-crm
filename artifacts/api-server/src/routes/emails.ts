@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, emailsTable, emailSettingsTable } from "@workspace/db";
 import { eq, sql, and, or } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, scopeFilter, inScope, requireBodyCompanyAccess } from "../middlewares/auth";
 import nodemailer from "nodemailer";
 import { logger } from "../lib/logger";
 
@@ -25,8 +25,13 @@ router.get("/emails", requireAuth, async (req, res): Promise<void> => {
   const { folder, companyId, search } = req.query;
   let rows = await db.select().from(emailsTable).orderBy(sql`${emailsTable.createdAt} desc`);
 
+  rows = scopeFilter(req, rows);
   if (folder) rows = rows.filter(r => r.folder === folder);
-  if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
+  if (companyId) {
+    const cid = parseInt(companyId as string, 10);
+    if (!inScope(req, cid)) { res.status(403).json({ error: "Forbidden" }); return; }
+    rows = rows.filter(r => r.companyId === cid);
+  }
   if (search) {
     const s = (search as string).toLowerCase();
     rows = rows.filter(r =>
@@ -39,7 +44,7 @@ router.get("/emails", requireAuth, async (req, res): Promise<void> => {
   res.json(rows);
 });
 
-router.post("/emails", requireAuth, async (req, res): Promise<void> => {
+router.post("/emails", requireAuth, requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const userId = req.user?.id;
   const isSend = data.action === "send";
@@ -148,6 +153,7 @@ router.get("/emails/:id/attachments/:idx", requireAuth, async (req, res): Promis
   const idx = parseInt(req.params.idx, 10);
   const [email] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!email) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, email.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const atts = (email.attachments ?? []) as Array<{ filename: string; contentType: string; size: number; content?: string }>;
   const att = atts[idx];
   if (!att) { res.status(404).json({ error: "Attachment not found" }); return; }
@@ -163,6 +169,7 @@ router.get("/emails/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [email] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!email) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, email.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(email);
 });
 
@@ -170,6 +177,7 @@ router.patch("/emails/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const { isRead, isStarred, folder } = req.body;
   const updates: Partial<typeof emailsTable.$inferInsert> = { updatedAt: new Date() };
   if (isRead !== undefined) updates.isRead = isRead;
@@ -183,6 +191,7 @@ router.delete("/emails/:id", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(emailsTable).where(eq(emailsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   if (existing.folder === "trash") {
     await db.delete(emailsTable).where(eq(emailsTable.id, id));
   } else {
@@ -191,8 +200,9 @@ router.delete("/emails/:id", requireAuth, async (req, res): Promise<void> => {
   res.json({ success: true });
 });
 
-router.post("/emails/sync", requireAuth, async (req, res): Promise<void> => {
+router.post("/emails/sync", requireAuth, requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const companyId = req.body.companyId ?? (req.user as any)?.companyId ?? 1;
+  if (!inScope(req, companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, companyId));
   if (!settings?.imapHost || !settings?.imapUser || !settings?.imapPass) {
     res.status(400).json({ error: "IMAP not configured. Go to Email Settings first." });

@@ -1,4 +1,5 @@
 import { useListProjects } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -20,7 +21,9 @@ const stageColors: Record<string, string> = {
 const STAGE_ORDER = ["enquiry","design","approval","production","delivery","installation","handover","completed","on_hold","cancelled"];
 
 export function ProjectsReport() {
-  const { data: projects, isLoading } = useListProjects();
+  const { data: rawProjects, isLoading } = useListProjects();
+  const { filterByCompany } = useActiveCompany();
+  const projects = rawProjects ? filterByCompany(rawProjects) : rawProjects;
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading report...</div>;
 

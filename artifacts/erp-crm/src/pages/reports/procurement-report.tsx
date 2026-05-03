@@ -1,4 +1,5 @@
 import { useListPurchaseOrders, useListPurchaseRequests, useListSuppliers } from "@workspace/api-client-react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -21,9 +22,13 @@ const prStatusColors: Record<string, string> = {
 };
 
 export function ProcurementReport() {
-  const { data: orders, isLoading } = useListPurchaseOrders();
-  const { data: requests } = useListPurchaseRequests();
-  const { data: suppliers } = useListSuppliers();
+  const { data: rawOrders, isLoading } = useListPurchaseOrders();
+  const { data: rawRequests } = useListPurchaseRequests();
+  const { data: rawSuppliers } = useListSuppliers();
+  const { filterByCompany } = useActiveCompany();
+  const orders = rawOrders ? filterByCompany(rawOrders) : rawOrders;
+  const requests = rawRequests ? filterByCompany(rawRequests) : rawRequests;
+  const suppliers = rawSuppliers ? filterByCompany(rawSuppliers) : rawSuppliers;
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading report...</div>;
 

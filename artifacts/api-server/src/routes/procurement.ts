@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, suppliersTable, purchaseRequestsTable, purchaseOrdersTable, rfqsTable, supplierQuotationsTable, companiesTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, inScope } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -100,7 +100,9 @@ async function enrichPo(po: any) {
 // ─── Suppliers ──────────────────────────────────────────────────────────────
 
 router.get("/suppliers", requirePermission("suppliers", "view"), async (req, res): Promise<void> => {
+  // suppliers may be company-scoped or global (companyId null)
   let rows = await db.select().from(suppliersTable).orderBy(suppliersTable.name);
+  rows = scopeFilter(req, rows);
   const { search, status, companyId } = req.query;
   if (search) {
     const s = (search as string).toLowerCase();
@@ -111,7 +113,7 @@ router.get("/suppliers", requirePermission("suppliers", "view"), async (req, res
   res.json(rows);
 });
 
-router.post("/suppliers", requirePermission("suppliers", "create"), async (req, res): Promise<void> => {
+router.post("/suppliers", requirePermission("suppliers", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const [supplier] = await db.insert(suppliersTable).values(req.body).returning();
   res.status(201).json(supplier);
 });
@@ -120,18 +122,24 @@ router.get("/suppliers/:id", requirePermission("suppliers", "view"), async (req,
   const id = parseInt(req.params.id, 10);
   const [supplier] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id));
   if (!supplier) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, supplier.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(supplier);
 });
 
-router.put("/suppliers/:id", requirePermission("suppliers", "edit"), async (req, res): Promise<void> => {
+router.put("/suppliers/:id", requirePermission("suppliers", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [supplier] = await db.update(suppliersTable).set({ ...req.body, updatedAt: new Date() }).where(eq(suppliersTable.id, id)).returning();
-  if (!supplier) { res.status(404).json({ error: "Not found" }); return; }
   res.json(supplier);
 });
 
 router.delete("/suppliers/:id", requirePermission("suppliers", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(suppliersTable).where(eq(suppliersTable.id, id));
   res.json({ success: true });
 });
@@ -166,6 +174,7 @@ router.get("/purchase-requests/:id", requirePermission("purchase_requests", "vie
   const id = parseInt(req.params.id, 10);
   const [pr] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
   if (!pr) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, pr.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichPr(pr));
 });
 
@@ -173,6 +182,7 @@ router.put("/purchase-requests/:id", requirePermission("purchase_requests", "edi
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   if (existing.status === "approved") { res.status(400).json({ error: "Cannot edit approved PR" }); return; }
   const data = req.body;
   const [pr] = await db.update(purchaseRequestsTable).set({
@@ -183,23 +193,29 @@ router.put("/purchase-requests/:id", requirePermission("purchase_requests", "edi
 
 router.post("/purchase-requests/:id/submit", requirePermission("purchase_requests", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [pr] = await db.update(purchaseRequestsTable).set({ status: "submitted", updatedAt: new Date() }).where(eq(purchaseRequestsTable.id, id)).returning();
-  if (!pr) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichPr(pr));
 });
 
 router.post("/purchase-requests/:id/approve", requirePermission("purchase_requests", "approve"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [pr] = await db.update(purchaseRequestsTable).set({ status: "approved", approvedById: req.user?.id, updatedAt: new Date() }).where(eq(purchaseRequestsTable.id, id)).returning();
-  if (!pr) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichPr(pr));
 });
 
 router.post("/purchase-requests/:id/reject", requirePermission("purchase_requests", "approve"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   const { reason } = req.body;
+  const [existing] = await db.select().from(purchaseRequestsTable).where(eq(purchaseRequestsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [pr] = await db.update(purchaseRequestsTable).set({ status: "rejected", rejectionReason: reason, approvedById: req.user?.id, updatedAt: new Date() }).where(eq(purchaseRequestsTable.id, id)).returning();
-  if (!pr) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichPr(pr));
 });
 
@@ -233,6 +249,7 @@ router.get("/rfqs/:id", requirePermission("purchase_requests", "view"), async (r
   const id = parseInt(req.params.id, 10);
   const [rfq] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
   if (!rfq) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, rfq.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichRfq(rfq));
 });
 
@@ -240,6 +257,7 @@ router.put("/rfqs/:id", requirePermission("purchase_requests", "edit"), requireB
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   if (existing.status === "closed") { res.status(400).json({ error: "Cannot edit closed RFQ" }); return; }
   const data = req.body;
   const [rfq] = await db.update(rfqsTable).set({
@@ -253,21 +271,28 @@ router.put("/rfqs/:id", requirePermission("purchase_requests", "edit"), requireB
 
 router.delete("/rfqs/:id", requirePermission("purchase_requests", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(rfqsTable).where(eq(rfqsTable.id, id));
   res.json({ success: true });
 });
 
 router.post("/rfqs/:id/send", requirePermission("purchase_requests", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [rfq] = await db.update(rfqsTable).set({ status: "sent", updatedAt: new Date() }).where(eq(rfqsTable.id, id)).returning();
-  if (!rfq) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichRfq(rfq));
 });
 
 router.post("/rfqs/:id/close", requirePermission("purchase_requests", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [rfq] = await db.update(rfqsTable).set({ status: "closed", updatedAt: new Date() }).where(eq(rfqsTable.id, id)).returning();
-  if (!rfq) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichRfq(rfq));
 });
 
@@ -306,6 +331,7 @@ router.get("/supplier-quotations/:id", requirePermission("purchase_requests", "v
   const id = parseInt(req.params.id, 10);
   const [sq] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!sq) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, sq.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichSq(sq));
 });
 
@@ -313,6 +339,7 @@ router.put("/supplier-quotations/:id", requirePermission("purchase_requests", "e
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const data = req.body;
   const items = data.items ?? parseJson(existing.items);
   const subtotal = items.reduce((s: number, i: any) => s + ((i.unitPrice ?? 0) * (i.quantity ?? 1)), 0);
@@ -328,6 +355,9 @@ router.put("/supplier-quotations/:id", requirePermission("purchase_requests", "e
 
 router.delete("/supplier-quotations/:id", requirePermission("purchase_requests", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   res.json({ success: true });
 });
@@ -337,6 +367,7 @@ router.post("/supplier-quotations/:id/select", requirePermission("purchase_reque
   const { reason } = req.body;
   const [sq] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
   if (!sq) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, sq.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   // Mark others in same RFQ as rejected
   if (sq.rfqId) {
     await db.update(supplierQuotationsTable).set({ status: "rejected", updatedAt: new Date() })
@@ -352,8 +383,10 @@ router.post("/supplier-quotations/:id/select", requirePermission("purchase_reque
 
 router.post("/supplier-quotations/:id/reject", requirePermission("purchase_requests", "approve"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(supplierQuotationsTable).where(eq(supplierQuotationsTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [sq] = await db.update(supplierQuotationsTable).set({ status: "rejected", updatedAt: new Date() }).where(eq(supplierQuotationsTable.id, id)).returning();
-  if (!sq) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichSq(sq));
 });
 
@@ -392,6 +425,7 @@ router.get("/purchase-orders/:id", requirePermission("purchase_orders", "view"),
   const id = parseInt(req.params.id, 10);
   const [po] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!po) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, po.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichPo(po));
 });
 
@@ -399,6 +433,7 @@ router.put("/purchase-orders/:id", requirePermission("purchase_orders", "edit"),
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   if (["approved", "issued"].includes(existing.status)) { res.status(400).json({ error: "Cannot edit approved/issued PO" }); return; }
   const data = req.body;
   const items = data.items ?? parseJson(existing.items);
@@ -417,6 +452,7 @@ router.delete("/purchase-orders/:id", requirePermission("purchase_orders", "dele
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   if (["approved", "issued"].includes(existing.status)) { res.status(400).json({ error: "Cannot delete approved/issued PO" }); return; }
   await db.delete(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   res.json({ success: true });
@@ -424,23 +460,29 @@ router.delete("/purchase-orders/:id", requirePermission("purchase_orders", "dele
 
 router.post("/purchase-orders/:id/submit", requirePermission("purchase_orders", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [po] = await db.update(purchaseOrdersTable).set({ status: "submitted", updatedAt: new Date() }).where(eq(purchaseOrdersTable.id, id)).returning();
-  if (!po) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichPo(po));
 });
 
 router.post("/purchase-orders/:id/approve", requirePermission("purchase_orders", "approve"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [po] = await db.update(purchaseOrdersTable).set({ status: "approved", approvedById: req.user?.id, updatedAt: new Date() }).where(eq(purchaseOrdersTable.id, id)).returning();
-  if (!po) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichPo(po));
 });
 
 router.post("/purchase-orders/:id/reject", requirePermission("purchase_orders", "approve"), async (req, res): Promise<void> => {
   const id = parseInt(req.params.id, 10);
   const { reason } = req.body;
+  const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [po] = await db.update(purchaseOrdersTable).set({ status: "rejected", rejectionReason: reason, updatedAt: new Date() }).where(eq(purchaseOrdersTable.id, id)).returning();
-  if (!po) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichPo(po));
 });
 
@@ -448,6 +490,7 @@ router.post("/purchase-orders/:id/issue", requirePermission("purchase_orders", "
   const id = parseInt(req.params.id, 10);
   const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   if (existing.status !== "approved") { res.status(400).json({ error: "PO must be approved before issuing" }); return; }
   const [po] = await db.update(purchaseOrdersTable).set({ status: "issued", updatedAt: new Date() }).where(eq(purchaseOrdersTable.id, id)).returning();
   res.json(await enrichPo(po));
@@ -457,8 +500,10 @@ router.post("/purchase-orders/:id/cancel", requirePermission("purchase_orders", 
   const id = parseInt(req.params.id, 10);
   const { reason } = req.body;
   if (!reason) { res.status(400).json({ error: "Cancellation reason required" }); return; }
+  const [existing] = await db.select().from(purchaseOrdersTable).where(eq(purchaseOrdersTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!inScope(req, existing.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [po] = await db.update(purchaseOrdersTable).set({ status: "cancelled", rejectionReason: reason, updatedAt: new Date() }).where(eq(purchaseOrdersTable.id, id)).returning();
-  if (!po) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await enrichPo(po));
 });
 
