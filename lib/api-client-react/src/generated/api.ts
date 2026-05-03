@@ -115,6 +115,7 @@ import type {
   ListOfferLettersParams,
   ListPaymentsMadeParams,
   ListPaymentsReceivedParams,
+  ListPayrollParams,
   ListProformaInvoicesParams,
   ListProjectsParams,
   ListPublicCompanies200Item,
@@ -139,6 +140,7 @@ import type {
   OfferLetterAttachment,
   PaymentMade,
   PaymentReceived,
+  PayrollSummary,
   PendingApprovals,
   ProcurementDashboard,
   ProformaInvoice,
@@ -12750,6 +12752,106 @@ export const useUpdateAttendance = <
 > => {
   return useMutation(getUpdateAttendanceMutationOptions(options));
 };
+
+/**
+ * Returns one row per active employee with monthly pay computed from
+attendance: dailyWage = (basic + allowances) / 30, gross = present *
+dailyWage, unauthorisedDeduction = unauthorisedAbsent * 3 * dailyWage
+(per the company rule baked into the offer letter), net = gross
+minus unauthorisedDeduction (clamped at zero).
+
+ * @summary Compute monthly payroll from attendance
+ */
+export const getListPayrollUrl = (params?: ListPayrollParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/payroll?${stringifiedParams}`
+    : `/api/payroll`;
+};
+
+export const listPayroll = async (
+  params?: ListPayrollParams,
+  options?: RequestInit,
+): Promise<PayrollSummary> => {
+  return customFetch<PayrollSummary>(getListPayrollUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListPayrollQueryKey = (params?: ListPayrollParams) => {
+  return [`/api/payroll`, ...(params ? [params] : [])] as const;
+};
+
+export const getListPayrollQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPayroll>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListPayrollParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPayroll>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPayrollQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPayroll>>> = ({
+    signal,
+  }) => listPayroll(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPayroll>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListPayrollQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPayroll>>
+>;
+export type ListPayrollQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Compute monthly payroll from attendance
+ */
+
+export function useListPayroll<
+  TData = Awaited<ReturnType<typeof listPayroll>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListPayrollParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPayroll>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListPayrollQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List expenses

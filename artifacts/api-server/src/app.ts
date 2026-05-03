@@ -391,6 +391,26 @@ async function runMigrations() {
       `));
     }
 
+    // Grant default permissions on the new "payroll" module. Read-only for
+    // most roles; only admins / HR get full access. Idempotent.
+    const payrollRoleGrants: Array<{ role: string; row: string }> = [
+      { role: "super_admin",      row: "(SELECT id FROM roles WHERE code='super_admin'),      'payroll', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE" },
+      { role: "company_admin",    row: "(SELECT id FROM roles WHERE code='company_admin'),    'payroll', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE" },
+      { role: "department_admin", row: "(SELECT id FROM roles WHERE code='department_admin'), 'payroll', TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE" },
+      { role: "manager",          row: "(SELECT id FROM roles WHERE code='manager'),          'payroll', TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE" },
+      { role: "user",             row: "(SELECT id FROM roles WHERE code='user'),             'payroll', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE" },
+      { role: "data_entry",       row: "(SELECT id FROM roles WHERE code='data_entry'),       'payroll', FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE" },
+      { role: "viewer",           row: "(SELECT id FROM roles WHERE code='viewer'),           'payroll', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE" },
+    ];
+    for (const g of payrollRoleGrants) {
+      await db.execute(sql.raw(`
+        INSERT INTO permissions (role_id, module, can_view, can_create, can_edit, can_approve, can_delete, can_export, can_print)
+        SELECT ${g.row}
+        WHERE EXISTS (SELECT 1 FROM roles WHERE code='${g.role}')
+        ON CONFLICT (role_id, module) DO NOTHING
+      `));
+    }
+
     // Seed the 18 prefab-construction supplier categories (per task spec).
     // These replace any earlier seed list; ON CONFLICT (name) DO NOTHING keeps
     // re-runs idempotent. Existing applications referencing the old names by

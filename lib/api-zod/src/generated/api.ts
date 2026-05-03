@@ -5119,6 +5119,51 @@ export const UpdateAttendanceResponse = zod.object({
 });
 
 /**
+ * Returns one row per active employee with monthly pay computed from
+attendance: dailyWage = (basic + allowances) / 30, gross = present *
+dailyWage, unauthorisedDeduction = unauthorisedAbsent * 3 * dailyWage
+(per the company rule baked into the offer letter), net = gross
+minus unauthorisedDeduction (clamped at zero).
+
+ * @summary Compute monthly payroll from attendance
+ */
+export const ListPayrollQueryParams = zod.object({
+  month: zod.coerce
+    .string()
+    .optional()
+    .describe("Target month in `YYYY-MM` format. Defaults to current month."),
+  companyId: zod.coerce.number().optional(),
+});
+
+export const ListPayrollResponse = zod.object({
+  month: zod
+    .string()
+    .describe("Resolved month in `YYYY-MM` form (echoes the query param)."),
+  daysInMonth: zod.number(),
+  rows: zod.array(
+    zod.object({
+      employeeId: zod.number(),
+      employeeCode: zod.string(),
+      employeeName: zod.string(),
+      designation: zod.string().nullish(),
+      companyId: zod.number(),
+      companyName: zod.string().nullish(),
+      basicSalary: zod.number(),
+      allowances: zod.number(),
+      monthlySalary: zod.number(),
+      dailyWage: zod.number(),
+      daysInMonth: zod.number(),
+      presentDays: zod.number(),
+      absentDays: zod.number(),
+      unauthorisedDays: zod.number(),
+      grossPay: zod.number(),
+      unauthorisedDeduction: zod.number(),
+      netPay: zod.number(),
+    }),
+  ),
+});
+
+/**
  * @summary List expenses
  */
 export const ListExpensesQueryParams = zod.object({

@@ -1274,6 +1274,33 @@ export interface CreateEmployeeAttachmentBody {
   notes?: string;
 }
 
+export interface PayrollRow {
+  employeeId: number;
+  employeeCode: string;
+  employeeName: string;
+  designation?: string | null;
+  companyId: number;
+  companyName?: string | null;
+  basicSalary: number;
+  allowances: number;
+  monthlySalary: number;
+  dailyWage: number;
+  daysInMonth: number;
+  presentDays: number;
+  absentDays: number;
+  unauthorisedDays: number;
+  grossPay: number;
+  unauthorisedDeduction: number;
+  netPay: number;
+}
+
+export interface PayrollSummary {
+  /** Resolved month in `YYYY-MM` form (echoes the query param). */
+  month: string;
+  daysInMonth: number;
+  rows: PayrollRow[];
+}
+
 export interface OfferLetterAttachment {
   id: number;
   offerLetterId: number;
@@ -2150,6 +2177,14 @@ export type ListOfferLettersParams = {
   companyId?: number;
   templateType?: string;
   employeeId?: number;
+};
+
+export type ListPayrollParams = {
+  /**
+   * Target month in `YYYY-MM` format. Defaults to current month.
+   */
+  month?: string;
+  companyId?: number;
 };
 
 export type ListExpensesParams = {

@@ -16,7 +16,7 @@ import {
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
   BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft, TrendingUp,
-  MessageCircle,
+  MessageCircle, Wallet,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -117,6 +117,7 @@ const NAV: NavGroup[] = [
       { href: "/hr/employees", label: "Employees", icon: HardHat },
       { href: "/hr/attendance", label: "Attendance", icon: Clock },
       { href: "/hr/offer-letters", label: "Offer Letters", icon: Mail },
+      { href: "/hr/payroll", label: "Payroll", icon: Wallet },
     ],
   },
   {

@@ -48,6 +48,7 @@ tags:
   - name: whatsapp
   - name: employee-attachments
   - name: offer-letters
+  - name: payroll
 
 paths:
   /healthz:
@@ -3066,6 +3067,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Attendance"
+
+  # PAYROLL
+  /payroll:
+    get:
+      operationId: listPayroll
+      tags: [payroll]
+      summary: Compute monthly payroll from attendance
+      description: |
+        Returns one row per active employee with monthly pay computed from
+        attendance: dailyWage = (basic + allowances) / 30, gross = present *
+        dailyWage, unauthorisedDeduction = unauthorisedAbsent * 3 * dailyWage
+        (per the company rule baked into the offer letter), net = gross
+        minus unauthorisedDeduction (clamped at zero).
+      parameters:
+        - name: month
+          in: query
+          description: Target month in `YYYY-MM` format. Defaults to current month.
+          schema:
+            type: string
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payroll summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayrollSummary"
 
   # EXPENSES
   /expenses:
@@ -6306,6 +6337,76 @@ components:
         notes:
           type: string
       required: [category, fileName, objectKey]
+
+    PayrollRow:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        employeeCode:
+          type: string
+        employeeName:
+          type: string
+        designation:
+          type: string
+          nullable: true
+        companyId:
+          type: integer
+        companyName:
+          type: string
+          nullable: true
+        basicSalary:
+          type: number
+        allowances:
+          type: number
+        monthlySalary:
+          type: number
+        dailyWage:
+          type: number
+        daysInMonth:
+          type: integer
+        presentDays:
+          type: integer
+        absentDays:
+          type: integer
+        unauthorisedDays:
+          type: integer
+        grossPay:
+          type: number
+        unauthorisedDeduction:
+          type: number
+        netPay:
+          type: number
+      required:
+        - employeeId
+        - employeeCode
+        - employeeName
+        - companyId
+        - basicSalary
+        - allowances
+        - monthlySalary
+        - dailyWage
+        - daysInMonth
+        - presentDays
+        - absentDays
+        - unauthorisedDays
+        - grossPay
+        - unauthorisedDeduction
+        - netPay
+
+    PayrollSummary:
+      type: object
+      properties:
+        month:
+          type: string
+          description: Resolved month in `YYYY-MM` form (echoes the query param).
+        daysInMonth:
+          type: integer
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/PayrollRow"
+      required: [month, daysInMonth, rows]
 
     OfferLetterAttachment:
       type: object

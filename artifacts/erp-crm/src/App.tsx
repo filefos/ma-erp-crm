@@ -65,6 +65,7 @@ import { EmployeesList } from "@/pages/hr/employees";
 import { EmployeeDetail } from "@/pages/hr/employee-detail";
 import { AttendanceList } from "@/pages/hr/attendance";
 import { OfferLettersList } from "@/pages/hr/offer-letters";
+import { PayrollPage } from "@/pages/hr/payroll";
 import { OfferLetterDetail } from "@/pages/hr/offer-letter-detail";
 import { AssetsList } from "@/pages/assets/index";
 import { ReportsHub } from "@/pages/reports/index";
@@ -320,6 +321,9 @@ function Router() {
       </Route>
       <Route path="/hr/offer-letters">
         <ModuleGuard module="offer_letters"><OfferLettersList /></ModuleGuard>
+      </Route>
+      <Route path="/hr/payroll">
+        <ModuleGuard module="payroll"><PayrollPage /></ModuleGuard>
       </Route>
       <Route path="/hr/offer-letters/:id">
         {(params) => (
