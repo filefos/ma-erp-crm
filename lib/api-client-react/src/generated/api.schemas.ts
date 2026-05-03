@@ -1111,6 +1111,11 @@ export interface InventoryItem {
   minimumStock: number;
   unitCost?: number;
   warehouseLocation?: string;
+  description?: string;
+  brand?: string;
+  country?: string;
+  color?: string;
+  imageUrl?: string;
   companyId?: number;
   isActive: boolean;
   createdAt: string;
@@ -1124,6 +1129,11 @@ export interface CreateInventoryItemBody {
   minimumStock?: number;
   unitCost?: number;
   warehouseLocation?: string;
+  description?: string;
+  brand?: string;
+  country?: string;
+  color?: string;
+  imageUrl?: string;
   companyId?: number;
 }
 
@@ -1135,8 +1145,10 @@ export interface StockEntry {
   itemName?: string;
   quantity: number;
   unit?: string;
+  unitCost?: number;
   reference?: string;
   notes?: string;
+  imageUrl?: string;
   approvalStatus: string;
   approvedById?: number;
   createdById?: number;
@@ -1150,8 +1162,10 @@ export interface CreateStockEntryBody {
   itemId: number;
   quantity: number;
   unit?: string;
+  unitCost?: number;
   reference?: string;
   notes?: string;
+  imageUrl?: string;
   companyId?: number;
 }
 

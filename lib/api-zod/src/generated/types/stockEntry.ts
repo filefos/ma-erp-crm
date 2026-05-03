@@ -14,8 +14,10 @@ export interface StockEntry {
   itemName?: string;
   quantity: number;
   unit?: string;
+  unitCost?: number;
   reference?: string;
   notes?: string;
+  imageUrl?: string;
   approvalStatus: string;
   approvedById?: number;
   createdById?: number;

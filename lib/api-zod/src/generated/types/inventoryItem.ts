@@ -17,6 +17,11 @@ export interface InventoryItem {
   minimumStock: number;
   unitCost?: number;
   warehouseLocation?: string;
+  description?: string;
+  brand?: string;
+  country?: string;
+  color?: string;
+  imageUrl?: string;
   companyId?: number;
   isActive: boolean;
   createdAt: string;

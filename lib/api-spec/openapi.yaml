@@ -6023,6 +6023,16 @@ components:
           type: number
         warehouseLocation:
           type: string
+        description:
+          type: string
+        brand:
+          type: string
+        country:
+          type: string
+        color:
+          type: string
+        imageUrl:
+          type: string
         companyId:
           type: integer
         isActive:
@@ -6048,6 +6058,16 @@ components:
           type: number
         warehouseLocation:
           type: string
+        description:
+          type: string
+        brand:
+          type: string
+        country:
+          type: string
+        color:
+          type: string
+        imageUrl:
+          type: string
         companyId:
           type: integer
       required: [name, category, unit]
@@ -6069,9 +6089,13 @@ components:
           type: number
         unit:
           type: string
+        unitCost:
+          type: number
         reference:
           type: string
         notes:
+          type: string
+        imageUrl:
           type: string
         approvalStatus:
           type: string
@@ -6098,9 +6122,13 @@ components:
           type: number
         unit:
           type: string
+        unitCost:
+          type: number
         reference:
           type: string
         notes:
+          type: string
+        imageUrl:
           type: string
         companyId:
           type: integer

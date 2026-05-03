@@ -11,7 +11,9 @@ export interface CreateStockEntryBody {
   itemId: number;
   quantity: number;
   unit?: string;
+  unitCost?: number;
   reference?: string;
   notes?: string;
+  imageUrl?: string;
   companyId?: number;
 }
