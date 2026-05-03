@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, Shield, Building2, Pencil, Check, X, Upload, Trash2 } from "lucide-react";
+import { User, Mail, Phone, Shield, Building2, Pencil, Check, X, Upload, Trash2, Sparkles } from "lucide-react";
+import { getAutomationLevel, setAutomationLevel, type AutomationLevel } from "@/lib/ai-client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LEVEL_COLORS: Record<string, string> = {
   super_admin: "bg-red-100 text-red-800",
@@ -33,6 +35,27 @@ export function MyProfile() {
   const [sigSaved, setSigSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const token = localStorage.getItem("erp_token");
+
+  // AI automation level
+  const [autoLevel, setAutoLevel] = useState<AutomationLevel>("suggest");
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [autoSaved, setAutoSaved] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    getAutomationLevel().then(r => { if (!cancelled) setAutoLevel(r.automationLevel); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  const onChangeAutoLevel = async (v: AutomationLevel) => {
+    setAutoLevel(v);
+    setAutoSaving(true);
+    try {
+      await setAutomationLevel(v);
+      setAutoSaved(true);
+      setTimeout(() => setAutoSaved(false), 2500);
+    } finally {
+      setAutoSaving(false);
+    }
+  };
 
   const u = user as {
     id: number; name: string; email: string; phone?: string | null;
@@ -241,6 +264,34 @@ export function MyProfile() {
               {sigSaving ? "Saving..." : "Save Signature"}
             </Button>
             {sigSaved && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Signature saved!</span>}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Automation */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#1e6ab0]" />AI Automation Level</CardTitle>
+          <CardDescription>How much should the assistant do for you on overdue follow-ups and reminders?</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-[260px_1fr] gap-4 items-start">
+            <Select value={autoLevel} onValueChange={(v) => onChangeAutoLevel(v as AutomationLevel)}>
+              <SelectTrigger data-testid="select-automation-level"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="off">Off — no AI suggestions or alerts</SelectItem>
+                <SelectItem value="suggest">Suggest — show drafts on demand</SelectItem>
+                <SelectItem value="auto_with_approval">Auto with approval — notify me when due</SelectItem>
+                <SelectItem value="fully_automatic">Fully automatic — send WhatsApp follow-ups for me</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p><b>Suggest</b> — buttons like "Suggest reply" and "Suggest next follow-up" use AI when you click them.</p>
+              <p><b>Auto with approval</b> — you also get a notification when a lead's follow-up date passes or an invoice goes overdue.</p>
+              <p><b>Fully automatic</b> — for overdue lead follow-ups with a WhatsApp number, the assistant will send a friendly message on your behalf and log it.</p>
+              {autoSaving && <p className="text-blue-600">Saving…</p>}
+              {autoSaved && <p className="text-emerald-600 flex items-center gap-1"><Check className="w-3.5 h-3.5" />Saved</p>}
+            </div>
           </div>
         </CardContent>
       </Card>

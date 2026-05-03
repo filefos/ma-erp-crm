@@ -127,6 +127,28 @@ const ACTION_COLUMN: Record<PermissionAction, "canView" | "canCreate" | "canEdit
 };
 
 /**
+ * Programmatic version of requirePermission. Returns true/false instead of
+ * sending a response. Use inside handlers when the required permission depends
+ * on request body (e.g. AI suggest-followup which can target a lead OR a deal).
+ */
+export async function hasPermission(user: User | undefined, module: string, action: PermissionAction): Promise<boolean> {
+  if (!user) return false;
+  if (user.permissionLevel === "super_admin") return true;
+  const col = ACTION_COLUMN[action];
+  const [override] = await db.select().from(userPermissionsTable)
+    .where(and(eq(userPermissionsTable.userId, user.id), eq(userPermissionsTable.module, module)));
+  if (override && override[col] !== null && override[col] !== undefined) {
+    return Boolean(override[col]);
+  }
+  const lvl = user.permissionLevel ?? "user";
+  const [role] = await db.select().from(rolesTable).where(eq(rolesTable.code, lvl));
+  if (!role) return false;
+  const [perm] = await db.select().from(permissionsTable)
+    .where(and(eq(permissionsTable.roleId, role.id), eq(permissionsTable.module, module)));
+  return Boolean(perm?.[col]);
+}
+
+/**
  * Module-level permission check. Consults user_permissions overrides first,
  * then falls back to the role's permissions row. super_admin always passes.
  */

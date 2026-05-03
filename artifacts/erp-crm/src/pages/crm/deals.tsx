@@ -8,7 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, ArrowLeft, Pencil } from "lucide-react";
+import { Search, Plus, ArrowLeft, Pencil, Sparkles, MessageCircle, Mail, Copy } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { suggestFollowUp, type FollowUpSuggestion } from "@/lib/ai-client";
+import { useToast } from "@/hooks/use-toast";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
@@ -44,12 +47,44 @@ export function DealsList() {
   const [editForm, setEditForm] = useState<EditForm>({ title: "", clientName: "", value: "", stage: "new", probability: "0", expectedCloseDate: "" });
 
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [aiFollowUp, setAiFollowUp] = useState<FollowUpSuggestion | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
   const { data: deals, isLoading } = useListDeals();
   const create = useCreateDeal({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() }); setOpen(false); setForm({ title: "", clientName: "", value: "", stage: "new", probability: "0", expectedCloseDate: "" }); } } });
   const update = useUpdateDeal({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() }); setEditOpen(false); setEditId(null); } } });
 
   const { filterByCompany } = useActiveCompany();
   const filtered = filterByCompany(deals ?? []).filter(d => !search || d.title.toLowerCase().includes(search.toLowerCase()) || d.clientName?.toLowerCase().includes(search.toLowerCase()));
+
+  async function onSuggestForDeal() {
+    if (!editId || aiBusy) return;
+    setAiBusy(true);
+    try {
+      const r = await suggestFollowUp({ dealId: editId });
+      setAiFollowUp(r);
+    } catch (err) {
+      toast({
+        title: "Could not draft follow-up",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  function applyDealFollowUpDate() {
+    if (!editId || !aiFollowUp?.recommendedDate) return;
+    setEditForm(p => ({ ...p, expectedCloseDate: aiFollowUp.recommendedDate ?? p.expectedCloseDate }));
+    toast({ title: "Date applied", description: `Expected close set to ${aiFollowUp.recommendedDate}` });
+    setAiFollowUp(null);
+  }
+
+  function copyText(t: string) {
+    navigator.clipboard.writeText(t);
+    toast({ title: "Copied to clipboard" });
+  }
 
   function openEdit(d: typeof filtered[0]) {
     setEditId(d.id);
@@ -123,6 +158,45 @@ export function DealsList() {
         </div>
       </div>
 
+      {/* AI Suggested Follow-up dialog (shared across deals) */}
+      <Dialog open={aiFollowUp != null} onOpenChange={(o) => !o && setAiFollowUp(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#1e6ab0]" />AI Suggested Next Follow-up</DialogTitle></DialogHeader>
+          {aiFollowUp && (
+            <div className="space-y-4 pt-1">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="border rounded-lg p-3 bg-muted/30">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Recommended Date</div>
+                  <div className="font-semibold mt-0.5">{aiFollowUp.recommendedDate ?? "—"}</div>
+                </div>
+                <div className="border rounded-lg p-3 bg-muted/30">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Channel</div>
+                  <div className="font-semibold mt-0.5 capitalize">{aiFollowUp.channel ?? "—"}</div>
+                </div>
+                <div className="border rounded-lg p-3 bg-muted/30">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Why</div>
+                  <div className="text-xs mt-0.5">{aiFollowUp.reason ?? "—"}</div>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs font-semibold flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-green-600" />WhatsApp message</div>
+                <Textarea value={aiFollowUp.whatsappMessage ?? ""} onChange={(e) => setAiFollowUp(p => p ? { ...p, whatsappMessage: e.target.value } : p)} rows={4} className="text-sm" />
+                <div className="flex justify-end"><Button size="sm" variant="outline" onClick={() => copyText(aiFollowUp.whatsappMessage ?? "")}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button></div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs font-semibold flex items-center gap-1"><Mail className="w-3.5 h-3.5" />Email — {aiFollowUp.emailSubject ?? "(no subject)"}</div>
+                <Textarea value={aiFollowUp.emailBody ?? ""} onChange={(e) => setAiFollowUp(p => p ? { ...p, emailBody: e.target.value } : p)} rows={6} className="text-sm" />
+                <div className="flex justify-end"><Button size="sm" variant="outline" onClick={() => copyText(`${aiFollowUp.emailSubject ?? ""}\n\n${aiFollowUp.emailBody ?? ""}`)}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button></div>
+              </div>
+              <div className="flex justify-between">
+                <Button variant="ghost" size="sm" onClick={() => setAiFollowUp(null)}>Close</Button>
+                <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={applyDealFollowUpDate} disabled={!aiFollowUp.recommendedDate}>Apply date to deal</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Deal Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
@@ -141,13 +215,27 @@ export function DealsList() {
               </div>
               <div className="space-y-1"><Label>Expected Close Date</Label><Input type="date" value={editForm.expectedCloseDate} onChange={e => setEditForm(p => ({...p, expectedCloseDate: e.target.value}))} /></div>
             </div>
-            <Button
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
-              onClick={() => editId && update.mutate({ id: editId, data: { ...editForm, value: parseFloat(editForm.value) || 0, probability: parseFloat(editForm.probability) || 0 } as any })}
-              disabled={!editForm.title || update.isPending}
-            >
-              {update.isPending ? "Saving..." : "Save Changes"}
-            </Button>
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onSuggestForDeal}
+                disabled={aiBusy || !editId}
+                className="gap-1 border-[#0f2d5a]/30 text-[#0f2d5a]"
+                data-testid="button-deal-suggest-followup"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                {aiBusy ? "Drafting…" : "Suggest next follow-up"}
+              </Button>
+              <Button
+                className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                onClick={() => editId && update.mutate({ id: editId, data: { ...editForm, value: parseFloat(editForm.value) || 0, probability: parseFloat(editForm.probability) || 0 } as any })}
+                disabled={!editForm.title || update.isPending}
+              >
+                {update.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

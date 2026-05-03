@@ -25,9 +25,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link } from "wouter";
 import {
   ArrowLeft, Search, Send, MessageCircle, Plus, Settings, RefreshCw, CheckCheck, Check, Clock,
-  AlertTriangle, Link2, Inbox,
+  AlertTriangle, Link2, Inbox, Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { suggestWhatsAppReply } from "@/lib/ai-client";
 
 type LinkKind = "lead" | "deal" | "contact" | "project";
 
@@ -58,6 +59,7 @@ export function WhatsAppInbox() {
   const [selectedThreadId, setSelectedThreadId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
 
   const accountsQ = useListWhatsappAccounts();
   const accounts = accountsQ.data ?? [];
@@ -119,6 +121,24 @@ export function WhatsAppInbox() {
   const onSend = () => {
     if (!selectedThread || !draft.trim()) return;
     send.mutate({ data: { threadId: selectedThread.id, body: draft.trim() } });
+  };
+
+  const onSuggest = async () => {
+    if (!selectedThread || aiBusy) return;
+    setAiBusy(true);
+    try {
+      const { draft: text } = await suggestWhatsAppReply(selectedThread.id);
+      setDraft(text);
+      toast({ title: "Draft ready", description: "Review and edit before sending." });
+    } catch (err) {
+      toast({
+        title: "Could not draft a reply",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setAiBusy(false);
+    }
   };
 
   return (
@@ -289,26 +309,43 @@ export function WhatsAppInbox() {
                     ))}
                   </div>
 
-                  <div className="border-t p-2 flex items-end gap-2">
-                    <Textarea
-                      rows={2}
-                      placeholder="Type a reply…"
-                      value={draft}
-                      onChange={e => setDraft(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSend(); }
-                      }}
-                      className="resize-none flex-1"
-                      data-testid="textarea-wa-reply"
-                    />
-                    <Button
-                      onClick={onSend}
-                      disabled={!draft.trim() || send.isPending || !tokenReady}
-                      className="bg-green-600 hover:bg-green-700 text-white gap-1"
-                      data-testid="button-wa-reply-send"
-                    >
-                      {send.isPending ? "Sending…" : (<><Send className="w-3.5 h-3.5" /> Send</>)}
-                    </Button>
+                  <div className="border-t p-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={onSuggest}
+                        disabled={aiBusy}
+                        className="gap-1 border-[#0f2d5a]/30 text-[#0f2d5a] hover:bg-[#0f2d5a]/5"
+                        data-testid="button-wa-suggest-reply"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {aiBusy ? "Drafting…" : "Suggest reply"}
+                      </Button>
+                      <span className="text-[10px] text-muted-foreground">⌘/Ctrl + Enter to send</span>
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <Textarea
+                        rows={2}
+                        placeholder="Type a reply…"
+                        value={draft}
+                        onChange={e => setDraft(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSend(); }
+                        }}
+                        className="resize-none flex-1"
+                        data-testid="textarea-wa-reply"
+                      />
+                      <Button
+                        onClick={onSend}
+                        disabled={!draft.trim() || send.isPending || !tokenReady}
+                        className="bg-green-600 hover:bg-green-700 text-white gap-1"
+                        data-testid="button-wa-reply-send"
+                      >
+                        {send.isPending ? "Sending…" : (<><Send className="w-3.5 h-3.5" /> Send</>)}
+                      </Button>
+                    </div>
                   </div>
                 </>
               )}

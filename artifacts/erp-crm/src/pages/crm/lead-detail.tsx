@@ -24,6 +24,7 @@ import {
   scoreLead, suggestNextAction, generateFollowUpMessage, generateWhatsAppMessage, summarizeClient,
   predictDealSuccess, analyzeLostDeal, improveNotes,
 } from "@/lib/ai-crm";
+import { suggestFollowUp, type FollowUpSuggestion } from "@/lib/ai-client";
 
 const scoreColors: Record<string, string> = {
   hot: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
@@ -63,6 +64,8 @@ export function LeadDetail({ id }: Props) {
   const [convertForm, setConvertForm] = useState({ title: "", value: "", probability: "50", expectedCloseDate: "" });
   const [aiText, setAiText] = useState<string>("");
   const [aiTitle, setAiTitle] = useState<string>("");
+  const [aiFollowUp, setAiFollowUp] = useState<FollowUpSuggestion | null>(null);
+  const [aiFollowUpBusy, setAiFollowUpBusy] = useState(false);
 
   const update = useUpdateLead({
     mutation: {
@@ -129,6 +132,29 @@ export function LeadDetail({ id }: Props) {
 
   const showAi = (title: string, text: string) => { setAiTitle(title); setAiText(text); };
   const copyText = (txt: string) => { navigator.clipboard.writeText(txt); toast({ title: "Copied to clipboard" }); };
+
+  const onSuggestFollowUp = async () => {
+    setAiFollowUpBusy(true);
+    try {
+      const r = await suggestFollowUp({ leadId: lid });
+      setAiFollowUp(r);
+    } catch (err) {
+      toast({
+        title: "Could not draft follow-up",
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setAiFollowUpBusy(false);
+    }
+  };
+
+  const applyAiFollowUpDate = () => {
+    if (!aiFollowUp?.recommendedDate) return;
+    const data: Partial<typeof l> & { nextFollowUp: string } = { ...l, nextFollowUp: aiFollowUp.recommendedDate };
+    update.mutate({ id: lid, data: data as Parameters<typeof update.mutate>[0]["data"] });
+    toast({ title: "Follow-up date applied", description: aiFollowUp.recommendedDate });
+  };
 
   const openConvert = () => {
     setConvertForm({
@@ -413,6 +439,16 @@ export function LeadDetail({ id }: Props) {
             </div>
 
             <div className="flex items-center flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={onSuggestFollowUp}
+                disabled={aiFollowUpBusy}
+                className="bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] text-white hover:opacity-95"
+                data-testid="button-ai-suggest-followup"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                {aiFollowUpBusy ? "Drafting…" : "Suggest next follow-up"}
+              </Button>
               <Button size="sm" variant="outline" onClick={() => showAi("Suggested Follow-up Email", generateFollowUpMessage(l))} data-testid="button-ai-followup">
                 <Wand2 className="w-3.5 h-3.5 mr-1.5" />Draft Follow-up Email
               </Button>
@@ -444,6 +480,51 @@ export function LeadDetail({ id }: Props) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* AI Suggested Follow-up dialog */}
+      <Dialog open={aiFollowUp != null} onOpenChange={(o) => !o && setAiFollowUp(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#1e6ab0]" />AI Suggested Next Follow-up</DialogTitle></DialogHeader>
+          {aiFollowUp && (
+            <div className="space-y-4 pt-1">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="border rounded-lg p-3 bg-muted/30">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Recommended Date</div>
+                  <div className="font-semibold mt-0.5">{aiFollowUp.recommendedDate ?? "—"}</div>
+                </div>
+                <div className="border rounded-lg p-3 bg-muted/30">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Channel</div>
+                  <div className="font-semibold mt-0.5 capitalize">{aiFollowUp.channel ?? "—"}</div>
+                </div>
+                <div className="border rounded-lg p-3 bg-muted/30 col-span-1">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Why</div>
+                  <div className="text-xs mt-0.5">{aiFollowUp.reason ?? "—"}</div>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs font-semibold flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-green-600" />WhatsApp message</div>
+                <Textarea value={aiFollowUp.whatsappMessage ?? ""} onChange={(e) => setAiFollowUp(p => p ? { ...p, whatsappMessage: e.target.value } : p)} rows={4} className="text-sm" />
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="outline" onClick={() => copyText(aiFollowUp.whatsappMessage ?? "")}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs font-semibold flex items-center gap-1"><Mail className="w-3.5 h-3.5" />Email — {aiFollowUp.emailSubject ?? "(no subject)"}</div>
+                <Textarea value={aiFollowUp.emailBody ?? ""} onChange={(e) => setAiFollowUp(p => p ? { ...p, emailBody: e.target.value } : p)} rows={6} className="text-sm" />
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="outline" onClick={() => copyText(`${aiFollowUp.emailSubject ?? ""}\n\n${aiFollowUp.emailBody ?? ""}`)}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button>
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <Button variant="ghost" size="sm" onClick={() => setAiFollowUp(null)}>Close</Button>
+                <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={applyAiFollowUpDate} disabled={!aiFollowUp.recommendedDate}>
+                  Apply date to lead
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* AI text dialog */}
       <Dialog open={!!aiText} onOpenChange={open => !open && setAiText("")}>

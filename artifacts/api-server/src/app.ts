@@ -16,6 +16,7 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE proforma_invoices ADD COLUMN IF NOT EXISTS notes TEXT`);
     await db.execute(sql`ALTER TABLE quotations ADD COLUMN IF NOT EXISTS tech_specs TEXT`);
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signature_url TEXT`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS automation_level TEXT NOT NULL DEFAULT 'suggest'`);
     await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS lpo_file_url TEXT`);
     await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS scope TEXT`);
     // Supplier enhancements

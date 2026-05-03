@@ -24,6 +24,7 @@ import emailsRouter from "./emails";
 import emailSettingsRouter from "./email-settings";
 import whatsappRouter from "./whatsapp";
 import whatsappWebhookRouter from "./whatsapp-webhook";
+import aiRouter from "./ai";
 
 const router: IRouter = Router();
 
@@ -54,5 +55,6 @@ router.use(emailSettingsRouter);
 // Mount before the authed whatsapp router so its route wins.
 router.use(whatsappWebhookRouter);
 router.use(whatsappRouter);
+router.use(aiRouter);
 
 export default router;
