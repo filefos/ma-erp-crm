@@ -342,7 +342,7 @@ export function SalesDashboard() {
               >
                 <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
                   <div className="flex items-center gap-2.5 mb-2.5">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-[#1e6ab0] to-[#0f2d5a]" : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : "bg-[#1e6ab0]"}`}>
                       {i + 1}
                     </div>
                     <Avatar name={row.name} size={32} />
@@ -354,7 +354,7 @@ export function SalesDashboard() {
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="rounded-lg bg-muted/40 p-2">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Won</div>
-                      <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400 truncate">{fmtAED(row.won)}</div>
+                      <div className="text-sm font-bold text-orange-600 truncate">{fmtAED(row.won)}</div>
                       <div className="text-[10px] text-muted-foreground">{row.wonCount} deal{row.wonCount === 1 ? "" : "s"}</div>
                     </div>
                     <div className="rounded-lg bg-muted/40 p-2">
@@ -367,13 +367,13 @@ export function SalesDashboard() {
                     <div className="mb-2">
                       <div className="flex items-center justify-between text-[10px] mb-1">
                         <span className="text-muted-foreground">Target {fmtAED(row.target)}</span>
-                        <span className={`font-bold ${row.attainment >= 100 ? "text-emerald-700" : row.attainment >= 75 ? "text-[#1e6ab0]" : "text-orange-600"}`}>
+                        <span className={`font-bold ${row.attainment >= 100 ? "text-orange-600" : row.attainment >= 75 ? "text-[#1e6ab0]" : "text-[#0f2d5a] dark:text-white"}`}>
                           {row.attainment}%
                         </span>
                       </div>
                       <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${row.attainment >= 100 ? "bg-gradient-to-r from-emerald-500 to-emerald-600" : row.attainment >= 75 ? "bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" : row.attainment >= 50 ? "bg-gradient-to-r from-orange-400 to-orange-500" : "bg-gradient-to-r from-orange-500 to-orange-700"}`}
+                          className={`h-full ${row.attainment >= 100 ? "bg-gradient-to-r from-orange-500 to-orange-700" : row.attainment >= 75 ? "bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" : row.attainment >= 50 ? "bg-gradient-to-r from-[#1e6ab0] to-orange-400" : "bg-gradient-to-r from-orange-300 to-orange-500"}`}
                           style={{ width: `${Math.min(100, row.attainment)}%` }}
                         />
                       </div>
@@ -410,7 +410,7 @@ export function SalesDashboard() {
                 <Link key={c.name} href={href} className="block group" data-testid={`card-customer-${i}`}>
                   <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
                     <div className="flex items-center gap-2.5 mb-2.5">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-[#1e6ab0] to-[#0f2d5a]" : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : "bg-[#1e6ab0]"}`}>
                         {i + 1}
                       </div>
                       <Avatar name={c.name} size={32} />
