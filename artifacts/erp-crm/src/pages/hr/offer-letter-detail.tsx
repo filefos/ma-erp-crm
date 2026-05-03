@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  ArrowLeft, Pencil, Save, X, Send, FileDown, RefreshCcw, UserPlus, CheckCircle2, XCircle,
+  ArrowLeft, Pencil, Save, X, Send, FileDown, Printer, RefreshCcw, UserPlus, CheckCircle2, XCircle,
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
@@ -136,6 +136,9 @@ export function OfferLetterDetail({ id }: Props) {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={downloadPdf} disabled={downloading} data-testid="button-download-pdf">
             <FileDown className="w-4 h-4 mr-1" />{downloading ? "Generating…" : "Download PDF"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()} data-testid="button-print-offer">
+            <Printer className="w-4 h-4 mr-1" />Print
           </Button>
           {isDraft && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="button-edit-offer"><Pencil className="w-4 h-4 mr-1" />Edit</Button>}
           {isDraft && editing && (
