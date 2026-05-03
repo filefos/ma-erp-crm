@@ -61,8 +61,8 @@ export function Login() {
               Run two companies from one secure platform.
             </h1>
             <p className="text-white/70 text-sm leading-relaxed">
-              Multi-company sales, accounts, procurement, inventory, projects and HR — built for
-              Prime Max General Trading and Elite Prefab Industries.
+              Multi-company sales, accounts, procurement, inventory, projects and HR — powered by
+              PRIME ERP SYSTEMS.
             </p>
           </div>
 

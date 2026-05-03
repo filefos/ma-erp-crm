@@ -6,8 +6,8 @@ const STORAGE_KEY = "erp_active_company_id";
 const CHANGE_EVENT = "erp:active-company-changed";
 
 const COMPANY_INFO: Record<number, { name: string; short: string; poweredBy: string }> = {
-  1: { name: "Prime Max Prefab Houses Ind. LLC", short: "Prime Max", poweredBy: "Prime Max" },
-  2: { name: "Elite Prefab Industries LLC", short: "Elite Prefab", poweredBy: "Elite Prefab" },
+  1: { name: "Prime Max Prefab Houses Ind. LLC", short: "Prime Max", poweredBy: "Prime Solution" },
+  2: { name: "Elite Prefab Industries LLC", short: "Elite Prefab", poweredBy: "Prime Solution" },
 };
 
 function readStored(): number | null {

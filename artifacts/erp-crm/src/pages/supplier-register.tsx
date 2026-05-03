@@ -306,7 +306,7 @@ export default function SupplierRegisterPage() {
             </div>
             <div>
               <div className="text-lg font-semibold">Become a Supplier</div>
-              <div className="text-xs text-white/70">Prime Max & Elite Prefab — UAE Procurement</div>
+              <div className="text-xs text-white/70">PRIME ERP SYSTEMS — UAE Procurement</div>
             </div>
           </div>
           <a href="/login" className="text-xs text-white/80 hover:text-white underline">Sign in</a>

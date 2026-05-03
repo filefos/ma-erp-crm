@@ -86,7 +86,7 @@ export function BusinessDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground text-sm">Prime Max & Elite Prefab — Business Overview</p>
+        <p className="text-muted-foreground text-sm">PRIME ERP SYSTEMS — Business Overview</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -64,7 +64,7 @@ export function CompaniesAdmin() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Companies</h1>
-        <p className="text-muted-foreground text-sm">Manage Prime Max and Elite Prefab company profiles including logos.</p>
+        <p className="text-muted-foreground text-sm">Manage company profiles including logos for PRIME ERP SYSTEMS.</p>
       </div>
 
       {isLoading ? (

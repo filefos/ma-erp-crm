@@ -278,7 +278,7 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Display Name (shown as sender)</Label>
-              <Input {...F("smtpFromName")} placeholder="Prime Max ERP" className="h-8 text-sm" />
+              <Input {...F("smtpFromName")} placeholder="PRIME ERP SYSTEMS" className="h-8 text-sm" />
             </div>
             <div className="flex items-center gap-3 pt-1">
               <Button variant="outline" size="sm" onClick={testSmtp} disabled={smtpTest.status === "loading"}>
