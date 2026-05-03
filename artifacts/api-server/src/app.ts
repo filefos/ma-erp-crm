@@ -408,16 +408,21 @@ async function runMigrations() {
     }
 
     // Per-offer-letter attachments (academic / supporting documents).
+    // Files live in object storage; the row stores only the object key.
     await db.execute(sql`CREATE TABLE IF NOT EXISTS offer_letter_attachments (
       id SERIAL PRIMARY KEY,
       offer_letter_id INTEGER NOT NULL,
       file_name TEXT NOT NULL,
+      object_key TEXT NOT NULL,
       content_type TEXT,
       size_bytes INTEGER,
-      content_base64 TEXT NOT NULL,
       uploaded_by_id INTEGER,
       uploaded_at TIMESTAMP NOT NULL DEFAULT NOW()
     )`);
+    // Migrate any earlier rows that used the inline base64 column.
+    await db.execute(sql`ALTER TABLE offer_letter_attachments ADD COLUMN IF NOT EXISTS object_key TEXT`);
+    await db.execute(sql`ALTER TABLE offer_letter_attachments DROP COLUMN IF EXISTS content_base64`);
+    await db.execute(sql`ALTER TABLE offer_letter_attachments ALTER COLUMN object_key SET NOT NULL`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS offer_letter_attachments_offer_idx ON offer_letter_attachments(offer_letter_id)`);
 
     // Push notification device tokens (one row per Expo push token, per user/device).

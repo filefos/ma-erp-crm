@@ -4693,6 +4693,56 @@ export const DeleteEmployeeAttachmentResponse = zod.object({
 });
 
 /**
+ * @summary List attachments for an offer letter
+ */
+export const ListOfferLetterAttachmentsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListOfferLetterAttachmentsResponseItem = zod.object({
+  id: zod.number(),
+  offerLetterId: zod.number(),
+  fileName: zod.string(),
+  objectKey: zod.string(),
+  signedUrl: zod.string().optional(),
+  contentType: zod.string().optional(),
+  sizeBytes: zod.number().optional(),
+  uploadedById: zod.number().optional(),
+  uploadedByName: zod.string().optional(),
+  uploadedAt: zod.string(),
+});
+export const ListOfferLetterAttachmentsResponse = zod.array(
+  ListOfferLetterAttachmentsResponseItem,
+);
+
+/**
+ * @summary Register an uploaded file as an offer letter attachment
+ */
+export const CreateOfferLetterAttachmentParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CreateOfferLetterAttachmentBody = zod.object({
+  fileName: zod.string(),
+  objectKey: zod.string(),
+  contentType: zod.string().optional(),
+  sizeBytes: zod.number().optional(),
+});
+
+/**
+ * @summary Delete an offer letter attachment
+ */
+export const DeleteOfferLetterAttachmentParams = zod.object({
+  id: zod.coerce.number(),
+  attId: zod.coerce.number(),
+});
+
+export const DeleteOfferLetterAttachmentResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
  * @summary List offer letters
  */
 export const ListOfferLettersQueryParams = zod.object({

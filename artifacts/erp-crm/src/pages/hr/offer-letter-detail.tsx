@@ -3,7 +3,8 @@ import { Link, useLocation } from "wouter";
 import {
   useGetOfferLetter, useUpdateOfferLetter, useSetOfferLetterStatus,
   useReissueOfferLetter, useConvertOfferLetterToEmployee, useListCompanies,
-  getGetOfferLetterQueryKey, getListOfferLettersQueryKey,
+  useListOfferLetterAttachments, useCreateOfferLetterAttachment, useDeleteOfferLetterAttachment,
+  getGetOfferLetterQueryKey, getListOfferLettersQueryKey, getListOfferLetterAttachmentsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +20,7 @@ import {
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
-import {
-  listOfferLetterAttachments, uploadOfferLetterAttachment,
-  deleteOfferLetterAttachment, downloadOfferLetterAttachment,
-  type OfferLetterAttachment,
-} from "@/lib/offer-letter-attachments";
+import { uploadFile } from "@/lib/upload";
 import { Paperclip, Upload, Trash2, Download } from "lucide-react";
 
 const COMMISSION_DEFAULTS = {
@@ -124,19 +121,21 @@ export function OfferLetterDetail({ id }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [downloading, setDownloading] = useState(false);
-  const [attachments, setAttachments] = useState<OfferLetterAttachment[]>([]);
-  const [attLoading, setAttLoading] = useState(false);
   const [attError, setAttError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const reloadAttachments = async () => {
-    if (!oid) return;
-    setAttLoading(true);
-    setAttError(null);
-    try { setAttachments(await listOfferLetterAttachments(oid)); }
-    catch (e: any) { setAttError(e?.message ?? "Failed to load"); }
-    finally { setAttLoading(false); }
-  };
-  useEffect(() => { if (oid) void reloadAttachments(); }, [oid]);
+
+  const attachmentsQueryKey = getListOfferLetterAttachmentsQueryKey(oid);
+  const { data: attachmentsData, isLoading: attLoading } = useListOfferLetterAttachments(oid, {
+    query: { queryKey: attachmentsQueryKey, enabled: !!oid },
+  });
+  const attachments = (attachmentsData ?? []) as any[];
+  const createAttachment = useCreateOfferLetterAttachment({
+    mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: attachmentsQueryKey }) },
+  });
+  const deleteAttachment = useDeleteOfferLetterAttachment({
+    mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: attachmentsQueryKey }) },
+  });
+
   const onPickFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
@@ -147,9 +146,12 @@ export function OfferLetterDetail({ id }: Props) {
           setAttError(`"${f.name}" exceeds 8 MB limit`);
           continue;
         }
-        await uploadOfferLetterAttachment(oid, f);
+        const r = await uploadFile(f);
+        await createAttachment.mutateAsync({
+          id: oid,
+          data: { fileName: r.fileName, objectKey: r.objectKey, contentType: r.contentType, sizeBytes: r.sizeBytes },
+        });
       }
-      await reloadAttachments();
     } catch (e: any) {
       setAttError(e?.message ?? "Upload failed");
     } finally {
@@ -526,19 +528,24 @@ export function OfferLetterDetail({ id }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="text-sm truncate" title={a.fileName}>{a.fileName}</div>
                     <div className="text-[11px] text-muted-foreground">
-                      {a.contentType || "file"} · {a.sizeBytes ? `${(a.sizeBytes / 1024).toFixed(1)} KB` : "—"} · {new Date(a.uploadedAt).toLocaleString()}
+                      {a.contentType || "file"} · {fmtBytes(a.sizeBytes)} · {new Date(a.uploadedAt).toLocaleString()}
+                      {a.uploadedByName ? <> · uploaded by {a.uploadedByName}</> : null}
                     </div>
                   </div>
-                  <Button size="sm" variant="ghost" onClick={() => downloadOfferLetterAttachment(oid, a)} data-testid={`button-download-attachment-${a.id}`}>
-                    <Download className="w-4 h-4" />
-                  </Button>
+                  {a.signedUrl && (
+                    <Button size="sm" variant="ghost" asChild data-testid={`button-download-attachment-${a.id}`}>
+                      <a href={a.signedUrl} target="_blank" rel="noopener noreferrer" download={a.fileName}>
+                        <Download className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  )}
                   {canEdit && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={async () => {
                         if (!confirm(`Delete "${a.fileName}"?`)) return;
-                        try { await deleteOfferLetterAttachment(oid, a.id); await reloadAttachments(); }
+                        try { await deleteAttachment.mutateAsync({ id: oid, attId: a.id }); }
                         catch (e: any) { setAttError(e?.message ?? "Delete failed"); }
                       }}
                       data-testid={`button-delete-attachment-${a.id}`}
@@ -554,6 +561,13 @@ export function OfferLetterDetail({ id }: Props) {
       </Card>
     </div>
   );
+}
+
+function fmtBytes(n: number | null | undefined): string {
+  if (!n || n <= 0) return "—";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 function CField({ label, k, draft, setDraft, type = "text" }: { label: string; k: string; draft: any; setDraft: (fn: any) => void; type?: string }) {

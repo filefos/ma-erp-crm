@@ -51,6 +51,7 @@ import type {
   CreateJournalEntryBody,
   CreateLeadBody,
   CreateLpoBody,
+  CreateOfferLetterAttachmentBody,
   CreateOfferLetterBody,
   CreatePaymentMadeBody,
   CreatePaymentReceivedBody,
@@ -135,6 +136,7 @@ import type {
   ModulePermission,
   Notification,
   OfferLetter,
+  OfferLetterAttachment,
   PaymentMade,
   PaymentReceived,
   PendingApprovals,
@@ -11773,6 +11775,280 @@ export const useDeleteEmployeeAttachment = <
   TContext
 > => {
   return useMutation(getDeleteEmployeeAttachmentMutationOptions(options));
+};
+
+/**
+ * @summary List attachments for an offer letter
+ */
+export const getListOfferLetterAttachmentsUrl = (id: number) => {
+  return `/api/offer-letters/${id}/attachments`;
+};
+
+export const listOfferLetterAttachments = async (
+  id: number,
+  options?: RequestInit,
+): Promise<OfferLetterAttachment[]> => {
+  return customFetch<OfferLetterAttachment[]>(
+    getListOfferLetterAttachmentsUrl(id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListOfferLetterAttachmentsQueryKey = (id: number) => {
+  return [`/api/offer-letters/${id}/attachments`] as const;
+};
+
+export const getListOfferLetterAttachmentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listOfferLetterAttachments>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listOfferLetterAttachments>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListOfferLetterAttachmentsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listOfferLetterAttachments>>
+  > = ({ signal }) =>
+    listOfferLetterAttachments(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listOfferLetterAttachments>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListOfferLetterAttachmentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listOfferLetterAttachments>>
+>;
+export type ListOfferLetterAttachmentsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List attachments for an offer letter
+ */
+
+export function useListOfferLetterAttachments<
+  TData = Awaited<ReturnType<typeof listOfferLetterAttachments>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listOfferLetterAttachments>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListOfferLetterAttachmentsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Register an uploaded file as an offer letter attachment
+ */
+export const getCreateOfferLetterAttachmentUrl = (id: number) => {
+  return `/api/offer-letters/${id}/attachments`;
+};
+
+export const createOfferLetterAttachment = async (
+  id: number,
+  createOfferLetterAttachmentBody: CreateOfferLetterAttachmentBody,
+  options?: RequestInit,
+): Promise<OfferLetterAttachment> => {
+  return customFetch<OfferLetterAttachment>(
+    getCreateOfferLetterAttachmentUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createOfferLetterAttachmentBody),
+    },
+  );
+};
+
+export const getCreateOfferLetterAttachmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+    TError,
+    { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+  TError,
+  { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+  TContext
+> => {
+  const mutationKey = ["createOfferLetterAttachment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+    { id: number; data: BodyType<CreateOfferLetterAttachmentBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createOfferLetterAttachment(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateOfferLetterAttachmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createOfferLetterAttachment>>
+>;
+export type CreateOfferLetterAttachmentMutationBody =
+  BodyType<CreateOfferLetterAttachmentBody>;
+export type CreateOfferLetterAttachmentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Register an uploaded file as an offer letter attachment
+ */
+export const useCreateOfferLetterAttachment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+    TError,
+    { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+  TError,
+  { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+  TContext
+> => {
+  return useMutation(getCreateOfferLetterAttachmentMutationOptions(options));
+};
+
+/**
+ * @summary Delete an offer letter attachment
+ */
+export const getDeleteOfferLetterAttachmentUrl = (
+  id: number,
+  attId: number,
+) => {
+  return `/api/offer-letters/${id}/attachments/${attId}`;
+};
+
+export const deleteOfferLetterAttachment = async (
+  id: number,
+  attId: number,
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(
+    getDeleteOfferLetterAttachmentUrl(id, attId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getDeleteOfferLetterAttachmentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteOfferLetterAttachment>>,
+    TError,
+    { id: number; attId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteOfferLetterAttachment>>,
+  TError,
+  { id: number; attId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteOfferLetterAttachment"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteOfferLetterAttachment>>,
+    { id: number; attId: number }
+  > = (props) => {
+    const { id, attId } = props ?? {};
+
+    return deleteOfferLetterAttachment(id, attId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteOfferLetterAttachmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteOfferLetterAttachment>>
+>;
+
+export type DeleteOfferLetterAttachmentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete an offer letter attachment
+ */
+export const useDeleteOfferLetterAttachment = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteOfferLetterAttachment>>,
+    TError,
+    { id: number; attId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteOfferLetterAttachment>>,
+  TError,
+  { id: number; attId: number },
+  TContext
+> => {
+  return useMutation(getDeleteOfferLetterAttachmentMutationOptions(options));
 };
 
 /**

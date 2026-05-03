@@ -223,7 +223,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
       {/* Footer — official address and contact details. Dark navy top
           border to match the header. No TRN, no P.O. Box per request. */}
       <div style={{ borderTop: "2px solid #0f2d5a", paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: "#0f2d5a", textAlign: "center", lineHeight: 1.35 }}>
-        <div>Plot # 2040, Sajja Industrial Area, Sharjah, United Arab Emirates</div>
+        <div>Plot # 2040, Sajja Industrial Area, Sharjah, UAE</div>
         <div>Tel: 0566163555 &nbsp;·&nbsp; Email: hr@primemaxprefab.com &nbsp;·&nbsp; Web: www.primemaxprefab.com</div>
       </div>
     </div>

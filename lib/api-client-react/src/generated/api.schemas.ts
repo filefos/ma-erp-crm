@@ -1274,6 +1274,26 @@ export interface CreateEmployeeAttachmentBody {
   notes?: string;
 }
 
+export interface OfferLetterAttachment {
+  id: number;
+  offerLetterId: number;
+  fileName: string;
+  objectKey: string;
+  signedUrl?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  uploadedById?: number;
+  uploadedByName?: string;
+  uploadedAt: string;
+}
+
+export interface CreateOfferLetterAttachmentBody {
+  fileName: string;
+  objectKey: string;
+  contentType?: string;
+  sizeBytes?: number;
+}
+
 export interface OfferLetter {
   id: number;
   letterNumber: string;

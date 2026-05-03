@@ -132,15 +132,15 @@ export const offerLettersTable = pgTable("offer_letters", {
 });
 
 // Per-offer-letter attachments (academic certificates, ID copies, etc.).
-// Files are stored inline as base64 to avoid a hard dep on object storage and
-// keep operations simple. 8 MB per-file cap is enforced server-side.
+// Files live in object storage; we only persist the `objectKey` (e.g.
+// "/objects/uploads/<uuid>") plus metadata. Mirrors employee_attachments.
 export const offerLetterAttachmentsTable = pgTable("offer_letter_attachments", {
   id: serial("id").primaryKey(),
   offerLetterId: integer("offer_letter_id").notNull(),
   fileName: text("file_name").notNull(),
+  objectKey: text("object_key").notNull(),
   contentType: text("content_type"),
   sizeBytes: integer("size_bytes"),
-  contentBase64: text("content_base64").notNull(),
   uploadedById: integer("uploaded_by_id"),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
 });

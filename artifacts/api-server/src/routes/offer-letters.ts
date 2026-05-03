@@ -5,6 +5,23 @@ import {
 } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { ObjectStorageService } from "../lib/objectStorage";
+
+const storageService = new ObjectStorageService();
+async function signObjectKey(objectKey: string | null | undefined): Promise<string | undefined> {
+  if (!objectKey || !objectKey.startsWith("/objects/")) return undefined;
+  try {
+    const file = await storageService.getObjectEntityFile(objectKey);
+    const [signed] = await file.getSignedUrl({
+      version: "v4",
+      action: "read",
+      expires: Date.now() + 15 * 60 * 1000,
+    });
+    return signed;
+  } catch {
+    return undefined;
+  }
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -233,10 +250,9 @@ router.post("/offer-letters/:id/convert-to-employee", requirePermission("offer_l
 });
 
 // --- Attachments (academic / supporting documents) ---------------------------
-// Files are stored inline as base64 to keep this self-contained and avoid an
-// object-storage dep. 8 MB cap per file is enforced here.
-const ATTACHMENT_MAX_BYTES = 8 * 1024 * 1024;
-
+// Files live in object storage; the row stores only the object key. Mirrors
+// the employee-attachments pattern. Clients call requestUploadUrl + PUT, then
+// register the resulting objectKey via POST.
 type OfferGuard =
   | { ok: true; row: typeof offerLettersTable.$inferSelect }
   | { ok: false; status: 404 | 403 };
@@ -247,75 +263,48 @@ async function loadOfferOr403(req: any, id: number): Promise<OfferGuard> {
   return { ok: true, row };
 }
 
-// LIST attachments (metadata only — no base64 payload)
+async function enrichAttachment(a: typeof offerLetterAttachmentsTable.$inferSelect) {
+  const signedUrl = await signObjectKey(a.objectKey);
+  let uploadedByName: string | undefined;
+  if (a.uploadedById) {
+    const [u] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, a.uploadedById));
+    uploadedByName = u?.name;
+  }
+  return { ...a, signedUrl, uploadedByName };
+}
+
 router.get("/offer-letters/:id/attachments", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const guard = await loadOfferOr403(req, id);
   if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
-  const rows = await db.select({
-    id: offerLetterAttachmentsTable.id,
-    offerLetterId: offerLetterAttachmentsTable.offerLetterId,
-    fileName: offerLetterAttachmentsTable.fileName,
-    contentType: offerLetterAttachmentsTable.contentType,
-    sizeBytes: offerLetterAttachmentsTable.sizeBytes,
-    uploadedById: offerLetterAttachmentsTable.uploadedById,
-    uploadedAt: offerLetterAttachmentsTable.uploadedAt,
-  }).from(offerLetterAttachmentsTable)
+  const rows = await db.select().from(offerLetterAttachmentsTable)
     .where(eq(offerLetterAttachmentsTable.offerLetterId, id))
     .orderBy(desc(offerLetterAttachmentsTable.uploadedAt));
-  res.json(rows);
+  res.json(await Promise.all(rows.map(enrichAttachment)));
 });
 
-// CREATE attachment — body: { fileName, contentType, contentBase64 }
 router.post("/offer-letters/:id/attachments", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const guard = await loadOfferOr403(req, id);
   if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
-  const { fileName, contentType, contentBase64 } = req.body ?? {};
-  if (!fileName || !contentBase64 || typeof contentBase64 !== "string") {
-    res.status(400).json({ error: "fileName and contentBase64 are required" }); return;
+  const { fileName, objectKey, contentType, sizeBytes } = req.body ?? {};
+  if (!fileName || !objectKey) {
+    res.status(400).json({ error: "fileName and objectKey are required" }); return;
   }
-  // Approx byte size from base64 (3/4 ratio), enforce cap before insert.
-  const approxBytes = Math.floor(contentBase64.length * 0.75);
-  if (approxBytes > ATTACHMENT_MAX_BYTES) {
-    res.status(413).json({ error: `File exceeds ${ATTACHMENT_MAX_BYTES / 1024 / 1024} MB limit` }); return;
+  if (typeof objectKey !== "string" || !objectKey.startsWith("/objects/")) {
+    res.status(400).json({ error: "objectKey must reference an uploaded object" }); return;
   }
   const [row] = await db.insert(offerLetterAttachmentsTable).values({
     offerLetterId: id,
     fileName: String(fileName).slice(0, 255),
+    objectKey,
     contentType: contentType ? String(contentType).slice(0, 120) : null,
-    sizeBytes: approxBytes,
-    contentBase64,
+    sizeBytes: typeof sizeBytes === "number" ? sizeBytes : null,
     uploadedById: req.user?.id ?? null,
-  }).returning({
-    id: offerLetterAttachmentsTable.id,
-    offerLetterId: offerLetterAttachmentsTable.offerLetterId,
-    fileName: offerLetterAttachmentsTable.fileName,
-    contentType: offerLetterAttachmentsTable.contentType,
-    sizeBytes: offerLetterAttachmentsTable.sizeBytes,
-    uploadedById: offerLetterAttachmentsTable.uploadedById,
-    uploadedAt: offerLetterAttachmentsTable.uploadedAt,
-  });
-  res.status(201).json(row);
+  }).returning();
+  res.status(201).json(await enrichAttachment(row));
 });
 
-// DOWNLOAD attachment payload (auth-gated, served as raw bytes)
-router.get("/offer-letters/:id/attachments/:attId/download", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
-  const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);
-  const guard = await loadOfferOr403(req, id);
-  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
-  const [att] = await db.select().from(offerLetterAttachmentsTable)
-    .where(and(eq(offerLetterAttachmentsTable.id, attId), eq(offerLetterAttachmentsTable.offerLetterId, id)));
-  if (!att) { res.status(404).json({ error: "Attachment not found" }); return; }
-  const buf = Buffer.from(att.contentBase64, "base64");
-  res.setHeader("Content-Type", att.contentType || "application/octet-stream");
-  res.setHeader("Content-Length", String(buf.length));
-  res.setHeader("Content-Disposition", `attachment; filename="${att.fileName.replace(/"/g, "")}"`);
-  res.send(buf);
-});
-
-// DELETE attachment
 router.delete("/offer-letters/:id/attachments/:attId", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);
@@ -323,7 +312,7 @@ router.delete("/offer-letters/:id/attachments/:attId", requirePermission("offer_
   if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
   await db.delete(offerLetterAttachmentsTable)
     .where(and(eq(offerLetterAttachmentsTable.id, attId), eq(offerLetterAttachmentsTable.offerLetterId, id)));
-  res.json({ ok: true });
+  res.json({ success: true });
 });
 
 export default router;

@@ -2818,6 +2818,75 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  # OFFER LETTER ATTACHMENTS
+  /offer-letters/{id}/attachments:
+    get:
+      operationId: listOfferLetterAttachments
+      tags: [offer-letter-attachments]
+      summary: List attachments for an offer letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of attachments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfferLetterAttachment"
+    post:
+      operationId: createOfferLetterAttachment
+      tags: [offer-letter-attachments]
+      summary: Register an uploaded file as an offer letter attachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOfferLetterAttachmentBody"
+      responses:
+        "201":
+          description: Attachment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferLetterAttachment"
+
+  /offer-letters/{id}/attachments/{attId}:
+    delete:
+      operationId: deleteOfferLetterAttachment
+      tags: [offer-letter-attachments]
+      summary: Delete an offer letter attachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
   # OFFER LETTERS
   /offer-letters:
     get:
@@ -6237,6 +6306,44 @@ components:
         notes:
           type: string
       required: [category, fileName, objectKey]
+
+    OfferLetterAttachment:
+      type: object
+      properties:
+        id:
+          type: integer
+        offerLetterId:
+          type: integer
+        fileName:
+          type: string
+        objectKey:
+          type: string
+        signedUrl:
+          type: string
+        contentType:
+          type: string
+        sizeBytes:
+          type: integer
+        uploadedById:
+          type: integer
+        uploadedByName:
+          type: string
+        uploadedAt:
+          type: string
+      required: [id, offerLetterId, fileName, objectKey, uploadedAt]
+
+    CreateOfferLetterAttachmentBody:
+      type: object
+      properties:
+        fileName:
+          type: string
+        objectKey:
+          type: string
+        contentType:
+          type: string
+        sizeBytes:
+          type: integer
+      required: [fileName, objectKey]
 
     OfferLetter:
       type: object
