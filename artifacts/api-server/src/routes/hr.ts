@@ -69,8 +69,10 @@ router.get("/employees", requirePermission("employees", "view"), async (req, res
 
 router.post("/employees", requirePermission("employees", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
-  const count = await db.select({ count: sql<number>`count(*)::int` }).from(employeesTable);
-  const num = (count[0]?.count ?? 0) + 1;
+  // Use shared employee_number_seq so manual creation here cannot collide with
+  // ids minted by offer-letter convert-to-employee.
+  const seqRes: any = await db.execute(sql`SELECT nextval('employee_number_seq') AS n`);
+  const num = Number(seqRes.rows?.[0]?.n ?? seqRes[0]?.n ?? 1);
   const employeeId = `EMP-${String(num).padStart(5, "0")}`;
   const [emp] = await db.insert(employeesTable).values({ ...data, employeeId }).returning();
   res.status(201).json(await enrichEmployee(emp));
