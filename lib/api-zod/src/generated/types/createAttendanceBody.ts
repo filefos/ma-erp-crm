@@ -15,6 +15,10 @@ export interface CreateAttendanceBody {
   status: string;
   latitude?: number;
   longitude?: number;
+  accuracyMeters?: number;
   selfieUrl?: string;
+  selfieObjectKey?: string;
+  source?: string;
+  address?: string;
   notes?: string;
 }

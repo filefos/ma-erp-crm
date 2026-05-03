@@ -2,8 +2,10 @@ import React, { useMemo, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
+import { Image } from "expo-image";
 import {
   getListAttendanceQueryKey,
+  useAttendanceCheckIn, useAttendanceCheckOut,
   useCreateAttendance, useListAttendance, useListEmployees, useUpdateAttendance,
 } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
@@ -13,6 +15,7 @@ import { ActionSheet, FormCell, FormRow, Select, StatusPill } from "@/components
 import { ATTENDANCE_STATUSES, attendanceStatusMeta } from "@/lib/format";
 import { useApp } from "@/contexts/AppContext";
 import { canMarkAttendance } from "@/lib/permissions";
+import { captureAndUploadAttendance, showAttendanceError } from "@/lib/attendance";
 
 function todayKey() {
   const d = new Date();
@@ -75,19 +78,61 @@ export default function AttendanceScreen() {
       onError: (e) => Alert.alert("Could not update attendance", (e as Error).message ?? ""),
     },
   });
+  const checkInMut = useAttendanceCheckIn({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getListAttendanceQueryKey() }),
+      onError: (e) => showAttendanceError(e),
+    },
+  });
+  const checkOutMut = useAttendanceCheckOut({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getListAttendanceQueryKey() }),
+      onError: (e) => showAttendanceError(e),
+    },
+  });
+  const [busy, setBusy] = useState<null | "in" | "out">(null);
 
-  const checkIn = () => {
-    if (!myEmployee) return;
-    create.mutate({ data: { employeeId: myEmployee.id, date: todayKey(), checkIn: nowTime(), status: "present" } });
+  const checkIn = async () => {
+    if (busy) return;
+    setBusy("in");
+    try {
+      const cap = await captureAndUploadAttendance();
+      await checkInMut.mutateAsync({
+        data: {
+          latitude: cap.gps.latitude,
+          longitude: cap.gps.longitude,
+          accuracyMeters: cap.gps.accuracyMeters ?? undefined,
+          address: cap.gps.address,
+          selfieObjectKey: cap.selfieObjectKey,
+          source: "mobile_gps",
+        },
+      });
+    } catch (e) {
+      showAttendanceError(e);
+    } finally {
+      setBusy(null);
+    }
   };
-  const checkOut = () => {
-    if (!myToday) return;
-    update.mutate({ id: myToday.id, data: {
-      employeeId: myToday.employeeId, date: myToday.date,
-      checkIn: myToday.checkIn, checkOut: nowTime(),
-      status: myToday.status, overtime: myToday.overtime,
-      notes: myToday.notes,
-    } });
+  const checkOut = async () => {
+    if (busy || !myToday) return;
+    setBusy("out");
+    try {
+      const cap = await captureAndUploadAttendance();
+      await checkOutMut.mutateAsync({
+        data: {
+          latitude: cap.gps.latitude,
+          longitude: cap.gps.longitude,
+          accuracyMeters: cap.gps.accuracyMeters ?? undefined,
+          address: cap.gps.address,
+          selfieObjectKey: cap.selfieObjectKey,
+          source: "mobile_gps",
+        },
+      });
+    } catch (e) {
+      showAttendanceError(e);
+    } finally {
+      setBusy(null);
+    }
   };
 
   const setStatusFor = (employeeId: number, status: string) => {
@@ -133,7 +178,7 @@ export default function AttendanceScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.primary} />}
       >
-        {/* Self check-in card */}
+        {/* Self check-in card with GPS + selfie */}
         {myEmployee ? (
           <Card>
             <View style={styles.row}>
@@ -144,15 +189,39 @@ export default function AttendanceScreen() {
               {myToday?.checkIn ? `In ${myToday.checkIn}` : "Not checked in"}
               {myToday?.checkOut ? ` · Out ${myToday.checkOut}` : ""}
             </Text>
+            {myToday?.address ? (
+              <Text style={[styles.meta, { color: c.mutedForeground }]} numberOfLines={2}>
+                <Feather name="map-pin" size={11} color={c.mutedForeground} /> {myToday.address}
+              </Text>
+            ) : null}
             <View style={styles.row}>
+              {(myToday as any)?.selfieSignedUrl ? (
+                <Image
+                  source={{ uri: (myToday as any).selfieSignedUrl }}
+                  style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: c.muted }}
+                  contentFit="cover"
+                />
+              ) : null}
+              {(myToday as any)?.checkOutSelfieSignedUrl ? (
+                <Image
+                  source={{ uri: (myToday as any).checkOutSelfieSignedUrl }}
+                  style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: c.muted }}
+                  contentFit="cover"
+                />
+              ) : null}
               {!myToday ? (
-                <BrandButton label="Check in" icon="log-in" onPress={checkIn} loading={create.isPending} style={{ flex: 1 }} />
+                <BrandButton label="Check in (GPS + selfie)" icon="camera" onPress={checkIn} loading={busy === "in"} style={{ flex: 1, minWidth: 200 }} />
               ) : !myToday.checkOut ? (
-                <BrandButton label="Check out" icon="log-out" variant="secondary" onPress={checkOut} loading={update.isPending} style={{ flex: 1 }} />
+                <BrandButton label="Check out (GPS + selfie)" icon="camera" variant="secondary" onPress={checkOut} loading={busy === "out"} style={{ flex: 1, minWidth: 200 }} />
               ) : (
                 <Text style={[styles.meta, { color: c.success }]}>Day complete · thanks!</Text>
               )}
             </View>
+            {!myToday ? (
+              <Text style={[styles.meta, { color: c.mutedForeground, fontSize: 11 }]}>
+                Location and a wide-angle selfie are required for check-in. Both are uploaded securely.
+              </Text>
+            ) : null}
           </Card>
         ) : null}
 

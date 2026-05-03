@@ -21,6 +21,8 @@ import type {
   AdminSummary,
   Asset,
   Attendance,
+  AttendanceCheckInBody,
+  AttendanceCheckOutBody,
   AuditLog,
   AuthCompany,
   AuthResponse,
@@ -140,6 +142,8 @@ import type {
   QuotationApproveResponse,
   RejectPurchaseOrderBody,
   RejectPurchaseRequestBody,
+  RequestUploadUrlBody,
+  RequestUploadUrlResponse,
   Rfq,
   RoleSummary,
   SalesPipeline,
@@ -11237,6 +11241,264 @@ export const useCreateAttendance = <
   TContext
 > => {
   return useMutation(getCreateAttendanceMutationOptions(options));
+};
+
+/**
+ * @summary Sales-force GPS + selfie check-in
+ */
+export const getAttendanceCheckInUrl = () => {
+  return `/api/attendance/check-in`;
+};
+
+export const attendanceCheckIn = async (
+  attendanceCheckInBody: AttendanceCheckInBody,
+  options?: RequestInit,
+): Promise<Attendance> => {
+  return customFetch<Attendance>(getAttendanceCheckInUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(attendanceCheckInBody),
+  });
+};
+
+export const getAttendanceCheckInMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof attendanceCheckIn>>,
+    TError,
+    { data: BodyType<AttendanceCheckInBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof attendanceCheckIn>>,
+  TError,
+  { data: BodyType<AttendanceCheckInBody> },
+  TContext
+> => {
+  const mutationKey = ["attendanceCheckIn"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof attendanceCheckIn>>,
+    { data: BodyType<AttendanceCheckInBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return attendanceCheckIn(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AttendanceCheckInMutationResult = NonNullable<
+  Awaited<ReturnType<typeof attendanceCheckIn>>
+>;
+export type AttendanceCheckInMutationBody = BodyType<AttendanceCheckInBody>;
+export type AttendanceCheckInMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Sales-force GPS + selfie check-in
+ */
+export const useAttendanceCheckIn = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof attendanceCheckIn>>,
+    TError,
+    { data: BodyType<AttendanceCheckInBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof attendanceCheckIn>>,
+  TError,
+  { data: BodyType<AttendanceCheckInBody> },
+  TContext
+> => {
+  return useMutation(getAttendanceCheckInMutationOptions(options));
+};
+
+/**
+ * @summary Sales-force GPS + selfie check-out
+ */
+export const getAttendanceCheckOutUrl = () => {
+  return `/api/attendance/check-out`;
+};
+
+export const attendanceCheckOut = async (
+  attendanceCheckOutBody: AttendanceCheckOutBody,
+  options?: RequestInit,
+): Promise<Attendance> => {
+  return customFetch<Attendance>(getAttendanceCheckOutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(attendanceCheckOutBody),
+  });
+};
+
+export const getAttendanceCheckOutMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof attendanceCheckOut>>,
+    TError,
+    { data: BodyType<AttendanceCheckOutBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof attendanceCheckOut>>,
+  TError,
+  { data: BodyType<AttendanceCheckOutBody> },
+  TContext
+> => {
+  const mutationKey = ["attendanceCheckOut"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof attendanceCheckOut>>,
+    { data: BodyType<AttendanceCheckOutBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return attendanceCheckOut(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AttendanceCheckOutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof attendanceCheckOut>>
+>;
+export type AttendanceCheckOutMutationBody = BodyType<AttendanceCheckOutBody>;
+export type AttendanceCheckOutMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Sales-force GPS + selfie check-out
+ */
+export const useAttendanceCheckOut = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof attendanceCheckOut>>,
+    TError,
+    { data: BodyType<AttendanceCheckOutBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof attendanceCheckOut>>,
+  TError,
+  { data: BodyType<AttendanceCheckOutBody> },
+  TContext
+> => {
+  return useMutation(getAttendanceCheckOutMutationOptions(options));
+};
+
+/**
+ * @summary Request a presigned upload URL for object storage
+ */
+export const getRequestUploadUrlUrl = () => {
+  return `/api/storage/uploads/request-url`;
+};
+
+export const requestUploadUrl = async (
+  requestUploadUrlBody: RequestUploadUrlBody,
+  options?: RequestInit,
+): Promise<RequestUploadUrlResponse> => {
+  return customFetch<RequestUploadUrlResponse>(getRequestUploadUrlUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(requestUploadUrlBody),
+  });
+};
+
+export const getRequestUploadUrlMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<RequestUploadUrlBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<RequestUploadUrlBody> },
+  TContext
+> => {
+  const mutationKey = ["requestUploadUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    { data: BodyType<RequestUploadUrlBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestUploadUrl(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestUploadUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestUploadUrl>>
+>;
+export type RequestUploadUrlMutationBody = BodyType<RequestUploadUrlBody>;
+export type RequestUploadUrlMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Request a presigned upload URL for object storage
+ */
+export const useRequestUploadUrl = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestUploadUrl>>,
+    TError,
+    { data: BodyType<RequestUploadUrlBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestUploadUrl>>,
+  TError,
+  { data: BodyType<RequestUploadUrlBody> },
+  TContext
+> => {
+  return useMutation(getRequestUploadUrlMutationOptions(options));
 };
 
 /**

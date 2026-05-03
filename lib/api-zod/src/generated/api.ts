@@ -4436,14 +4436,28 @@ export const ListAttendanceResponseItem = zod.object({
   id: zod.number(),
   employeeId: zod.number(),
   employeeName: zod.string().optional(),
+  userId: zod.number().optional(),
+  companyId: zod.number().optional(),
   date: zod.string(),
   checkIn: zod.string().optional(),
   checkOut: zod.string().optional(),
+  checkInAt: zod.string().optional(),
+  checkOutAt: zod.string().optional(),
   overtime: zod.number().optional(),
   status: zod.string(),
   latitude: zod.number().optional(),
   longitude: zod.number().optional(),
+  accuracyMeters: zod.number().optional(),
+  checkOutLatitude: zod.number().optional(),
+  checkOutLongitude: zod.number().optional(),
+  checkOutAccuracyMeters: zod.number().optional(),
   selfieUrl: zod.string().optional(),
+  selfieObjectKey: zod.string().optional(),
+  selfieSignedUrl: zod.string().optional(),
+  checkOutSelfieObjectKey: zod.string().optional(),
+  checkOutSelfieSignedUrl: zod.string().optional(),
+  source: zod.string().optional(),
+  address: zod.string().optional(),
   notes: zod.string().optional(),
   createdAt: zod.string(),
 });
@@ -4461,8 +4475,87 @@ export const CreateAttendanceBody = zod.object({
   status: zod.string(),
   latitude: zod.number().optional(),
   longitude: zod.number().optional(),
+  accuracyMeters: zod.number().optional(),
   selfieUrl: zod.string().optional(),
+  selfieObjectKey: zod.string().optional(),
+  source: zod.string().optional(),
+  address: zod.string().optional(),
   notes: zod.string().optional(),
+});
+
+/**
+ * @summary Sales-force GPS + selfie check-in
+ */
+export const AttendanceCheckInBody = zod.object({
+  latitude: zod.number(),
+  longitude: zod.number(),
+  accuracyMeters: zod.number().optional(),
+  selfieObjectKey: zod.string(),
+  address: zod.string().optional(),
+  notes: zod.string().optional(),
+  source: zod.string().optional(),
+});
+
+/**
+ * @summary Sales-force GPS + selfie check-out
+ */
+export const AttendanceCheckOutBody = zod.object({
+  latitude: zod.number(),
+  longitude: zod.number(),
+  accuracyMeters: zod.number().optional(),
+  selfieObjectKey: zod.string().optional(),
+  address: zod.string().optional(),
+  notes: zod.string().optional(),
+  source: zod.string().optional(),
+});
+
+export const AttendanceCheckOutResponse = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  employeeName: zod.string().optional(),
+  userId: zod.number().optional(),
+  companyId: zod.number().optional(),
+  date: zod.string(),
+  checkIn: zod.string().optional(),
+  checkOut: zod.string().optional(),
+  checkInAt: zod.string().optional(),
+  checkOutAt: zod.string().optional(),
+  overtime: zod.number().optional(),
+  status: zod.string(),
+  latitude: zod.number().optional(),
+  longitude: zod.number().optional(),
+  accuracyMeters: zod.number().optional(),
+  checkOutLatitude: zod.number().optional(),
+  checkOutLongitude: zod.number().optional(),
+  checkOutAccuracyMeters: zod.number().optional(),
+  selfieUrl: zod.string().optional(),
+  selfieObjectKey: zod.string().optional(),
+  selfieSignedUrl: zod.string().optional(),
+  checkOutSelfieObjectKey: zod.string().optional(),
+  checkOutSelfieSignedUrl: zod.string().optional(),
+  source: zod.string().optional(),
+  address: zod.string().optional(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Request a presigned upload URL for object storage
+ */
+export const RequestUploadUrlBody = zod.object({
+  name: zod.string(),
+  size: zod.number(),
+  contentType: zod.string(),
+});
+
+export const RequestUploadUrlResponse = zod.object({
+  uploadURL: zod.string(),
+  objectPath: zod.string(),
+  metadata: zod.object({
+    name: zod.string(),
+    size: zod.number(),
+    contentType: zod.string(),
+  }),
 });
 
 /**
@@ -4481,7 +4574,11 @@ export const UpdateAttendanceBody = zod.object({
   status: zod.string(),
   latitude: zod.number().optional(),
   longitude: zod.number().optional(),
+  accuracyMeters: zod.number().optional(),
   selfieUrl: zod.string().optional(),
+  selfieObjectKey: zod.string().optional(),
+  source: zod.string().optional(),
+  address: zod.string().optional(),
   notes: zod.string().optional(),
 });
 
@@ -4489,14 +4586,28 @@ export const UpdateAttendanceResponse = zod.object({
   id: zod.number(),
   employeeId: zod.number(),
   employeeName: zod.string().optional(),
+  userId: zod.number().optional(),
+  companyId: zod.number().optional(),
   date: zod.string(),
   checkIn: zod.string().optional(),
   checkOut: zod.string().optional(),
+  checkInAt: zod.string().optional(),
+  checkOutAt: zod.string().optional(),
   overtime: zod.number().optional(),
   status: zod.string(),
   latitude: zod.number().optional(),
   longitude: zod.number().optional(),
+  accuracyMeters: zod.number().optional(),
+  checkOutLatitude: zod.number().optional(),
+  checkOutLongitude: zod.number().optional(),
+  checkOutAccuracyMeters: zod.number().optional(),
   selfieUrl: zod.string().optional(),
+  selfieObjectKey: zod.string().optional(),
+  selfieSignedUrl: zod.string().optional(),
+  checkOutSelfieObjectKey: zod.string().optional(),
+  checkOutSelfieSignedUrl: zod.string().optional(),
+  source: zod.string().optional(),
+  address: zod.string().optional(),
   notes: zod.string().optional(),
   createdAt: zod.string(),
 });

@@ -44,6 +44,19 @@ async function runMigrations() {
     // Project enhancements: salesperson + delivery date
     await db.execute(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS salesperson_id INTEGER`);
     await db.execute(sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS delivery_date TEXT`);
+    // Sales-force GPS + selfie attendance enhancements
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS user_id INTEGER`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS company_id INTEGER`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS check_in_at TIMESTAMP`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS check_out_at TIMESTAMP`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS accuracy_meters DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS check_out_latitude DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS check_out_longitude DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS check_out_accuracy_meters DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS selfie_object_key TEXT`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS check_out_selfie_object_key TEXT`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS source TEXT`);
+    await db.execute(sql`ALTER TABLE attendance ADD COLUMN IF NOT EXISTS address TEXT`);
     // Sales targets table
     await db.execute(sql`CREATE TABLE IF NOT EXISTS sales_targets (
       id SERIAL PRIMARY KEY,

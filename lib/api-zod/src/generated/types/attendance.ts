@@ -10,14 +10,28 @@ export interface Attendance {
   id: number;
   employeeId: number;
   employeeName?: string;
+  userId?: number;
+  companyId?: number;
   date: string;
   checkIn?: string;
   checkOut?: string;
+  checkInAt?: string;
+  checkOutAt?: string;
   overtime?: number;
   status: string;
   latitude?: number;
   longitude?: number;
+  accuracyMeters?: number;
+  checkOutLatitude?: number;
+  checkOutLongitude?: number;
+  checkOutAccuracyMeters?: number;
   selfieUrl?: string;
+  selfieObjectKey?: string;
+  selfieSignedUrl?: string;
+  checkOutSelfieObjectKey?: string;
+  checkOutSelfieSignedUrl?: string;
+  source?: string;
+  address?: string;
   notes?: string;
   createdAt: string;
 }

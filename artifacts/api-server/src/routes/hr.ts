@@ -1,10 +1,45 @@
 import { Router } from "express";
 import { db, employeesTable, attendanceTable, departmentsTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { ObjectStorageService } from "../lib/objectStorage";
 
 const router = Router();
 router.use(requireAuth);
+
+const storageService = new ObjectStorageService();
+
+function todayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function nowTime(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+async function signSelfie(objectKey: string | null | undefined): Promise<string | undefined> {
+  if (!objectKey || !objectKey.startsWith("/objects/")) return undefined;
+  try {
+    const file = await storageService.getObjectEntityFile(objectKey);
+    const [signed] = await file.getSignedUrl({
+      version: "v4",
+      action: "read",
+      expires: Date.now() + 15 * 60 * 1000,
+    });
+    return signed;
+  } catch {
+    return undefined;
+  }
+}
+
+async function enrichRow(row: typeof attendanceTable.$inferSelect & { employeeName?: string }) {
+  const [selfieSignedUrl, checkOutSelfieSignedUrl] = await Promise.all([
+    signSelfie(row.selfieObjectKey),
+    signSelfie(row.checkOutSelfieObjectKey),
+  ]);
+  return { ...row, selfieSignedUrl, checkOutSelfieSignedUrl };
+}
 
 // Employees
 router.get("/employees", requirePermission("employees", "view"), async (req, res): Promise<void> => {
@@ -72,7 +107,128 @@ router.get("/attendance", requirePermission("attendance", "view"), async (req, r
     if (req.companyScope === null || req.companyScope === undefined) return true;
     return r._empCompanyId == null || req.companyScope.includes(r._empCompanyId);
   }).map(({ _empCompanyId, ...r }) => r);
-  res.json(filtered);
+  // Sign selfie object keys for read access (15-min URLs).
+  const withSigned = await Promise.all(filtered.map(enrichRow));
+  res.json(withSigned);
+});
+
+// ----------------------------------------------------------------------------
+// Sales-force GPS + selfie check-in / check-out
+// Auto-stamps userId from JWT and companyId from active-company header.
+// Selfie is uploaded to object storage first; the client passes selfieObjectKey.
+// ----------------------------------------------------------------------------
+
+async function findEmployeeForUser(userId: number, email: string | null | undefined, companyId: number | null) {
+  // Prefer email match scoped to active company; fall back to any email match.
+  if (email) {
+    const lower = email.toLowerCase();
+    if (companyId != null) {
+      const [byCompany] = await db.select().from(employeesTable)
+        .where(and(eq(sql`lower(${employeesTable.email})`, lower), eq(employeesTable.companyId, companyId)));
+      if (byCompany) return byCompany;
+    }
+    const [byEmail] = await db.select().from(employeesTable)
+      .where(eq(sql`lower(${employeesTable.email})`, lower));
+    if (byEmail) return byEmail;
+  }
+  return null;
+}
+
+router.post("/attendance/check-in", async (req, res): Promise<void> => {
+  const u = req.user!;
+  const body = req.body ?? {};
+  const lat = Number(body.latitude);
+  const lng = Number(body.longitude);
+  const accuracy = body.accuracyMeters != null ? Number(body.accuracyMeters) : null;
+  const selfieObjectKey: string | undefined = body.selfieObjectKey ?? undefined;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    res.status(400).json({ error: "Invalid GPS coordinates" }); return;
+  }
+  if (!selfieObjectKey || !selfieObjectKey.startsWith("/objects/")) {
+    res.status(400).json({ error: "selfieObjectKey is required" }); return;
+  }
+  const activeCompanyId = req.companyScope && req.companyScope.length === 1 ? req.companyScope[0] : (u.companyId ?? null);
+  const emp = await findEmployeeForUser(u.id, u.email, activeCompanyId);
+  if (!emp) {
+    res.status(404).json({ error: "No employee record linked to your user. Ask HR to add one with your email." });
+    return;
+  }
+  if (req.companyScope !== null && req.companyScope !== undefined && emp.companyId != null && !req.companyScope.includes(emp.companyId)) {
+    res.status(403).json({ error: "Forbidden", message: "Employee outside your company scope" }); return;
+  }
+
+  const date = todayKey();
+  const now = new Date();
+
+  // If an open entry already exists today, return it instead of duplicating.
+  const [open] = await db.select().from(attendanceTable)
+    .where(and(eq(attendanceTable.employeeId, emp.id), eq(attendanceTable.date, date)))
+    .orderBy(desc(attendanceTable.createdAt));
+  if (open && !open.checkOut) {
+    const enriched = await enrichRow({ ...open, employeeName: emp.name });
+    res.status(200).json(enriched); return;
+  }
+
+  const [att] = await db.insert(attendanceTable).values({
+    employeeId: emp.id,
+    userId: u.id,
+    companyId: emp.companyId,
+    date,
+    checkIn: nowTime(),
+    checkInAt: now,
+    status: "present",
+    latitude: lat,
+    longitude: lng,
+    accuracyMeters: accuracy ?? undefined,
+    selfieObjectKey,
+    source: body.source ?? "mobile_gps",
+    address: body.address ?? null,
+    notes: body.notes ?? null,
+  }).returning();
+
+  const enriched = await enrichRow({ ...att, employeeName: emp.name });
+  res.status(201).json(enriched);
+});
+
+router.post("/attendance/check-out", async (req, res): Promise<void> => {
+  const u = req.user!;
+  const body = req.body ?? {};
+  const lat = Number(body.latitude);
+  const lng = Number(body.longitude);
+  const accuracy = body.accuracyMeters != null ? Number(body.accuracyMeters) : null;
+  const selfieObjectKey: string | undefined = body.selfieObjectKey ?? undefined;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    res.status(400).json({ error: "Invalid GPS coordinates" }); return;
+  }
+
+  const activeCompanyId = req.companyScope && req.companyScope.length === 1 ? req.companyScope[0] : (u.companyId ?? null);
+  const emp = await findEmployeeForUser(u.id, u.email, activeCompanyId);
+  if (!emp) {
+    res.status(404).json({ error: "No employee record linked to your user." }); return;
+  }
+
+  const date = todayKey();
+  const [open] = await db.select().from(attendanceTable)
+    .where(and(eq(attendanceTable.employeeId, emp.id), eq(attendanceTable.date, date)))
+    .orderBy(desc(attendanceTable.createdAt));
+  if (!open || open.checkOut) {
+    res.status(409).json({ error: "No open check-in to close for today." }); return;
+  }
+
+  const now = new Date();
+  const [att] = await db.update(attendanceTable).set({
+    checkOut: nowTime(),
+    checkOutAt: now,
+    checkOutLatitude: lat,
+    checkOutLongitude: lng,
+    checkOutAccuracyMeters: accuracy ?? undefined,
+    checkOutSelfieObjectKey: selfieObjectKey ?? null,
+    notes: body.notes ?? open.notes,
+    updatedAt: now,
+  }).where(eq(attendanceTable.id, open.id)).returning();
+
+  const enriched = await enrichRow({ ...att, employeeName: emp.name });
+  res.status(200).json(enriched);
 });
 
 router.post("/attendance", requirePermission("attendance", "create"), async (req, res): Promise<void> => {

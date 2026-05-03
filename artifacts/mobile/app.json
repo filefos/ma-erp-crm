@@ -28,7 +28,20 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "MA ERP-CRM uses your location to record GPS-verified attendance check-ins for the sales team."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "MA ERP-CRM uses the camera to capture an on-site selfie for verified attendance.",
+          "photosPermission": "MA ERP-CRM uses your photos to attach receipts and supporting documents."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
