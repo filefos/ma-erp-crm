@@ -157,6 +157,90 @@ async function runMigrations() {
     )`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS whatsapp_messages_thread_idx ON whatsapp_messages(thread_id, created_at)`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS whatsapp_messages_wamid_idx ON whatsapp_messages(wa_message_id)`);
+
+    // Supplier self-registration portal
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS supplier_categories (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS supplier_registrations (
+      id SERIAL PRIMARY KEY,
+      ref_number TEXT NOT NULL UNIQUE,
+      company_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      company_name TEXT NOT NULL,
+      trade_license_no TEXT,
+      license_expiry TEXT,
+      established_year TEXT,
+      company_size TEXT,
+      country TEXT,
+      city TEXT,
+      address TEXT,
+      website TEXT,
+      contact_person TEXT NOT NULL,
+      designation TEXT,
+      email TEXT NOT NULL,
+      phone TEXT,
+      whatsapp TEXT,
+      trn TEXT,
+      vat_registered BOOLEAN NOT NULL DEFAULT FALSE,
+      chamber_membership TEXT,
+      bank_name TEXT,
+      bank_account_name TEXT,
+      bank_account_number TEXT,
+      iban TEXT,
+      swift TEXT,
+      currency TEXT DEFAULT 'AED',
+      categories TEXT DEFAULT '[]',
+      payment_terms TEXT,
+      delivery_terms TEXT,
+      years_experience TEXT,
+      major_clients TEXT,
+      attachments TEXT DEFAULT '[]',
+      agreed_terms BOOLEAN NOT NULL DEFAULT FALSE,
+      submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      ip_address TEXT,
+      reviewed_by_id INTEGER,
+      reviewed_at TIMESTAMP,
+      review_notes TEXT,
+      supplier_id_created INTEGER,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )`);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS supplier_registrations_status_idx ON supplier_registrations(status, company_id)`);
+
+    // Seed the 18 UAE supplier categories (idempotent — ON CONFLICT DO NOTHING).
+    const seedCategories = [
+      "Building Materials",
+      "Steel & Metal Products",
+      "Cement & Concrete",
+      "Electrical Supplies",
+      "Plumbing & Sanitary",
+      "HVAC & Mechanical",
+      "Hardware & Tools",
+      "Paints & Coatings",
+      "Insulation Materials",
+      "Doors, Windows & Glass",
+      "Flooring & Tiles",
+      "Furniture & Fittings",
+      "Safety & PPE",
+      "Heavy Equipment Rental",
+      "Transportation & Logistics",
+      "Manpower Supply",
+      "IT, Office & Stationery",
+      "Other Services",
+    ];
+    for (let i = 0; i < seedCategories.length; i++) {
+      await db.execute(sql`
+        INSERT INTO supplier_categories (name, sort_order, is_active)
+        VALUES (${seedCategories[i]}, ${i}, TRUE)
+        ON CONFLICT (name) DO NOTHING
+      `);
+    }
+
     logger.info("Schema migrations applied");
   } catch (err) {
     logger.warn({ err }, "Migration warning (non-fatal)");

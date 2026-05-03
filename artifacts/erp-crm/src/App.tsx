@@ -46,6 +46,8 @@ import { PurchaseOrderDetail } from "@/pages/procurement/purchase-order-detail";
 import { RfqsList } from "@/pages/procurement/rfqs";
 import { SupplierQuotationsList } from "@/pages/procurement/supplier-quotations";
 import ProcurementDashboardPage from "@/pages/procurement/procurement-dashboard";
+import { SupplierApplicationsList } from "@/pages/procurement/applications";
+import SupplierRegisterPage from "@/pages/supplier-register";
 import { SalesDashboard } from "@/pages/sales/dashboard";
 import { ProjectsDashboard } from "@/pages/projects/dashboard";
 import { HrDashboard } from "@/pages/hr/dashboard";
@@ -97,6 +99,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/supplier-register" component={SupplierRegisterPage} />
       {/* The executive dashboard renders permission-gated sections per user;
           it does not require a specific module guard (which would create a
           redirect loop, since ModuleGuard redirects to /dashboard on deny).
@@ -242,6 +245,9 @@ function Router() {
       </Route>
       <Route path="/procurement/suppliers">
         <ModuleGuard module="suppliers"><SuppliersList /></ModuleGuard>
+      </Route>
+      <Route path="/procurement/applications">
+        <ModuleGuard module="suppliers"><SupplierApplicationsList /></ModuleGuard>
       </Route>
       <Route path="/procurement/purchase-requests">
         <ModuleGuard module="purchase_requests"><PurchaseRequestsList /></ModuleGuard>

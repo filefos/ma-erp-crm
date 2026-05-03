@@ -667,6 +667,117 @@ export interface CreateSalesTargetBody {
   notes?: string;
 }
 
+export interface SupplierCategoryItem {
+  id: number;
+  name: string;
+  sortOrder?: number;
+  isActive: boolean;
+}
+
+export interface SupplierRegistrationAttachment {
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
+export interface SupplierRegistration {
+  id: number;
+  refNumber: string;
+  companyId: number;
+  status: string;
+  companyName: string;
+  tradeLicenseNo?: string;
+  licenseExpiry?: string;
+  establishedYear?: string;
+  companySize?: string;
+  country?: string;
+  city?: string;
+  address?: string;
+  website?: string;
+  contactPerson: string;
+  designation?: string;
+  email: string;
+  phone?: string;
+  whatsapp?: string;
+  trn?: string;
+  vatRegistered?: boolean;
+  chamberMembership?: string;
+  bankName?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  iban?: string;
+  swift?: string;
+  currency?: string;
+  categories?: string[];
+  paymentTerms?: string;
+  deliveryTerms?: string;
+  yearsExperience?: string;
+  majorClients?: string;
+  attachments?: SupplierRegistrationAttachment[];
+  agreedTerms: boolean;
+  submittedAt: string;
+  reviewedById?: number;
+  reviewedAt?: string;
+  reviewNotes?: string;
+  supplierIdCreated?: number;
+  createdAt: string;
+}
+
+export type SubmitSupplierRegistrationBodyAttachmentsItem = {
+  filename: string;
+  contentType: string;
+  /** base64-encoded file content */
+  content: string;
+};
+
+export interface SubmitSupplierRegistrationBody {
+  companyId: number;
+  companyName: string;
+  tradeLicenseNo?: string;
+  licenseExpiry?: string;
+  establishedYear?: string;
+  companySize?: string;
+  country?: string;
+  city?: string;
+  address?: string;
+  website?: string;
+  contactPerson: string;
+  designation?: string;
+  email: string;
+  phone?: string;
+  whatsapp?: string;
+  trn?: string;
+  vatRegistered?: boolean;
+  chamberMembership?: string;
+  bankName?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  iban?: string;
+  swift?: string;
+  currency?: string;
+  categories: string[];
+  paymentTerms?: string;
+  deliveryTerms?: string;
+  yearsExperience?: string;
+  majorClients?: string;
+  attachments?: SubmitSupplierRegistrationBodyAttachmentsItem[];
+  agreedTerms: boolean;
+}
+
+export type SupplierApplicationDecisionBodyDecision =
+  (typeof SupplierApplicationDecisionBodyDecision)[keyof typeof SupplierApplicationDecisionBodyDecision];
+
+export const SupplierApplicationDecisionBodyDecision = {
+  approve: "approve",
+  reject: "reject",
+  needs_info: "needs_info",
+} as const;
+
+export interface SupplierApplicationDecisionBody {
+  decision: SupplierApplicationDecisionBodyDecision;
+  notes?: string;
+}
+
 export interface Supplier {
   id: number;
   companyId?: number;
@@ -1612,6 +1723,10 @@ export type ListSalesTargetsParams = {
 
 export type DeleteSalesTarget200 = {
   ok?: boolean;
+};
+
+export type ListSupplierApplicationsParams = {
+  status?: string;
 };
 
 export type ListSuppliersParams = {

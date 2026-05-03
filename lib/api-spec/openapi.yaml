@@ -1438,6 +1438,125 @@ paths:
                 properties:
                   ok: { type: boolean }
 
+  # SUPPLIER SELF-REGISTRATION (PUBLIC PORTAL + ADMIN REVIEW)
+  /supplier-categories:
+    get:
+      operationId: listSupplierCategories
+      tags: [suppliers]
+      summary: List active supplier categories (public)
+      security: []
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupplierCategoryItem"
+
+  /supplier-register:
+    post:
+      operationId: submitSupplierRegistration
+      tags: [suppliers]
+      summary: Submit a supplier registration application (public)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitSupplierRegistrationBody"
+      responses:
+        "201":
+          description: Application accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierRegistration"
+
+  /supplier-applications:
+    get:
+      operationId: listSupplierApplications
+      tags: [suppliers]
+      summary: List supplier applications (admin review queue)
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: Applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupplierRegistration"
+
+  /supplier-applications/{id}:
+    get:
+      operationId: getSupplierApplication
+      tags: [suppliers]
+      summary: Get a supplier application
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Application
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierRegistration"
+
+  /supplier-applications/{id}/decision:
+    post:
+      operationId: decideSupplierApplication
+      tags: [suppliers]
+      summary: Approve / reject / request info for an application
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SupplierApplicationDecisionBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierRegistration"
+
+  /supplier-applications/{id}/attachments/{idx}:
+    get:
+      operationId: downloadSupplierApplicationAttachment
+      tags: [suppliers]
+      summary: Download an attached document from an application
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: path
+          name: idx
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: File
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+
   # SUPPLIERS
   /suppliers:
     get:
@@ -4982,6 +5101,128 @@ components:
         targetAmount: { type: number }
         notes: { type: string }
       required: [companyId, userId, period, year, targetAmount]
+
+    SupplierCategoryItem:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        sortOrder: { type: integer }
+        isActive: { type: boolean }
+      required: [id, name, isActive]
+
+    SupplierRegistrationAttachment:
+      type: object
+      properties:
+        filename: { type: string }
+        contentType: { type: string }
+        size: { type: integer }
+      required: [filename, contentType, size]
+
+    SupplierRegistration:
+      type: object
+      properties:
+        id: { type: integer }
+        refNumber: { type: string }
+        companyId: { type: integer }
+        status: { type: string }
+        companyName: { type: string }
+        tradeLicenseNo: { type: string }
+        licenseExpiry: { type: string }
+        establishedYear: { type: string }
+        companySize: { type: string }
+        country: { type: string }
+        city: { type: string }
+        address: { type: string }
+        website: { type: string }
+        contactPerson: { type: string }
+        designation: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        trn: { type: string }
+        vatRegistered: { type: boolean }
+        chamberMembership: { type: string }
+        bankName: { type: string }
+        bankAccountName: { type: string }
+        bankAccountNumber: { type: string }
+        iban: { type: string }
+        swift: { type: string }
+        currency: { type: string }
+        categories:
+          type: array
+          items: { type: string }
+        paymentTerms: { type: string }
+        deliveryTerms: { type: string }
+        yearsExperience: { type: string }
+        majorClients: { type: string }
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplierRegistrationAttachment"
+        agreedTerms: { type: boolean }
+        submittedAt: { type: string }
+        reviewedById: { type: integer }
+        reviewedAt: { type: string }
+        reviewNotes: { type: string }
+        supplierIdCreated: { type: integer }
+        createdAt: { type: string }
+      required: [id, refNumber, companyId, status, companyName, contactPerson, email, agreedTerms, submittedAt, createdAt]
+
+    SubmitSupplierRegistrationBody:
+      type: object
+      properties:
+        companyId: { type: integer }
+        companyName: { type: string }
+        tradeLicenseNo: { type: string }
+        licenseExpiry: { type: string }
+        establishedYear: { type: string }
+        companySize: { type: string }
+        country: { type: string }
+        city: { type: string }
+        address: { type: string }
+        website: { type: string }
+        contactPerson: { type: string }
+        designation: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        whatsapp: { type: string }
+        trn: { type: string }
+        vatRegistered: { type: boolean }
+        chamberMembership: { type: string }
+        bankName: { type: string }
+        bankAccountName: { type: string }
+        bankAccountNumber: { type: string }
+        iban: { type: string }
+        swift: { type: string }
+        currency: { type: string }
+        categories:
+          type: array
+          items: { type: string }
+        paymentTerms: { type: string }
+        deliveryTerms: { type: string }
+        yearsExperience: { type: string }
+        majorClients: { type: string }
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              filename: { type: string }
+              contentType: { type: string }
+              content: { type: string, description: "base64-encoded file content" }
+            required: [filename, contentType, content]
+        agreedTerms: { type: boolean }
+      required: [companyId, companyName, contactPerson, email, agreedTerms, categories]
+
+    SupplierApplicationDecisionBody:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum: [approve, reject, needs_info]
+        notes: { type: string }
+      required: [decision]
 
     Supplier:
       type: object

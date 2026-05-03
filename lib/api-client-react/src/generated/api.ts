@@ -114,6 +114,7 @@ import type {
   ListRfqsParams,
   ListSalesTargetsParams,
   ListStockEntriesParams,
+  ListSupplierApplicationsParams,
   ListSupplierQuotationsParams,
   ListSuppliersParams,
   ListTaxInvoicesParams,
@@ -144,9 +145,13 @@ import type {
   SendWhatsappBody,
   SendWhatsappResponse,
   StockEntry,
+  SubmitSupplierRegistrationBody,
   SuccessResponse,
   Supplier,
+  SupplierApplicationDecisionBody,
+  SupplierCategoryItem,
   SupplierQuotation,
+  SupplierRegistration,
   TaxInvoice,
   UpdateDepartmentBody,
   UpdateRolePermissionsBody,
@@ -5949,6 +5954,561 @@ export const useDeleteSalesTarget = <
 > => {
   return useMutation(getDeleteSalesTargetMutationOptions(options));
 };
+
+/**
+ * @summary List active supplier categories (public)
+ */
+export const getListSupplierCategoriesUrl = () => {
+  return `/api/supplier-categories`;
+};
+
+export const listSupplierCategories = async (
+  options?: RequestInit,
+): Promise<SupplierCategoryItem[]> => {
+  return customFetch<SupplierCategoryItem[]>(getListSupplierCategoriesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListSupplierCategoriesQueryKey = () => {
+  return [`/api/supplier-categories`] as const;
+};
+
+export const getListSupplierCategoriesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSupplierCategories>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listSupplierCategories>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListSupplierCategoriesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listSupplierCategories>>
+  > = ({ signal }) => listSupplierCategories({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSupplierCategories>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListSupplierCategoriesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSupplierCategories>>
+>;
+export type ListSupplierCategoriesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List active supplier categories (public)
+ */
+
+export function useListSupplierCategories<
+  TData = Awaited<ReturnType<typeof listSupplierCategories>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listSupplierCategories>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListSupplierCategoriesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Submit a supplier registration application (public)
+ */
+export const getSubmitSupplierRegistrationUrl = () => {
+  return `/api/supplier-register`;
+};
+
+export const submitSupplierRegistration = async (
+  submitSupplierRegistrationBody: SubmitSupplierRegistrationBody,
+  options?: RequestInit,
+): Promise<SupplierRegistration> => {
+  return customFetch<SupplierRegistration>(getSubmitSupplierRegistrationUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(submitSupplierRegistrationBody),
+  });
+};
+
+export const getSubmitSupplierRegistrationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitSupplierRegistration>>,
+    TError,
+    { data: BodyType<SubmitSupplierRegistrationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitSupplierRegistration>>,
+  TError,
+  { data: BodyType<SubmitSupplierRegistrationBody> },
+  TContext
+> => {
+  const mutationKey = ["submitSupplierRegistration"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitSupplierRegistration>>,
+    { data: BodyType<SubmitSupplierRegistrationBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return submitSupplierRegistration(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitSupplierRegistrationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitSupplierRegistration>>
+>;
+export type SubmitSupplierRegistrationMutationBody =
+  BodyType<SubmitSupplierRegistrationBody>;
+export type SubmitSupplierRegistrationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Submit a supplier registration application (public)
+ */
+export const useSubmitSupplierRegistration = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitSupplierRegistration>>,
+    TError,
+    { data: BodyType<SubmitSupplierRegistrationBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitSupplierRegistration>>,
+  TError,
+  { data: BodyType<SubmitSupplierRegistrationBody> },
+  TContext
+> => {
+  return useMutation(getSubmitSupplierRegistrationMutationOptions(options));
+};
+
+/**
+ * @summary List supplier applications (admin review queue)
+ */
+export const getListSupplierApplicationsUrl = (
+  params?: ListSupplierApplicationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/supplier-applications?${stringifiedParams}`
+    : `/api/supplier-applications`;
+};
+
+export const listSupplierApplications = async (
+  params?: ListSupplierApplicationsParams,
+  options?: RequestInit,
+): Promise<SupplierRegistration[]> => {
+  return customFetch<SupplierRegistration[]>(
+    getListSupplierApplicationsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListSupplierApplicationsQueryKey = (
+  params?: ListSupplierApplicationsParams,
+) => {
+  return [`/api/supplier-applications`, ...(params ? [params] : [])] as const;
+};
+
+export const getListSupplierApplicationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSupplierApplications>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListSupplierApplicationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSupplierApplications>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListSupplierApplicationsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listSupplierApplications>>
+  > = ({ signal }) =>
+    listSupplierApplications(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSupplierApplications>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListSupplierApplicationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSupplierApplications>>
+>;
+export type ListSupplierApplicationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List supplier applications (admin review queue)
+ */
+
+export function useListSupplierApplications<
+  TData = Awaited<ReturnType<typeof listSupplierApplications>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListSupplierApplicationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSupplierApplications>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListSupplierApplicationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a supplier application
+ */
+export const getGetSupplierApplicationUrl = (id: number) => {
+  return `/api/supplier-applications/${id}`;
+};
+
+export const getSupplierApplication = async (
+  id: number,
+  options?: RequestInit,
+): Promise<SupplierRegistration> => {
+  return customFetch<SupplierRegistration>(getGetSupplierApplicationUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSupplierApplicationQueryKey = (id: number) => {
+  return [`/api/supplier-applications/${id}`] as const;
+};
+
+export const getGetSupplierApplicationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSupplierApplication>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSupplierApplication>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSupplierApplicationQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSupplierApplication>>
+  > = ({ signal }) => getSupplierApplication(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSupplierApplication>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSupplierApplicationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSupplierApplication>>
+>;
+export type GetSupplierApplicationQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get a supplier application
+ */
+
+export function useGetSupplierApplication<
+  TData = Awaited<ReturnType<typeof getSupplierApplication>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSupplierApplication>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSupplierApplicationQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Approve / reject / request info for an application
+ */
+export const getDecideSupplierApplicationUrl = (id: number) => {
+  return `/api/supplier-applications/${id}/decision`;
+};
+
+export const decideSupplierApplication = async (
+  id: number,
+  supplierApplicationDecisionBody: SupplierApplicationDecisionBody,
+  options?: RequestInit,
+): Promise<SupplierRegistration> => {
+  return customFetch<SupplierRegistration>(
+    getDecideSupplierApplicationUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(supplierApplicationDecisionBody),
+    },
+  );
+};
+
+export const getDecideSupplierApplicationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof decideSupplierApplication>>,
+    TError,
+    { id: number; data: BodyType<SupplierApplicationDecisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof decideSupplierApplication>>,
+  TError,
+  { id: number; data: BodyType<SupplierApplicationDecisionBody> },
+  TContext
+> => {
+  const mutationKey = ["decideSupplierApplication"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof decideSupplierApplication>>,
+    { id: number; data: BodyType<SupplierApplicationDecisionBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return decideSupplierApplication(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DecideSupplierApplicationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof decideSupplierApplication>>
+>;
+export type DecideSupplierApplicationMutationBody =
+  BodyType<SupplierApplicationDecisionBody>;
+export type DecideSupplierApplicationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Approve / reject / request info for an application
+ */
+export const useDecideSupplierApplication = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof decideSupplierApplication>>,
+    TError,
+    { id: number; data: BodyType<SupplierApplicationDecisionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof decideSupplierApplication>>,
+  TError,
+  { id: number; data: BodyType<SupplierApplicationDecisionBody> },
+  TContext
+> => {
+  return useMutation(getDecideSupplierApplicationMutationOptions(options));
+};
+
+/**
+ * @summary Download an attached document from an application
+ */
+export const getDownloadSupplierApplicationAttachmentUrl = (
+  id: number,
+  idx: number,
+) => {
+  return `/api/supplier-applications/${id}/attachments/${idx}`;
+};
+
+export const downloadSupplierApplicationAttachment = async (
+  id: number,
+  idx: number,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(
+    getDownloadSupplierApplicationAttachmentUrl(id, idx),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getDownloadSupplierApplicationAttachmentQueryKey = (
+  id: number,
+  idx: number,
+) => {
+  return [`/api/supplier-applications/${id}/attachments/${idx}`] as const;
+};
+
+export const getDownloadSupplierApplicationAttachmentQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadSupplierApplicationAttachment>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  idx: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadSupplierApplicationAttachment>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getDownloadSupplierApplicationAttachmentQueryKey(id, idx);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof downloadSupplierApplicationAttachment>>
+  > = ({ signal }) =>
+    downloadSupplierApplicationAttachment(id, idx, {
+      signal,
+      ...requestOptions,
+    });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(id && idx),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadSupplierApplicationAttachment>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type DownloadSupplierApplicationAttachmentQueryResult = NonNullable<
+  Awaited<ReturnType<typeof downloadSupplierApplicationAttachment>>
+>;
+export type DownloadSupplierApplicationAttachmentQueryError =
+  ErrorType<unknown>;
+
+/**
+ * @summary Download an attached document from an application
+ */
+
+export function useDownloadSupplierApplicationAttachment<
+  TData = Awaited<ReturnType<typeof downloadSupplierApplicationAttachment>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  idx: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadSupplierApplicationAttachment>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDownloadSupplierApplicationAttachmentQueryOptions(
+    id,
+    idx,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List suppliers

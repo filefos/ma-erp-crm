@@ -2264,6 +2264,254 @@ export const DeleteSalesTargetResponse = zod.object({
 });
 
 /**
+ * @summary List active supplier categories (public)
+ */
+export const ListSupplierCategoriesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  sortOrder: zod.number().optional(),
+  isActive: zod.boolean(),
+});
+export const ListSupplierCategoriesResponse = zod.array(
+  ListSupplierCategoriesResponseItem,
+);
+
+/**
+ * @summary Submit a supplier registration application (public)
+ */
+export const SubmitSupplierRegistrationBody = zod.object({
+  companyId: zod.number(),
+  companyName: zod.string(),
+  tradeLicenseNo: zod.string().optional(),
+  licenseExpiry: zod.string().optional(),
+  establishedYear: zod.string().optional(),
+  companySize: zod.string().optional(),
+  country: zod.string().optional(),
+  city: zod.string().optional(),
+  address: zod.string().optional(),
+  website: zod.string().optional(),
+  contactPerson: zod.string(),
+  designation: zod.string().optional(),
+  email: zod.string(),
+  phone: zod.string().optional(),
+  whatsapp: zod.string().optional(),
+  trn: zod.string().optional(),
+  vatRegistered: zod.boolean().optional(),
+  chamberMembership: zod.string().optional(),
+  bankName: zod.string().optional(),
+  bankAccountName: zod.string().optional(),
+  bankAccountNumber: zod.string().optional(),
+  iban: zod.string().optional(),
+  swift: zod.string().optional(),
+  currency: zod.string().optional(),
+  categories: zod.array(zod.string()),
+  paymentTerms: zod.string().optional(),
+  deliveryTerms: zod.string().optional(),
+  yearsExperience: zod.string().optional(),
+  majorClients: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string(),
+        contentType: zod.string(),
+        content: zod.string().describe("base64-encoded file content"),
+      }),
+    )
+    .optional(),
+  agreedTerms: zod.boolean(),
+});
+
+/**
+ * @summary List supplier applications (admin review queue)
+ */
+export const ListSupplierApplicationsQueryParams = zod.object({
+  status: zod.coerce.string().optional(),
+});
+
+export const ListSupplierApplicationsResponseItem = zod.object({
+  id: zod.number(),
+  refNumber: zod.string(),
+  companyId: zod.number(),
+  status: zod.string(),
+  companyName: zod.string(),
+  tradeLicenseNo: zod.string().optional(),
+  licenseExpiry: zod.string().optional(),
+  establishedYear: zod.string().optional(),
+  companySize: zod.string().optional(),
+  country: zod.string().optional(),
+  city: zod.string().optional(),
+  address: zod.string().optional(),
+  website: zod.string().optional(),
+  contactPerson: zod.string(),
+  designation: zod.string().optional(),
+  email: zod.string(),
+  phone: zod.string().optional(),
+  whatsapp: zod.string().optional(),
+  trn: zod.string().optional(),
+  vatRegistered: zod.boolean().optional(),
+  chamberMembership: zod.string().optional(),
+  bankName: zod.string().optional(),
+  bankAccountName: zod.string().optional(),
+  bankAccountNumber: zod.string().optional(),
+  iban: zod.string().optional(),
+  swift: zod.string().optional(),
+  currency: zod.string().optional(),
+  categories: zod.array(zod.string()).optional(),
+  paymentTerms: zod.string().optional(),
+  deliveryTerms: zod.string().optional(),
+  yearsExperience: zod.string().optional(),
+  majorClients: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string(),
+        contentType: zod.string(),
+        size: zod.number(),
+      }),
+    )
+    .optional(),
+  agreedTerms: zod.boolean(),
+  submittedAt: zod.string(),
+  reviewedById: zod.number().optional(),
+  reviewedAt: zod.string().optional(),
+  reviewNotes: zod.string().optional(),
+  supplierIdCreated: zod.number().optional(),
+  createdAt: zod.string(),
+});
+export const ListSupplierApplicationsResponse = zod.array(
+  ListSupplierApplicationsResponseItem,
+);
+
+/**
+ * @summary Get a supplier application
+ */
+export const GetSupplierApplicationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetSupplierApplicationResponse = zod.object({
+  id: zod.number(),
+  refNumber: zod.string(),
+  companyId: zod.number(),
+  status: zod.string(),
+  companyName: zod.string(),
+  tradeLicenseNo: zod.string().optional(),
+  licenseExpiry: zod.string().optional(),
+  establishedYear: zod.string().optional(),
+  companySize: zod.string().optional(),
+  country: zod.string().optional(),
+  city: zod.string().optional(),
+  address: zod.string().optional(),
+  website: zod.string().optional(),
+  contactPerson: zod.string(),
+  designation: zod.string().optional(),
+  email: zod.string(),
+  phone: zod.string().optional(),
+  whatsapp: zod.string().optional(),
+  trn: zod.string().optional(),
+  vatRegistered: zod.boolean().optional(),
+  chamberMembership: zod.string().optional(),
+  bankName: zod.string().optional(),
+  bankAccountName: zod.string().optional(),
+  bankAccountNumber: zod.string().optional(),
+  iban: zod.string().optional(),
+  swift: zod.string().optional(),
+  currency: zod.string().optional(),
+  categories: zod.array(zod.string()).optional(),
+  paymentTerms: zod.string().optional(),
+  deliveryTerms: zod.string().optional(),
+  yearsExperience: zod.string().optional(),
+  majorClients: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string(),
+        contentType: zod.string(),
+        size: zod.number(),
+      }),
+    )
+    .optional(),
+  agreedTerms: zod.boolean(),
+  submittedAt: zod.string(),
+  reviewedById: zod.number().optional(),
+  reviewedAt: zod.string().optional(),
+  reviewNotes: zod.string().optional(),
+  supplierIdCreated: zod.number().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Approve / reject / request info for an application
+ */
+export const DecideSupplierApplicationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DecideSupplierApplicationBody = zod.object({
+  decision: zod.enum(["approve", "reject", "needs_info"]),
+  notes: zod.string().optional(),
+});
+
+export const DecideSupplierApplicationResponse = zod.object({
+  id: zod.number(),
+  refNumber: zod.string(),
+  companyId: zod.number(),
+  status: zod.string(),
+  companyName: zod.string(),
+  tradeLicenseNo: zod.string().optional(),
+  licenseExpiry: zod.string().optional(),
+  establishedYear: zod.string().optional(),
+  companySize: zod.string().optional(),
+  country: zod.string().optional(),
+  city: zod.string().optional(),
+  address: zod.string().optional(),
+  website: zod.string().optional(),
+  contactPerson: zod.string(),
+  designation: zod.string().optional(),
+  email: zod.string(),
+  phone: zod.string().optional(),
+  whatsapp: zod.string().optional(),
+  trn: zod.string().optional(),
+  vatRegistered: zod.boolean().optional(),
+  chamberMembership: zod.string().optional(),
+  bankName: zod.string().optional(),
+  bankAccountName: zod.string().optional(),
+  bankAccountNumber: zod.string().optional(),
+  iban: zod.string().optional(),
+  swift: zod.string().optional(),
+  currency: zod.string().optional(),
+  categories: zod.array(zod.string()).optional(),
+  paymentTerms: zod.string().optional(),
+  deliveryTerms: zod.string().optional(),
+  yearsExperience: zod.string().optional(),
+  majorClients: zod.string().optional(),
+  attachments: zod
+    .array(
+      zod.object({
+        filename: zod.string(),
+        contentType: zod.string(),
+        size: zod.number(),
+      }),
+    )
+    .optional(),
+  agreedTerms: zod.boolean(),
+  submittedAt: zod.string(),
+  reviewedById: zod.number().optional(),
+  reviewedAt: zod.string().optional(),
+  reviewNotes: zod.string().optional(),
+  supplierIdCreated: zod.number().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Download an attached document from an application
+ */
+export const DownloadSupplierApplicationAttachmentParams = zod.object({
+  id: zod.coerce.number(),
+  idx: zod.coerce.number(),
+});
+
+/**
  * @summary List suppliers
  */
 export const ListSuppliersQueryParams = zod.object({

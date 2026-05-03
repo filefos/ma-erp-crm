@@ -84,6 +84,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/procurement/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/procurement/suppliers", label: "Suppliers", icon: Building2 },
+      { href: "/procurement/applications", label: "Supplier Applications", icon: FileCheck },
       { href: "/procurement/purchase-requests", label: "Purchase Requests", icon: ClipboardList },
       { href: "/procurement/rfqs", label: "RFQs", icon: Send },
       { href: "/procurement/supplier-quotations", label: "Quotations", icon: FileText },
@@ -565,7 +566,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || location === "/login") return <>{children}</>;
+  if (!isAuthenticated || location === "/login" || location === "/supplier-register") return <>{children}</>;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">

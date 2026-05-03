@@ -188,6 +188,13 @@ export function Login() {
             <span className="font-semibold text-foreground/80">Secure access</span> — All actions are
             recorded in the audit trail. Contact your administrator if you cannot sign in.
           </div>
+
+          <div className="text-center text-xs text-muted-foreground border-t pt-3">
+            Are you a vendor?{" "}
+            <a href="/supplier-register" className="text-[#1e6ab0] font-medium hover:underline">
+              Become a supplier →
+            </a>
+          </div>
         </div>
       </div>
     </div>

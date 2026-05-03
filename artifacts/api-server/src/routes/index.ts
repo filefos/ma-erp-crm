@@ -13,6 +13,7 @@ import invoicesRouter from "./invoices";
 import projectsRouter from "./projects";
 import salesTargetsRouter from "./sales-targets";
 import procurementRouter from "./procurement";
+import supplierRegistrationsRouter from "./supplier-registrations";
 import inventoryRouter from "./inventory";
 import assetsRouter from "./assets";
 import hrRouter from "./hr";
@@ -30,6 +31,11 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
+// Public supplier-registration endpoints (categories list + submit) MUST be
+// mounted before any router that calls `router.use(requireAuth)`, because
+// Express propagates sub-router middleware into the parent chain. The admin
+// endpoints inside this router still gate themselves explicitly.
+router.use(supplierRegistrationsRouter);
 router.use(companiesRouter);
 router.use(departmentsRouter);
 router.use(usersRouter);

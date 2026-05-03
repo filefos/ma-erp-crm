@@ -108,7 +108,84 @@ export const purchaseOrdersTable = pgTable("purchase_orders", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ─── Supplier self-registration portal ──────────────────────────────────────
+// Public-facing application table. Approval creates a row in suppliersTable.
+
+export const supplierCategoriesTable = pgTable("supplier_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const supplierRegistrationsTable = pgTable("supplier_registrations", {
+  id: serial("id").primaryKey(),
+  refNumber: text("ref_number").notNull().unique(),
+  companyId: integer("company_id").notNull(), // which of our companies they applied to (Prime Max / Elite)
+  status: text("status").notNull().default("pending"), // pending | approved | rejected | needs_info
+
+  // Company information
+  companyName: text("company_name").notNull(),
+  tradeLicenseNo: text("trade_license_no"),
+  licenseExpiry: text("license_expiry"),
+  establishedYear: text("established_year"),
+  companySize: text("company_size"),
+  country: text("country"),
+  city: text("city"),
+  address: text("address"),
+  website: text("website"),
+
+  // Contact
+  contactPerson: text("contact_person").notNull(),
+  designation: text("designation"),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  whatsapp: text("whatsapp"),
+
+  // Tax / legal
+  trn: text("trn"),
+  vatRegistered: boolean("vat_registered").notNull().default(false),
+  chamberMembership: text("chamber_membership"),
+
+  // Banking
+  bankName: text("bank_name"),
+  bankAccountName: text("bank_account_name"),
+  bankAccountNumber: text("bank_account_number"),
+  iban: text("iban"),
+  swift: text("swift"),
+  currency: text("currency").default("AED"),
+
+  // Categories — JSON array of category names
+  categories: text("categories").default("[]"),
+
+  // Commercial
+  paymentTerms: text("payment_terms"),
+  deliveryTerms: text("delivery_terms"),
+  yearsExperience: text("years_experience"),
+  majorClients: text("major_clients"),
+
+  // Attachments — JSON array of { filename, contentType, size, content (base64) }
+  attachments: text("attachments").default("[]"),
+
+  // Declarations
+  agreedTerms: boolean("agreed_terms").notNull().default(false),
+  submittedAt: timestamp("submitted_at").notNull().defaultNow(),
+  ipAddress: text("ip_address"),
+
+  // Review
+  reviewedById: integer("reviewed_by_id"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  supplierIdCreated: integer("supplier_id_created"),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const insertSupplierSchema = createInsertSchema(suppliersTable).omit({ id: true, createdAt: true, updatedAt: true });
+export type SupplierCategory = typeof supplierCategoriesTable.$inferSelect;
+export type SupplierRegistration = typeof supplierRegistrationsTable.$inferSelect;
 export const insertPurchaseRequestSchema = createInsertSchema(purchaseRequestsTable).omit({ id: true, prNumber: true, createdAt: true, updatedAt: true });
 export const insertRfqSchema = createInsertSchema(rfqsTable).omit({ id: true, rfqNumber: true, createdAt: true, updatedAt: true });
 export const insertSupplierQuotationSchema = createInsertSchema(supplierQuotationsTable).omit({ id: true, sqNumber: true, createdAt: true, updatedAt: true });
