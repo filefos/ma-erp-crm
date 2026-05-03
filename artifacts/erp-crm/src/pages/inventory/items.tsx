@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, AlertTriangle } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListInventoryItemsQueryKey } from "@workspace/api-client-react";
+import { createInventoryItem } from "@workspace/api-client-react";
 
 const CATEGORIES = ["Steel & Structure","Insulation","Windows & Doors","Roofing","Electrical","Plumbing","Civil","Fixtures","Hardware","Other"];
 
@@ -22,7 +24,7 @@ export function InventoryItemsList() {
   const [form, setForm] = useState({ name: "", category: "Steel & Structure", unit: "nos", openingStock: "0", minimumStock: "0", unitCost: "0", warehouseLocation: "" });
   const queryClient = useQueryClient();
   const { data: items, isLoading } = useListInventoryItems({ search: search || undefined, category: category === "all" ? undefined : category });
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
   const filtered = filterByCompany(items ?? []);
   const create = useCreateInventoryItem({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListInventoryItemsQueryKey() }); setOpen(false); } } });
 
@@ -50,6 +52,33 @@ export function InventoryItemsList() {
             filename="inventory-items"
             title="Inventory Items"
             size="sm"
+          />
+          <BulkUploadDialog
+            title="Bulk Upload Inventory Items"
+            description="Upload a CSV or Excel file with one item per row. Existing items are not updated — duplicates by name will be skipped by the server."
+            templateFilename="inventory-items-template.xlsx"
+            columns={[
+              { key: "name", label: "Item Name", required: true, example: "GI Sheet 0.5mm" },
+              { key: "category", label: "Category", required: true, example: "Steel & Structure" },
+              { key: "unit", label: "Unit", example: "nos" },
+              { key: "openingStock", label: "Opening Stock", example: 0 },
+              { key: "minimumStock", label: "Minimum Stock", example: 0 },
+              { key: "unitCost", label: "Unit Cost (AED)", example: 0 },
+              { key: "warehouseLocation", label: "Location", example: "Sajja Yard" },
+            ]}
+            onRow={async (row) => {
+              await createInventoryItem({
+                name: row["Item Name"],
+                category: row["Category"] || "Other",
+                unit: row["Unit"] || "nos",
+                openingStock: parseFloat(row["Opening Stock"] || "0") || 0,
+                minimumStock: parseFloat(row["Minimum Stock"] || "0") || 0,
+                unitCost: parseFloat(row["Unit Cost (AED)"] || "0") || 0,
+                warehouseLocation: row["Location"] || "",
+                companyId: activeCompanyId,
+              } as any);
+            }}
+            onComplete={() => queryClient.invalidateQueries({ queryKey: getListInventoryItemsQueryKey() })}
           />
           {lowStockCount > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-lg text-orange-700 text-sm dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400">

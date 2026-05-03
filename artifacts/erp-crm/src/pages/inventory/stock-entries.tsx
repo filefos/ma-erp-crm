@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListStockEntriesQueryKey, getListInventoryItemsQueryKey } from "@workspace/api-client-react";
+import { getListStockEntriesQueryKey, getListInventoryItemsQueryKey, createStockEntry } from "@workspace/api-client-react";
 
 const typeColors: Record<string, string> = {
   stock_in: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -26,7 +27,7 @@ export function StockEntriesList() {
   const queryClient = useQueryClient();
   const { data: entries, isLoading } = useListStockEntries();
   const { data: items } = useListInventoryItems();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
   const filtered = filterByCompany(entries ?? []);
   const create = useCreateStockEntry({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListStockEntriesQueryKey() }); queryClient.invalidateQueries({ queryKey: getListInventoryItemsQueryKey() }); setOpen(false); } } });
 
@@ -50,6 +51,39 @@ export function StockEntriesList() {
             ]}
             filename="stock-entries"
             title="Stock Entries"
+          />
+          <BulkUploadDialog
+            title="Bulk Upload Stock Entries"
+            description="Upload a CSV or Excel file with one stock movement per row. Item names must match an existing inventory item exactly."
+            templateFilename="stock-entries-template.xlsx"
+            columns={[
+              { key: "type", label: "Type", required: true, example: "stock_in" },
+              { key: "itemName", label: "Item Name", required: true, example: "GI Sheet 0.5mm" },
+              { key: "quantity", label: "Quantity", required: true, example: 100 },
+              { key: "reference", label: "Reference", example: "PO-2026-0001" },
+              { key: "notes", label: "Notes", example: "" },
+            ]}
+            onRow={async (row) => {
+              const itemName = (row["Item Name"] || "").trim().toLowerCase();
+              const item = (items ?? []).find(i => i.name.trim().toLowerCase() === itemName);
+              if (!item) throw new Error(`Item "${row["Item Name"]}" not found`);
+              const type = (row["Type"] || "stock_in").trim();
+              if (!["stock_in", "stock_out", "material_return", "adjustment"].includes(type)) {
+                throw new Error(`Invalid type "${type}" — use stock_in, stock_out, material_return or adjustment`);
+              }
+              await createStockEntry({
+                type,
+                itemId: item.id,
+                quantity: parseFloat(row["Quantity"] || "0") || 0,
+                reference: row["Reference"] || "",
+                notes: row["Notes"] || "",
+                companyId: activeCompanyId,
+              } as any);
+            }}
+            onComplete={() => {
+              queryClient.invalidateQueries({ queryKey: getListStockEntriesQueryKey() });
+              queryClient.invalidateQueries({ queryKey: getListInventoryItemsQueryKey() });
+            }}
           />
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />New Entry</Button></DialogTrigger>
