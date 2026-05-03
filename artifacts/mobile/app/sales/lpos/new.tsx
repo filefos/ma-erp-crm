@@ -1,19 +1,22 @@
 import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   type CreateLpoBody,
+  type LpoAttachment,
   getListLposQueryKey,
   useCreateLpo,
   useListQuotations,
 } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { AppHeader } from "@/components/AppHeader";
-import { BrandButton, BrandInput } from "@/components/ui";
+import { BrandButton, BrandInput, Card } from "@/components/ui";
 import { FormCell, FormRow, Select } from "@/components/forms";
 import { LPO_STATUSES } from "@/lib/format";
 import { useApp } from "@/contexts/AppContext";
+import { captureImageFromCamera, pickDocument, pickImageFromLibrary } from "@/lib/attachments";
 
 const PAYMENT_PRESETS: { value: string; label: string }[] = [
   { value: "30 days credit", label: "30 days credit" },
@@ -41,6 +44,8 @@ export default function NewLpo() {
     status: "active",
     notes: "",
   });
+  const [attachments, setAttachments] = useState<LpoAttachment[]>([]);
+  const [picking, setPicking] = useState(false);
   const upd = (p: Partial<CreateLpoBody>) => setForm(f => ({ ...f, ...p }));
 
   const create = useCreateLpo({
@@ -53,7 +58,19 @@ export default function NewLpo() {
   const submit = () => {
     if (!form.clientName.trim()) return Alert.alert("Client name is required");
     if (!Number.isFinite(Number(form.lpoValue)) || Number(form.lpoValue) <= 0) return Alert.alert("LPO value must be greater than zero");
-    create.mutate({ data: { ...form, lpoValue: Number(form.lpoValue) } });
+    create.mutate({ data: { ...form, lpoValue: Number(form.lpoValue), attachments: attachments.length ? attachments : undefined } });
+  };
+
+  const addAttachment = async (picker: () => Promise<LpoAttachment | null>) => {
+    setPicking(true);
+    try {
+      const a = await picker();
+      if (a) setAttachments(prev => [...prev, a]);
+    } catch (e) {
+      Alert.alert("Could not attach file", (e as Error).message ?? "");
+    } finally {
+      setPicking(false);
+    }
   };
 
   const quoteOpts = [{ value: "", label: "No source quotation" }, ...((quotes.data ?? []).map(q => ({ value: String(q.id), label: q.quotationNumber, hint: q.clientName })))];
@@ -81,9 +98,39 @@ export default function NewLpo() {
         <BrandInput label="Scope" multiline value={form.scope ?? ""} onChangeText={v => upd({ scope: v })} style={{ minHeight: 80, textAlignVertical: "top" }} />
         <BrandInput label="Delivery schedule" multiline value={form.deliverySchedule ?? ""} onChangeText={v => upd({ deliverySchedule: v })} style={{ minHeight: 60, textAlignVertical: "top" }} />
         <BrandInput label="Notes" multiline value={form.notes ?? ""} onChangeText={v => upd({ notes: v })} style={{ minHeight: 60, textAlignVertical: "top" }} />
+
+        <Card>
+          <Text style={[styles.cardLabel, { color: c.mutedForeground }]}>Attachments {attachments.length ? `(${attachments.length})` : ""}</Text>
+          {attachments.length === 0 ? (
+            <Text style={[styles.empty, { color: c.mutedForeground }]}>Add the LPO PDF or a photo of the signed copy.</Text>
+          ) : attachments.map((a, i) => (
+            <View key={`${a.filename}-${i}`} style={[styles.attRow, { borderColor: c.border }]}>
+              <Feather name="paperclip" size={14} color={c.primary} />
+              <Text style={[styles.attName, { color: c.foreground }]} numberOfLines={1}>{a.filename}</Text>
+              <Text style={[styles.attSize, { color: c.mutedForeground }]}>{a.size ? `${Math.round(a.size / 1024)} KB` : ""}</Text>
+              <Pressable onPress={() => setAttachments(prev => prev.filter((_, j) => j !== i))} hitSlop={8}>
+                <Feather name="x" size={16} color={c.mutedForeground} />
+              </Pressable>
+            </View>
+          ))}
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <BrandButton label="Camera" icon="camera" variant="secondary" onPress={() => addAttachment(captureImageFromCamera)} loading={picking} style={{ flex: 1 }} />
+            <BrandButton label="Photo" icon="image" variant="secondary" onPress={() => addAttachment(pickImageFromLibrary)} loading={picking} style={{ flex: 1 }} />
+            <BrandButton label="File" icon="file" variant="secondary" onPress={() => addAttachment(pickDocument)} loading={picking} style={{ flex: 1 }} />
+          </View>
+        </Card>
+
         <BrandButton label="Create LPO" icon="check" loading={create.isPending} onPress={submit} />
       </ScrollView>
     </View>
   );
 }
-const styles = StyleSheet.create({ flex: { flex: 1 }, content: { padding: 16, gap: 12, paddingBottom: 120 } });
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  content: { padding: 16, gap: 12, paddingBottom: 120 },
+  cardLabel: { fontFamily: "Inter_500Medium", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 },
+  empty: { fontFamily: "Inter_500Medium", fontSize: 13 },
+  attRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth },
+  attName: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  attSize: { fontFamily: "Inter_500Medium", fontSize: 12 },
+});

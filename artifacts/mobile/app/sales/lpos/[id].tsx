@@ -4,6 +4,7 @@ import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  type LpoAttachment,
   getGetLpoQueryKey, getListLposQueryKey,
   useGetLpo, useUpdateLpo,
 } from "@workspace/api-client-react";
@@ -14,6 +15,7 @@ import { ActionSheet, StatusPill } from "@/components/forms";
 import { DocumentWebView } from "@/components/DocumentWebView";
 import { LPO_STATUSES, fmtAed, fmtDate, lpoStatusMeta } from "@/lib/format";
 import { lpoHtml } from "@/lib/document-html";
+import { captureImageFromCamera, pickDocument, pickImageFromLibrary } from "@/lib/attachments";
 
 export default function LpoDetail() {
   const c = useColors();
@@ -25,6 +27,7 @@ export default function LpoDetail() {
   const [statusOpen, setStatusOpen] = useState(false);
   const [pdfOpen, setPdfOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<{ title: string; html: string } | null>(null);
+  const [attaching, setAttaching] = useState(false);
 
   const update = useUpdateLpo({
     mutation: {
@@ -48,18 +51,31 @@ export default function LpoDetail() {
   const l = q.data;
   const sm = lpoStatusMeta(l.status);
 
+  const baseBody = (overrides: { status?: string; attachments?: LpoAttachment[] } = {}) => ({
+    companyId: l.companyId, clientName: l.clientName, projectRef: l.projectRef,
+    projectId: l.projectId, quotationId: l.quotationId, lpoDate: l.lpoDate,
+    lpoValue: l.lpoValue, scope: l.scope, deliverySchedule: l.deliverySchedule,
+    paymentTerms: l.paymentTerms, notes: l.notes,
+    status: overrides.status ?? l.status,
+    attachments: overrides.attachments ?? l.attachments?.map(a => ({ filename: a.filename, contentType: a.contentType, size: a.size })),
+  });
+
   const changeStatus = (status: string) => {
-    update.mutate({
-      id: lid,
-      data: {
-        companyId: l.companyId, clientName: l.clientName, projectRef: l.projectRef,
-        projectId: l.projectId, quotationId: l.quotationId, lpoDate: l.lpoDate,
-        lpoValue: l.lpoValue, scope: l.scope, deliverySchedule: l.deliverySchedule,
-        paymentTerms: l.paymentTerms, notes: l.notes,
-        attachments: l.attachments?.map(a => ({ filename: a.filename, contentType: a.contentType, size: a.size })),
-        status,
-      },
-    });
+    update.mutate({ id: lid, data: baseBody({ status }) });
+  };
+
+  const addAttachment = async (picker: () => Promise<LpoAttachment | null>) => {
+    setAttaching(true);
+    try {
+      const a = await picker();
+      if (!a) return;
+      const existing = (l.attachments ?? []).map(x => ({ filename: x.filename, contentType: x.contentType, size: x.size }));
+      await update.mutateAsync({ id: lid, data: baseBody({ attachments: [...existing, a] }) });
+    } catch (e) {
+      Alert.alert("Could not attach file", (e as Error).message ?? "");
+    } finally {
+      setAttaching(false);
+    }
   };
 
   return (
@@ -97,9 +113,18 @@ export default function LpoDetail() {
         {l.paymentTerms ? <><SectionHeading title="Payment terms" /><Card><Text style={[styles.body, { color: c.foreground }]}>{l.paymentTerms}</Text></Card></> : null}
         {l.notes ? <><SectionHeading title="Notes" /><Card><Text style={[styles.body, { color: c.foreground }]}>{l.notes}</Text></Card></> : null}
 
+        <SectionHeading title={`Attachments (${l.attachments?.length ?? 0})`} />
+        <Card>
+          <Text style={[styles.cardLabel, { color: c.mutedForeground }]}>Add a file</Text>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <BrandButton label="Camera" icon="camera" variant="secondary" onPress={() => addAttachment(captureImageFromCamera)} loading={attaching} style={{ flex: 1 }} />
+            <BrandButton label="Photo" icon="image" variant="secondary" onPress={() => addAttachment(pickImageFromLibrary)} loading={attaching} style={{ flex: 1 }} />
+            <BrandButton label="File" icon="file" variant="secondary" onPress={() => addAttachment(pickDocument)} loading={attaching} style={{ flex: 1 }} />
+          </View>
+        </Card>
+
         {(l.attachments ?? []).length ? (
           <>
-            <SectionHeading title={`Attachments (${l.attachments?.length ?? 0})`} />
             {(l.attachments ?? []).map((a, i) => {
               const dataUrl = a.content
                 ? `data:${a.contentType ?? "application/octet-stream"};base64,${a.content}`
@@ -164,4 +189,5 @@ const styles = StyleSheet.create({
   body: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   meta: { fontFamily: "Inter_500Medium", fontSize: 12 },
   amount: { fontFamily: "Inter_700Bold", fontSize: 18 },
+  cardLabel: { fontFamily: "Inter_500Medium", fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5 },
 });
