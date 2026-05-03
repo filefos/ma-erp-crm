@@ -188,6 +188,65 @@ export function SalesDashboard() {
   // Legacy compact leaderboard panel keeps its top-8 cap.
   const leaderboard = useMemo(() => salesPerformance.slice(0, 8), [salesPerformance]);
 
+  // Monthly salesperson performance — current calendar month only.
+  const salesPerformanceMonth = useMemo(() => {
+    const nowD = new Date();
+    const monthStart = new Date(nowD.getFullYear(), nowD.getMonth(), 1).getTime();
+    const monthEnd = new Date(nowD.getFullYear(), nowD.getMonth() + 1, 1).getTime();
+    const inMonth = (raw: any) => {
+      if (!raw) return false;
+      const t = new Date(raw).getTime();
+      return t >= monthStart && t < monthEnd;
+    };
+    return salesUsers
+      .map((u: any) => {
+        const userQuotes = quotations.filter(
+          (q: any) =>
+            (q.preparedById === u.id || q.preparedByName === u.name) &&
+            inMonth(q.quotationDate ?? q.createdAt),
+        );
+        const userDeals = deals.filter(
+          (d: any) => d.assignedToId === u.id || d.assignedToName === u.name,
+        );
+        const wonDeals = userDeals.filter(
+          (d: any) => d.stage === "won" && inMonth(d.closedAt ?? d.updatedAt ?? d.createdAt),
+        );
+        const quoted = userQuotes.reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
+        const won = wonDeals.reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+        const userTargets = targets.filter(
+          (t: any) => t.userId === u.id && t.year === year,
+        );
+        const target = userTargets.reduce((s: number, t: any) => {
+          if (t.period === "monthly")   return s + Number(t.targetAmount ?? 0);
+          if (t.period === "quarterly") return s + Number(t.targetAmount ?? 0) / 3;
+          if (t.period === "yearly")    return s + Number(t.targetAmount ?? 0) / 12;
+          return s;
+        }, 0);
+        const sparkline: number[] = [];
+        for (let i = 5; i >= 0; i--) {
+          const ms = new Date(nowD.getFullYear(), nowD.getMonth() - i, 1).getTime();
+          const me = new Date(nowD.getFullYear(), nowD.getMonth() - i + 1, 1).getTime();
+          const v = userDeals
+            .filter((d: any) => {
+              if (d.stage !== "won") return false;
+              const dt = d.closedAt ?? d.updatedAt ?? d.createdAt;
+              if (!dt) return false;
+              const t = new Date(dt).getTime();
+              return t >= ms && t < me;
+            })
+            .reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+          sparkline.push(v);
+        }
+        return {
+          id: u.id, name: u.name, quoted, won, target: Math.round(target), sparkline,
+          quoteCount: userQuotes.length, wonCount: wonDeals.length,
+          attainment: target > 0 ? Math.round((won / target) * 100) : null,
+        };
+      })
+      .filter((r: any) => r.quoted > 0 || r.won > 0 || r.target > 0)
+      .sort((a: any, b: any) => b.won - a.won || b.quoted - a.quoted);
+  }, [salesUsers, quotations, deals, targets, year]);
+
   // ---- Recent quotations ----
   const recentQuotations = useMemo(
     () => [...quotations].sort((a: any, b: any) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")).slice(0, 6),
@@ -353,18 +412,18 @@ export function SalesDashboard() {
         )}
       </PanelCard>
 
-      {/* Salesperson Performance row */}
+      {/* Salesperson Performance row — current month */}
       <PanelCard
         title="Salesperson Performance"
-        subtitle={`Quotations, won deals & target attainment · ${year}`}
+        subtitle={`Monthly report · ${new Date().toLocaleString("en-US", { month: "long", year: "numeric" })} · top 5 by won value`}
         icon={Crown}
         data-testid="panel-salesperson-performance"
       >
-        {salesPerformance.length === 0 ? (
-          <Empty>No salesperson activity yet.</Empty>
+        {salesPerformanceMonth.length === 0 ? (
+          <Empty>No salesperson activity this month yet.</Empty>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-testid="grid-salesperson-performance">
-            {salesPerformance.slice(0, 5).map((row: any, i: number) => (
+            {salesPerformanceMonth.slice(0, 5).map((row: any, i: number) => (
               <Link
                 key={row.id}
                 href={`/crm/leaderboard#sp-${row.id}`}
