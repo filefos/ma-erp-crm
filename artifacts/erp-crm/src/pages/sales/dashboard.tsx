@@ -363,8 +363,8 @@ export function SalesDashboard() {
         {salesPerformance.length === 0 ? (
           <Empty>No salesperson activity yet.</Empty>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" data-testid="grid-salesperson-performance">
-            {salesPerformance.slice(0, 3).map((row: any, i: number) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" data-testid="grid-salesperson-performance">
+            {salesPerformance.slice(0, 5).map((row: any, i: number) => (
               <Link
                 key={row.id}
                 href={`/crm/leaderboard#sp-${row.id}`}
