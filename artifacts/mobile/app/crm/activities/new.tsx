@@ -10,7 +10,7 @@ import {
 import { useColors } from "@/hooks/useColors";
 import { AppHeader } from "@/components/AppHeader";
 import { BrandButton, BrandInput } from "@/components/ui";
-import { Select } from "@/components/forms";
+import { DatePickerField, Select } from "@/components/forms";
 import { ACTIVITY_TYPES } from "@/lib/format";
 
 export default function NewActivity() {
@@ -48,7 +48,7 @@ export default function NewActivity() {
         <Select label="Type" value={form.type} options={ACTIVITY_TYPES} onChange={v => upd({ type: v })} />
         <BrandInput label="Subject *" icon="edit-3" value={form.subject} onChangeText={v => upd({ subject: v })} />
         <BrandInput label="Description" multiline value={form.description ?? ""} onChangeText={v => upd({ description: v })} style={{ minHeight: 100, textAlignVertical: "top" }} />
-        <BrandInput label="Due date (YYYY-MM-DD)" icon="calendar" value={form.dueDate ?? ""} onChangeText={v => upd({ dueDate: v })} />
+        <DatePickerField label="Due date" value={form.dueDate ?? ""} onChange={v => upd({ dueDate: v })} />
         <BrandButton label="Create activity" icon="check" loading={create.isPending} onPress={submit} />
       </ScrollView>
     </View>

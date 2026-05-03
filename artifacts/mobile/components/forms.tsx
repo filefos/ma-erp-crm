@@ -99,6 +99,181 @@ export function Select({ label, value, options, onChange, placeholder, icon }: S
 }
 
 // ---------------------------------------------------------------------------
+// DatePickerField — modal calendar for picking an ISO yyyy-mm-dd date.
+// Cross-platform (web + native), no extra dependencies.
+// ---------------------------------------------------------------------------
+const WEEK_DAYS = ["S", "M", "T", "W", "T", "F", "S"];
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function pad2(n: number) { return n < 10 ? `0${n}` : String(n); }
+function toIso(d: Date) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function parseIso(s: string | null | undefined): Date | null {
+  if (!s) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  const y = Number(m[1]), mo = Number(m[2]) - 1, da = Number(m[3]);
+  const d = new Date(y, mo, da);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function formatDisplay(s: string | null | undefined): string | null {
+  const d = parseIso(s);
+  if (!d) return null;
+  return `${pad2(d.getDate())} ${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+}
+
+interface DatePickerFieldProps {
+  label?: string;
+  value: string | null | undefined;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  icon?: FeatherName;
+}
+export function DatePickerField({ label, value, onChange, placeholder, icon = "calendar" }: DatePickerFieldProps) {
+  const c = useColors();
+  const [open, setOpen] = useState(false);
+  const selected = parseIso(value);
+  const today = new Date();
+  const initial = selected ?? today;
+  const [viewYear, setViewYear] = useState(initial.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initial.getMonth());
+
+  const openSheet = () => {
+    const base = parseIso(value) ?? new Date();
+    setViewYear(base.getFullYear());
+    setViewMonth(base.getMonth());
+    setOpen(true);
+  };
+
+  const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDayOfMonth; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const goPrev = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  };
+  const goNext = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  };
+  const pick = (day: number) => {
+    onChange(toIso(new Date(viewYear, viewMonth, day)));
+    setOpen(false);
+  };
+  const pickToday = () => {
+    const t = new Date();
+    onChange(toIso(t));
+    setOpen(false);
+  };
+  const clear = () => { onChange(""); setOpen(false); };
+
+  const display = formatDisplay(value);
+
+  return (
+    <View style={{ gap: 6 }}>
+      {label ? <Text style={[styles.inputLabel, { color: c.mutedForeground }]}>{label}</Text> : null}
+      <Pressable
+        onPress={openSheet}
+        style={({ pressed }) => [
+          styles.inputWrap,
+          { backgroundColor: c.card, borderColor: c.border, opacity: pressed ? 0.85 : 1 },
+        ]}
+      >
+        {icon ? <Feather name={icon} size={16} color={c.mutedForeground} style={{ marginRight: 8 }} /> : null}
+        <Text style={[styles.inputText, { color: display ? c.foreground : c.mutedForeground }]} numberOfLines={1}>
+          {display ?? placeholder ?? "Pick a date"}
+        </Text>
+        {value ? (
+          <Pressable
+            onPress={(e) => { e.stopPropagation(); clear(); }}
+            hitSlop={8}
+          >
+            <Feather name="x" size={16} color={c.mutedForeground} />
+          </Pressable>
+        ) : (
+          <Feather name="chevron-down" size={16} color={c.mutedForeground} />
+        )}
+      </Pressable>
+
+      <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
+          <Pressable style={[styles.sheet, { backgroundColor: c.card }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.calHeader}>
+              <Pressable onPress={goPrev} hitSlop={8} style={[styles.calNav, { borderColor: c.border }]}>
+                <Feather name="chevron-left" size={18} color={c.foreground} />
+              </Pressable>
+              <Text style={[styles.sheetTitle, { color: c.foreground, marginBottom: 0, flex: 1, textAlign: "center" }]}>
+                {MONTH_NAMES[viewMonth]} {viewYear}
+              </Text>
+              <Pressable onPress={goNext} hitSlop={8} style={[styles.calNav, { borderColor: c.border }]}>
+                <Feather name="chevron-right" size={18} color={c.foreground} />
+              </Pressable>
+            </View>
+            <View style={styles.calRow}>
+              {WEEK_DAYS.map((d, i) => (
+                <View key={`wd-${i}`} style={styles.calCell}>
+                  <Text style={[styles.calWeekday, { color: c.mutedForeground }]}>{d}</Text>
+                </View>
+              ))}
+            </View>
+            <View style={styles.calGrid}>
+              {cells.map((day, i) => {
+                if (day == null) return <View key={`e-${i}`} style={styles.calCell} />;
+                const isSelected = !!selected
+                  && selected.getFullYear() === viewYear
+                  && selected.getMonth() === viewMonth
+                  && selected.getDate() === day;
+                const isToday = today.getFullYear() === viewYear
+                  && today.getMonth() === viewMonth
+                  && today.getDate() === day;
+                return (
+                  <Pressable
+                    key={`d-${i}`}
+                    onPress={() => pick(day)}
+                    style={({ pressed }) => [
+                      styles.calCell,
+                      styles.calDay,
+                      isSelected ? { backgroundColor: c.primary } : isToday ? { borderWidth: 1, borderColor: c.primary } : null,
+                      pressed && !isSelected ? { backgroundColor: c.secondary } : null,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.calDayText,
+                        { color: isSelected ? "#fff" : c.foreground },
+                      ]}
+                    >
+                      {day}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={styles.calFooter}>
+              <Pressable onPress={pickToday} style={({ pressed }) => [styles.calFooterBtn, { borderColor: c.border, opacity: pressed ? 0.85 : 1 }]}>
+                <Text style={[styles.calFooterText, { color: c.primary }]}>Today</Text>
+              </Pressable>
+              <Pressable onPress={clear} style={({ pressed }) => [styles.calFooterBtn, { borderColor: c.border, opacity: pressed ? 0.85 : 1 }]}>
+                <Text style={[styles.calFooterText, { color: c.mutedForeground }]}>Clear</Text>
+              </Pressable>
+              <Pressable onPress={() => setOpen(false)} style={({ pressed }) => [styles.calFooterBtn, { borderColor: c.border, opacity: pressed ? 0.85 : 1 }]}>
+                <Text style={[styles.calFooterText, { color: c.foreground }]}>Cancel</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // ActionSheet — bottom sheet of named actions. Used for status/stage changes.
 // ---------------------------------------------------------------------------
 export interface ActionItem {
@@ -165,4 +340,16 @@ const styles = StyleSheet.create({
   sheetItemSub: { fontFamily: "Inter_400Regular", fontSize: 12 },
 
   formRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+
+  calHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  calNav: { width: 36, height: 36, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  calRow: { flexDirection: "row" },
+  calGrid: { flexDirection: "row", flexWrap: "wrap" },
+  calCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: "center", justifyContent: "center" },
+  calWeekday: { fontFamily: "Inter_600SemiBold", fontSize: 11, textTransform: "uppercase" },
+  calDay: { borderRadius: 999 },
+  calDayText: { fontFamily: "Inter_500Medium", fontSize: 14 },
+  calFooter: { flexDirection: "row", gap: 8, marginTop: 8 },
+  calFooterBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center" },
+  calFooterText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
 });

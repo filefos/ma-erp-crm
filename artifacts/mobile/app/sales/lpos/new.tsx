@@ -13,7 +13,7 @@ import {
 import { useColors } from "@/hooks/useColors";
 import { AppHeader } from "@/components/AppHeader";
 import { BrandButton, BrandInput, Card } from "@/components/ui";
-import { FormCell, FormRow, Select } from "@/components/forms";
+import { DatePickerField, FormCell, FormRow, Select } from "@/components/forms";
 import { LPO_STATUSES } from "@/lib/format";
 import { useApp } from "@/contexts/AppContext";
 import { captureImageFromCamera, pickDocument, pickImageFromLibrary } from "@/lib/attachments";
@@ -89,7 +89,7 @@ export default function NewLpo() {
         <BrandInput label="Client name *" icon="user" value={form.clientName} onChangeText={v => upd({ clientName: v })} />
         <FormRow>
           <FormCell><BrandInput label="Project ref" value={form.projectRef ?? ""} onChangeText={v => upd({ projectRef: v })} /></FormCell>
-          <FormCell><BrandInput label="LPO date (YYYY-MM-DD)" icon="calendar" value={form.lpoDate ?? ""} onChangeText={v => upd({ lpoDate: v })} /></FormCell>
+          <FormCell><DatePickerField label="LPO date" value={form.lpoDate ?? ""} onChange={v => upd({ lpoDate: v || undefined })} /></FormCell>
         </FormRow>
         <BrandInput label="LPO value (AED) *" keyboardType="numeric" value={String(form.lpoValue ?? 0)} onChangeText={v => upd({ lpoValue: Number(v) || 0 })} />
         <Select label="Status" value={form.status ?? "active"} options={LPO_STATUSES} onChange={v => upd({ status: v })} />

@@ -8,7 +8,7 @@ import {
   useCreateDeal, useUpdateDeal,
 } from "@workspace/api-client-react";
 import { BrandButton, BrandInput } from "@/components/ui";
-import { FormCell, FormRow, Select } from "@/components/forms";
+import { DatePickerField, FormCell, FormRow, Select } from "@/components/forms";
 import { DEAL_STAGES } from "@/lib/format";
 import { useApp } from "@/contexts/AppContext";
 
@@ -66,7 +66,7 @@ export function DealForm({ initial }: Props) {
         <FormCell><BrandInput label="Probability (%)" keyboardType="numeric" value={form.probability != null ? String(form.probability) : ""} onChangeText={v => upd({ probability: v ? Number(v) : undefined })} /></FormCell>
       </FormRow>
       <Select label="Stage" value={form.stage} options={DEAL_STAGES} onChange={v => upd({ stage: v })} />
-      <BrandInput label="Expected close (YYYY-MM-DD)" icon="calendar" value={form.expectedCloseDate ?? ""} onChangeText={v => upd({ expectedCloseDate: v })} />
+      <DatePickerField label="Expected close" value={form.expectedCloseDate ?? ""} onChange={v => upd({ expectedCloseDate: v || undefined })} />
       <BrandInput label="Notes" multiline value={form.notes ?? ""} onChangeText={v => upd({ notes: v })} style={{ minHeight: 80, textAlignVertical: "top" }} />
       <BrandButton label={initial ? "Save changes" : "Create deal"} onPress={submit} loading={busy} icon="check" />
     </View>

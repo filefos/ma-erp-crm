@@ -11,7 +11,7 @@ import {
   useUpdateLead,
 } from "@workspace/api-client-react";
 import { BrandButton, BrandInput } from "@/components/ui";
-import { FormCell, FormRow, Select } from "@/components/forms";
+import { DatePickerField, FormCell, FormRow, Select } from "@/components/forms";
 import { LEAD_SCORES, LEAD_STATUSES } from "@/lib/format";
 import { useApp } from "@/contexts/AppContext";
 
@@ -101,7 +101,7 @@ export function LeadForm({ initial }: Props) {
         <FormCell><Select label="Status" value={form.status} options={LEAD_STATUSES} onChange={v => upd({ status: v })} /></FormCell>
         <FormCell><Select label="Score" value={form.leadScore ?? "warm"} options={LEAD_SCORES} onChange={v => upd({ leadScore: v })} /></FormCell>
       </FormRow>
-      <BrandInput label="Next follow-up (YYYY-MM-DD)" icon="calendar" value={form.nextFollowUp ?? ""} onChangeText={v => upd({ nextFollowUp: v })} />
+      <DatePickerField label="Next follow-up" value={form.nextFollowUp ?? ""} onChange={v => upd({ nextFollowUp: v || undefined })} />
       <BrandInput label="Notes" multiline value={form.notes ?? ""} onChangeText={v => upd({ notes: v })} style={{ minHeight: 80, textAlignVertical: "top" }} />
       <BrandButton label={initial ? "Save changes" : "Create lead"} onPress={submit} loading={busy} icon="check" />
     </View>

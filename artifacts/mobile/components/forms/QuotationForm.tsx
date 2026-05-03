@@ -9,7 +9,7 @@ import {
   useCreateQuotation, useUpdateQuotation,
 } from "@workspace/api-client-react";
 import { BrandButton, BrandInput, Card, SectionHeading } from "@/components/ui";
-import { FormCell, FormRow, Select } from "@/components/forms";
+import { DatePickerField, FormCell, FormRow, Select } from "@/components/forms";
 import { QUOTATION_STATUSES, fmtAed } from "@/lib/format";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -156,7 +156,7 @@ export function QuotationForm({ initial }: Props) {
         <FormCell><BrandInput label="VAT %" keyboardType="numeric" value={String(form.vatPercent ?? 5)} onChangeText={v => upd({ vatPercent: Number(v) || 0 })} /></FormCell>
       </FormRow>
       <Select label="Status" value={form.status ?? "draft"} options={QUOTATION_STATUSES} onChange={v => upd({ status: v })} />
-      <BrandInput label="Validity (YYYY-MM-DD)" icon="calendar" value={form.validity ?? ""} onChangeText={v => upd({ validity: v })} />
+      <DatePickerField label="Validity" value={form.validity ?? ""} onChange={v => upd({ validity: v || undefined })} />
       <BrandInput label="Payment terms" multiline value={form.paymentTerms ?? ""} onChangeText={v => upd({ paymentTerms: v })} style={{ minHeight: 60, textAlignVertical: "top" }} />
       <BrandInput label="Delivery terms" multiline value={form.deliveryTerms ?? ""} onChangeText={v => upd({ deliveryTerms: v })} style={{ minHeight: 60, textAlignVertical: "top" }} />
       <BrandInput label="Terms & conditions" multiline value={form.termsConditions ?? ""} onChangeText={v => upd({ termsConditions: v })} style={{ minHeight: 80, textAlignVertical: "top" }} />
