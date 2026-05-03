@@ -12,7 +12,7 @@ import {
   emailSettingsTable,
   emailsTable,
 } from "@workspace/db";
-import { eq, and, isNotNull, sql } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 import nodemailer from "nodemailer";
 import { logger } from "../lib/logger";
 
@@ -130,5 +130,3 @@ export function startSupplierExpiryWorker(): void {
     setInterval(() => { void tick(); }, SCAN_INTERVAL_MS);
   }, STARTUP_DELAY_MS);
 }
-// silence unused import in case of future refactors
-void sql;

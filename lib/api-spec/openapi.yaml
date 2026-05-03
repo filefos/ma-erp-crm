@@ -5261,7 +5261,7 @@ components:
             required: [filename, contentType, content]
         agreedTerms: { type: boolean }
         agreedCodeOfConduct: { type: boolean }
-      required: [companyId, companyName, tradeLicenseNo, licenseAuthority, licenseExpiry, country, contactPerson, designation, email, phone, tenderContactName, tenderContactEmail, bankName, bankAccountName, bankAccountNumber, iban, contactPerson, agreedTerms, agreedCodeOfConduct, categories]
+      required: [companyId, companyName, tradeName, tradeLicenseNo, licenseAuthority, licenseExpiry, establishedYear, companySize, country, city, emirate, poBox, address, website, contactPerson, designation, email, phone, tenderContactName, tenderContactMobile, tenderContactEmail, bankName, bankBranch, bankAccountName, bankAccountNumber, iban, swift, currency, yearsExperience, turnoverBand, employeeBand, agreedTerms, agreedCodeOfConduct, categories]
 
     SupplierApplicationDecisionBody:
       type: object

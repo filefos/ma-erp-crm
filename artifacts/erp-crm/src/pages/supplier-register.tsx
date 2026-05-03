@@ -179,10 +179,18 @@ export default function SupplierRegisterPage() {
     if (s === 1) {
       if (!form.companyId) return "Please select the company you are applying to.";
       if (!form.companyName.trim()) return "Legal company name is required.";
+      if (!form.tradeName.trim()) return "Trade name (DBA) is required.";
       if (!form.tradeLicenseNo.trim()) return "Trade Licence Number is required.";
       if (!form.licenseAuthority.trim()) return "Trade Licence issuing authority is required.";
       if (!form.licenseExpiry) return "Trade Licence expiry date is required.";
+      if (!form.establishedYear.trim()) return "Year established is required.";
+      if (!form.companySize.trim()) return "Company size is required.";
       if (!form.country.trim()) return "Country is required.";
+      if (!form.city.trim()) return "City is required.";
+      if (!form.emirate.trim()) return "Emirate is required.";
+      if (!form.poBox.trim()) return "PO Box is required.";
+      if (!form.address.trim()) return "Office address is required.";
+      if (!form.website.trim()) return "Company website is required.";
     }
     if (s === 2) {
       if (!form.contactPerson.trim()) return "Authorised signatory name is required.";
@@ -190,18 +198,25 @@ export default function SupplierRegisterPage() {
       if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "A valid contact email is required.";
       if (!form.phone.trim()) return "Phone number is required.";
       if (!form.tenderContactName.trim()) return "Tender / RFQ contact name is required.";
+      if (!form.tenderContactMobile.trim()) return "Tender contact mobile number is required.";
       if (!form.tenderContactEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tenderContactEmail)) return "A valid tender contact email is required.";
       if (form.vatRegistered && !form.trn.trim()) return "VAT TRN is required when VAT-registered.";
     }
     if (s === 3) {
       if (form.categories.length === 0) return "Please select at least one supply category.";
       if (form.categories.includes("Other") && !form.categoriesOther.trim()) return "Please describe the Other category.";
+      if (!form.yearsExperience.trim()) return "Years of experience is required.";
+      if (!form.turnoverBand.trim()) return "Annual turnover band is required.";
+      if (!form.employeeBand.trim()) return "Employee count band is required.";
     }
     if (s === 4) {
       if (!form.bankName.trim()) return "Bank name is required.";
+      if (!form.bankBranch.trim()) return "Bank branch is required.";
       if (!form.bankAccountName.trim()) return "Account holder name is required.";
       if (!form.bankAccountNumber.trim()) return "Account number is required.";
       if (!form.iban.trim()) return "IBAN is required.";
+      if (!form.swift.trim()) return "SWIFT / BIC code is required.";
+      if (!form.currency.trim()) return "Account currency is required.";
     }
     if (s === 6) {
       const present = new Set(files.map(f => f.documentType));
