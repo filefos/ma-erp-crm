@@ -252,15 +252,38 @@ router.put("/users/:id", requirePermissionLevel("company_admin"), validateBody(U
 router.post("/users/:id/change-password", requirePermissionLevel("company_admin"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const { newPassword } = req.body;
-  if (!newPassword || newPassword.length < 6) {
-    res.status(400).json({ error: "Password must be at least 6 characters" });
+  if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
     return;
   }
+
+  const callerLevel = req.user!.permissionLevel ?? "user";
+  const callerRank = PERMISSION_RANK[callerLevel] ?? 0;
+
+  // Tenant isolation: target user must be within the caller's company scope.
+  if (!(await userInScope(req, id))) {
+    res.status(403).json({ error: "Forbidden", message: "Target user is outside your company scope" });
+    return;
+  }
+
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
   if (!user) { res.status(404).json({ error: "Not found" }); return; }
+
+  // Rank protection: cannot reset a password for a user of equal or higher rank,
+  // and only super_admin may reset another super_admin's password.
+  const targetRank = PERMISSION_RANK[user.permissionLevel ?? "user"] ?? 0;
+  if (targetRank >= callerRank && req.user!.id !== id) {
+    res.status(403).json({ error: "Forbidden", message: "Cannot reset password for a user with equal or higher access than yours" });
+    return;
+  }
+  if (user.permissionLevel === "super_admin" && callerLevel !== "super_admin") {
+    res.status(403).json({ error: "Forbidden", message: "Only super_admin may reset a super_admin password" });
+    return;
+  }
+
   const passwordHash = await hashPassword(newPassword);
   await db.update(usersTable).set({ passwordHash, updatedAt: new Date() }).where(eq(usersTable.id, id));
-  await audit(req, { action: "update", entity: "user", entityId: id, details: `Password changed for user ${user.email}` });
+  await audit(req, { action: "update", entity: "user", entityId: id, details: `Password reset by ${req.user!.email} for user ${user.email}` });
   res.json({ success: true });
 });
 
