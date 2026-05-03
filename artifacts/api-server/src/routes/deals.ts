@@ -36,10 +36,11 @@ export type ClosingDocsResult = {
 // Idempotent: each document is only created if not already present for the source quotation,
 // and the existing IDs are returned regardless so callers can always link to them.
 async function autoCreateClosingDocs(
+  tx: any,
   deal: typeof dealsTable.$inferSelect,
   preparedById: number | undefined,
 ): Promise<ClosingDocsResult> {
-  return await db.transaction(async (tx) => {
+  {
     const result: ClosingDocsResult = {
       createdProformaInvoice: false,
       createdTaxInvoice: false,
@@ -58,7 +59,7 @@ async function autoCreateClosingDocs(
       result.warnings.push("Quotation has no company — closing documents not created.");
       return result;
     }
-    const items = await tx.select().from(quotationItemsTable)
+    const items: (typeof quotationItemsTable.$inferSelect)[] = await tx.select().from(quotationItemsTable)
       .where(eq(quotationItemsTable.quotationId, q.id)).orderBy(quotationItemsTable.sortOrder);
     if (items.length === 0) {
       result.warnings.push("Quotation has no items — closing documents may be empty.");
@@ -136,7 +137,7 @@ async function autoCreateClosingDocs(
     }
 
     return result;
-  });
+  }
 }
 
 async function enrichDeal(deal: typeof dealsTable.$inferSelect) {
@@ -190,16 +191,30 @@ router.put("/deals/:id", requirePermission("deals", "edit"), requireBodyCompanyA
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const ownerScope = await getOwnerScope(req);
   if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [deal] = await db.update(dealsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(dealsTable.id, id)).returning();
-  // Auto-create downstream documents when stage transitions to "won".
-  // Note: this codebase consistently uses the literal "won" (see lead status,
-  // notifications, dashboard, jobs/follow-ups). There is no separate "closed_won".
-  let auto: ClosingDocsResult = {
-    createdProformaInvoice: false, createdTaxInvoice: false, createdDeliveryNote: false, warnings: [],
-  };
-  if (existing.stage !== "won" && deal.stage === "won") {
-    auto = await autoCreateClosingDocs(deal, req.user?.id);
-  }
+  // Single atomic transaction for the deal update. The downstream
+  // auto-creation runs inside a savepoint and on failure rolls back only
+  // that block, surfacing the error as a soft warning while the stage
+  // transition still commits — never blocking the user with a 500.
+  const { deal, auto } = await db.transaction(async (tx) => {
+    const [deal] = await tx.update(dealsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(dealsTable.id, id)).returning();
+    let auto: ClosingDocsResult = {
+      createdProformaInvoice: false, createdTaxInvoice: false, createdDeliveryNote: false, warnings: [],
+    };
+    // Note: this codebase consistently uses the literal "won" (see lead status,
+    // notifications, dashboard, jobs/follow-ups). There is no separate "closed_won".
+    if (existing.stage !== "won" && deal.stage === "won") {
+      try {
+        auto = await tx.transaction(async (sp: any) => autoCreateClosingDocs(sp, deal, req.user?.id));
+      } catch (err: any) {
+        req.log?.error({ err, dealId: deal.id }, "Auto-closing-doc creation failed");
+        auto = {
+          createdProformaInvoice: false, createdTaxInvoice: false, createdDeliveryNote: false,
+          warnings: [`Closing documents could not be auto-created (${err?.message ?? "unknown error"}). You can create them manually from Accounts.`],
+        };
+      }
+    }
+    return { deal, auto };
+  });
   const enriched = await enrichDeal(deal);
   res.json({ ...enriched, ...auto });
 });

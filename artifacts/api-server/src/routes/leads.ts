@@ -11,7 +11,12 @@ router.use(requireAuth);
 // Wrapped in a transaction so the read-modify-write is atomic.
 // Returns the linked quotation id (always — whether newly created or pre-existing)
 // plus a `created` flag and warnings for any soft issues.
+// Runs inside the caller-provided tx so the status flip and the quotation
+// creation are part of one atomic unit. The caller wraps this in try/catch
+// so any unexpected failure surfaces as a non-blocking warning (the lead
+// status update still commits via a separate inner savepoint pattern).
 async function autoCreateQuotationForLead(
+  tx: any,
   lead: typeof leadsTable.$inferSelect,
   preparedById: number | undefined,
 ): Promise<{ quotationId?: number; createdQuotation: boolean; warnings: string[] }> {
@@ -20,7 +25,7 @@ async function autoCreateQuotationForLead(
     warnings.push("Lead has no company assigned — quotation not created.");
     return { createdQuotation: false, warnings };
   }
-  return await db.transaction(async (tx) => {
+  {
     const [existing] = await tx.select({ id: quotationsTable.id })
       .from(quotationsTable).where(eq(quotationsTable.leadId, lead.id)).limit(1);
     if (existing) return { quotationId: existing.id, createdQuotation: false, warnings };
@@ -79,7 +84,7 @@ async function autoCreateQuotationForLead(
       warnings.push("Quotation seeded with a placeholder line item — please review before sending.");
     }
     return { quotationId: q.id, createdQuotation: true, warnings };
-  });
+  }
 }
 
 async function enrichLead(lead: typeof leadsTable.$inferSelect) {
@@ -225,13 +230,28 @@ router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyA
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const ownerScope = await getOwnerScope(req);
   if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [lead] = await db.update(leadsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
-  // Auto-create draft quotation when lead status transitions to "won".
-  let auto: { quotationId?: number; createdQuotation: boolean; warnings: string[] } =
-    { createdQuotation: false, warnings: [] };
-  if (existing.status !== "won" && lead.status === "won") {
-    auto = await autoCreateQuotationForLead(lead, req.user?.id);
-  }
+  // Single atomic transaction for the lead update. Auto-quotation creation
+  // runs inside the same tx via a savepoint (db.transaction nested call) so
+  // that on success it commits with the status flip; on failure the
+  // savepoint rolls back and the surrounding tx still commits the status
+  // flip with a warning surfaced to the UI (no 500).
+  const { lead, auto } = await db.transaction(async (tx) => {
+    const [lead] = await tx.update(leadsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
+    let auto: { quotationId?: number; createdQuotation: boolean; warnings: string[] } =
+      { createdQuotation: false, warnings: [] };
+    if (existing.status !== "won" && lead.status === "won") {
+      try {
+        auto = await tx.transaction(async (sp: any) => autoCreateQuotationForLead(sp, lead, req.user?.id));
+      } catch (err: any) {
+        req.log?.error({ err, leadId: lead.id }, "Auto-quotation creation failed");
+        auto = {
+          createdQuotation: false,
+          warnings: [`Quotation could not be auto-created (${err?.message ?? "unknown error"}). You can create it manually from the Quotations page.`],
+        };
+      }
+    }
+    return { lead, auto };
+  });
   const enriched = await enrichLead(lead);
   res.json({ ...enriched, ...auto });
 });
