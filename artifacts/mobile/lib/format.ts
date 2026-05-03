@@ -127,6 +127,51 @@ function find(list: { value: string; label: string; tone: Tone }[], v?: string):
   return hit ?? { label: v ?? "—", tone: "muted" };
 }
 
+// ---------------------------------------------------------------------------
+// HR / Projects metadata
+// ---------------------------------------------------------------------------
+
+export const ATTENDANCE_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "present",  label: "Present",  tone: "success" },
+  { value: "absent",   label: "Absent",   tone: "destructive" },
+  { value: "half_day", label: "Half day", tone: "orange" },
+  { value: "leave",    label: "On leave", tone: "blue" },
+  { value: "holiday",  label: "Holiday",  tone: "navy" },
+];
+
+export const EMPLOYEE_TYPES: { value: string; label: string; tone: Tone }[] = [
+  { value: "staff",  label: "Staff",  tone: "blue" },
+  { value: "labor",  label: "Labour", tone: "orange" },
+];
+
+export const PROJECT_STAGES: { value: string; label: string; tone: Tone }[] = [
+  { value: "new_project",  label: "New",          tone: "blue" },
+  { value: "production",   label: "Production",   tone: "navy" },
+  { value: "procurement",  label: "Procurement",  tone: "orange" },
+  { value: "delivery",     label: "Delivery",     tone: "blue" },
+  { value: "installation", label: "Installation", tone: "orange" },
+  { value: "testing",      label: "Testing",      tone: "navy" },
+  { value: "handover",     label: "Handover",     tone: "success" },
+  { value: "completed",    label: "Completed",    tone: "success" },
+];
+
+export const PIPELINE_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "pending",      label: "Pending",      tone: "muted" },
+  { value: "in_progress",  label: "In progress",  tone: "blue" },
+  { value: "done",         label: "Done",         tone: "success" },
+];
+
+export const PAYMENT_PIPELINE_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "unpaid",  label: "Unpaid",  tone: "destructive" },
+  { value: "partial", label: "Partial", tone: "orange" },
+  { value: "paid",    label: "Paid",    tone: "success" },
+];
+
+export function attendanceStatusMeta(s?: string): StatusMeta { return find(ATTENDANCE_STATUSES, s); }
+export function employeeTypeMeta(s?: string): StatusMeta { return find(EMPLOYEE_TYPES, s); }
+export function projectStageMeta(s?: string): StatusMeta { return find(PROJECT_STAGES, s); }
+export function pipelineStatusMeta(s?: string): StatusMeta { return find(PIPELINE_STATUSES, s); }
+
 export function leadStatusMeta(s?: string): StatusMeta { return find(LEAD_STATUSES, s); }
 export function leadScoreMeta(s?: string): StatusMeta { return find(LEAD_SCORES, s); }
 export function dealStageMeta(s?: string): StatusMeta { return find(DEAL_STAGES, s); }

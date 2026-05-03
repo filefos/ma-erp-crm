@@ -105,3 +105,27 @@ export function isAdmin(user: UserLike | null | undefined): boolean {
   if (!user) return false;
   return ADMIN_LEVELS.has(user.permissionLevel ?? "");
 }
+
+const HR_ROLES = new Set(["hr", "hr_manager", "hr_person"]);
+const PROJECT_ROLES = new Set(["project_manager", "production", "management"]);
+const PROJECT_DEPTS = new Set(["Projects", "Production", "Management", "Main Admin"]);
+
+export function canMarkAttendance(user: UserLike | null | undefined): boolean {
+  if (!user) return false;
+  if (isAdmin(user)) return true;
+  const role = (user.role ?? "").toLowerCase();
+  if (HR_ROLES.has(role)) return true;
+  return user.departmentName === "HR";
+}
+
+export function canManageHr(user: UserLike | null | undefined): boolean {
+  return canMarkAttendance(user);
+}
+
+export function canManageProjects(user: UserLike | null | undefined): boolean {
+  if (!user) return false;
+  if (isAdmin(user)) return true;
+  const role = (user.role ?? "").toLowerCase();
+  if (PROJECT_ROLES.has(role)) return true;
+  return PROJECT_DEPTS.has(user.departmentName ?? "");
+}
