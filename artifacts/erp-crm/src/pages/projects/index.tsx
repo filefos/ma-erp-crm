@@ -102,7 +102,6 @@ export function ProjectsList() {
             filtered.length === 0 ? <TableRow><TableCell colSpan={12} className="text-center py-8 text-muted-foreground">No projects found.</TableCell></TableRow> :
             filtered.map(p => {
               const progress = getProgress(p);
-              const anyP = p as unknown as { clientPhone?: string; deliveryDate?: string; salespersonName?: string };
               return (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">
@@ -111,7 +110,7 @@ export function ProjectsList() {
                   <TableCell className="font-medium">{p.projectName}</TableCell>
                   <TableCell>{p.clientName}</TableCell>
                   <TableCell className="text-muted-foreground">{p.location || "-"}</TableCell>
-                  <TableCell>{anyP.salespersonName || <span className="text-muted-foreground italic text-xs">Unassigned</span>}</TableCell>
+                  <TableCell>{p.salespersonName || <span className="text-muted-foreground italic text-xs">Unassigned</span>}</TableCell>
                   <TableCell className="text-right font-semibold">AED {Number(p.projectValue ?? 0).toLocaleString()}</TableCell>
                   <TableCell><Badge variant="secondary" className={stageColors[p.stage] ?? ""}>{p.stage.replace("_"," ")}</Badge></TableCell>
                   <TableCell>
@@ -122,18 +121,18 @@ export function ProjectsList() {
                   </TableCell>
                   <TableCell className="text-xs">{p.startDate || "-"}</TableCell>
                   <TableCell className="text-xs">{p.endDate || "-"}</TableCell>
-                  <TableCell className="text-xs">{anyP.deliveryDate || "-"}</TableCell>
+                  <TableCell className="text-xs">{p.deliveryDate || "-"}</TableCell>
                   <TableCell>
-                    {anyP.clientPhone && (
+                    {p.clientPhone && (
                       <WhatsAppQuickIcon
-                        phone={anyP.clientPhone}
+                        phone={p.clientPhone}
                         context="project"
                         defaultTemplateId="delivery_update"
                         vars={{
                           name: p.clientName,
                           companyName: p.clientName,
                           number: p.projectNumber,
-                          date: anyP.deliveryDate,
+                          date: p.deliveryDate,
                         }}
                         className="h-7 w-7"
                         testId={`button-wa-project-${p.id}`}

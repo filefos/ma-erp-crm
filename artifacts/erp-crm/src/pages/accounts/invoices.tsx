@@ -86,10 +86,9 @@ export function TaxInvoicesList() {
             {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
             filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No invoices found.</TableCell></TableRow> :
             filtered?.map(inv => {
-              const anyInv = inv as unknown as { clientPhone?: string; dueDate?: string };
               const today = new Date().toISOString().slice(0, 10);
               const hasBalance = inv.paymentStatus !== "paid" && Number(inv.balance ?? 0) > 0;
-              const isOverdue = hasBalance && Boolean(anyInv.dueDate && anyInv.dueDate < today);
+              const isOverdue = hasBalance && Boolean(inv.dueDate && inv.dueDate < today);
               return (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium">
@@ -102,9 +101,9 @@ export function TaxInvoicesList() {
                   <TableCell className="text-right font-medium text-red-600">AED {inv.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell><Badge variant="secondary" className={paymentStatusColors[inv.paymentStatus] ?? ""}>{inv.paymentStatus}</Badge></TableCell>
                   <TableCell>
-                    {anyInv.clientPhone && (
+                    {inv.clientPhone && (
                       <WhatsAppQuickIcon
-                        phone={anyInv.clientPhone}
+                        phone={inv.clientPhone}
                         context="invoice"
                         defaultTemplateId={isOverdue ? "payment_reminder" : "invoice_sent"}
                         vars={{
@@ -114,7 +113,7 @@ export function TaxInvoicesList() {
                           amount: isOverdue
                             ? Number(inv.balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
                             : Number(inv.grandTotal ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 }),
-                          dueDate: anyInv.dueDate,
+                          dueDate: inv.dueDate,
                         }}
                         className="h-7 w-7"
                         testId={`button-wa-invoice-${inv.id}`}

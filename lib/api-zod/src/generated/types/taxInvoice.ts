@@ -14,8 +14,10 @@ export interface TaxInvoice {
   companyTrn?: string;
   clientName: string;
   clientTrn?: string;
+  clientPhone?: string;
   invoiceDate?: string;
   supplyDate?: string;
+  dueDate?: string;
   quotationId?: number;
   projectId?: number;
   subtotal?: number;

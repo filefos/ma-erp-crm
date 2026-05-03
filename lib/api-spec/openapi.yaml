@@ -4597,9 +4597,13 @@ components:
           type: string
         clientTrn:
           type: string
+        clientPhone:
+          type: string
         invoiceDate:
           type: string
         supplyDate:
+          type: string
+        dueDate:
           type: string
         quotationId:
           type: integer
@@ -4839,6 +4843,8 @@ components:
         projectName:
           type: string
         clientName:
+          type: string
+        clientPhone:
           type: string
         companyId:
           type: integer

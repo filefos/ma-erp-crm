@@ -46,6 +46,7 @@ const MODULES = [
   "projects",
   "employees", "attendance",
   "users", "companies", "departments", "roles", "audit_logs",
+  "emails", "whatsapp",
 ] as const;
 
 router.get("/roles", requirePermissionLevel("company_admin"), async (_req, res): Promise<void> => {

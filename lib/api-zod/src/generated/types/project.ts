@@ -11,6 +11,7 @@ export interface Project {
   projectNumber: string;
   projectName: string;
   clientName: string;
+  clientPhone?: string;
   companyId?: number;
   companyRef?: string;
   location?: string;

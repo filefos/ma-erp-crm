@@ -466,8 +466,10 @@ export interface TaxInvoice {
   companyTrn?: string;
   clientName: string;
   clientTrn?: string;
+  clientPhone?: string;
   invoiceDate?: string;
   supplyDate?: string;
+  dueDate?: string;
   quotationId?: number;
   projectId?: number;
   subtotal?: number;
@@ -592,6 +594,7 @@ export interface Project {
   projectNumber: string;
   projectName: string;
   clientName: string;
+  clientPhone?: string;
   companyId?: number;
   companyRef?: string;
   location?: string;
