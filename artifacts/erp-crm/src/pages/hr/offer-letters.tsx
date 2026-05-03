@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  useListOfferLetters, useCreateOfferLetter, getListOfferLettersQueryKey,
+  useListOfferLetters, useCreateOfferLetter, useListEmployees, useGetEmployee,
+  getListOfferLettersQueryKey, getGetEmployeeQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CompanyField } from "@/components/CompanyField";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { FileText, Plus, Search } from "lucide-react";
+import { FileText, Plus, Search, User } from "lucide-react";
 
 const STATUS_TONE: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -22,23 +23,23 @@ const STATUS_TONE: Record<string, string> = {
   rejected: "bg-red-100 text-red-800",
 };
 
+const NEW_CANDIDATE = "__new_candidate__";
+
+const EMPTY_FORM = {
+  source: NEW_CANDIDATE as string,
+  employeeId: "" as string,
+  candidateName: "", companyId: "", templateType: "staff", workerType: "staff",
+  designation: "", joiningDate: "", basicSalary: "", allowances: "",
+  candidateNationality: "", candidatePassportNo: "", candidatePersonalEmail: "", candidatePersonalPhone: "",
+};
+
 export function OfferLettersList() {
   const [, setLocation] = useLocation();
   const [status, setStatus] = useState<string>("all");
   const [templateType, setTemplateType] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    candidateName: "", companyId: "", templateType: "staff", workerType: "staff",
-    designation: "", joiningDate: "", basicSalary: "", allowances: "",
-    candidateNationality: "", candidatePassportNo: "", candidatePersonalEmail: "", candidatePersonalPhone: "",
-  });
-
-  // Auto-open the create dialog when navigated with ?new=1
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("new") === "1") setOpen(true);
-  }, []);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const qc = useQueryClient();
   const { filterByCompany } = useActiveCompany();
@@ -47,12 +48,51 @@ export function OfferLettersList() {
     const s = search.toLowerCase();
     return !s || o.candidateName.toLowerCase().includes(s) || o.letterNumber.toLowerCase().includes(s);
   });
+  const { data: employees } = useListEmployees({});
+  const scopedEmployees = filterByCompany(employees ?? []) as any[];
+
+  // Pull selected employee for prefill (only once a real employee id is chosen).
+  const selectedEmpId = form.source !== NEW_CANDIDATE && form.source ? parseInt(form.source, 10) : undefined;
+  const { data: selectedEmployee } = useGetEmployee(selectedEmpId!, {
+    query: { queryKey: getGetEmployeeQueryKey(selectedEmpId!), enabled: !!selectedEmpId },
+  });
+  useEffect(() => {
+    if (!selectedEmployee) return;
+    const e: any = selectedEmployee;
+    setForm(p => ({
+      ...p,
+      employeeId: String(e.id),
+      candidateName: e.name ?? p.candidateName,
+      companyId: e.companyId ? String(e.companyId) : p.companyId,
+      designation: e.designation ?? p.designation,
+      joiningDate: e.joiningDate ?? p.joiningDate,
+      basicSalary: e.basicSalary != null ? String(e.basicSalary) : p.basicSalary,
+      allowances: e.allowances != null ? String(e.allowances) : p.allowances,
+      candidateNationality: e.nationality ?? p.candidateNationality,
+      candidatePassportNo: e.passportNo ?? p.candidatePassportNo,
+      candidatePersonalEmail: e.personalEmail ?? p.candidatePersonalEmail,
+      candidatePersonalPhone: e.personalPhone ?? p.candidatePersonalPhone,
+      templateType: e.type === "labor" || e.type === "labour" ? "labour" : "staff",
+      workerType: e.type === "labor" || e.type === "labour" ? "labor" : "staff",
+    }));
+  }, [selectedEmployee]);
+
+  // Auto-open via ?new=1 (and pre-select employee if employeeId param present)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "1") {
+      setOpen(true);
+      const eid = params.get("employeeId");
+      if (eid) setForm(p => ({ ...p, source: eid }));
+    }
+  }, []);
 
   const create = useCreateOfferLetter({
     mutation: {
       onSuccess: (created: any) => {
         qc.invalidateQueries({ queryKey: getListOfferLettersQueryKey() });
         setOpen(false);
+        setForm({ ...EMPTY_FORM });
         setLocation(`/hr/offer-letters/${created.id}`);
       },
     },
@@ -65,6 +105,7 @@ export function OfferLettersList() {
         companyId: parseInt(form.companyId, 10),
         templateType: form.templateType,
         workerType: form.workerType,
+        employeeId: form.employeeId ? parseInt(form.employeeId, 10) : undefined,
         designation: form.designation || undefined,
         joiningDate: form.joiningDate || undefined,
         basicSalary: form.basicSalary ? Number(form.basicSalary) : undefined,
@@ -84,17 +125,39 @@ export function OfferLettersList() {
           <h1 className="text-2xl font-bold tracking-tight">Offer Letters</h1>
           <p className="text-muted-foreground">Issue and track candidate offer letters.</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setForm({ ...EMPTY_FORM }); }}>
           <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-new-offer"><Plus className="w-4 h-4 mr-2" />New Offer Letter</Button></DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>New Offer Letter</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="space-y-1 col-span-2">
+                <Label className="flex items-center gap-1"><User className="w-3 h-3" />Candidate Source *</Label>
+                <Select value={form.source} onValueChange={v => {
+                  if (v === NEW_CANDIDATE) {
+                    // Reset to a fresh new-candidate state
+                    setForm({ ...EMPTY_FORM, source: NEW_CANDIDATE });
+                  } else {
+                    setForm(p => ({ ...p, source: v, employeeId: v }));
+                  }
+                }}>
+                  <SelectTrigger data-testid="select-candidate-source"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NEW_CANDIDATE}>+ New candidate (manual entry)</SelectItem>
+                    {scopedEmployees.map(e => (
+                      <SelectItem key={e.id} value={String(e.id)}>{e.name} · {e.employeeId}{e.designation ? ` · ${e.designation}` : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.source !== NEW_CANDIDATE && form.employeeId && (
+                  <p className="text-[11px] text-muted-foreground">Pre-filled from employee #{form.employeeId}. Edit any field below before issuing.</p>
+                )}
+              </div>
               <div className="space-y-1 col-span-2"><Label>Candidate Name *</Label><Input value={form.candidateName} onChange={e => setForm(p => ({ ...p, candidateName: e.target.value }))} data-testid="input-candidate-name" /></div>
-              <div className="space-y-1"><Label>Company *</Label><CompanyField value={form.companyId} onChange={v => setForm(p => ({ ...p, companyId: v }))} /></div>
-              <div className="space-y-1"><Label>Template</Label>
+              <div className="space-y-1"><Label>Issuing Company *</Label><CompanyField value={form.companyId} onChange={v => setForm(p => ({ ...p, companyId: v }))} /></div>
+              <div className="space-y-1"><Label>Template *</Label>
                 <Select value={form.templateType} onValueChange={v => setForm(p => ({ ...p, templateType: v, workerType: v === "labour" ? "labor" : "staff" }))}>
                   <SelectTrigger data-testid="select-template-type"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="staff">Staff (08:00–18:00)</SelectItem><SelectItem value="labour">Labour (07:00–19:00, 9h+2h break)</SelectItem></SelectContent>
+                  <SelectContent><SelectItem value="staff">Staff (08:00 AM – 06:00 PM)</SelectItem><SelectItem value="labour">Labour (07:00 AM – 07:00 PM, 9h+2h breaks)</SelectItem></SelectContent>
                 </Select>
               </div>
               <div className="space-y-1"><Label>Designation</Label><Input value={form.designation} onChange={e => setForm(p => ({ ...p, designation: e.target.value }))} /></div>
