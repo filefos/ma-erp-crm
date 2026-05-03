@@ -641,7 +641,7 @@ function AccountRow({ account: a }: AccountRowProps) {
     test.mutate({ id: a.id }, {
       onSuccess: (data) => setResult(data as unknown as TestResult),
       onError: (err: unknown) => {
-        toast({ title: "Could not test", description: err instanceof Error ? err.message : undefined, variant: "destructive" });
+        toast({ title: "Could not test", description: formatWhatsappError(err), variant: "destructive" });
       },
     });
   };
@@ -691,12 +691,14 @@ function AccountRow({ account: a }: AccountRowProps) {
               {result.nameStatus && `name: ${result.nameStatus}`}
             </div>
           )}
+          <div className="text-green-800/80">Token env checked: <code>{result.envVarName}</code></div>
         </div>
       )}
       {result && !result.ok && (
         <div className="text-xs rounded-md border border-red-200 bg-red-50 text-red-900 p-2 space-y-0.5">
           <div className="font-medium flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Connection failed</div>
-          {!result.envVarSet && <div>Token env <code>{result.envVarName}</code> is not set in this Replit. Add it under Tools → Secrets.</div>}
+          <div>Token env checked: <code>{result.envVarName}</code> ({result.envVarSet ? "set" : "not set"})</div>
+          {!result.envVarSet && <div>Add <code>{result.envVarName}</code> in this Replit under Tools → Secrets.</div>}
           {result.error?.message && <div>{result.error.message}</div>}
           {(result.error?.code != null || result.error?.subcode != null || result.error?.type) && (
             <div className="font-mono text-[11px] text-red-800/80">
