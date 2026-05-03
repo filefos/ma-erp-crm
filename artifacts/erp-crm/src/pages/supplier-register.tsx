@@ -205,9 +205,6 @@ export default function SupplierRegisterPage() {
     if (s === 3) {
       if (form.categories.length === 0) return "Please select at least one supply category.";
       if (form.categories.includes("Other") && !form.categoriesOther.trim()) return "Please describe the Other category.";
-      if (!form.yearsExperience.trim()) return "Years of experience is required.";
-      if (!form.turnoverBand.trim()) return "Annual turnover band is required.";
-      if (!form.employeeBand.trim()) return "Employee count band is required.";
     }
     if (s === 4) {
       if (!form.bankName.trim()) return "Bank name is required.";
@@ -217,6 +214,11 @@ export default function SupplierRegisterPage() {
       if (!form.iban.trim()) return "IBAN is required.";
       if (!form.swift.trim()) return "SWIFT / BIC code is required.";
       if (!form.currency.trim()) return "Account currency is required.";
+    }
+    if (s === 5) {
+      if (!form.yearsExperience.trim()) return "Years of experience is required.";
+      if (!form.turnoverBand.trim()) return "Annual turnover band is required.";
+      if (!form.employeeBand.trim()) return "Employee count band is required.";
     }
     if (s === 6) {
       const present = new Set(files.map(f => f.documentType));
