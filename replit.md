@@ -24,6 +24,10 @@ pnpm workspace monorepo with React+Vite frontend, Express 5 backend, PostgreSQL 
 
 ## Key Commands
 
+## Mobile App (Expo)
+
+`artifacts/mobile` (slug `mobile`, previewPath `/mobile/`, port 18115) — Expo Router app for the same ERP-CRM. Reuses `@workspace/api-client-react` (token via `expo-secure-store`, base URL via `EXPO_PUBLIC_DOMAIN`, sends `Authorization` + `X-Active-Company-Id`). Login screen calls `/api/auth/login`, lets the user pick which authorized company to enter (chips from `useListAuthCompanies`). Eight role-based home dashboards (Accountant, Salesperson, Attendance, CRM, Procurement, Inventory, Assets, Admin) chosen by `homeFor(user.role)` with KPI tiles + quick links. Bottom tab bar mirrors the web sidebar via `visibleModulesFor(role)` (same RBAC). Header shows active-company chip → switcher modal when user has >1 company, plus sign-out. Brand: navy `#0f2d5a`, blue `#1e6ab0`, orange accents. Module screens are placeholders pending follow-up build-out.
+
 ## Modules / Features
 - **Projects — Salesperson, Timeline & Sales Performance** (`pages/projects/sales-performance.tsx`, `/projects/sales-performance`, nav: "Sales Performance" under Projects):
   - **Schema additions** (data-preserving, `ALTER TABLE … ADD COLUMN IF NOT EXISTS` migrations in `app.ts`): `projects.salesperson_id INTEGER` and `projects.delivery_date TEXT`; new `sales_targets` table (id, company_id, user_id, period[`monthly`/`quarterly`/`yearly`], year, month, quarter, target_amount, notes, timestamps).
