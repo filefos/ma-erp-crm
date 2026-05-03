@@ -29,6 +29,7 @@ import emailSettingsRouter from "./email-settings";
 import whatsappRouter from "./whatsapp";
 import whatsappWebhookRouter from "./whatsapp-webhook";
 import aiRouter from "./ai";
+import adminResetRouter from "./admin-reset";
 
 const router: IRouter = Router();
 
@@ -68,5 +69,6 @@ router.use(emailSettingsRouter);
 router.use(whatsappWebhookRouter);
 router.use(whatsappRouter);
 router.use(aiRouter);
+router.use(adminResetRouter);
 
 export default router;
