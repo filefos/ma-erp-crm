@@ -87,7 +87,7 @@ interface CompanyInfo {
 
 const COMPANIES: Record<number, CompanyInfo> = {
   1: {
-    name: "PRIME MAX PREFAB HOUSES INDUSTRY LLC",
+    name: "PRIME MAX PREFAB HOUSES IND. LLC.",
     address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
     trn: "105383255400003",
     phone: "056 616 3555",
@@ -659,6 +659,18 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <div className="font-bold mb-1">Delivery Date &amp; Time:</div>
               <div className="text-gray-600 mb-4">{data.deliveryDate ?? "________________________"}</div>
               <div className="border-t border-gray-500 pt-1">Date / Time</div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CHEQUE FAVOR BANNER (quotation page 1, prominent, brand-highlighted) */}
+        {isQuotation && (
+          <div
+            className="border-2 border-orange-500 bg-orange-50 p-3 mb-3 text-center"
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+          >
+            <div className="text-[12px] font-black uppercase tracking-wide text-[#0f2d5a]">
+              All cheques shall be prepared in favor of "{co.name}"
             </div>
           </div>
         )}

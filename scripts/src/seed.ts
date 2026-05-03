@@ -65,7 +65,7 @@ async function seed() {
   // ===== COMPANIES (2) =====
   const [pm, ep] = await db.insert(companiesTable).values([
     {
-      name: "Prime Max Prefab Houses Industry LLC",
+      name: "PRIME MAX PREFAB HOUSES IND. LLC.",
       shortName: "Prime Max",
       prefix: "PM",
       address: "Industrial Area 12, Sharjah, United Arab Emirates",
@@ -74,7 +74,7 @@ async function seed() {
       website: "www.primemax-uae.com",
       trn: "100234567890001",
       vatPercent: 5,
-      bankDetails: "Emirates NBD\nA/c Name: Prime Max Prefab Houses Industry LLC\nA/c No: 1234567890101\nIBAN: AE070331234567890101001\nSWIFT: EBILAEAD",
+      bankDetails: "Emirates NBD\nA/c Name: PRIME MAX PREFAB HOUSES IND. LLC.\nA/c No: 1234567890101\nIBAN: AE070331234567890101001\nSWIFT: EBILAEAD",
       logo: "/uploads/logos/prime-max.png",
     },
     {
@@ -303,7 +303,7 @@ async function seed() {
   ]);
 
   const [bank1] = await db.insert(bankAccountsTable).values([
-    { bankName: "Emirates NBD", accountName: "Prime Max Prefab Houses Industry LLC", accountNumber: "1234567890101", iban: "AE070331234567890101001", swiftCode: "EBILAEAD", currency: "AED", companyId: pm.id },
+    { bankName: "Emirates NBD", accountName: "PRIME MAX PREFAB HOUSES IND. LLC.", accountNumber: "1234567890101", iban: "AE070331234567890101001", swiftCode: "EBILAEAD", currency: "AED", companyId: pm.id },
     { bankName: "Mashreq Bank", accountName: "Elite Pre-Fabricated Houses Trading Co. LLC", accountNumber: "5555666677778", iban: "AE200330005555666677778", swiftCode: "BOMLAEAD", currency: "AED", companyId: ep.id },
   ]).returning();
 
@@ -320,7 +320,7 @@ async function seed() {
   const cm = userByEmail("manager@primemax.ae");
   await db.insert(auditLogsTable).values([
     { userId: sa.id, userName: sa.name, action: "login", entity: "auth", details: "Super admin signed in", ipAddress: "127.0.0.1" },
-    { userId: sa.id, userName: sa.name, action: "create", entity: "company", entityId: pm.id, details: "Created company Prime Max Prefab Houses Industry LLC" },
+    { userId: sa.id, userName: sa.name, action: "create", entity: "company", entityId: pm.id, details: "Created company PRIME MAX PREFAB HOUSES IND. LLC." },
     { userId: sa.id, userName: sa.name, action: "create", entity: "company", entityId: ep.id, details: "Created company Elite Pre-Fabricated Houses Trading Co. LLC" },
     { userId: sa.id, userName: sa.name, action: "create", entity: "user", entityId: cm.id, details: `Created user ${cm.email} with role company_admin` },
     { userId: sa.id, userName: sa.name, action: "permission_change", entity: "role", entityId: roleByCode("user").id, details: "Initialized default permission matrix for all 7 roles" },

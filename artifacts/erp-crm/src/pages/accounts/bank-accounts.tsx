@@ -84,7 +84,7 @@ export function BankAccountsList() {
             <DialogHeader><DialogTitle>Add Bank Account</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="space-y-1 col-span-2"><Label>Bank Name *</Label><Input value={form.bankName} onChange={e => setForm(p => ({...p, bankName: e.target.value}))} placeholder="Emirates NBD, Mashreq, ADCB..." /></div>
-              <div className="space-y-1 col-span-2"><Label>Account Name *</Label><Input value={form.accountName} onChange={e => setForm(p => ({...p, accountName: e.target.value}))} placeholder="Prime Max Prefab Houses Industry LLC" /></div>
+              <div className="space-y-1 col-span-2"><Label>Account Name *</Label><Input value={form.accountName} onChange={e => setForm(p => ({...p, accountName: e.target.value}))} placeholder="PRIME MAX PREFAB HOUSES IND. LLC." /></div>
               <div className="space-y-1"><Label>Account Number *</Label><Input value={form.accountNumber} onChange={e => setForm(p => ({...p, accountNumber: e.target.value}))} /></div>
               <div className="space-y-1"><Label>Currency</Label>
                 <Select value={form.currency} onValueChange={v => setForm(p => ({...p, currency: v}))}>
