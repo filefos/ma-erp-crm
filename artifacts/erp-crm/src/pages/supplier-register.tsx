@@ -209,10 +209,10 @@ export default function SupplierRegisterPage() {
           ...form,
           referenceClients: cleanRefs,
           attachments: files.map(f => ({ filename: f.filename, contentType: f.contentType, content: f.content })),
-        } as never,
+        },
       });
       const co = companies?.find(c => c.id === form.companyId);
-      setSubmitted({ refNumber: (result as { refNumber: string }).refNumber, companyName: co?.name ?? "Procurement Team" });
+      setSubmitted({ refNumber: result.refNumber, companyName: co?.name ?? "Procurement Team" });
     } catch (err: unknown) {
       const e = err as { error?: string; message?: string };
       setError(e?.error ?? e?.message ?? "Submission failed. Please try again.");
