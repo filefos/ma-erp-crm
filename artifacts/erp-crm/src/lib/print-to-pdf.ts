@@ -35,14 +35,57 @@ function findSafeCutY(canvas: HTMLCanvasElement, targetY: number, windowPx: numb
   return targetY;
 }
 
+// Find the last row of the canvas that contains any non-white pixels. Used
+// to trim trailing whitespace so a fixed-height A4 element with internal
+// padding doesn't render as a blank second PDF page.
+function findLastContentY(canvas: HTMLCanvasElement): number {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas.height;
+  let data: Uint8ClampedArray;
+  try {
+    data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  } catch {
+    return canvas.height;
+  }
+  const step = 4;
+  const whiteThreshold = 248;
+  for (let y = canvas.height - 1; y >= 0; y--) {
+    const rowOffset = y * canvas.width * 4;
+    for (let x = 0; x < canvas.width; x += step) {
+      const i = rowOffset + x * 4;
+      if (data[i] < whiteThreshold || data[i + 1] < whiteThreshold || data[i + 2] < whiteThreshold) {
+        return y + 1;
+      }
+    }
+  }
+  return canvas.height;
+}
+
 export async function captureElementToPdfBase64(el: HTMLElement, filename: string): Promise<{ base64: string; filename: string }> {
-  const canvas = await html2canvas(el, {
+  const rawCanvas = await html2canvas(el, {
     scale: 2,
     useCORS: true,
     backgroundColor: "#ffffff",
     windowWidth: el.scrollWidth,
     windowHeight: el.scrollHeight,
   });
+
+  // Trim trailing whitespace from the rendered canvas. Without this an A4
+  // element with bottom padding can render a near-blank second page.
+  const lastY = findLastContentY(rawCanvas);
+  let canvas: HTMLCanvasElement = rawCanvas;
+  if (lastY > 0 && lastY < rawCanvas.height) {
+    const trimmed = document.createElement("canvas");
+    trimmed.width = rawCanvas.width;
+    trimmed.height = lastY;
+    const tctx = trimmed.getContext("2d");
+    if (tctx) {
+      tctx.fillStyle = "#ffffff";
+      tctx.fillRect(0, 0, trimmed.width, trimmed.height);
+      tctx.drawImage(rawCanvas, 0, 0, rawCanvas.width, lastY, 0, 0, rawCanvas.width, lastY);
+      canvas = trimmed;
+    }
+  }
 
   const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
   const pageWidth = pdf.internal.pageSize.getWidth();
@@ -51,6 +94,16 @@ export async function captureElementToPdfBase64(el: HTMLElement, filename: strin
   const imgWidth = pageWidth;
   const ratio = canvas.width / imgWidth;
   const sliceHeightPx = Math.floor(pageHeight * ratio);
+  // If content fits in a single page (with up to 2% slack), render it as one
+  // page scaled exactly to its height — no slicing, no risk of blank pages.
+  if (canvas.height <= sliceHeightPx * 1.02) {
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    const drawHeight = Math.min(pageHeight, canvas.height / ratio);
+    pdf.addImage(dataUrl, "JPEG", 0, 0, imgWidth, drawHeight, undefined, "FAST");
+    const dataUri = pdf.output("datauristring");
+    const base64 = dataUri.split(",")[1] ?? "";
+    return { base64, filename: filename.endsWith(".pdf") ? filename : `${filename}.pdf` };
+  }
   // Search up to 35% of a page above the target boundary for a clean cut.
   // A wider window means we almost always find whitespace rather than slicing
   // through text, even on dense pages like the offer letter rules list.

@@ -41,13 +41,21 @@ const COMPANY_RULES = [
   "Salary is paid every month between the 1st and 10th of the following month.",
   "Taking leave / off without prior written permission will result in a deduction of three (3) days' salary per occurrence.",
   "Any damage or loss of company material is fully recoverable from the employee's salary.",
-  "Emergency leave is allowed only after discussion with and approval from higher management.",
-  "Unsatisfactory performance or lack of focus on assigned work is grounds for warning, deduction or termination at management's discretion.",
-  "Verbal abuse or fighting with any colleague will result in salary deduction and disciplinary action.",
-  "Any physical fight will be reported directly to the police and the employee handed over to the authorities.",
-  "Any attempt to steal company material will result in an immediate police case against the employee.",
-  "After completion of two (2) continuous years of service, the employee is entitled to annual leave with leave salary and a one-side economy class air ticket to home country.",
+  "Unsatisfactory performance or misconduct is grounds for warning, deduction or termination at management's discretion.",
+  "Verbal abuse, fighting or theft will result in disciplinary action and may be reported to the UAE authorities.",
   "Cooking facility and company-provided residence are available.",
+];
+
+// UAE Federal Decree-Law No. 33 of 2021 — minimum statutory clauses to include
+// in every offer letter for compliance with UAE Labour Law.
+const UAE_LAW_CLAUSES = [
+  "Probation Period: Six (6) months from the joining date as per Article 9 of UAE Federal Decree-Law No. 33 of 2021.",
+  "Notice Period: Either party may terminate the contract by giving thirty (30) days' written notice after probation.",
+  "Annual Leave: Thirty (30) calendar days per year after one (1) completed year of service, as per Article 29.",
+  "Public Holidays, Sick Leave and Maternity Leave are granted in accordance with UAE Labour Law.",
+  "End-of-Service Gratuity is payable as per Article 51 of UAE Federal Decree-Law No. 33 of 2021 upon eligible separation.",
+  "Working hours and overtime shall comply with Articles 17 and 19 of UAE Labour Law.",
+  "This contract is governed by the laws of the United Arab Emirates; any dispute shall be referred to the competent UAE labour courts.",
 ];
 
 const STAFF_DUTY = "Duty Timing: 08:00 AM – 06:00 PM (Staff). One-side economy class air ticket to home country provided after completion of two (2) continuous years of service.";
@@ -67,15 +75,26 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
   const totalSalary = (doc.basicSalary ?? 0) + (doc.allowances ?? 0);
   const dutyLine = doc.templateType === "labour" ? LABOUR_DUTY : STAFF_DUTY;
 
-  // Compact spacing tokens — the goal is to fit a full offer letter
-  // (compensation + commission + 11 company rules + signatures) into a
-  // single A4 page. All vertical rhythm flows through these constants.
-  const FS_BODY = 10.5;
-  const FS_SMALL = 9.5;
-  const FS_H2 = 12;
-  const LH = 1.35;
-  const headingStyle = { color: "#0f2d5a", fontSize: FS_H2, fontWeight: 700 as const, marginTop: 10, marginBottom: 4 };
-  const paraStyle = { fontSize: FS_BODY, lineHeight: LH, margin: 0 };
+  // Slightly enlarged body type while still fitting an entire offer letter
+  // — compensation, commission, company rules, UAE-law clauses and the
+  // signature block — onto a single A4 page.
+  const FS_BODY = 11.5;
+  const FS_SMALL = 10.5;
+  const FS_H2 = 13;
+  const LH = 1.4;
+  const NAVY = "#0f2d5a";
+  const SKY = "#1e6ab0";
+  const headingStyle = {
+    color: NAVY,
+    fontSize: FS_H2,
+    fontWeight: 700 as const,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingBottom: 2,
+    borderBottom: `1px solid ${SKY}33`,
+    letterSpacing: 0.3,
+  };
+  const paraStyle = { fontSize: FS_BODY, lineHeight: LH, margin: 0, color: "#1a1a1a" };
 
   return (
     <div
@@ -84,25 +103,33 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
       style={{
         width: "794px",
         height: "1123px", // strict A4 — single page
-        padding: "28px 44px 0",
+        padding: "0",
         fontFamily: "Georgia, 'Times New Roman', serif",
         display: "flex",
         flexDirection: "column",
         boxSizing: "border-box",
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: "inset 0 0 0 1px #e8eef7",
       }}
     >
-      {/* Minimal header — legal company name (left) + Ref/Date (right).
-          Per spec, only the company name is required in the header; the
-          logo and brand title were intentionally removed. */}
-      <div style={{ borderBottom: "2px solid #0f2d5a", paddingBottom: 6 }}>
+      {/* Premium accent — twin navy / sky-blue ribbons at the very top */}
+      <div style={{ height: 6, background: NAVY }} />
+      <div style={{ height: 2, background: SKY }} />
+
+      {/* Header — legal company name (left) + Ref/Date (right) */}
+      <div style={{ padding: "16px 44px 8px", borderBottom: `1.5px solid ${NAVY}` }}>
         <div style={{ display: "table", width: "100%" }}>
           <div style={{ display: "table-row" }}>
             <div style={{ display: "table-cell", verticalAlign: "middle" }}>
-              <div style={{ color: "#0f2d5a", fontSize: 16, fontWeight: 800, lineHeight: 1.2, letterSpacing: 0.3 }}>
+              <div style={{ color: NAVY, fontSize: 17, fontWeight: 800, lineHeight: 1.2, letterSpacing: 0.5 }}>
                 {legalName}
               </div>
+              <div style={{ color: SKY, fontSize: FS_SMALL, fontStyle: "italic", marginTop: 2, letterSpacing: 0.2 }}>
+                Excellence in Prefabricated Construction
+              </div>
             </div>
-            <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL, width: 220 }}>
+            <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL, width: 220, color: NAVY }}>
               <div><strong>Ref:</strong> {doc.letterNumber}</div>
               <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
             </div>
@@ -110,13 +137,15 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
         </div>
       </div>
 
-      {/* Body wrapper — flex-1 pushes the footer to the bottom of the A4 page. */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", paddingTop: 8 }}>
+      {/* Body wrapper — flex-1 pushes the signature + footer to the bottom of the A4 page. */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "10px 44px 0" }}>
         {/* Subject */}
-        <h1 style={{ textAlign: "center", color: "#0f2d5a", fontWeight: 700, fontSize: 14, margin: "4px 0 6px" }}>OFFER OF EMPLOYMENT</h1>
+        <h1 style={{ textAlign: "center", color: NAVY, fontWeight: 700, fontSize: 16, margin: "4px 0 8px", letterSpacing: 1.2, textTransform: "uppercase" }}>
+          Offer of Employment
+        </h1>
 
         {/* Addressee — collapsed onto one line to save vertical space */}
-        <div style={{ fontSize: FS_BODY, lineHeight: LH }}>
+        <div style={{ fontSize: FS_BODY, lineHeight: LH, color: "#1a1a1a" }}>
           <strong>To:</strong> {doc.candidateName}
           {doc.candidateNationality && <> &nbsp;·&nbsp; <strong>Nationality:</strong> {doc.candidateNationality}</>}
           {doc.candidatePassportNo && <> &nbsp;·&nbsp; <strong>Passport No:</strong> {doc.candidatePassportNo}</>}
@@ -124,17 +153,20 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
 
         <p style={{ ...paraStyle, marginTop: 6 }}>Dear {doc.candidateName.split(" ")[0]},</p>
         <p style={{ ...paraStyle, marginTop: 2 }}>
-          We are pleased to offer you the position of <strong>{doc.designation ?? "—"}</strong> with{" "}
-          <strong>{legalName}</strong>, on the terms and conditions set out below.
+          We are pleased to offer you the position of <strong style={{ color: NAVY }}>{doc.designation ?? "—"}</strong> with{" "}
+          <strong style={{ color: NAVY }}>{legalName}</strong>, on the terms and conditions set out below.
         </p>
 
         {/* Compensation */}
         <h2 style={headingStyle}>1. Compensation</h2>
         <table style={{ width: "100%", fontSize: FS_BODY, borderCollapse: "collapse" }}>
           <tbody>
-            <tr><td style={{ padding: "3px 6px", border: "1px solid #ccd" }}>Basic Salary</td><td style={{ padding: "3px 6px", border: "1px solid #ccd", textAlign: "right" }}>AED {(doc.basicSalary ?? 0).toLocaleString()}</td></tr>
-            <tr><td style={{ padding: "3px 6px", border: "1px solid #ccd" }}>Allowances</td><td style={{ padding: "3px 6px", border: "1px solid #ccd", textAlign: "right" }}>AED {(doc.allowances ?? 0).toLocaleString()}</td></tr>
-            <tr style={{ background: "#f1f5fa" }}><td style={{ padding: "3px 6px", border: "1px solid #ccd", fontWeight: 700 }}>Gross Monthly Salary</td><td style={{ padding: "3px 6px", border: "1px solid #ccd", textAlign: "right", fontWeight: 700 }}>AED {totalSalary.toLocaleString()}</td></tr>
+            <tr><td style={{ padding: "4px 8px", border: `1px solid ${SKY}55` }}>Basic Salary</td><td style={{ padding: "4px 8px", border: `1px solid ${SKY}55`, textAlign: "right" }}>AED {(doc.basicSalary ?? 0).toLocaleString()}</td></tr>
+            <tr><td style={{ padding: "4px 8px", border: `1px solid ${SKY}55` }}>Allowances</td><td style={{ padding: "4px 8px", border: `1px solid ${SKY}55`, textAlign: "right" }}>AED {(doc.allowances ?? 0).toLocaleString()}</td></tr>
+            <tr style={{ background: `${SKY}15` }}>
+              <td style={{ padding: "4px 8px", border: `1px solid ${SKY}55`, fontWeight: 700, color: NAVY }}>Gross Monthly Salary</td>
+              <td style={{ padding: "4px 8px", border: `1px solid ${SKY}55`, textAlign: "right", fontWeight: 700, color: NAVY }}>AED {totalSalary.toLocaleString()}</td>
+            </tr>
           </tbody>
         </table>
 
@@ -169,9 +201,17 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
           );
         })()}
 
+        {/* Statutory UAE-law clauses */}
+        <h2 style={headingStyle}>{doc.commissionEnabled ? 4 : 3}. Statutory Terms (UAE Labour Law)</h2>
+        <ol style={{ fontSize: FS_SMALL, lineHeight: LH, paddingLeft: 18, margin: 0, color: "#1a1a1a" }}>
+          {UAE_LAW_CLAUSES.map((r, i) => (
+            <li key={i} style={{ marginBottom: 1 }}>{r}</li>
+          ))}
+        </ol>
+
         {/* Rules — compressed list */}
-        <h2 style={headingStyle}>{doc.commissionEnabled ? 4 : 3}. Company Rules &amp; Code of Conduct</h2>
-        <ol style={{ fontSize: FS_SMALL, lineHeight: LH, paddingLeft: 16, margin: 0 }}>
+        <h2 style={headingStyle}>{doc.commissionEnabled ? 5 : 4}. Company Rules &amp; Code of Conduct</h2>
+        <ol style={{ fontSize: FS_SMALL, lineHeight: LH, paddingLeft: 18, margin: 0, color: "#1a1a1a" }}>
           {COMPANY_RULES.map((r, i) => (
             <li key={i} style={{ marginBottom: 1 }}>{r}</li>
           ))}
@@ -179,41 +219,42 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
 
         {doc.notes && (
           <>
-            <h2 style={headingStyle}>{doc.commissionEnabled ? 5 : 4}. Additional Notes</h2>
+            <h2 style={headingStyle}>{doc.commissionEnabled ? 6 : 5}. Additional Notes</h2>
             <p style={{ ...paraStyle, whiteSpace: "pre-wrap" }}>{doc.notes}</p>
           </>
         )}
 
-        {/* Acceptance + Signatures */}
-        <p style={{ ...paraStyle, marginTop: 8 }}>
-          Kindly sign and return a copy of this letter within seven (7) days of receipt to confirm your acceptance of this offer and the Company Rules above.
+        <p style={{ ...paraStyle, marginTop: 6, fontStyle: "italic", color: NAVY }}>
+          Kindly sign and return a copy of this letter within seven (7) days of receipt to confirm your acceptance.
         </p>
 
-        <div style={{ display: "table", width: "100%", marginTop: 14, fontSize: FS_BODY }}>
+        {/* Spacer pushes signature block + footer to the bottom of the page */}
+        <div style={{ flex: 1, minHeight: 8 }} />
+
+        {/* Signature block — sits directly above the footer per spec */}
+        <div style={{ display: "table", width: "100%", marginTop: 8, marginBottom: 10, fontSize: FS_BODY }}>
           <div style={{ display: "table-row" }}>
             <div style={{ display: "table-cell", width: "50%", paddingRight: 24, verticalAlign: "top" }}>
-              <div style={{ borderTop: "1px solid #555", paddingTop: 4 }}>For and on behalf of</div>
-              <div style={{ fontWeight: 700, color: "#0f2d5a" }}>{legalName}</div>
-              <div style={{ borderTop: "1px solid #555", paddingTop: 4, marginTop: 28 }}>Authorised Signatory</div>
+              <div style={{ color: "#444" }}>For and on behalf of</div>
+              <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3 }}>{legalName}</div>
+              <div style={{ borderTop: `1px solid ${NAVY}`, paddingTop: 4, marginTop: 38, color: NAVY, fontWeight: 600 }}>Authorised Signatory</div>
             </div>
             <div style={{ display: "table-cell", width: "50%", paddingLeft: 24, verticalAlign: "top" }}>
-              <div style={{ borderTop: "1px solid #555", paddingTop: 4 }}>Accepted by</div>
-              <div style={{ fontWeight: 700 }}>{doc.candidateName}</div>
-              <div style={{ borderTop: "1px solid #555", paddingTop: 4, marginTop: 28 }}>Signature &amp; Date</div>
+              <div style={{ color: "#444" }}>Accepted by</div>
+              <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3 }}>{doc.candidateName}</div>
+              <div style={{ borderTop: `1px solid ${NAVY}`, paddingTop: 4, marginTop: 38, color: NAVY, fontWeight: 600 }}>Signature &amp; Date</div>
             </div>
           </div>
         </div>
-
-        {/* Spacer pushes footer to the bottom of the page */}
-        <div style={{ flex: 1, minHeight: 8 }} />
       </div>
 
-      {/* Footer — official address and contact details. Dark navy top
-          border to match the header. No TRN, no P.O. Box per request. */}
-      <div style={{ borderTop: "2px solid #0f2d5a", paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: "#0f2d5a", textAlign: "center", lineHeight: 1.35 }}>
+      {/* Footer — official address and contact details. */}
+      <div style={{ borderTop: `1.5px solid ${NAVY}`, paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: NAVY, textAlign: "center", lineHeight: 1.4, background: `${SKY}10` }}>
         <div>Plot # 2040, Sajja Industrial Area, Sharjah, UAE</div>
         <div>Tel: 0566163555 &nbsp;·&nbsp; Email: hr@primemaxprefab.com &nbsp;·&nbsp; Web: www.primemaxprefab.com</div>
       </div>
+      <div style={{ height: 2, background: SKY }} />
+      <div style={{ height: 6, background: NAVY }} />
     </div>
   );
 });
