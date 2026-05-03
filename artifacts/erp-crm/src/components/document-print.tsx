@@ -562,31 +562,38 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </tbody>
             </table>
 
-            {/* Bank Details (left) + Totals (right) side-by-side */}
+            {/* Bank Details (left, invoices only) + Totals (right) side-by-side.
+                Bank details are intentionally hidden on quotations and shown only
+                on proforma / tax invoices. */}
             <div className="flex border-l border-r border-b border-gray-400 mb-0">
-              {/* Bank Details */}
-              <div className="flex-1 border-r border-gray-400 p-2 bg-gray-50" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                {co.bank ? (
-                  <>
-                    <div className="font-black text-[11px] uppercase mb-1 text-[#0f2d5a]">Bank Details</div>
-                    <table className="text-[10px] w-full">
-                      <tbody>
-                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Bank Name</td><td className="font-semibold">{co.bank.bankName}</td></tr>
-                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Title</td><td className="font-semibold">{co.bank.accountTitle}</td></tr>
-                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Number</td><td className="font-semibold">{co.bank.accountNumber}</td></tr>
-                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">IBAN</td><td className="font-semibold">{co.bank.iban}</td></tr>
-                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Swift Code</td><td className="font-semibold">{co.bank.swift}</td></tr>
-                        <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Currency</td><td className="font-semibold">{co.bank.currency}</td></tr>
-                      </tbody>
-                    </table>
-                  </>
-                ) : (
-                  <div className="text-[10px] text-gray-400 italic">No bank details configured</div>
-                )}
-              </div>
+              {/* Bank Details — hidden on quotations */}
+              {!isQuotation && (
+                <div className="flex-1 border-r border-gray-400 p-2 bg-gray-50" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                  {co.bank ? (
+                    <>
+                      <div className="font-black text-[11px] uppercase mb-1 text-[#0f2d5a]">Bank Details</div>
+                      <div className="text-[10px] font-semibold mb-1 text-[#0f2d5a]">
+                        All cheques shall be prepared in favor of "{co.name}".
+                      </div>
+                      <table className="text-[10px] w-full">
+                        <tbody>
+                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Bank Name</td><td className="font-semibold">{co.bank.bankName}</td></tr>
+                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Title</td><td className="font-semibold">{co.bank.accountTitle}</td></tr>
+                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Number</td><td className="font-semibold">{co.bank.accountNumber}</td></tr>
+                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">IBAN</td><td className="font-semibold">{co.bank.iban}</td></tr>
+                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Swift Code</td><td className="font-semibold">{co.bank.swift}</td></tr>
+                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Currency</td><td className="font-semibold">{co.bank.currency}</td></tr>
+                        </tbody>
+                      </table>
+                    </>
+                  ) : (
+                    <div className="text-[10px] text-gray-400 italic">No bank details configured</div>
+                  )}
+                </div>
+              )}
 
-              {/* Totals */}
-              <div className="w-72 flex-shrink-0">
+              {/* Totals — full width on quotations, right column otherwise */}
+              <div className={isQuotation ? "ml-auto w-72 flex-shrink-0" : "w-72 flex-shrink-0"}>
                 <table className="w-full border-collapse text-[12px]">
                   <tbody>
                     {(data.discount ?? 0) > 0 && (

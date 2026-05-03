@@ -24,7 +24,7 @@ export function BankAccountsList() {
   const queryClient = useQueryClient();
   const { data: accounts, isLoading } = useListBankAccounts();
   const { data: companies } = useListCompanies();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, companyName } = useActiveCompany();
   const filtered = filterByCompany(accounts ?? []);
   const create = useCreateBankAccount({
     mutation: {
@@ -41,6 +41,21 @@ export function BankAccountsList() {
 
   return (
     <div className="space-y-4">
+      {/* Cheque-favor notice — pinned above the page so it is unmissable */}
+      <div className="rounded-xl border-2 border-[#0f2d5a] bg-gradient-to-r from-[#0f2d5a]/5 to-[#1e6ab0]/5 px-4 py-3 shadow-sm" data-testid="banner-cheque-favor">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white">
+            <Landmark className="h-4 w-4" />
+          </div>
+          <div className="flex-1">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-[#0f2d5a]">Important — Cheque Instructions</div>
+            <div className="text-sm font-semibold text-[#0f2d5a] dark:text-white">
+              All cheques shall be prepared in favor of "{(companyName ?? "").toUpperCase()}".
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Bank Accounts</h1>
