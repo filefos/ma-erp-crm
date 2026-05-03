@@ -59,7 +59,7 @@ export function DeliveryNoteDetail({ id }: Props) {
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[dn.status] ?? "bg-gray-100"}`}>{dn.status}</Badge>
         <div className="ml-auto flex gap-2">
-          <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} docTypeLabel="Delivery Note" />
+          <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} recipientEmail={(dn as any).clientEmail ?? undefined} companyId={dn.companyId ?? undefined} docTypeLabel="Delivery Note" />
         </div>
       </div>
       <DocumentPrint data={docData} />

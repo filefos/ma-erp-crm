@@ -322,7 +322,7 @@ export function QuotationDetail({ id }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} recipientPhone={q.clientPhone ?? undefined} docTypeLabel="Quotation" />
+          <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} recipientPhone={q.clientPhone ?? undefined} recipientEmail={q.clientEmail ?? undefined} companyId={q.companyId ?? undefined} docTypeLabel="Quotation" />
         </div>
       </div>
 

@@ -133,7 +133,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
           >
             <Receipt className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Convert to Tax Invoice"}
           </Button>
-          <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} recipientPhone={(pi as any).clientPhone ?? undefined} docTypeLabel="Proforma Invoice" />
+          <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} recipientPhone={(pi as any).clientPhone ?? undefined} recipientEmail={(pi as any).clientEmail ?? undefined} companyId={pi.companyId ?? undefined} docTypeLabel="Proforma Invoice" />
         </div>
       </div>
       <DocumentPrint data={docData} />

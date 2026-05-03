@@ -112,7 +112,7 @@ export function InvoiceDetail({ id }: Props) {
           >
             <Package className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Create Delivery Note"}
           </Button>
-          <ExportButtons docNumber={inv.invoiceNumber ?? inv.id?.toString() ?? "Invoice"} recipientPhone={(inv as any).clientPhone ?? undefined} docTypeLabel="Tax Invoice" />
+          <ExportButtons docNumber={inv.invoiceNumber ?? inv.id?.toString() ?? "Invoice"} recipientPhone={(inv as any).clientPhone ?? undefined} recipientEmail={(inv as any).clientEmail ?? undefined} companyId={inv.companyId ?? undefined} docTypeLabel="Tax Invoice" />
         </div>
       </div>
       <DocumentPrint data={docData} />
