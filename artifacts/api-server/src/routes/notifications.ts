@@ -6,12 +6,19 @@ import { requireAuth, requirePermissionLevel } from "../middlewares/auth";
 const router = Router();
 router.use(requireAuth);
 
-async function autoCheckFollowUps(userId: number) {
+async function autoCheckFollowUps(userId: number, companyScope: number[] | null) {
   try {
     const today = new Date().toISOString().split("T")[0];
     const dueLeads = await db.select().from(leadsTable)
       .where(and(eq(leadsTable.isActive, true), sql`${leadsTable.nextFollowUp} IS NOT NULL AND ${leadsTable.nextFollowUp} <= ${today}`));
-    const active = dueLeads.filter(l => !["won", "lost"].includes(l.status));
+    const active = dueLeads.filter(l => {
+      if (!["won", "lost"].includes(l.status)) {
+        // Only process leads within the caller's company scope
+        if (companyScope === null) return true;
+        return l.companyId == null || companyScope.includes(l.companyId as number);
+      }
+      return false;
+    });
     for (const lead of active) {
       const notifyUsers = new Set<number>();
       if (lead.assignedToId) notifyUsers.add(lead.assignedToId);
@@ -45,8 +52,9 @@ async function autoCheckFollowUps(userId: number) {
 // Notifications
 router.get("/notifications", async (req, res): Promise<void> => {
   const userId = req.user!.id;
-  // Background: auto-create follow-up notifications for due leads
-  autoCheckFollowUps(userId);
+  const companyScope = req.companyScope ?? null;
+  // Background: auto-create follow-up notifications for due leads within scope
+  autoCheckFollowUps(userId, companyScope);
   let rows = await db.select().from(notificationsTable)
     .where(eq(notificationsTable.userId, userId))
     .orderBy(sql`${notificationsTable.createdAt} desc`)

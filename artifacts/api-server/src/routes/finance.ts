@@ -6,6 +6,12 @@ import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess }
 const router = Router();
 router.use(requireAuth);
 
+function stripFields(obj: any, ...fields: string[]): any {
+  const copy: any = { ...obj };
+  for (const f of fields) delete copy[f];
+  return copy;
+}
+
 // Bank Accounts
 router.get("/bank-accounts", requirePermission("bank_accounts", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(bankAccountsTable).orderBy(bankAccountsTable.bankName);
@@ -45,7 +51,7 @@ router.get("/cheques", requirePermission("cheques", "view"), async (req, res): P
 });
 
 router.post("/cheques", requirePermission("cheques", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const data = req.body;
+  const data = stripFields(req.body, "status", "approvedById", "printedById");
   const words = numberToWords(data.amount ?? 0);
   const [cheque] = await db.insert(chequesTable).values({
     ...data, amountInWords: words + " UAE Dirhams Only", preparedById: req.user?.id,
@@ -66,7 +72,8 @@ router.put("/cheques/:id", requirePermission("cheques", "edit"), requireBodyComp
   const [existing] = await db.select().from(chequesTable).where(eq(chequesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [cheque] = await db.update(chequesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(chequesTable.id, id)).returning();
+  const data = stripFields(req.body, "status", "approvedById", "printedById");
+  const [cheque] = await db.update(chequesTable).set({ ...data, updatedAt: new Date() }).where(eq(chequesTable.id, id)).returning();
   res.json(cheque);
 });
 
@@ -90,7 +97,7 @@ router.get("/expenses", requirePermission("expenses", "view"), async (req, res):
 });
 
 router.post("/expenses", requirePermission("expenses", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const data = req.body;
+  const data = stripFields(req.body, "status", "approvedById", "printedById");
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(expensesTable);
   const num = (count[0]?.count ?? 0) + 1;
   const expenseNumber = `EXP-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
@@ -111,14 +118,16 @@ router.put("/expenses/:id", requirePermission("expenses", "edit"), requireBodyCo
   const [existing] = await db.select().from(expensesTable).where(eq(expensesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [expense] = await db.update(expensesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(expensesTable.id, id)).returning();
+  const data = stripFields(req.body, "status", "approvedById", "printedById");
+  const [expense] = await db.update(expensesTable).set({ ...data, updatedAt: new Date() }).where(eq(expensesTable.id, id)).returning();
   res.json(expense);
 });
 
 router.delete("/expenses/:id", requirePermission("expenses", "delete"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(expensesTable).where(eq(expensesTable.id, id));
-  if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(expensesTable).where(eq(expensesTable.id, id));
   res.json({ success: true });
 });
@@ -174,7 +183,7 @@ router.get("/payments-received", requirePermission("expenses", "view"), async (r
 });
 
 router.post("/payments-received", requirePermission("expenses", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const data = req.body;
+  const data = stripFields(req.body, "status");
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(paymentsReceivedTable);
   const num = (count[0]?.count ?? 0) + 1;
   const paymentNumber = `RCV-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
@@ -187,7 +196,8 @@ router.put("/payments-received/:id", requirePermission("expenses", "edit"), requ
   const [existing] = await db.select().from(paymentsReceivedTable).where(eq(paymentsReceivedTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [payment] = await db.update(paymentsReceivedTable).set({ ...req.body, updatedAt: new Date() }).where(eq(paymentsReceivedTable.id, id)).returning();
+  const data = stripFields(req.body, "status");
+  const [payment] = await db.update(paymentsReceivedTable).set({ ...data, updatedAt: new Date() }).where(eq(paymentsReceivedTable.id, id)).returning();
   res.json(payment);
 });
 
@@ -218,7 +228,7 @@ router.get("/payments-made", requirePermission("expenses", "view"), async (req, 
 });
 
 router.post("/payments-made", requirePermission("expenses", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const data = req.body;
+  const data = stripFields(req.body, "status");
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(paymentsMadeTable);
   const num = (count[0]?.count ?? 0) + 1;
   const paymentNumber = `PMT-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
@@ -231,7 +241,8 @@ router.put("/payments-made/:id", requirePermission("expenses", "edit"), requireB
   const [existing] = await db.select().from(paymentsMadeTable).where(eq(paymentsMadeTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [payment] = await db.update(paymentsMadeTable).set({ ...req.body, updatedAt: new Date() }).where(eq(paymentsMadeTable.id, id)).returning();
+  const data = stripFields(req.body, "status");
+  const [payment] = await db.update(paymentsMadeTable).set({ ...data, updatedAt: new Date() }).where(eq(paymentsMadeTable.id, id)).returning();
   res.json(payment);
 });
 
@@ -271,14 +282,14 @@ router.get("/journal-entries", requirePermission("expenses", "view"), async (req
 });
 
 router.post("/journal-entries", requirePermission("expenses", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const data = req.body;
-  const lines = data.lines ?? [];
+  const rawData = stripFields(req.body, "status", "approvedById");
+  const lines = rawData.lines ?? [];
   const totalDebit = lines.reduce((s: number, l: any) => s + (l.debit ?? 0), 0);
   const totalCredit = lines.reduce((s: number, l: any) => s + (l.credit ?? 0), 0);
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(journalEntriesTable);
   const num = (count[0]?.count ?? 0) + 1;
   const journalNumber = `JV-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
-  const [journal] = await db.insert(journalEntriesTable).values({ ...data, journalNumber, totalDebit, totalCredit, preparedById: req.user?.id, lines: undefined }).returning();
+  const [journal] = await db.insert(journalEntriesTable).values({ ...rawData, journalNumber, totalDebit, totalCredit, preparedById: req.user?.id, lines: undefined }).returning();
   if (lines.length > 0) {
     await db.insert(journalEntryLinesTable).values(lines.map((l: any, i: number) => ({ journalId: journal.id, accountId: l.accountId, accountName: l.accountName, description: l.description, debit: l.debit ?? 0, credit: l.credit ?? 0, sortOrder: i })));
   }
@@ -299,11 +310,11 @@ router.put("/journal-entries/:id", requirePermission("expenses", "edit"), requir
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   if (existing.status === "approved") { res.status(400).json({ error: "Cannot edit approved journal entry" }); return; }
-  const data = req.body;
-  const lines = data.lines ?? [];
+  const rawData = stripFields(req.body, "status", "approvedById");
+  const lines = rawData.lines ?? [];
   const totalDebit = lines.reduce((s: number, l: any) => s + (l.debit ?? 0), 0);
   const totalCredit = lines.reduce((s: number, l: any) => s + (l.credit ?? 0), 0);
-  const [journal] = await db.update(journalEntriesTable).set({ ...data, totalDebit, totalCredit, updatedAt: new Date(), lines: undefined }).where(eq(journalEntriesTable.id, id)).returning();
+  const [journal] = await db.update(journalEntriesTable).set({ ...rawData, totalDebit, totalCredit, updatedAt: new Date(), lines: undefined }).where(eq(journalEntriesTable.id, id)).returning();
   await db.delete(journalEntryLinesTable).where(eq(journalEntryLinesTable.journalId, id));
   if (lines.length > 0) {
     await db.insert(journalEntryLinesTable).values(lines.map((l: any, i: number) => ({ journalId: id, accountId: l.accountId, accountName: l.accountName, description: l.description, debit: l.debit ?? 0, credit: l.credit ?? 0, sortOrder: i })));

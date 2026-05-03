@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, inventoryItemsTable, stockEntriesTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, inScope } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -72,6 +72,16 @@ router.get("/stock-entries", requirePermission("stock_entries", "view"), async (
 
 router.post("/stock-entries", requirePermission("stock_entries", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
+
+  // Verify the referenced inventory item belongs to the caller's company scope
+  const [targetItem] = await db.select().from(inventoryItemsTable).where(eq(inventoryItemsTable.id, data.itemId));
+  if (!targetItem) { res.status(404).json({ error: "Inventory item not found" }); return; }
+  if (!inScope(req, targetItem.companyId)) { res.status(403).json({ error: "Forbidden: inventory item belongs to a different company" }); return; }
+  // Enforce that the item's companyId matches the stock entry's companyId
+  if (targetItem.companyId != null && data.companyId != null && targetItem.companyId !== data.companyId) {
+    res.status(400).json({ error: "itemId does not belong to the specified company" }); return;
+  }
+
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(stockEntriesTable);
   const num = (count[0]?.count ?? 0) + 1;
   const entryNumber = `SE-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
@@ -80,14 +90,11 @@ router.post("/stock-entries", requirePermission("stock_entries", "create"), requ
     ...data, entryNumber, createdById: req.user?.id, approvalStatus: "approved",
   }).returning();
 
-  const [item] = await db.select().from(inventoryItemsTable).where(eq(inventoryItemsTable.id, data.itemId));
-  if (item) {
-    const delta = ["stock_in", "material_return"].includes(data.type) ? data.quantity : -Math.abs(data.quantity);
-    await db.update(inventoryItemsTable).set({
-      currentStock: Math.max(0, item.currentStock + delta),
-      updatedAt: new Date(),
-    }).where(eq(inventoryItemsTable.id, data.itemId));
-  }
+  const delta = ["stock_in", "material_return"].includes(data.type) ? data.quantity : -Math.abs(data.quantity);
+  await db.update(inventoryItemsTable).set({
+    currentStock: Math.max(0, targetItem.currentStock + delta),
+    updatedAt: new Date(),
+  }).where(eq(inventoryItemsTable.id, data.itemId));
 
   const [itemRecord] = await db.select({ name: inventoryItemsTable.name }).from(inventoryItemsTable).where(eq(inventoryItemsTable.id, data.itemId));
   res.status(201).json({ ...entry, itemName: itemRecord?.name });
