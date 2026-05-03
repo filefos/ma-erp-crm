@@ -121,18 +121,21 @@ export function SalesDashboard() {
 
   // ---- Top clients by quotation value ----
   const topClients = useMemo(() => {
-    const m: Record<string, { value: number; count: number }> = {};
+    const m: Record<string, { value: number; count: number; lastDate: string | null; leadId: number | null }> = {};
     for (const q of quotations as any[]) {
       const key = q.clientName ?? "Unknown";
-      const e = m[key] ?? { value: 0, count: 0 };
+      const e = m[key] ?? { value: 0, count: 0, lastDate: null, leadId: null };
       e.value += Number(q.grandTotal ?? 0);
       e.count += 1;
+      const created = q.createdAt ?? null;
+      if (created && (!e.lastDate || created > e.lastDate)) e.lastDate = created;
+      if (e.leadId == null && q.leadId != null) e.leadId = q.leadId;
       m[key] = e;
     }
     return Object.entries(m)
       .map(([name, v]) => ({ name, ...v }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+      .slice(0, 8);
   }, [quotations]);
 
   // ---- Top salespeople (by won deals + quotations + projects-via-deals) ----
@@ -175,6 +178,46 @@ export function SalesDashboard() {
       .filter((r: any) => r.quoted > 0 || r.won > 0 || r.target > 0)
       .sort((a: any, b: any) => b.won - a.won)
       .slice(0, 8);
+  }, [salesUsers, quotations, deals, targets, year]);
+
+  // ---- Full salesperson roster for the dedicated performance row (unsliced) ----
+  const salesPerformance = useMemo(() => {
+    const now = new Date();
+    return salesUsers
+      .map((u: any) => {
+        const userDeals = deals.filter((d: any) => d.assignedToId === u.id || d.assignedToName === u.name);
+        const userQuotes = quotations.filter((q: any) => q.preparedById === u.id || q.preparedByName === u.name);
+        const quoted = userQuotes.reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
+        const wonDeals = userDeals.filter((d: any) => d.stage === "won");
+        const won = wonDeals.reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+        const userTargets = targets.filter((t: any) => t.userId === u.id && t.year === year);
+        const target = userTargets.reduce((s: number, t: any) => {
+          if (t.period === "yearly")    return s + Number(t.targetAmount ?? 0);
+          if (t.period === "quarterly") return s + Number(t.targetAmount ?? 0) * 4;
+          if (t.period === "monthly")   return s + Number(t.targetAmount ?? 0) * 12;
+          return s;
+        }, 0);
+        const sparkline: number[] = [];
+        for (let i = 5; i >= 0; i--) {
+          const ms = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const me = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+          const v = userDeals.filter((d: any) => {
+            if (d.stage !== "won") return false;
+            const dt = d.closedAt ?? d.updatedAt ?? d.createdAt;
+            if (!dt) return false;
+            const t = new Date(dt).getTime();
+            return t >= ms.getTime() && t < me.getTime();
+          }).reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
+          sparkline.push(v);
+        }
+        return {
+          id: u.id, name: u.name, quoted, won, target, sparkline,
+          quoteCount: userQuotes.length, wonCount: wonDeals.length,
+          attainment: target > 0 ? Math.round((won / target) * 100) : null,
+        };
+      })
+      .filter((r: any) => r.quoted > 0 || r.won > 0 || r.target > 0)
+      .sort((a: any, b: any) => b.won - a.won);
   }, [salesUsers, quotations, deals, targets, year]);
 
   // ---- Recent quotations ----
@@ -310,6 +353,129 @@ export function SalesDashboard() {
         <KPIWidget icon={Briefcase}  tone="navy"   label="Active Pipeline"    value={fmtAED(deals.filter((d: any) => !["won", "lost"].includes(d.stage)).reduce((s: number, d: any) => s + Number(d.value ?? 0), 0))} sub={`${deals.filter((d: any) => !["won", "lost"].includes(d.stage)).length} open deals`} href="/crm/pipeline" testId="kpi-pipeline" />
         <KPIWidget icon={Calendar}   tone="amber"  label="Quotes Expiring"    value={expiringQuotes.length}  sub="Within 7 days"                                                  href="/sales/quotations" testId="kpi-expiring" />
       </div>
+
+      {/* Salesperson Performance row */}
+      <PanelCard
+        title="Salesperson Performance"
+        subtitle={`Quotations, won deals & target attainment · ${year}`}
+        icon={Crown}
+        data-testid="panel-salesperson-performance"
+      >
+        {salesPerformance.length === 0 ? (
+          <Empty>No salesperson activity yet.</Empty>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" data-testid="grid-salesperson-performance">
+            {salesPerformance.map((row: any, i: number) => (
+              <Link
+                key={row.id}
+                href="/crm/leaderboard"
+                className="block group"
+                data-testid={`card-salesperson-${row.id}`}
+              >
+                <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                      {i + 1}
+                    </div>
+                    <Avatar name={row.name} size={32} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold truncate text-[#0f2d5a] dark:text-white">{row.name}</div>
+                      <div className="text-[10px] text-muted-foreground">Salesperson</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="rounded-lg bg-muted/40 p-2">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Won</div>
+                      <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400 truncate">{fmtAED(row.won)}</div>
+                      <div className="text-[10px] text-muted-foreground">{row.wonCount} deal{row.wonCount === 1 ? "" : "s"}</div>
+                    </div>
+                    <div className="rounded-lg bg-muted/40 p-2">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Quoted</div>
+                      <div className="text-sm font-bold text-[#1e6ab0] truncate">{fmtAED(row.quoted)}</div>
+                      <div className="text-[10px] text-muted-foreground">{row.quoteCount} quote{row.quoteCount === 1 ? "" : "s"}</div>
+                    </div>
+                  </div>
+                  {row.target > 0 ? (
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between text-[10px] mb-1">
+                        <span className="text-muted-foreground">Target {fmtAED(row.target)}</span>
+                        <span className={`font-bold ${row.attainment >= 100 ? "text-emerald-700" : row.attainment >= 75 ? "text-[#1e6ab0]" : row.attainment >= 50 ? "text-orange-600" : "text-red-600"}`}>
+                          {row.attainment}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${row.attainment >= 100 ? "bg-gradient-to-r from-emerald-500 to-emerald-600" : row.attainment >= 75 ? "bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" : row.attainment >= 50 ? "bg-gradient-to-r from-orange-400 to-orange-500" : "bg-gradient-to-r from-red-400 to-red-500"}`}
+                          style={{ width: `${Math.min(100, row.attainment)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-2 text-[10px] text-muted-foreground italic">No target set</div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">Last 6 months</span>
+                    <Sparkline data={row.sparkline} color="#1e6ab0" width={90} height={24} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </PanelCard>
+
+      {/* Top Customers row */}
+      <PanelCard
+        title="Top Customers"
+        subtitle="Ranked by total quotation value"
+        icon={Users}
+        data-testid="panel-top-customers"
+      >
+        {topClients.length === 0 ? (
+          <Empty>No customer quotations yet.</Empty>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" data-testid="grid-top-customers">
+            {topClients.map((c: any, i: number) => {
+              const href = c.leadId != null ? `/crm/leads/${c.leadId}` : "/crm/leads";
+              const pct = topClients[0].value > 0 ? Math.min(100, (c.value / topClients[0].value) * 100) : 0;
+              return (
+                <Link key={c.name} href={href} className="block group" data-testid={`card-customer-${i}`}>
+                  <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
+                    <div className="flex items-center gap-2.5 mb-2.5">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                        {i + 1}
+                      </div>
+                      <Avatar name={c.name} size={32} />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold truncate text-[#0f2d5a] dark:text-white">{c.name}</div>
+                        <div className="text-[10px] text-muted-foreground">Customer</div>
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5 p-2.5 mb-2">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Quoted</div>
+                      <div className="text-lg font-bold text-[#0f2d5a] dark:text-white truncate">{fmtAED(c.value)}</div>
+                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mt-1.5">
+                        <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">
+                        {c.count} quote{c.count === 1 ? "" : "s"}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {c.lastDate ? new Date(c.lastDate).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-end text-[10px] text-[#1e6ab0] group-hover:underline">
+                      View <ArrowRight className="w-3 h-3 ml-0.5" />
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </PanelCard>
 
       {/* Funnel + Status Mix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
