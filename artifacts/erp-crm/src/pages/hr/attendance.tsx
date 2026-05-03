@@ -191,8 +191,6 @@ export function AttendanceList() {
     employeeId: "", date: today, status: "present",
     checkIn: "08:00", checkOut: "17:00", overtime: "", notes: "",
   });
-  const [gps, setGps] = useState<GpsState>({ status: "idle" });
-  const [selfie, setSelfie] = useState("");
   const queryClient = useQueryClient();
   const { data: attendance, isLoading } = useListAttendance({ date: date || undefined });
   const { data: employees } = useListEmployees();
@@ -202,8 +200,6 @@ export function AttendanceList() {
         queryClient.invalidateQueries({ queryKey: ["/attendance"] });
         setOpen(false);
         setForm({ employeeId: "", date: today, status: "present", checkIn: "08:00", checkOut: "17:00", overtime: "", notes: "" });
-        setGps({ status: "idle" });
-        setSelfie("");
       },
     },
   });
@@ -216,13 +212,10 @@ export function AttendanceList() {
   const leave = filtered?.filter(a => a.status === "leave").length ?? 0;
   const halfDay = filtered?.filter(a => a.status === "half_day").length ?? 0;
 
-  // GPS + selfie are required only when the employee is actually checking in.
+  // The web admin panel records attendance on behalf of staff — GPS + selfie
+  // verification is only enforced on the mobile self-check-in flow.
   const requiresOnSitePresence = ["present", "half_day"].includes(form.status);
-  const gpsCaptured = gps.status === "ok";
-  const selfieCaptured = selfie.length > 0;
-  const canSubmit = !!form.employeeId && !!form.date && !create.isPending && (
-    !requiresOnSitePresence || (gpsCaptured && selfieCaptured)
-  );
+  const canSubmit = !!form.employeeId && !!form.date && !create.isPending;
 
   const submit = () => {
     create.mutate({
@@ -230,9 +223,6 @@ export function AttendanceList() {
         ...form,
         employeeId: parseInt(form.employeeId, 10),
         overtime: form.overtime ? parseFloat(form.overtime) : undefined,
-        latitude: gps.status === "ok" ? gps.lat : undefined,
-        longitude: gps.status === "ok" ? gps.lng : undefined,
-        selfieUrl: selfie || undefined,
       } as any,
     });
   };
@@ -242,7 +232,7 @@ export function AttendanceList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Attendance</h1>
-          <p className="text-muted-foreground">Daily attendance with mandatory GPS + selfie verification.</p>
+          <p className="text-muted-foreground">Daily attendance, recorded by HR from the web admin panel.</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportMenu
@@ -259,16 +249,7 @@ export function AttendanceList() {
             filename="attendance"
             title="Attendance"
           />
-          <Dialog
-            open={open}
-            onOpenChange={o => {
-              setOpen(o);
-              if (!o) {
-                setGps({ status: "idle" });
-                setSelfie("");
-              }
-            }}
-          >
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
                 <Plus className="w-4 h-4 mr-2" />Mark Attendance
@@ -301,16 +282,6 @@ export function AttendanceList() {
                     <div className="space-y-1"><Label>Check In</Label><Input type="time" value={form.checkIn} onChange={e => setForm(p => ({...p, checkIn: e.target.value}))} /></div>
                     <div className="space-y-1"><Label>Check Out</Label><Input type="time" value={form.checkOut} onChange={e => setForm(p => ({...p, checkOut: e.target.value}))} /></div>
                     <div className="space-y-1 col-span-2"><Label>Overtime (hours)</Label><Input type="number" step="0.5" value={form.overtime} onChange={e => setForm(p => ({...p, overtime: e.target.value}))} placeholder="0" /></div>
-                    <div className="col-span-2 space-y-2">
-                      <GpsCapture value={gps} onChange={setGps} />
-                      <SelfieCapture value={selfie} onChange={setSelfie} />
-                      {!gpsCaptured && (
-                        <p className="text-[11px] text-muted-foreground">GPS location is required for check-in.</p>
-                      )}
-                      {!selfieCaptured && (
-                        <p className="text-[11px] text-muted-foreground">A selfie at the work location is required for check-in.</p>
-                      )}
-                    </div>
                   </>
                 )}
                 <div className="space-y-1 col-span-2"><Label>Notes</Label><Input value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} placeholder="Reason for absence, leave type, etc." /></div>
