@@ -793,6 +793,16 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               {data.termsConditions ?? STANDARD_TC}
             </div>
 
+            {/* Cheque favor — highlighted on terms page */}
+            <div
+              className="border-2 border-orange-500 bg-orange-50 p-3 mb-4 text-center"
+              style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+            >
+              <div className="text-[12px] font-black uppercase tracking-wide text-[#0f2d5a]">
+                All cheques shall be prepared in favor of "{co.name}"
+              </div>
+            </div>
+
             {/* Signature */}
             <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
               <div>
