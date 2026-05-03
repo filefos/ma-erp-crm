@@ -1,10 +1,18 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
+import { Text, View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  getListAttendanceQueryKey,
+  useAttendanceCheckIn,
+  useAttendanceCheckOut,
   useListAttendance,
   useListAssets,
   useListCheques,
   useListDeals,
+  useListEmployees,
   useListExpenses,
   useListInventoryItems,
   useListLeads,
@@ -16,6 +24,7 @@ import {
   useListUsers,
 } from "@workspace/api-client-react";
 import {
+  BrandButton,
   Card,
   EmptyState,
   KpiGrid,
@@ -24,8 +33,12 @@ import {
   SectionHeading,
   Skeleton,
 } from "@/components/ui";
+import { StatusPill } from "@/components/forms";
 import { DashboardScreen } from "@/components/Dashboard";
 import { useApp } from "@/contexts/AppContext";
+import { useColors } from "@/hooks/useColors";
+import { attendanceStatusMeta } from "@/lib/format";
+import { captureAndUploadAttendance, showAttendanceError } from "@/lib/attendance";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -150,8 +163,11 @@ export function SalespersonDashboard() {
 // ---------------------------------------------------------------------------
 export function AttendanceDashboard() {
   const router = useRouter();
-  const { user, activeCompany } = useApp();
+  const c = useColors();
+  const qc = useQueryClient();
+  const { user, activeCompany, activeCompanyId } = useApp();
   const attendance = useListAttendance();
+  const employees = useListEmployees(activeCompanyId ? { companyId: activeCompanyId } : {});
   const today = new Date().toISOString().slice(0, 10);
   const todayList = (attendance.data ?? []).filter(a => (a.date ?? "").slice(0, 10) === today);
 
@@ -160,12 +176,153 @@ export function AttendanceDashboard() {
   const absent = count(todayList, a => (a.status ?? "").toLowerCase() === "absent");
   const late = count(todayList, a => (a.status ?? "").toLowerCase() === "late");
 
+  const myEmployee = useMemo(() => {
+    if (!user) return null;
+    const email = (user.email ?? "").toLowerCase();
+    if (!email) return null;
+    return (employees.data ?? []).find(e => (e.email ?? "").toLowerCase() === email) ?? null;
+  }, [employees.data, user]);
+
+  const myToday = useMemo(
+    () => myEmployee ? todayList.find(r => r.employeeId === myEmployee.id) ?? null : null,
+    [todayList, myEmployee],
+  );
+
+  const checkInMut = useAttendanceCheckIn({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getListAttendanceQueryKey() }),
+      onError: (e) => showAttendanceError(e),
+    },
+  });
+  const checkOutMut = useAttendanceCheckOut({
+    mutation: {
+      onSuccess: () => qc.invalidateQueries({ queryKey: getListAttendanceQueryKey() }),
+      onError: (e) => showAttendanceError(e),
+    },
+  });
+  const [busy, setBusy] = useState<null | "in" | "out">(null);
+
+  const checkIn = async () => {
+    if (busy) return;
+    setBusy("in");
+    try {
+      const cap = await captureAndUploadAttendance();
+      await checkInMut.mutateAsync({
+        data: {
+          latitude: cap.gps.latitude,
+          longitude: cap.gps.longitude,
+          accuracyMeters: cap.gps.accuracyMeters ?? undefined,
+          address: cap.gps.address,
+          selfieObjectKey: cap.selfieObjectKey,
+          source: "mobile_gps",
+        },
+      });
+    } catch (e) {
+      showAttendanceError(e);
+    } finally {
+      setBusy(null);
+    }
+  };
+  const checkOut = async () => {
+    if (busy) return;
+    setBusy("out");
+    try {
+      const cap = await captureAndUploadAttendance();
+      await checkOutMut.mutateAsync({
+        data: {
+          latitude: cap.gps.latitude,
+          longitude: cap.gps.longitude,
+          accuracyMeters: cap.gps.accuracyMeters ?? undefined,
+          address: cap.gps.address,
+          selfieObjectKey: cap.selfieObjectKey,
+          source: "mobile_gps",
+        },
+      });
+    } catch (e) {
+      showAttendanceError(e);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <DashboardScreen
       title={`Attendance`}
       subtitle={activeCompany?.short ? `${activeCompany.short} · HR · ${user?.name ?? ""}` : "HR"}
     >
-      <SectionHeading title={`Today · ${today}`} />
+      <SectionHeading title="My attendance · today" />
+      <Card>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <Text style={{ fontFamily: "Inter_700Bold", fontSize: 14, color: c.foreground, flex: 1 }}>
+            {myEmployee?.name ?? user?.name ?? "Field staff"}
+          </Text>
+          {myToday ? (
+            <StatusPill
+              label={attendanceStatusMeta(myToday.status).label}
+              tone={attendanceStatusMeta(myToday.status).tone}
+            />
+          ) : null}
+        </View>
+        <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: c.mutedForeground }}>
+          {myToday?.checkIn ? `In ${myToday.checkIn}` : "Not checked in yet"}
+          {myToday?.checkOut ? ` · Out ${myToday.checkOut}` : ""}
+        </Text>
+        {myToday?.address ? (
+          <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: c.mutedForeground }} numberOfLines={2}>
+            <Feather name="map-pin" size={11} color={c.mutedForeground} /> {myToday.address}
+          </Text>
+        ) : null}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+          {myToday?.selfieSignedUrl ? (
+            <Image
+              source={{ uri: myToday.selfieSignedUrl }}
+              style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: c.muted }}
+              contentFit="cover"
+            />
+          ) : null}
+          {myToday?.checkOutSelfieSignedUrl ? (
+            <Image
+              source={{ uri: myToday.checkOutSelfieSignedUrl }}
+              style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: c.muted }}
+              contentFit="cover"
+            />
+          ) : null}
+          {!myEmployee && !employees.isLoading ? (
+            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 12, color: c.mutedForeground, flex: 1 }}>
+              No employee record linked to your login. Ask HR to add one with your email.
+            </Text>
+          ) : !myToday ? (
+            <BrandButton
+              label="Check in (GPS + selfie)"
+              icon="camera"
+              onPress={checkIn}
+              loading={busy === "in"}
+              disabled={!myEmployee}
+              style={{ flex: 1, minWidth: 200 }}
+            />
+          ) : !myToday.checkOut ? (
+            <BrandButton
+              label="Check out (GPS + selfie)"
+              icon="camera"
+              variant="secondary"
+              onPress={checkOut}
+              loading={busy === "out"}
+              style={{ flex: 1, minWidth: 200 }}
+            />
+          ) : (
+            <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 12, color: c.success }}>
+              Day complete · thanks!
+            </Text>
+          )}
+        </View>
+        {myEmployee && !myToday ? (
+          <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: c.mutedForeground }}>
+            Location and a wide-angle selfie are required for check-in. Both are uploaded securely.
+          </Text>
+        ) : null}
+      </Card>
+
+      <SectionHeading title={`Team · ${today}`} />
       {loading ? <KpiSkeleton /> : (
         <KpiGrid>
           <KpiTile label="Present" value={present} icon="check-circle" tone="blue" />
@@ -176,7 +333,7 @@ export function AttendanceDashboard() {
       )}
 
       <SectionHeading title="Quick actions" />
-      <QuickLink icon="user-check" label="Attendance log" onPress={() => router.push("/hr")} />
+      <QuickLink icon="user-check" label="Attendance log" hint="Today's status, history, manager grid" onPress={() => router.push("/hr/attendance")} />
       <QuickLink icon="users" label="Employees" onPress={() => router.push("/hr")} />
     </DashboardScreen>
   );
