@@ -124,6 +124,18 @@ export function OfferLetterDetail({ id }: Props) {
   const isDraft = offer.status === "draft";
   const isIssued = offer.status === "issued";
   const isAccepted = offer.status === "accepted";
+  // Editing is allowed in any status until the offer is converted to an
+  // employee record. Status-changing buttons (Issue / Accept / Reject) keep
+  // their own status-specific gating below.
+  const canEdit = !(offer as any).convertedEmployeeId;
+  // Live-resolved company logo URL (data: URL or http(s) link stored on the
+  // companies row). Falls back to the brand-based image inside the template
+  // when not provided so historical letters still render.
+  const companyLogoUrl: string | undefined = (() => {
+    if (!companies) return undefined;
+    const c = (companies as any[]).find(x => x.id === offer.companyId);
+    return c?.logo || undefined;
+  })();
 
   const save = () => {
     const patch: any = { ...draft };
@@ -159,13 +171,13 @@ export function OfferLetterDetail({ id }: Props) {
   // Auto-suggest the commission toggle when designation looks like a sales role.
   // Mirrors the create dialog: only flips OFF -> ON, never disables.
   useEffect(() => {
-    if (!editing || !isDraft) return;
+    if (!editing || !canEdit) return;
     const t = String(draft.designation ?? "").toLowerCase();
     const looksLikeSales = /\bsales(man|person|woman|\s+executive)?\b/.test(t) || t.includes("sales");
     if (looksLikeSales && !draft.commissionEnabled) {
       enableCommissionWithDefaults();
     }
-  }, [draft.designation, editing, isDraft]);
+  }, [draft.designation, editing, canEdit]);
 
   const downloadPdf = async () => {
     if (!previewRef.current) return;
@@ -198,11 +210,11 @@ export function OfferLetterDetail({ id }: Props) {
           <Button variant="outline" size="sm" onClick={() => window.print()} data-testid="button-print-offer">
             <Printer className="w-4 h-4 mr-1" />Print
           </Button>
-          {isDraft && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="button-edit-offer"><Pencil className="w-4 h-4 mr-1" />Edit</Button>}
-          {isDraft && editing && (
+          {canEdit && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="button-edit-offer"><Pencil className="w-4 h-4 mr-1" />Edit</Button>}
+          {canEdit && editing && (
             <>
               <Button variant="ghost" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4 mr-1" />Cancel</Button>
-              <Button size="sm" onClick={save} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-save-offer"><Save className="w-4 h-4 mr-1" />Save Draft</Button>
+              <Button size="sm" onClick={save} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-save-offer"><Save className="w-4 h-4 mr-1" />Save</Button>
             </>
           )}
           {isDraft && (
@@ -250,20 +262,20 @@ export function OfferLetterDetail({ id }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Edit pane */}
         <Card>
-          <CardHeader><CardTitle>{isDraft ? "Draft Fields" : "Letter Details"}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{isDraft ? "Draft Fields" : "Letter Details"}{canEdit && !isDraft && <span className="ml-2 text-xs text-muted-foreground font-normal">(editable)</span>}</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">
-            <FieldRow label="Candidate Name" k="candidateName" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} className="col-span-2" />
-            <FieldRow label="Designation" k="designation" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
-            <FieldRow label="Joining Date" k="joiningDate" type="date" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
-            <FieldRow label="Basic Salary (AED)" k="basicSalary" type="number" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
-            <FieldRow label="Allowances (AED)" k="allowances" type="number" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
-            <FieldRow label="Nationality" k="candidateNationality" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
-            <FieldRow label="Passport No." k="candidatePassportNo" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
-            <FieldRow label="Personal Email" k="candidatePersonalEmail" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
-            <FieldRow label="Personal Phone" k="candidatePersonalPhone" v={offer} editing={editing && isDraft} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Candidate Name" k="candidateName" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} className="col-span-2" />
+            <FieldRow label="Designation" k="designation" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Joining Date" k="joiningDate" type="date" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Basic Salary (AED)" k="basicSalary" type="number" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Allowances (AED)" k="allowances" type="number" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Nationality" k="candidateNationality" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Passport No." k="candidatePassportNo" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Personal Email" k="candidatePersonalEmail" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
+            <FieldRow label="Personal Phone" k="candidatePersonalPhone" v={offer} editing={editing && canEdit} draft={draft} setDraft={setDraft} />
             <div className="space-y-1 col-span-2">
               <Label className="text-xs text-muted-foreground">Template</Label>
-              {editing && isDraft ? (
+              {editing && canEdit ? (
                 <Select value={draft.templateType} onValueChange={v => setDraft((p: any) => ({ ...p, templateType: v, workerType: v === "labour" ? "labor" : "staff" }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -277,7 +289,7 @@ export function OfferLetterDetail({ id }: Props) {
             </div>
             <div className="space-y-1 col-span-2">
               <Label className="text-xs text-muted-foreground">Additional Notes</Label>
-              {editing && isDraft ? (
+              {editing && canEdit ? (
                 <Textarea rows={4} value={draft.notes} onChange={e => setDraft((p: any) => ({ ...p, notes: e.target.value }))} />
               ) : (
                 <div className="text-sm whitespace-pre-wrap">{offer.notes || <span className="text-muted-foreground">—</span>}</div>
@@ -290,7 +302,7 @@ export function OfferLetterDetail({ id }: Props) {
                   <Label className="text-sm font-semibold">Salesman Commission</Label>
                   <p className="text-[11px] text-muted-foreground">Sales target, base rate, per-step bonus and shortfall salary deductions printed on the letter.</p>
                 </div>
-                {editing && isDraft ? (
+                {editing && canEdit ? (
                   <Switch
                     checked={!!draft.commissionEnabled}
                     onCheckedChange={(v) => v ? enableCommissionWithDefaults() : setDraft((p: any) => ({ ...p, commissionEnabled: false }))}
@@ -300,7 +312,7 @@ export function OfferLetterDetail({ id }: Props) {
                   <Badge variant="outline">{offer.commissionEnabled ? "Enabled" : "Disabled"}</Badge>
                 )}
               </div>
-              {editing && isDraft && draft.commissionEnabled && (
+              {editing && canEdit && draft.commissionEnabled && (
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <CField label={`Sales Target (${draft.commissionCurrency || "AED"})`} k="commissionTargetAmount" type="number" draft={draft} setDraft={setDraft} />
                   <CField label="Currency" k="commissionCurrency" draft={draft} setDraft={setDraft} />
@@ -318,7 +330,7 @@ export function OfferLetterDetail({ id }: Props) {
                   </div>
                 </div>
               )}
-              {!(editing && isDraft) && offer.commissionEnabled && (
+              {!(editing && canEdit) && offer.commissionEnabled && (
                 <div className="text-xs text-muted-foreground mt-2 grid grid-cols-2 gap-1">
                   <div>Target: {offer.commissionCurrency ?? "AED"} {Number(offer.commissionTargetAmount ?? 0).toLocaleString()}</div>
                   <div>Base rate: {offer.commissionBaseRatePct ?? 0}%</div>
@@ -343,31 +355,32 @@ export function OfferLetterDetail({ id }: Props) {
                   ref={previewRef}
                   doc={{
                     letterNumber: offer.letterNumber,
-                    candidateName: editing && isDraft ? (draft.candidateName || offer.candidateName) : offer.candidateName,
-                    candidateNationality: editing && isDraft ? draft.candidateNationality : (offer as any).candidateNationality,
-                    candidatePassportNo: editing && isDraft ? draft.candidatePassportNo : (offer as any).candidatePassportNo,
-                    designation: editing && isDraft ? draft.designation : offer.designation,
-                    joiningDate: editing && isDraft ? draft.joiningDate : offer.joiningDate,
-                    basicSalary: editing && isDraft ? Number(draft.basicSalary || 0) : (offer as any).basicSalary,
-                    allowances: editing && isDraft ? Number(draft.allowances || 0) : (offer as any).allowances,
-                    templateType: editing && isDraft ? draft.templateType : offer.templateType,
-                    workerType: editing && isDraft ? draft.workerType : (offer as any).workerType,
+                    candidateName: editing && canEdit ? (draft.candidateName || offer.candidateName) : offer.candidateName,
+                    candidateNationality: editing && canEdit ? draft.candidateNationality : (offer as any).candidateNationality,
+                    candidatePassportNo: editing && canEdit ? draft.candidatePassportNo : (offer as any).candidatePassportNo,
+                    designation: editing && canEdit ? draft.designation : offer.designation,
+                    joiningDate: editing && canEdit ? draft.joiningDate : offer.joiningDate,
+                    basicSalary: editing && canEdit ? Number(draft.basicSalary || 0) : (offer as any).basicSalary,
+                    allowances: editing && canEdit ? Number(draft.allowances || 0) : (offer as any).allowances,
+                    templateType: editing && canEdit ? draft.templateType : offer.templateType,
+                    workerType: editing && canEdit ? draft.workerType : (offer as any).workerType,
                     companyName: snapshotLegalName ?? (offer as any).companyName,
                     companyId: offer.companyId,
                     letterhead: resolvedLetterhead,
+                    companyLogoUrl,
                     issuedAt: offer.issuedAt,
-                    notes: editing && isDraft ? draft.notes : offer.notes,
-                    commissionEnabled: editing && isDraft ? !!draft.commissionEnabled : !!offer.commissionEnabled,
-                    commissionTargetAmount: editing && isDraft ? Number(draft.commissionTargetAmount || 0) : offer.commissionTargetAmount,
-                    commissionCurrency: editing && isDraft ? draft.commissionCurrency : offer.commissionCurrency,
-                    commissionBaseRatePct: editing && isDraft ? Number(draft.commissionBaseRatePct || 0) : offer.commissionBaseRatePct,
-                    commissionBonusPerStepAmount: editing && isDraft ? Number(draft.commissionBonusPerStepAmount || 0) : offer.commissionBonusPerStepAmount,
-                    commissionBonusStepSize: editing && isDraft ? Number(draft.commissionBonusStepSize || 0) : offer.commissionBonusStepSize,
-                    commissionShortfallTier1Pct: editing && isDraft ? Number(draft.commissionShortfallTier1Pct || 0) : offer.commissionShortfallTier1Pct,
-                    commissionShortfallTier1DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier1DeductionPct || 0) : offer.commissionShortfallTier1DeductionPct,
-                    commissionShortfallTier2Pct: editing && isDraft ? Number(draft.commissionShortfallTier2Pct || 0) : offer.commissionShortfallTier2Pct,
-                    commissionShortfallTier2DeductionPct: editing && isDraft ? Number(draft.commissionShortfallTier2DeductionPct || 0) : offer.commissionShortfallTier2DeductionPct,
-                    commissionNotes: editing && isDraft ? draft.commissionNotes : offer.commissionNotes,
+                    notes: editing && canEdit ? draft.notes : offer.notes,
+                    commissionEnabled: editing && canEdit ? !!draft.commissionEnabled : !!offer.commissionEnabled,
+                    commissionTargetAmount: editing && canEdit ? Number(draft.commissionTargetAmount || 0) : offer.commissionTargetAmount,
+                    commissionCurrency: editing && canEdit ? draft.commissionCurrency : offer.commissionCurrency,
+                    commissionBaseRatePct: editing && canEdit ? Number(draft.commissionBaseRatePct || 0) : offer.commissionBaseRatePct,
+                    commissionBonusPerStepAmount: editing && canEdit ? Number(draft.commissionBonusPerStepAmount || 0) : offer.commissionBonusPerStepAmount,
+                    commissionBonusStepSize: editing && canEdit ? Number(draft.commissionBonusStepSize || 0) : offer.commissionBonusStepSize,
+                    commissionShortfallTier1Pct: editing && canEdit ? Number(draft.commissionShortfallTier1Pct || 0) : offer.commissionShortfallTier1Pct,
+                    commissionShortfallTier1DeductionPct: editing && canEdit ? Number(draft.commissionShortfallTier1DeductionPct || 0) : offer.commissionShortfallTier1DeductionPct,
+                    commissionShortfallTier2Pct: editing && canEdit ? Number(draft.commissionShortfallTier2Pct || 0) : offer.commissionShortfallTier2Pct,
+                    commissionShortfallTier2DeductionPct: editing && canEdit ? Number(draft.commissionShortfallTier2DeductionPct || 0) : offer.commissionShortfallTier2DeductionPct,
+                    commissionNotes: editing && canEdit ? draft.commissionNotes : offer.commissionNotes,
                   }}
                 />
               </div>

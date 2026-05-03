@@ -28,6 +28,10 @@ export interface OfferLetterDoc {
   // over name-based detection so historical letters render deterministically
   // even if a company is later renamed.
   letterhead?: "prime" | "elite";
+  // Live-resolved company logo URL (data: URL or http(s) link). Preferred over
+  // the hardcoded brand assets so any company configured by Admin renders with
+  // its own letterhead.
+  companyLogoUrl?: string | null;
   issuedAt?: string | null;
   notes?: string | null;
 }
@@ -67,7 +71,9 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
     <div ref={ref} className="bg-white text-black mx-auto" style={{ width: "794px", minHeight: "1123px", padding: "48px 56px", fontFamily: "Georgia, 'Times New Roman', serif" }}>
       {/* Letterhead */}
       <div className="flex items-center gap-4 pb-4 border-b-4" style={{ borderColor: "#0f2d5a" }}>
-        {isPrime ? (
+        {doc.companyLogoUrl ? (
+          <img src={doc.companyLogoUrl} alt={legalName} className="h-20 w-auto object-contain" crossOrigin="anonymous" />
+        ) : isPrime ? (
           <img src="/erp-crm/prime-max-logo.png" alt="Prime Max" className="h-20 w-auto" crossOrigin="anonymous" />
         ) : (
           <div className="h-20 w-20 flex items-center justify-center rounded-lg" style={{ background: "linear-gradient(135deg,#0f2d5a,#1e6ab0)", color: "white", fontWeight: 800, fontSize: 18, textAlign: "center", lineHeight: 1.1 }}>

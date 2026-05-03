@@ -82,14 +82,16 @@ router.post("/offer-letters", requirePermission("offer_letters", "create"), requ
   res.status(201).json(await enrichOffer(row));
 });
 
-// UPDATE (draft fields only)
+// UPDATE — allowed in any status until the offer has been converted to an
+// employee record. HR needs to be able to fix typos / correct salary lines on
+// already-issued letters without going through a full re-issue cycle.
 router.put("/offer-letters/:id", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(offerLettersTable).where(eq(offerLettersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
-  if (existing.status !== "draft") {
-    res.status(409).json({ error: "Only draft offer letters can be edited. Re-issue to make changes." }); return;
+  if (existing.convertedEmployeeId) {
+    res.status(409).json({ error: "This offer has already been converted to an employee and is locked. Edit the employee record instead." }); return;
   }
   const body = req.body ?? {};
   // Prevent clobbering of immutable fields (incl. companyId — would let a user
