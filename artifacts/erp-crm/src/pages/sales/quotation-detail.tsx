@@ -23,6 +23,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
   parsePaymentTerms,
   calculateInstallments,
@@ -66,10 +67,23 @@ export function QuotationDetail({ id }: Props) {
           toast({
             title: "Deal auto-created",
             description: "A new deal has been added to the sales pipeline.",
+            action: (
+              <ToastAction altText="Open pipeline" onClick={() => navigate("/crm/pipeline")}>
+                Open Pipeline
+              </ToastAction>
+            ),
           });
           queryClient.invalidateQueries({ queryKey: ["/deals"] });
         } else if (resp?.dealId) {
-          toast({ title: "Quotation linked to existing deal", description: "The deal value & probability were updated." });
+          toast({
+            title: "Quotation linked to existing deal",
+            description: "The deal value & probability were updated.",
+            action: (
+              <ToastAction altText="Open pipeline" onClick={() => navigate("/crm/pipeline")}>
+                Open Pipeline
+              </ToastAction>
+            ),
+          });
           queryClient.invalidateQueries({ queryKey: ["/deals"] });
         }
         for (const w of (resp?.warnings ?? []) as string[]) {

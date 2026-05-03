@@ -1,12 +1,31 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ToastAction } from "@/components/ui/toast";
-import { useListDeals, useUpdateDeal, getListDealsQueryKey } from "@workspace/api-client-react";
+import {
+  useListDeals, useUpdateDeal, getListDealsQueryKey,
+  useListProformaInvoices, useListTaxInvoices, useListDeliveryNotes,
+} from "@workspace/api-client-react";
+import { FileText, Receipt, Package } from "lucide-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { GripVertical, Search, TrendingUp, DollarSign, Briefcase, AlertTriangle } from "lucide-react";
+
+// Build a per-deal map of linked PI/INV/DN by parsing the "[deal:N]" trace tag
+// that the server writes into notes/projectName when auto-creating documents.
+function indexByDeal<T extends { id: number; notes?: string | null; projectName?: string | null }>(rows: T[] | undefined): Map<number, T> {
+  const m = new Map<number, T>();
+  for (const r of rows ?? []) {
+    const hay = `${r.notes ?? ""} ${r.projectName ?? ""}`;
+    const match = hay.match(/\[deal:(\d+)/);
+    if (match) {
+      const dealId = parseInt(match[1], 10);
+      if (!m.has(dealId)) m.set(dealId, r);
+    }
+  }
+  return m;
+}
 import { useToast } from "@/hooks/use-toast";
 import { ExecutiveHeader, Avatar } from "@/components/crm/premium";
 
@@ -30,6 +49,12 @@ const STAGES: Stage[] = [
 
 export function SalesPipeline() {
   const { data: dealsRaw, isLoading } = useListDeals();
+  const { data: piRaw } = useListProformaInvoices();
+  const { data: tiRaw } = useListTaxInvoices();
+  const { data: dnRaw } = useListDeliveryNotes();
+  const piByDeal = useMemo(() => indexByDeal(piRaw as any), [piRaw]);
+  const tiByDeal = useMemo(() => indexByDeal(tiRaw as any), [tiRaw]);
+  const dnByDeal = useMemo(() => indexByDeal(dnRaw as any), [dnRaw]);
   const { filterByCompany } = useActiveCompany();
   const [, navigate] = useLocation();
   const [search, setSearch] = useState("");
@@ -245,6 +270,31 @@ export function SalesPipeline() {
                             {d.expectedCloseDate && (
                               <div className="text-[10px] text-muted-foreground mt-0.5">Close: {d.expectedCloseDate}</div>
                             )}
+                            {(() => {
+                              const pi = piByDeal.get(d.id);
+                              const ti = tiByDeal.get(d.id);
+                              const dn = dnByDeal.get(d.id);
+                              if (!pi && !ti && !dn) return null;
+                              return (
+                                <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                                  {pi && (
+                                    <Link href={`/sales/proforma-invoices/${pi.id}`} onClick={e => e.stopPropagation()} title={`Proforma ${(pi as any).piNumber ?? pi.id}`}>
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] hover:bg-blue-100"><FileText className="w-2.5 h-2.5" />PI</span>
+                                    </Link>
+                                  )}
+                                  {ti && (
+                                    <Link href={`/accounts/invoices/${ti.id}`} onClick={e => e.stopPropagation()} title={`Tax Invoice ${(ti as any).invoiceNumber ?? ti.id}`}>
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-50 text-green-700 text-[10px] hover:bg-green-100"><Receipt className="w-2.5 h-2.5" />INV</span>
+                                    </Link>
+                                  )}
+                                  {dn && (
+                                    <Link href={`/accounts/delivery-notes/${dn.id}`} onClick={e => e.stopPropagation()} title={`Delivery Note ${(dn as any).dnNumber ?? dn.id}`}>
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] hover:bg-purple-100"><Package className="w-2.5 h-2.5" />DN</span>
+                                    </Link>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>

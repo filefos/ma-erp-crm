@@ -213,7 +213,9 @@ router.post("/quotations/:id/approve", requirePermission("quotations", "approve"
       if (d) {
         const newValue = Math.max(Number(d.value ?? 0), Number(q.grandTotal ?? 0));
         const newProbability = Math.max(Number(d.probability ?? 0), targetProbability);
-        const newStage = ["new", "qualified", "contacted"].includes(d.stage) ? "proposal" : d.stage;
+        // Deal stages: new, qualification, proposal, negotiation, won, lost.
+        // Promote anything earlier than "proposal" up to "proposal".
+        const newStage = ["new", "qualification"].includes(d.stage) ? "proposal" : d.stage;
         await tx.update(dealsTable).set({
           value: newValue,
           probability: newProbability,
