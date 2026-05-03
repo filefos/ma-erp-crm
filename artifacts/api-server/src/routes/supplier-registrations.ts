@@ -8,13 +8,26 @@ import {
   companiesTable,
   emailsTable,
   emailSettingsTable,
+  notificationsTable,
+  userCompanyAccessTable,
+  usersTable,
 } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import nodemailer from "nodemailer";
-import { requireAuth, requirePermission, scopeFilter, inScope } from "../middlewares/auth";
+import {
+  requireAuth,
+  requirePermission,
+  scopeFilter,
+  inScope,
+  hasPermission,
+} from "../middlewares/auth";
 import { logger } from "../lib/logger";
 
 const router = Router();
+
+// Per-file attachment cap (5 MB per spec).
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_FILES = 6; // trade licence, VAT, bank ref, EID, ISO, insurance
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -24,9 +37,11 @@ function parseJson<T = unknown>(str: string | null | undefined, fallback: T): T 
 
 function toResponse(reg: typeof supplierRegistrationsTable.$inferSelect) {
   const atts = parseJson<Array<{ filename: string; contentType: string; size: number; content?: string }>>(reg.attachments, []);
+  const refs = parseJson<Array<{ name?: string; contact?: string }>>(reg.referenceClients, []);
   return {
     ...reg,
     categories: parseJson<string[]>(reg.categories, []),
+    referenceClients: refs,
     // Strip base64 content from list/detail responses (download endpoint serves it)
     attachments: atts.map(a => ({ filename: a.filename, contentType: a.contentType, size: a.size })),
   };
@@ -39,13 +54,33 @@ async function nextRefNumber(): Promise<string> {
   return `REG-${yr}-${String(seq).padStart(4, "0")}`;
 }
 
-async function notifyApplicant(opts: {
+/**
+ * Generate the next supplier code for a company. MUST be called inside a
+ * transaction that already holds a row-level lock on the companies row
+ * (`SELECT ... FOR UPDATE`) so concurrent approvals can't race and produce
+ * duplicates. The unique partial index `suppliers_code_company_idx` is the
+ * last-line-of-defence — this lock is the primary safeguard.
+ */
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+async function nextSupplierCodeTx(tx: Tx, companyId: number): Promise<string> {
+  const [co] = await tx.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, companyId));
+  const prefix = co?.prefix ?? "PM";
+  const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` })
+    .from(suppliersTable)
+    .where(and(eq(suppliersTable.companyId, companyId), sql`${suppliersTable.code} IS NOT NULL`));
+  const seq = (count ?? 0) + 1;
+  return `SUP-${prefix}-${String(seq).padStart(4, "0")}`;
+}
+
+interface SendArgs {
   companyId: number;
   toEmail: string;
   toName: string;
   subject: string;
   body: string;
-}) {
+}
+
+async function sendEmail(opts: SendArgs) {
   try {
     const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, opts.companyId));
     if (settings?.smtpHost && settings?.smtpUser && settings?.smtpPass) {
@@ -65,7 +100,6 @@ async function notifyApplicant(opts: {
         text: opts.body,
       });
     }
-    // Always log a copy to sent folder so the team has a paper trail.
     await db.insert(emailsTable).values({
       companyId: opts.companyId,
       folder: "sent",
@@ -79,7 +113,61 @@ async function notifyApplicant(opts: {
       sentAt: new Date(),
     });
   } catch (err) {
-    logger.warn({ err }, "Supplier registration notification failed");
+    logger.warn({ err, to: opts.toEmail }, "Supplier registration email failed");
+  }
+}
+
+/**
+ * Notify procurement team for a company:
+ *  - email to the company's procurement inbox (smtpFromEmail / smtpUser)
+ *  - in-app notification to every active user in that company who has
+ *    suppliers:view permission.
+ */
+async function notifyProcurement(opts: {
+  companyId: number;
+  subject: string;
+  body: string;
+  entityId: number;
+  refNumber: string;
+}) {
+  try {
+    const [settings] = await db.select().from(emailSettingsTable).where(eq(emailSettingsTable.companyId, opts.companyId));
+    const inbox = settings?.smtpUser;
+    if (inbox) {
+      await sendEmail({
+        companyId: opts.companyId,
+        toEmail: inbox,
+        toName: "Procurement Team",
+        subject: opts.subject,
+        body: opts.body,
+      });
+    }
+    // In-app notifications — all active users in this company with
+    // suppliers:view. We parallelise the per-user permission check + insert
+    // with Promise.all so a company with many users doesn't serialise
+    // hundreds of round-trips.
+    const accessRows = await db
+      .select({ id: usersTable.id, name: usersTable.name, isActive: usersTable.isActive, permissionLevel: usersTable.permissionLevel, role: usersTable.role })
+      .from(userCompanyAccessTable)
+      .innerJoin(usersTable, eq(usersTable.id, userCompanyAccessTable.userId))
+      .where(eq(userCompanyAccessTable.companyId, opts.companyId));
+    const message = opts.body.split("\n")[0]?.slice(0, 240) ?? opts.refNumber;
+    await Promise.all(accessRows
+      .filter(u => u.isActive !== false)
+      .map(async u => {
+        const allowed = await hasPermission(u as never, "suppliers", "view");
+        if (!allowed) return;
+        await db.insert(notificationsTable).values({
+          userId: u.id,
+          title: opts.subject,
+          message,
+          type: "info",
+          entityType: "supplier_registration",
+          entityId: opts.entityId,
+        });
+      }));
+  } catch (err) {
+    logger.warn({ err }, "Procurement notification failed");
   }
 }
 
@@ -105,48 +193,56 @@ const submitLimiter = rateLimit({
 
 router.post("/supplier-register", submitLimiter, async (req, res): Promise<void> => {
   const b = req.body ?? {};
-  // Required fields
-  if (!b.companyId || !b.companyName || !b.contactPerson || !b.email || !b.agreedTerms) {
+  if (!b.companyId || !b.companyName || !b.contactPerson || !b.email) {
     res.status(400).json({ error: "Missing required fields" });
+    return;
+  }
+  if (!b.agreedTerms || !b.agreedCodeOfConduct) {
+    res.status(400).json({ error: "Both declarations must be accepted to submit." });
     return;
   }
   if (!Array.isArray(b.categories) || b.categories.length === 0) {
     res.status(400).json({ error: "Please select at least one supply category" });
     return;
   }
-  // Validate target company exists & is active
   const [target] = await db.select().from(companiesTable).where(eq(companiesTable.id, Number(b.companyId)));
   if (!target) { res.status(400).json({ error: "Invalid company" }); return; }
 
-  // Normalize attachments: validate, cap size (10MB each, 5 files max)
+  // Normalize attachments
   const rawAtts: Array<{ filename: string; contentType: string; content: string }> = Array.isArray(b.attachments) ? b.attachments : [];
-  if (rawAtts.length > 5) { res.status(400).json({ error: "Maximum 5 attachments allowed" }); return; }
-  const attachments = rawAtts.slice(0, 5).map(a => ({
+  if (rawAtts.length > MAX_FILES) { res.status(400).json({ error: `Maximum ${MAX_FILES} attachments allowed` }); return; }
+  const attachments = rawAtts.map(a => ({
     filename: String(a.filename ?? "file").slice(0, 200),
     contentType: String(a.contentType ?? "application/octet-stream"),
     size: typeof a.content === "string" ? Math.floor((a.content.length * 3) / 4) : 0,
     content: typeof a.content === "string" ? a.content : "",
   }));
   for (const a of attachments) {
-    if (a.size > 10 * 1024 * 1024) {
-      res.status(400).json({ error: `File ${a.filename} exceeds 10MB limit` });
+    if (a.size > MAX_FILE_BYTES) {
+      res.status(400).json({ error: `File ${a.filename} exceeds 5MB limit` });
       return;
     }
   }
 
   const refNumber = await nextRefNumber();
   const ip = (req.ip ?? "").slice(0, 64);
+  const refClients = Array.isArray(b.referenceClients) ? b.referenceClients.slice(0, 3) : [];
+
   const [reg] = await db.insert(supplierRegistrationsTable).values({
     refNumber,
     companyId: Number(b.companyId),
-    status: "pending",
+    status: "pending_review",
     companyName: String(b.companyName).slice(0, 500),
+    tradeName: b.tradeName ?? null,
     tradeLicenseNo: b.tradeLicenseNo ?? null,
+    licenseAuthority: b.licenseAuthority ?? null,
     licenseExpiry: b.licenseExpiry ?? null,
     establishedYear: b.establishedYear ?? null,
     companySize: b.companySize ?? null,
     country: b.country ?? null,
     city: b.city ?? null,
+    emirate: b.emirate ?? null,
+    poBox: b.poBox ?? null,
     address: b.address ?? null,
     website: b.website ?? null,
     contactPerson: String(b.contactPerson).slice(0, 200),
@@ -154,32 +250,51 @@ router.post("/supplier-register", submitLimiter, async (req, res): Promise<void>
     email: String(b.email).slice(0, 200),
     phone: b.phone ?? null,
     whatsapp: b.whatsapp ?? null,
+    tenderContactName: b.tenderContactName ?? null,
+    tenderContactMobile: b.tenderContactMobile ?? null,
+    tenderContactEmail: b.tenderContactEmail ?? null,
     trn: b.trn ?? null,
     vatRegistered: Boolean(b.vatRegistered),
+    vatCertificateExpiry: b.vatCertificateExpiry ?? null,
     chamberMembership: b.chamberMembership ?? null,
     bankName: b.bankName ?? null,
+    bankBranch: b.bankBranch ?? null,
     bankAccountName: b.bankAccountName ?? null,
     bankAccountNumber: b.bankAccountNumber ?? null,
     iban: b.iban ?? null,
     swift: b.swift ?? null,
     currency: b.currency ?? "AED",
     categories: JSON.stringify(b.categories),
+    categoriesOther: b.categoriesOther ?? null,
     paymentTerms: b.paymentTerms ?? null,
     deliveryTerms: b.deliveryTerms ?? null,
     yearsExperience: b.yearsExperience ?? null,
+    turnoverBand: b.turnoverBand ?? null,
+    employeeBand: b.employeeBand ?? null,
+    referenceClients: JSON.stringify(refClients),
     majorClients: b.majorClients ?? null,
     attachments: JSON.stringify(attachments),
     agreedTerms: Boolean(b.agreedTerms),
+    agreedCodeOfConduct: Boolean(b.agreedCodeOfConduct),
     ipAddress: ip || null,
   }).returning();
 
   // Acknowledge applicant
-  await notifyApplicant({
+  await sendEmail({
     companyId: reg.companyId,
     toEmail: reg.email,
     toName: reg.contactPerson,
     subject: `Application received — ${refNumber}`,
     body: `Dear ${reg.contactPerson},\n\nThank you for registering ${reg.companyName} as a supplier with ${target.name}.\n\nYour reference number is ${refNumber}. Our procurement team will review your application and get back to you shortly. Please retain this reference for any follow-up correspondence.\n\nKind regards,\n${target.name} Procurement Team`,
+  });
+
+  // Notify procurement (email to company inbox + in-app to suppliers:view users)
+  await notifyProcurement({
+    companyId: reg.companyId,
+    entityId: reg.id,
+    refNumber,
+    subject: `New supplier application — ${refNumber}`,
+    body: `A new supplier application has been submitted via the public portal.\n\nReference: ${refNumber}\nCompany: ${reg.companyName}\nContact: ${reg.contactPerson} <${reg.email}>\nCategories: ${(parseJson<string[]>(reg.categories, [])).join(", ")}\n\nReview at /procurement/applications.`,
   });
 
   res.status(201).json(toResponse(reg));
@@ -226,66 +341,101 @@ router.post("/supplier-applications/:id/decision", requireAuth, requirePermissio
   if (!inScope(req, reg.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const decision = String(req.body?.decision ?? "");
   const notes = req.body?.notes ? String(req.body.notes) : null;
-  if (!["approve", "reject", "needs_info"].includes(decision)) {
+  if (!["approve", "reject", "more_info_needed"].includes(decision)) {
     res.status(400).json({ error: "Invalid decision" });
     return;
   }
 
   let supplierIdCreated: number | null = reg.supplierIdCreated;
   let newStatus = reg.status;
+  let supplierCode: string | null = null;
+  let updated: typeof supplierRegistrationsTable.$inferSelect;
 
   if (decision === "approve") {
-    if (!supplierIdCreated) {
-      // Avoid duplicates: if a supplier with same TRN or email already exists in this company, link instead of creating.
-      let existing: typeof suppliersTable.$inferSelect | undefined;
-      if (reg.trn) {
-        [existing] = await db.select().from(suppliersTable).where(and(eq(suppliersTable.companyId, reg.companyId), eq(suppliersTable.trn, reg.trn)));
-      }
-      if (!existing && reg.email) {
-        [existing] = await db.select().from(suppliersTable).where(and(eq(suppliersTable.companyId, reg.companyId), eq(suppliersTable.email, reg.email)));
-      }
-      if (existing) {
-        supplierIdCreated = existing.id;
-      } else {
-        const cats = parseJson<string[]>(reg.categories, []);
-        const [created] = await db.insert(suppliersTable).values({
-          companyId: reg.companyId,
-          name: reg.companyName,
-          contactPerson: reg.contactPerson,
-          email: reg.email,
-          phone: reg.phone,
-          whatsapp: reg.whatsapp,
-          address: reg.address,
-          trn: reg.trn,
-          website: reg.website,
-          category: cats[0] ?? null,
-          paymentTerms: reg.paymentTerms,
-          bankName: reg.bankName,
-          bankAccountName: reg.bankAccountName,
-          bankAccountNumber: reg.bankAccountNumber,
-          iban: reg.iban,
-          status: "active",
-          notes: `Auto-created from supplier application ${reg.refNumber}.${cats.length > 1 ? `\nCategories: ${cats.join(", ")}` : ""}`,
-          isActive: true,
-        }).returning();
-        supplierIdCreated = created.id;
-      }
-    }
-    newStatus = "approved";
-  } else if (decision === "reject") {
-    newStatus = "rejected";
-  } else {
-    newStatus = "needs_info";
-  }
+    // Wrap the whole approval block in a transaction. Serialise concurrent
+    // approvals for the same company by taking a row-level lock on the
+    // companies row before counting/inserting suppliers — this prevents two
+    // simultaneous approvals from minting the same SUP-PM-#### code.
+    updated = await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT id FROM companies WHERE id = ${reg.companyId} FOR UPDATE`);
 
-  const [updated] = await db.update(supplierRegistrationsTable).set({
-    status: newStatus,
-    reviewedById: req.user?.id ?? null,
-    reviewedAt: new Date(),
-    reviewNotes: notes,
-    supplierIdCreated,
-    updatedAt: new Date(),
-  }).where(eq(supplierRegistrationsTable.id, id)).returning();
+      let _supplierId = supplierIdCreated;
+      if (!_supplierId) {
+        // De-dup by TRN, then by email — but always make sure the resulting
+        // supplier carries a SUP-PM/EP-#### code so it slots cleanly into
+        // the RFQ / quotation / LPO flows.
+        let existing: typeof suppliersTable.$inferSelect | undefined;
+        if (reg.trn) {
+          [existing] = await tx.select().from(suppliersTable).where(and(eq(suppliersTable.companyId, reg.companyId), eq(suppliersTable.trn, reg.trn)));
+        }
+        if (!existing && reg.email) {
+          [existing] = await tx.select().from(suppliersTable).where(and(eq(suppliersTable.companyId, reg.companyId), eq(suppliersTable.email, reg.email)));
+        }
+        if (existing) {
+          _supplierId = existing.id;
+          if (!existing.code) {
+            supplierCode = await nextSupplierCodeTx(tx, reg.companyId);
+            await tx.update(suppliersTable).set({
+              code: supplierCode,
+              tradeLicenseExpiry: existing.tradeLicenseExpiry ?? reg.licenseExpiry ?? null,
+              vatCertificateExpiry: existing.vatCertificateExpiry ?? reg.vatCertificateExpiry ?? null,
+              updatedAt: new Date(),
+            }).where(eq(suppliersTable.id, existing.id));
+          } else {
+            supplierCode = existing.code;
+          }
+        } else {
+          const cats = parseJson<string[]>(reg.categories, []);
+          supplierCode = await nextSupplierCodeTx(tx, reg.companyId);
+          const [created] = await tx.insert(suppliersTable).values({
+            companyId: reg.companyId,
+            code: supplierCode,
+            name: reg.companyName,
+            contactPerson: reg.contactPerson,
+            email: reg.email,
+            phone: reg.phone,
+            whatsapp: reg.whatsapp,
+            address: reg.address,
+            trn: reg.trn,
+            website: reg.website,
+            category: cats[0] ?? null,
+            paymentTerms: reg.paymentTerms,
+            bankName: reg.bankName,
+            bankAccountName: reg.bankAccountName,
+            bankAccountNumber: reg.bankAccountNumber,
+            iban: reg.iban,
+            tradeLicenseExpiry: reg.licenseExpiry ?? null,
+            vatCertificateExpiry: reg.vatCertificateExpiry ?? null,
+            status: "active",
+            notes: `Auto-created from supplier application ${reg.refNumber}.${cats.length > 1 ? `\nCategories: ${cats.join(", ")}` : ""}${reg.categoriesOther ? `\nOther: ${reg.categoriesOther}` : ""}`,
+            isActive: true,
+          }).returning();
+          _supplierId = created.id;
+        }
+      }
+
+      const [u] = await tx.update(supplierRegistrationsTable).set({
+        status: "approved",
+        reviewedById: req.user?.id ?? null,
+        reviewedAt: new Date(),
+        reviewNotes: notes,
+        supplierIdCreated: _supplierId,
+        updatedAt: new Date(),
+      }).where(eq(supplierRegistrationsTable.id, id)).returning();
+      return u;
+    });
+    supplierIdCreated = updated.supplierIdCreated;
+    newStatus = updated.status;
+  } else {
+    newStatus = decision === "reject" ? "rejected" : "more_info_needed";
+    [updated] = await db.update(supplierRegistrationsTable).set({
+      status: newStatus,
+      reviewedById: req.user?.id ?? null,
+      reviewedAt: new Date(),
+      reviewNotes: notes,
+      updatedAt: new Date(),
+    }).where(eq(supplierRegistrationsTable.id, id)).returning();
+  }
 
   // Notify applicant
   const [target] = await db.select().from(companiesTable).where(eq(companiesTable.id, reg.companyId));
@@ -294,7 +444,7 @@ router.post("/supplier-applications/:id/decision", requireAuth, requirePermissio
   let body = "";
   if (newStatus === "approved") {
     subject = `Application approved — ${reg.refNumber}`;
-    body = `Dear ${reg.contactPerson},\n\nWe are pleased to confirm that ${reg.companyName} has been approved as an authorized supplier for ${targetName}.\n\nReference: ${reg.refNumber}\n\nOur procurement team will be in touch with next steps. ${notes ? `\n\nNotes: ${notes}` : ""}\n\nKind regards,\n${targetName} Procurement Team`;
+    body = `Dear ${reg.contactPerson},\n\nWe are pleased to confirm that ${reg.companyName} has been approved as an authorized supplier for ${targetName}.${supplierCode ? `\n\nYour supplier code: ${supplierCode}` : ""}\n\nReference: ${reg.refNumber}\n\nOur procurement team will be in touch with next steps.${notes ? `\n\nNotes: ${notes}` : ""}\n\nKind regards,\n${targetName} Procurement Team`;
   } else if (newStatus === "rejected") {
     subject = `Application update — ${reg.refNumber}`;
     body = `Dear ${reg.contactPerson},\n\nThank you for your interest in supplying ${targetName}. After review, we are unable to proceed with your application at this time.\n\nReference: ${reg.refNumber}${notes ? `\n\nNotes: ${notes}` : ""}\n\nKind regards,\n${targetName} Procurement Team`;
@@ -302,7 +452,16 @@ router.post("/supplier-applications/:id/decision", requireAuth, requirePermissio
     subject = `Additional information requested — ${reg.refNumber}`;
     body = `Dear ${reg.contactPerson},\n\nThank you for your application to supply ${targetName}. We need some additional information to complete our review.\n\nReference: ${reg.refNumber}${notes ? `\n\nDetails: ${notes}` : ""}\n\nPlease reply to this email with the requested details.\n\nKind regards,\n${targetName} Procurement Team`;
   }
-  await notifyApplicant({ companyId: reg.companyId, toEmail: reg.email, toName: reg.contactPerson, subject, body });
+  await sendEmail({ companyId: reg.companyId, toEmail: reg.email, toName: reg.contactPerson, subject, body });
+
+  // Procurement gets a state-change email + in-app notification too.
+  await notifyProcurement({
+    companyId: reg.companyId,
+    entityId: reg.id,
+    refNumber: reg.refNumber,
+    subject: `Supplier application ${newStatus} — ${reg.refNumber}`,
+    body: `${reg.companyName} (${reg.refNumber}) was marked ${newStatus} by ${req.user?.name ?? "a reviewer"}.${supplierCode ? `\nSupplier code: ${supplierCode}` : ""}${notes ? `\nNotes: ${notes}` : ""}`,
+  });
 
   res.json(toResponse(updated));
 });

@@ -21,6 +21,15 @@ export const suppliersTable = pgTable("suppliers", {
   status: text("status").notNull().default("active"),
   notes: text("notes"),
   isActive: boolean("is_active").notNull().default(true),
+  // Supplier code: SUP-PM-#### / SUP-EP-#### (auto-generated on approval)
+  code: text("code"),
+  // Expiry reminder bookkeeping (used by daily cron, idempotent)
+  licenseExpiryReminderSentAt: timestamp("license_expiry_reminder_sent_at"),
+  vatExpiryReminderSentAt: timestamp("vat_expiry_reminder_sent_at"),
+  // Approved suppliers carry their trade licence + VAT cert expiry dates
+  // so the cron job can scan them.
+  tradeLicenseExpiry: text("trade_license_expiry"),
+  vatCertificateExpiry: text("vat_certificate_expiry"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -123,53 +132,69 @@ export const supplierRegistrationsTable = pgTable("supplier_registrations", {
   id: serial("id").primaryKey(),
   refNumber: text("ref_number").notNull().unique(),
   companyId: integer("company_id").notNull(), // which of our companies they applied to (Prime Max / Elite)
-  status: text("status").notNull().default("pending"), // pending | approved | rejected | needs_info
+  status: text("status").notNull().default("pending_review"), // pending_review | approved | rejected | more_info_needed
 
   // Company information
-  companyName: text("company_name").notNull(),
+  companyName: text("company_name").notNull(),       // legal name
+  tradeName: text("trade_name"),                     // trading / brand name
   tradeLicenseNo: text("trade_license_no"),
+  licenseAuthority: text("license_authority"),       // issuing authority (e.g. DED Dubai)
   licenseExpiry: text("license_expiry"),
   establishedYear: text("established_year"),
   companySize: text("company_size"),
   country: text("country"),
   city: text("city"),
+  emirate: text("emirate"),
+  poBox: text("po_box"),
   address: text("address"),
   website: text("website"),
 
-  // Contact
+  // Contact (authorised signatory)
   contactPerson: text("contact_person").notNull(),
   designation: text("designation"),
   email: text("email").notNull(),
   phone: text("phone"),
   whatsapp: text("whatsapp"),
 
+  // Tender contact (key contact for tenders / RFQs)
+  tenderContactName: text("tender_contact_name"),
+  tenderContactMobile: text("tender_contact_mobile"),
+  tenderContactEmail: text("tender_contact_email"),
+
   // Tax / legal
   trn: text("trn"),
   vatRegistered: boolean("vat_registered").notNull().default(false),
+  vatCertificateExpiry: text("vat_certificate_expiry"),
   chamberMembership: text("chamber_membership"),
 
   // Banking
   bankName: text("bank_name"),
+  bankBranch: text("bank_branch"),
   bankAccountName: text("bank_account_name"),
   bankAccountNumber: text("bank_account_number"),
   iban: text("iban"),
   swift: text("swift"),
   currency: text("currency").default("AED"),
 
-  // Categories — JSON array of category names
+  // Categories — JSON array of category names + free-text "Other"
   categories: text("categories").default("[]"),
+  categoriesOther: text("categories_other"),
 
-  // Commercial
+  // Commercial / Profile
   paymentTerms: text("payment_terms"),
   deliveryTerms: text("delivery_terms"),
   yearsExperience: text("years_experience"),
+  turnoverBand: text("turnover_band"),               // < 1M / 1-5M / 5-25M / 25M+
+  employeeBand: text("employee_band"),               // 1-10 / 11-50 / ...
+  referenceClients: text("reference_clients").default("[]"), // JSON [{name, contact}]
   majorClients: text("major_clients"),
 
   // Attachments — JSON array of { filename, contentType, size, content (base64) }
   attachments: text("attachments").default("[]"),
 
-  // Declarations
-  agreedTerms: boolean("agreed_terms").notNull().default(false),
+  // Declarations (two checkboxes per spec)
+  agreedTerms: boolean("agreed_terms").notNull().default(false),               // info true & accurate
+  agreedCodeOfConduct: boolean("agreed_code_of_conduct").notNull().default(false), // anti-bribery / code of conduct
   submittedAt: timestamp("submitted_at").notNull().defaultNow(),
   ipAddress: text("ip_address"),
 

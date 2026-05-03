@@ -170,7 +170,7 @@ async function runMigrations() {
       id SERIAL PRIMARY KEY,
       ref_number TEXT NOT NULL UNIQUE,
       company_id INTEGER NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending',
+      status TEXT NOT NULL DEFAULT 'pending_review',
       company_name TEXT NOT NULL,
       trade_license_no TEXT,
       license_expiry TEXT,
@@ -212,32 +212,68 @@ async function runMigrations() {
     )`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS supplier_registrations_status_idx ON supplier_registrations(status, company_id)`);
 
-    // Seed the 18 UAE supplier categories (idempotent — ON CONFLICT DO NOTHING).
+    // Add columns introduced after initial release (idempotent).
+    const supplierRegAdds: Array<[string, string]> = [
+      ["trade_name", "TEXT"],
+      ["license_authority", "TEXT"],
+      ["emirate", "TEXT"],
+      ["po_box", "TEXT"],
+      ["tender_contact_name", "TEXT"],
+      ["tender_contact_mobile", "TEXT"],
+      ["tender_contact_email", "TEXT"],
+      ["vat_certificate_expiry", "TEXT"],
+      ["bank_branch", "TEXT"],
+      ["categories_other", "TEXT"],
+      ["turnover_band", "TEXT"],
+      ["employee_band", "TEXT"],
+      ["reference_clients", "TEXT DEFAULT '[]'"],
+      ["agreed_code_of_conduct", "BOOLEAN NOT NULL DEFAULT FALSE"],
+    ];
+    for (const [col, def] of supplierRegAdds) {
+      await db.execute(sql.raw(`ALTER TABLE supplier_registrations ADD COLUMN IF NOT EXISTS ${col} ${def}`));
+    }
+    // Approved-supplier code + expiry tracking columns.
+    const supplierAdds: Array<[string, string]> = [
+      ["code", "TEXT"],
+      ["trade_license_expiry", "TEXT"],
+      ["vat_certificate_expiry", "TEXT"],
+      ["license_expiry_reminder_sent_at", "TIMESTAMP"],
+      ["vat_expiry_reminder_sent_at", "TIMESTAMP"],
+    ];
+    for (const [col, def] of supplierAdds) {
+      await db.execute(sql.raw(`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS ${col} ${def}`));
+    }
+    await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS suppliers_code_company_idx ON suppliers(company_id, code) WHERE code IS NOT NULL`);
+
+    // Seed the 18 prefab-construction supplier categories (per task spec).
+    // These replace any earlier seed list; ON CONFLICT (name) DO NOTHING keeps
+    // re-runs idempotent. Existing applications referencing the old names by
+    // string are unaffected (categories are stored as JSON strings, not FKs).
     const seedCategories = [
-      "Building Materials",
-      "Steel & Metal Products",
-      "Cement & Concrete",
-      "Electrical Supplies",
-      "Plumbing & Sanitary",
-      "HVAC & Mechanical",
-      "Hardware & Tools",
-      "Paints & Coatings",
+      "Sandwich Panels (PUF / EPS / Rockwool)",
+      "Steel & Structural Steel",
+      "Aluminium Profiles & Cladding",
+      "Doors & Windows (uPVC / Aluminium)",
+      "MEP — Electrical",
+      "MEP — Plumbing & Sanitary",
+      "HVAC / AC Units",
       "Insulation Materials",
-      "Doors, Windows & Glass",
-      "Flooring & Tiles",
-      "Furniture & Fittings",
-      "Safety & PPE",
-      "Heavy Equipment Rental",
-      "Transportation & Logistics",
+      "Hardware Fasteners & Fixings",
+      "Paints & Coatings",
+      "Joinery & Carpentry",
+      "Civil Works / Foundations",
+      "Crane Hire & Heavy Equipment",
+      "Transport & Logistics",
       "Manpower Supply",
-      "IT, Office & Stationery",
-      "Other Services",
+      "Safety / PPE / HSE Supplies",
+      "Stationery & IT Equipment",
+      "Other",
     ];
     for (let i = 0; i < seedCategories.length; i++) {
       await db.execute(sql`
         INSERT INTO supplier_categories (name, sort_order, is_active)
         VALUES (${seedCategories[i]}, ${i}, TRUE)
-        ON CONFLICT (name) DO NOTHING
+        ON CONFLICT (name) DO UPDATE SET sort_order = EXCLUDED.sort_order, is_active = TRUE
       `);
     }
 

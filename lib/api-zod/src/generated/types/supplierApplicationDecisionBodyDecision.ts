@@ -12,5 +12,5 @@ export type SupplierApplicationDecisionBodyDecision =
 export const SupplierApplicationDecisionBodyDecision = {
   approve: "approve",
   reject: "reject",
-  needs_info: "needs_info",
+  more_info_needed: "more_info_needed",
 } as const;

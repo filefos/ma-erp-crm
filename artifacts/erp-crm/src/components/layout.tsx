@@ -464,6 +464,15 @@ function SidebarContent() {
           <LogOut className="w-3.5 h-3.5 mr-2" />
           Sign Out
         </Button>
+        <a
+          href="/supplier-register"
+          target="_blank"
+          rel="noreferrer"
+          className="block mt-2 px-2 py-1.5 text-[10px] text-white/40 hover:text-white/80 hover:bg-white/5 rounded text-center"
+          title="Public supplier registration form — share this URL with prospective vendors"
+        >
+          Become a supplier →
+        </a>
       </div>
     </div>
   );

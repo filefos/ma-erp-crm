@@ -5119,20 +5119,32 @@ components:
         size: { type: integer }
       required: [filename, contentType, size]
 
+    SupplierReferenceClient:
+      type: object
+      properties:
+        name: { type: string }
+        contact: { type: string }
+
     SupplierRegistration:
       type: object
       properties:
         id: { type: integer }
         refNumber: { type: string }
         companyId: { type: integer }
-        status: { type: string }
+        status:
+          type: string
+          enum: [pending_review, approved, rejected, more_info_needed]
         companyName: { type: string }
+        tradeName: { type: string }
         tradeLicenseNo: { type: string }
+        licenseAuthority: { type: string }
         licenseExpiry: { type: string }
         establishedYear: { type: string }
         companySize: { type: string }
         country: { type: string }
         city: { type: string }
+        emirate: { type: string }
+        poBox: { type: string }
         address: { type: string }
         website: { type: string }
         contactPerson: { type: string }
@@ -5140,10 +5152,15 @@ components:
         email: { type: string }
         phone: { type: string }
         whatsapp: { type: string }
+        tenderContactName: { type: string }
+        tenderContactMobile: { type: string }
+        tenderContactEmail: { type: string }
         trn: { type: string }
         vatRegistered: { type: boolean }
+        vatCertificateExpiry: { type: string }
         chamberMembership: { type: string }
         bankName: { type: string }
+        bankBranch: { type: string }
         bankAccountName: { type: string }
         bankAccountNumber: { type: string }
         iban: { type: string }
@@ -5152,15 +5169,23 @@ components:
         categories:
           type: array
           items: { type: string }
+        categoriesOther: { type: string }
         paymentTerms: { type: string }
         deliveryTerms: { type: string }
         yearsExperience: { type: string }
+        turnoverBand: { type: string }
+        employeeBand: { type: string }
+        referenceClients:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplierReferenceClient"
         majorClients: { type: string }
         attachments:
           type: array
           items:
             $ref: "#/components/schemas/SupplierRegistrationAttachment"
         agreedTerms: { type: boolean }
+        agreedCodeOfConduct: { type: boolean }
         submittedAt: { type: string }
         reviewedById: { type: integer }
         reviewedAt: { type: string }
@@ -5174,12 +5199,16 @@ components:
       properties:
         companyId: { type: integer }
         companyName: { type: string }
+        tradeName: { type: string }
         tradeLicenseNo: { type: string }
+        licenseAuthority: { type: string }
         licenseExpiry: { type: string }
         establishedYear: { type: string }
         companySize: { type: string }
         country: { type: string }
         city: { type: string }
+        emirate: { type: string }
+        poBox: { type: string }
         address: { type: string }
         website: { type: string }
         contactPerson: { type: string }
@@ -5187,10 +5216,15 @@ components:
         email: { type: string }
         phone: { type: string }
         whatsapp: { type: string }
+        tenderContactName: { type: string }
+        tenderContactMobile: { type: string }
+        tenderContactEmail: { type: string }
         trn: { type: string }
         vatRegistered: { type: boolean }
+        vatCertificateExpiry: { type: string }
         chamberMembership: { type: string }
         bankName: { type: string }
+        bankBranch: { type: string }
         bankAccountName: { type: string }
         bankAccountNumber: { type: string }
         iban: { type: string }
@@ -5199,9 +5233,16 @@ components:
         categories:
           type: array
           items: { type: string }
+        categoriesOther: { type: string }
         paymentTerms: { type: string }
         deliveryTerms: { type: string }
         yearsExperience: { type: string }
+        turnoverBand: { type: string }
+        employeeBand: { type: string }
+        referenceClients:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupplierReferenceClient"
         majorClients: { type: string }
         attachments:
           type: array
@@ -5213,14 +5254,15 @@ components:
               content: { type: string, description: "base64-encoded file content" }
             required: [filename, contentType, content]
         agreedTerms: { type: boolean }
-      required: [companyId, companyName, contactPerson, email, agreedTerms, categories]
+        agreedCodeOfConduct: { type: boolean }
+      required: [companyId, companyName, contactPerson, email, agreedTerms, agreedCodeOfConduct, categories]
 
     SupplierApplicationDecisionBody:
       type: object
       properties:
         decision:
           type: string
-          enum: [approve, reject, needs_info]
+          enum: [approve, reject, more_info_needed]
         notes: { type: string }
       required: [decision]
 

@@ -5,20 +5,26 @@
  * Prime Max & Elite Prefab ERP CRM API
  * OpenAPI spec version: 0.1.0
  */
+import type { SupplierReferenceClient } from "./supplierReferenceClient";
 import type { SupplierRegistrationAttachment } from "./supplierRegistrationAttachment";
+import type { SupplierRegistrationStatus } from "./supplierRegistrationStatus";
 
 export interface SupplierRegistration {
   id: number;
   refNumber: string;
   companyId: number;
-  status: string;
+  status: SupplierRegistrationStatus;
   companyName: string;
+  tradeName?: string;
   tradeLicenseNo?: string;
+  licenseAuthority?: string;
   licenseExpiry?: string;
   establishedYear?: string;
   companySize?: string;
   country?: string;
   city?: string;
+  emirate?: string;
+  poBox?: string;
   address?: string;
   website?: string;
   contactPerson: string;
@@ -26,22 +32,32 @@ export interface SupplierRegistration {
   email: string;
   phone?: string;
   whatsapp?: string;
+  tenderContactName?: string;
+  tenderContactMobile?: string;
+  tenderContactEmail?: string;
   trn?: string;
   vatRegistered?: boolean;
+  vatCertificateExpiry?: string;
   chamberMembership?: string;
   bankName?: string;
+  bankBranch?: string;
   bankAccountName?: string;
   bankAccountNumber?: string;
   iban?: string;
   swift?: string;
   currency?: string;
   categories?: string[];
+  categoriesOther?: string;
   paymentTerms?: string;
   deliveryTerms?: string;
   yearsExperience?: string;
+  turnoverBand?: string;
+  employeeBand?: string;
+  referenceClients?: SupplierReferenceClient[];
   majorClients?: string;
   attachments?: SupplierRegistrationAttachment[];
   agreedTerms: boolean;
+  agreedCodeOfConduct?: boolean;
   submittedAt: string;
   reviewedById?: number;
   reviewedAt?: string;

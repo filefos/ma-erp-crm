@@ -680,18 +680,37 @@ export interface SupplierRegistrationAttachment {
   size: number;
 }
 
+export interface SupplierReferenceClient {
+  name?: string;
+  contact?: string;
+}
+
+export type SupplierRegistrationStatus =
+  (typeof SupplierRegistrationStatus)[keyof typeof SupplierRegistrationStatus];
+
+export const SupplierRegistrationStatus = {
+  pending_review: "pending_review",
+  approved: "approved",
+  rejected: "rejected",
+  more_info_needed: "more_info_needed",
+} as const;
+
 export interface SupplierRegistration {
   id: number;
   refNumber: string;
   companyId: number;
-  status: string;
+  status: SupplierRegistrationStatus;
   companyName: string;
+  tradeName?: string;
   tradeLicenseNo?: string;
+  licenseAuthority?: string;
   licenseExpiry?: string;
   establishedYear?: string;
   companySize?: string;
   country?: string;
   city?: string;
+  emirate?: string;
+  poBox?: string;
   address?: string;
   website?: string;
   contactPerson: string;
@@ -699,22 +718,32 @@ export interface SupplierRegistration {
   email: string;
   phone?: string;
   whatsapp?: string;
+  tenderContactName?: string;
+  tenderContactMobile?: string;
+  tenderContactEmail?: string;
   trn?: string;
   vatRegistered?: boolean;
+  vatCertificateExpiry?: string;
   chamberMembership?: string;
   bankName?: string;
+  bankBranch?: string;
   bankAccountName?: string;
   bankAccountNumber?: string;
   iban?: string;
   swift?: string;
   currency?: string;
   categories?: string[];
+  categoriesOther?: string;
   paymentTerms?: string;
   deliveryTerms?: string;
   yearsExperience?: string;
+  turnoverBand?: string;
+  employeeBand?: string;
+  referenceClients?: SupplierReferenceClient[];
   majorClients?: string;
   attachments?: SupplierRegistrationAttachment[];
   agreedTerms: boolean;
+  agreedCodeOfConduct?: boolean;
   submittedAt: string;
   reviewedById?: number;
   reviewedAt?: string;
@@ -733,12 +762,16 @@ export type SubmitSupplierRegistrationBodyAttachmentsItem = {
 export interface SubmitSupplierRegistrationBody {
   companyId: number;
   companyName: string;
+  tradeName?: string;
   tradeLicenseNo?: string;
+  licenseAuthority?: string;
   licenseExpiry?: string;
   establishedYear?: string;
   companySize?: string;
   country?: string;
   city?: string;
+  emirate?: string;
+  poBox?: string;
   address?: string;
   website?: string;
   contactPerson: string;
@@ -746,22 +779,32 @@ export interface SubmitSupplierRegistrationBody {
   email: string;
   phone?: string;
   whatsapp?: string;
+  tenderContactName?: string;
+  tenderContactMobile?: string;
+  tenderContactEmail?: string;
   trn?: string;
   vatRegistered?: boolean;
+  vatCertificateExpiry?: string;
   chamberMembership?: string;
   bankName?: string;
+  bankBranch?: string;
   bankAccountName?: string;
   bankAccountNumber?: string;
   iban?: string;
   swift?: string;
   currency?: string;
   categories: string[];
+  categoriesOther?: string;
   paymentTerms?: string;
   deliveryTerms?: string;
   yearsExperience?: string;
+  turnoverBand?: string;
+  employeeBand?: string;
+  referenceClients?: SupplierReferenceClient[];
   majorClients?: string;
   attachments?: SubmitSupplierRegistrationBodyAttachmentsItem[];
   agreedTerms: boolean;
+  agreedCodeOfConduct: boolean;
 }
 
 export type SupplierApplicationDecisionBodyDecision =
@@ -770,7 +813,7 @@ export type SupplierApplicationDecisionBodyDecision =
 export const SupplierApplicationDecisionBodyDecision = {
   approve: "approve",
   reject: "reject",
-  needs_info: "needs_info",
+  more_info_needed: "more_info_needed",
 } as const;
 
 export interface SupplierApplicationDecisionBody {

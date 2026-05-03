@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startFollowUpWorker } from "./jobs/follow-ups";
+import { startSupplierExpiryWorker } from "./jobs/supplier-expiry";
 
 const rawPort = process.env["PORT"];
 
@@ -24,4 +25,5 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   startFollowUpWorker();
+  startSupplierExpiryWorker();
 });

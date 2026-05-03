@@ -26,17 +26,17 @@ import {
 } from "lucide-react";
 
 const STATUS_BADGES: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  pending_review: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   approved: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  needs_info: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  more_info_needed: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: "Pending",
+  pending_review: "Pending Review",
   approved: "Approved",
   rejected: "Rejected",
-  needs_info: "Needs Info",
+  more_info_needed: "More Info Needed",
 };
 
 export function SupplierApplicationsList() {
@@ -65,8 +65,8 @@ export function SupplierApplicationsList() {
       <Tabs value={statusFilter} onValueChange={setStatusFilter}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="needs_info">Needs Info</TabsTrigger>
+          <TabsTrigger value="pending_review">Pending Review</TabsTrigger>
+          <TabsTrigger value="more_info_needed">More Info Needed</TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
         </TabsList>
@@ -148,7 +148,7 @@ function ApplicationDetailSheet({ id, onClose }: { id: number | null; onClose: (
   });
   const [notes, setNotes] = useState("");
 
-  function act(decision: "approve" | "reject" | "needs_info") {
+  function act(decision: "approve" | "reject" | "more_info_needed") {
     if (!id) return;
     decide.mutate({ id, data: { decision, notes: notes || undefined } as any });
   }
@@ -251,7 +251,7 @@ function ApplicationDetailSheet({ id, onClose }: { id: number | null; onClose: (
               </Section>
             )}
 
-            {((app as any).status === "pending" || (app as any).status === "needs_info") ? (
+            {((app as any).status === "pending_review" || (app as any).status === "more_info_needed") ? (
               <div className="border-t pt-4 space-y-3 sticky bottom-0 bg-card -mx-6 px-6 pb-2">
                 <div className="space-y-1">
                   <Label>Notes (optional — sent to applicant)</Label>
@@ -261,7 +261,7 @@ function ApplicationDetailSheet({ id, onClose }: { id: number | null; onClose: (
                   <Button onClick={() => act("approve")} disabled={decide.isPending} className="bg-emerald-600 hover:bg-emerald-700">
                     <CheckCircle2 className="w-4 h-4 mr-1" /> Approve & Create Supplier
                   </Button>
-                  <Button onClick={() => act("needs_info")} disabled={decide.isPending} variant="outline">
+                  <Button onClick={() => act("more_info_needed")} disabled={decide.isPending} variant="outline">
                     <MessageCircleQuestion className="w-4 h-4 mr-1" /> Request Info
                   </Button>
                   <Button onClick={() => act("reject")} disabled={decide.isPending} variant="outline" className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">

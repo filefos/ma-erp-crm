@@ -13,18 +13,22 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Building2, User, Banknote, Tags, Paperclip, FileText,
-  CheckCircle2, AlertCircle, Loader2, ArrowRight, ArrowLeft,
+  Building2, User, Banknote, Tags, Paperclip, FileText, ClipboardList,
+  CheckCircle2, AlertCircle, Loader2, ArrowRight, ArrowLeft, Plus, X,
 } from "lucide-react";
 
 interface UploadedFile {
   filename: string;
   contentType: string;
-  content: string; // base64 (no data: prefix)
+  content: string;
   size: number;
 }
 
+interface ReferenceClient { name: string; contact: string }
+
 const COMPANY_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"];
+const TURNOVER_BANDS = ["< 1M", "1-5M", "5-25M", "25M+"];
+const EMIRATES = ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"];
 const COUNTRIES = [
   "United Arab Emirates", "Saudi Arabia", "Oman", "Qatar", "Kuwait", "Bahrain",
   "India", "Pakistan", "China", "Turkey", "Germany", "United Kingdom", "Other",
@@ -35,9 +39,13 @@ const STEPS = [
   { id: 2, label: "Contact",     icon: User },
   { id: 3, label: "Categories",  icon: Tags },
   { id: 4, label: "Banking",     icon: Banknote },
-  { id: 5, label: "Documents",   icon: Paperclip },
-  { id: 6, label: "Review",      icon: FileText },
+  { id: 5, label: "Profile",     icon: ClipboardList },
+  { id: 6, label: "Documents",   icon: Paperclip },
+  { id: 7, label: "Review",      icon: FileText },
 ];
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_FILES = 6;
 
 export default function SupplierRegisterPage() {
   const { data: companies } = useListAuthCompanies();
@@ -50,36 +58,57 @@ export default function SupplierRegisterPage() {
 
   const [form, setForm] = useState({
     companyId: 0,
+    // Company
     companyName: "",
+    tradeName: "",
     tradeLicenseNo: "",
+    licenseAuthority: "",
     licenseExpiry: "",
     establishedYear: "",
     companySize: "",
     country: "United Arab Emirates",
+    emirate: "",
     city: "",
+    poBox: "",
     address: "",
     website: "",
+    // Contact
     contactPerson: "",
     designation: "",
     email: "",
     phone: "",
     whatsapp: "",
+    tenderContactName: "",
+    tenderContactMobile: "",
+    tenderContactEmail: "",
+    // Tax
     trn: "",
     vatRegistered: false,
+    vatCertificateExpiry: "",
     chamberMembership: "",
+    // Banking
     bankName: "",
+    bankBranch: "",
     bankAccountName: "",
     bankAccountNumber: "",
     iban: "",
     swift: "",
     currency: "AED",
+    // Categories + commercial
     categories: [] as string[],
+    categoriesOther: "",
     paymentTerms: "",
     deliveryTerms: "",
+    // Profile
     yearsExperience: "",
+    turnoverBand: "",
+    employeeBand: "",
     majorClients: "",
+    // Declarations
     agreedTerms: false,
+    agreedCodeOfConduct: false,
   });
+  const [refClients, setRefClients] = useState<ReferenceClient[]>([{ name: "", contact: "" }]);
   const [files, setFiles] = useState<UploadedFile[]>([]);
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -97,14 +126,14 @@ export default function SupplierRegisterPage() {
 
   async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const list = Array.from(e.target.files ?? []);
-    if (files.length + list.length > 5) {
-      setError("Maximum 5 files allowed.");
+    if (files.length + list.length > MAX_FILES) {
+      setError(`Maximum ${MAX_FILES} files allowed.`);
       return;
     }
     const next: UploadedFile[] = [];
     for (const f of list) {
-      if (f.size > 10 * 1024 * 1024) {
-        setError(`${f.name} exceeds 10MB limit.`);
+      if (f.size > MAX_FILE_BYTES) {
+        setError(`${f.name} exceeds 5MB limit.`);
         return;
       }
       const buf = await f.arrayBuffer();
@@ -123,17 +152,32 @@ export default function SupplierRegisterPage() {
     setFiles(p => p.filter((_, i) => i !== idx));
   }
 
+  function setRef(idx: number, key: keyof ReferenceClient, value: string) {
+    setRefClients(p => p.map((r, i) => i === idx ? { ...r, [key]: value } : r));
+  }
+  function addRef() { if (refClients.length < 3) setRefClients(p => [...p, { name: "", contact: "" }]); }
+  function removeRef(idx: number) {
+    setRefClients(p => p.length === 1 ? [{ name: "", contact: "" }] : p.filter((_, i) => i !== idx));
+  }
+
   function validateStep(s: number): string | null {
     if (s === 1) {
       if (!form.companyId) return "Please select the company you are applying to.";
-      if (!form.companyName.trim()) return "Company name is required.";
+      if (!form.companyName.trim()) return "Legal company name is required.";
+      if (!form.tradeLicenseNo.trim()) return "Trade Licence Number is required.";
+      if (!form.licenseExpiry) return "Trade Licence expiry date is required.";
     }
     if (s === 2) {
-      if (!form.contactPerson.trim()) return "Contact person is required.";
+      if (!form.contactPerson.trim()) return "Authorised signatory name is required.";
       if (!form.email.trim() || !form.email.includes("@")) return "A valid email is required.";
+      if (!form.phone.trim()) return "Phone number is required.";
+      if (form.vatRegistered && !form.trn.trim()) return "TRN is required when VAT registered.";
     }
     if (s === 3) {
       if (form.categories.length === 0) return "Please select at least one supply category.";
+    }
+    if (s === 4) {
+      if (form.bankName && !form.iban) return "IBAN is required when a bank is provided.";
     }
     return null;
   }
@@ -151,23 +195,27 @@ export default function SupplierRegisterPage() {
   }
 
   async function onSubmit() {
-    if (!form.agreedTerms) { setError("Please confirm the declaration to submit."); return; }
-    for (let s = 1; s <= 3; s++) {
+    if (!form.agreedTerms) { setError("Please confirm the truth-and-accuracy declaration."); return; }
+    if (!form.agreedCodeOfConduct) { setError("Please accept the Code of Conduct & anti-bribery policy."); return; }
+    for (let s = 1; s <= 4; s++) {
       const err = validateStep(s);
       if (err) { setStep(s); setError(err); return; }
     }
     setError(null);
     try {
+      const cleanRefs = refClients.filter(r => r.name.trim() || r.contact.trim()).slice(0, 3);
       const result = await submit.mutateAsync({
         data: {
           ...form,
+          referenceClients: cleanRefs,
           attachments: files.map(f => ({ filename: f.filename, contentType: f.contentType, content: f.content })),
-        },
+        } as never,
       });
       const co = companies?.find(c => c.id === form.companyId);
-      setSubmitted({ refNumber: (result as any).refNumber, companyName: co?.name ?? "Procurement Team" });
-    } catch (err: any) {
-      setError(err?.error ?? err?.message ?? "Submission failed. Please try again.");
+      setSubmitted({ refNumber: (result as { refNumber: string }).refNumber, companyName: co?.name ?? "Procurement Team" });
+    } catch (err: unknown) {
+      const e = err as { error?: string; message?: string };
+      setError(e?.error ?? e?.message ?? "Submission failed. Please try again.");
     }
   }
 
@@ -201,7 +249,6 @@ export default function SupplierRegisterPage() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      {/* Header */}
       <div className="bg-[#0f2d5a] text-white">
         <div className="max-w-4xl mx-auto px-4 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -219,7 +266,6 @@ export default function SupplierRegisterPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Stepper */}
         <div className="flex items-center justify-between mb-6 overflow-x-auto">
           {STEPS.map((s, i) => {
             const Icon = s.icon;
@@ -272,13 +318,19 @@ export default function SupplierRegisterPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Company Name" required>
+                <Field label="Legal Company Name" required>
                   <Input value={form.companyName} onChange={e => update("companyName", e.target.value)} />
                 </Field>
-                <Field label="Trade License No.">
+                <Field label="Trading / Brand Name">
+                  <Input value={form.tradeName} onChange={e => update("tradeName", e.target.value)} />
+                </Field>
+                <Field label="Trade Licence No." required>
                   <Input value={form.tradeLicenseNo} onChange={e => update("tradeLicenseNo", e.target.value)} />
                 </Field>
-                <Field label="License Expiry">
+                <Field label="Issuing Authority">
+                  <Input value={form.licenseAuthority} onChange={e => update("licenseAuthority", e.target.value)} placeholder="e.g. DED Dubai" />
+                </Field>
+                <Field label="Trade Licence Expiry" required>
                   <Input type="date" value={form.licenseExpiry} onChange={e => update("licenseExpiry", e.target.value)} />
                 </Field>
                 <Field label="Year Established">
@@ -303,22 +355,35 @@ export default function SupplierRegisterPage() {
                     </SelectContent>
                   </Select>
                 </Field>
+                <Field label="Emirate">
+                  <Select value={form.emirate} onValueChange={v => update("emirate", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select emirate" /></SelectTrigger>
+                    <SelectContent>
+                      {EMIRATES.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
                 <Field label="City">
                   <Input value={form.city} onChange={e => update("city", e.target.value)} />
                 </Field>
-                <Field label="Address" className="sm:col-span-2">
+                <Field label="P.O. Box">
+                  <Input value={form.poBox} onChange={e => update("poBox", e.target.value)} />
+                </Field>
+                <Field label="Office Address" className="sm:col-span-2">
                   <Textarea value={form.address} onChange={e => update("address", e.target.value)} rows={2} />
                 </Field>
               </div>
             </div>
           )}
 
-          {/* STEP 2 — Contact + tax */}
+          {/* STEP 2 — Contact + tax + tender contact */}
           {step === 2 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Primary Contact & Tax Details</h2>
+              <h2 className="text-lg font-semibold">Contact &amp; Tax Details</h2>
+
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Authorised Signatory</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Contact Person" required>
+                <Field label="Name" required>
                   <Input value={form.contactPerson} onChange={e => update("contactPerson", e.target.value)} />
                 </Field>
                 <Field label="Designation">
@@ -327,22 +392,42 @@ export default function SupplierRegisterPage() {
                 <Field label="Email" required>
                   <Input type="email" value={form.email} onChange={e => update("email", e.target.value)} />
                 </Field>
-                <Field label="Phone">
+                <Field label="Mobile" required>
                   <Input value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="+971 ..." />
                 </Field>
                 <Field label="WhatsApp">
                   <Input value={form.whatsapp} onChange={e => update("whatsapp", e.target.value)} placeholder="+971 ..." />
                 </Field>
-                <Field label="TRN (UAE Tax Registration Number)">
-                  <Input value={form.trn} onChange={e => update("trn", e.target.value)} />
+              </div>
+
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">Tender / RFQ Contact</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Field label="Name">
+                  <Input value={form.tenderContactName} onChange={e => update("tenderContactName", e.target.value)} />
                 </Field>
-                <Field label="Chamber of Commerce Membership">
-                  <Input value={form.chamberMembership} onChange={e => update("chamberMembership", e.target.value)} placeholder="Membership # / Emirate" />
+                <Field label="Mobile">
+                  <Input value={form.tenderContactMobile} onChange={e => update("tenderContactMobile", e.target.value)} />
                 </Field>
+                <Field label="Email">
+                  <Input type="email" value={form.tenderContactEmail} onChange={e => update("tenderContactEmail", e.target.value)} />
+                </Field>
+              </div>
+
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">Tax &amp; Legal</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex items-center gap-2 pt-6">
                   <Checkbox id="vat" checked={form.vatRegistered} onCheckedChange={v => update("vatRegistered", Boolean(v))} />
                   <Label htmlFor="vat" className="cursor-pointer">VAT Registered</Label>
                 </div>
+                <Field label="VAT TRN">
+                  <Input value={form.trn} onChange={e => update("trn", e.target.value)} />
+                </Field>
+                <Field label="VAT Certificate Expiry">
+                  <Input type="date" value={form.vatCertificateExpiry} onChange={e => update("vatCertificateExpiry", e.target.value)} />
+                </Field>
+                <Field label="Chamber of Commerce No.">
+                  <Input value={form.chamberMembership} onChange={e => update("chamberMembership", e.target.value)} placeholder="(optional)" />
+                </Field>
               </div>
             </div>
           )}
@@ -368,18 +453,17 @@ export default function SupplierRegisterPage() {
                   );
                 })}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <Field label="Years of Experience">
-                  <Input value={form.yearsExperience} onChange={e => update("yearsExperience", e.target.value)} placeholder="e.g. 10+ years" />
+              {form.categories.includes("Other") && (
+                <Field label="Other — please specify">
+                  <Input value={form.categoriesOther} onChange={e => update("categoriesOther", e.target.value)} placeholder="Describe the other category" />
                 </Field>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <Field label="Preferred Payment Terms">
                   <Input value={form.paymentTerms} onChange={e => update("paymentTerms", e.target.value)} placeholder="e.g. Net 30" />
                 </Field>
                 <Field label="Delivery Terms">
                   <Input value={form.deliveryTerms} onChange={e => update("deliveryTerms", e.target.value)} placeholder="e.g. DDP Dubai" />
-                </Field>
-                <Field label="Major Clients" className="sm:col-span-2">
-                  <Textarea value={form.majorClients} onChange={e => update("majorClients", e.target.value)} rows={2} placeholder="List a few notable clients (optional)" />
                 </Field>
               </div>
             </div>
@@ -393,6 +477,9 @@ export default function SupplierRegisterPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Bank Name">
                   <Input value={form.bankName} onChange={e => update("bankName", e.target.value)} />
+                </Field>
+                <Field label="Branch">
+                  <Input value={form.bankBranch} onChange={e => update("bankBranch", e.target.value)} />
                 </Field>
                 <Field label="Account Holder Name">
                   <Input value={form.bankAccountName} onChange={e => update("bankAccountName", e.target.value)} />
@@ -418,12 +505,63 @@ export default function SupplierRegisterPage() {
             </div>
           )}
 
-          {/* STEP 5 — Documents */}
+          {/* STEP 5 — Profile */}
           {step === 5 && (
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Company Profile</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Field label="Years in Business">
+                  <Input value={form.yearsExperience} onChange={e => update("yearsExperience", e.target.value)} placeholder="e.g. 10" />
+                </Field>
+                <Field label="Annual Turnover (AED)">
+                  <Select value={form.turnoverBand} onValueChange={v => update("turnoverBand", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select range" /></SelectTrigger>
+                    <SelectContent>
+                      {TURNOVER_BANDS.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Employees">
+                  <Select value={form.employeeBand} onValueChange={v => update("employeeBand", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select size" /></SelectTrigger>
+                    <SelectContent>
+                      {COMPANY_SIZES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Reference Clients (up to 3)</Label>
+                {refClients.map((r, i) => (
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+                    <Input placeholder="Client name" value={r.name} onChange={e => setRef(i, "name", e.target.value)} />
+                    <Input placeholder="Contact (name / phone / email)" value={r.contact} onChange={e => setRef(i, "contact", e.target.value)} />
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeRef(i)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                {refClients.length < 3 && (
+                  <Button type="button" variant="outline" size="sm" onClick={addRef}>
+                    <Plus className="w-3 h-3 mr-1" /> Add reference
+                  </Button>
+                )}
+              </div>
+
+              <Field label="Major Clients (free text, optional)">
+                <Textarea value={form.majorClients} onChange={e => update("majorClients", e.target.value)} rows={2} placeholder="List any other notable clients" />
+              </Field>
+            </div>
+          )}
+
+          {/* STEP 6 — Documents */}
+          {step === 6 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">Supporting Documents</h2>
               <p className="text-sm text-muted-foreground">
-                Upload trade license, VAT certificate, company profile, bank confirmation letter, etc. Max 5 files, 10MB each.
+                Trade Licence, VAT Certificate, Bank Reference Letter, Passport / EID of signatory.
+                Optional: ISO 9001, Insurance Certificate. PDF or JPG, max <strong>5 MB each</strong> (up to {MAX_FILES} files).
               </p>
               <div className="border-2 border-dashed rounded-xl p-6 text-center">
                 <Paperclip className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
@@ -435,10 +573,10 @@ export default function SupplierRegisterPage() {
                   type="file"
                   multiple
                   className="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                  accept=".pdf,.jpg,.jpeg,.png"
                   onChange={onFileChange}
                 />
-                <div className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG, DOC, XLS</div>
+                <div className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG · 5 MB max per file</div>
               </div>
               {files.length > 0 && (
                 <div className="space-y-2">
@@ -459,21 +597,23 @@ export default function SupplierRegisterPage() {
             </div>
           )}
 
-          {/* STEP 6 — Review & submit */}
-          {step === 6 && (
+          {/* STEP 7 — Review & submit */}
+          {step === 7 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Review & Submit</h2>
+              <h2 className="text-lg font-semibold">Review &amp; Submit</h2>
               <ReviewBlock title="Company">
                 <ReviewRow k="Applying to" v={companies?.find(c => c.id === form.companyId)?.name ?? "—"} />
-                <ReviewRow k="Company name" v={form.companyName} />
-                <ReviewRow k="Trade License" v={form.tradeLicenseNo || "—"} />
-                <ReviewRow k="Country / City" v={`${form.country}${form.city ? ", " + form.city : ""}`} />
+                <ReviewRow k="Legal name" v={form.companyName} />
+                <ReviewRow k="Trading name" v={form.tradeName || "—"} />
+                <ReviewRow k="Trade Licence" v={`${form.tradeLicenseNo}${form.licenseAuthority ? ` (${form.licenseAuthority})` : ""}`} />
+                <ReviewRow k="Licence Expiry" v={form.licenseExpiry || "—"} />
+                <ReviewRow k="Address" v={[form.poBox && `PO ${form.poBox}`, form.city, form.emirate, form.country].filter(Boolean).join(", ")} />
               </ReviewBlock>
               <ReviewBlock title="Contact">
-                <ReviewRow k="Person" v={`${form.contactPerson}${form.designation ? ` (${form.designation})` : ""}`} />
-                <ReviewRow k="Email" v={form.email} />
-                <ReviewRow k="Phone / WhatsApp" v={`${form.phone || "—"} / ${form.whatsapp || "—"}`} />
-                <ReviewRow k="TRN" v={form.trn || "—"} />
+                <ReviewRow k="Signatory" v={`${form.contactPerson}${form.designation ? ` (${form.designation})` : ""}`} />
+                <ReviewRow k="Email / Phone" v={`${form.email} / ${form.phone || "—"}`} />
+                <ReviewRow k="Tender contact" v={form.tenderContactName ? `${form.tenderContactName} — ${form.tenderContactEmail || form.tenderContactMobile || "—"}` : "—"} />
+                <ReviewRow k="VAT TRN" v={form.vatRegistered ? form.trn || "(missing)" : "Not VAT registered"} />
               </ReviewBlock>
               <ReviewBlock title="Categories">
                 <div className="flex flex-wrap gap-1.5">
@@ -481,6 +621,13 @@ export default function SupplierRegisterPage() {
                     <span key={c} className="text-xs bg-[#1e6ab0]/10 text-[#1e6ab0] px-2 py-0.5 rounded-full">{c}</span>
                   ))}
                 </div>
+                {form.categoriesOther && <div className="text-xs text-muted-foreground mt-1">Other: {form.categoriesOther}</div>}
+              </ReviewBlock>
+              <ReviewBlock title="Profile">
+                <ReviewRow k="Years in business" v={form.yearsExperience || "—"} />
+                <ReviewRow k="Turnover" v={form.turnoverBand || "—"} />
+                <ReviewRow k="Employees" v={form.employeeBand || "—"} />
+                <ReviewRow k="References" v={refClients.filter(r => r.name.trim()).map(r => r.name).join(", ") || "—"} />
               </ReviewBlock>
               <ReviewBlock title="Documents">
                 {files.length === 0 ? (
@@ -492,7 +639,7 @@ export default function SupplierRegisterPage() {
                 )}
               </ReviewBlock>
 
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 space-y-3">
                 <label className="flex items-start gap-2 cursor-pointer">
                   <Checkbox checked={form.agreedTerms} onCheckedChange={v => update("agreedTerms", Boolean(v))} className="mt-0.5" />
                   <span className="text-sm text-muted-foreground">
@@ -500,11 +647,16 @@ export default function SupplierRegisterPage() {
                     {companies?.find(c => c.id === form.companyId)?.name ?? "the procurement team"} to verify the details with relevant authorities.
                   </span>
                 </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <Checkbox checked={form.agreedCodeOfConduct} onCheckedChange={v => update("agreedCodeOfConduct", Boolean(v))} className="mt-0.5" />
+                  <span className="text-sm text-muted-foreground">
+                    I have read and accept the supplier <strong>Code of Conduct</strong> and <strong>Anti-Bribery &amp; Anti-Corruption</strong> policy.
+                  </span>
+                </label>
               </div>
             </div>
           )}
 
-          {/* Nav buttons */}
           <div className="flex items-center justify-between pt-2 border-t">
             <Button type="button" variant="outline" onClick={back} disabled={step === 1}>
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
