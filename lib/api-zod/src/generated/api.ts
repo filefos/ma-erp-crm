@@ -5295,7 +5295,7 @@ export const TestWhatsappAccountResponse = zod.object({
   nameStatus: zod.string().optional(),
   error: zod
     .object({
-      status: zod.number().optional(),
+      httpStatus: zod.number().optional(),
       message: zod.string().optional(),
       code: zod.number().optional(),
       subcode: zod.number().optional(),

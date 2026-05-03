@@ -1492,7 +1492,7 @@ export interface SendWhatsappResponse {
 }
 
 export type WhatsappAccountTestResultError = {
-  status?: number;
+  httpStatus?: number;
   message?: string;
   code?: number;
   subcode?: number;

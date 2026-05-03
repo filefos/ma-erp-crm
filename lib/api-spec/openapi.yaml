@@ -6347,7 +6347,7 @@ components:
         error:
           type: object
           properties:
-            status: { type: integer }
+            httpStatus: { type: integer }
             message: { type: string }
             code: { type: number }
             subcode: { type: number }

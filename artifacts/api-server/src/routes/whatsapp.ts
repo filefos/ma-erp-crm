@@ -132,7 +132,7 @@ router.delete("/whatsapp/accounts/:id", requirePermission("whatsapp", "delete"),
 
 // Diagnostic ping that calls Meta GET /{phoneNumberId}?fields=display_phone_number,verified_name,quality_rating
 // Lets the operator verify the phone_number_id + access token before sending a real message.
-router.post("/whatsapp/accounts/:id/test", requirePermission("whatsapp", "view"), async (req, res): Promise<void> => {
+router.post("/whatsapp/accounts/:id/test", requirePermission("whatsapp", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(String(req.params.id), 10);
   const [account] = await db.select().from(whatsappAccountsTable).where(eq(whatsappAccountsTable.id, id));
   if (!account) { res.status(404).json({ error: "Not found" }); return; }
@@ -157,7 +157,7 @@ router.post("/whatsapp/accounts/:id/test", requirePermission("whatsapp", "view")
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to reach WhatsApp Cloud API";
     req.log.warn({ accountId: account.id, envVarName }, "WhatsApp test connection network error");
-    res.json({ ok: false, envVarName, envVarSet: true, error: { message, status: 502 } });
+    res.json({ ok: false, envVarName, envVarSet: true, error: { message, httpStatus: 502 } });
     return;
   }
 
@@ -171,13 +171,13 @@ router.post("/whatsapp/accounts/:id/test", requirePermission("whatsapp", "view")
 
   if (!response.ok) {
     const meta = parseMetaError(json, response.status);
-    req.log.warn({ accountId: account.id, envVarName, status: response.status, metaError: meta }, "WhatsApp test connection rejected by Meta");
+    req.log.warn({ accountId: account.id, envVarName, status: response.status, metaError: meta, metaErrorRaw: json?.error ?? json }, "WhatsApp test connection rejected by Meta");
     res.json({
       ok: false,
       envVarName,
       envVarSet: true,
       error: {
-        status: response.status,
+        httpStatus: response.status,
         message: meta.message,
         code: meta.code,
         subcode: meta.subcode,
@@ -405,7 +405,7 @@ router.post("/whatsapp/send", requirePermission("whatsapp", "create"), async (re
 
   if (!response.ok) {
     const meta = parseMetaError(respJson, response.status);
-    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: response.status, metaError: meta }, "WhatsApp send rejected by Meta");
+    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: response.status, metaError: meta, metaErrorRaw: respJson?.error ?? respJson }, "WhatsApp send rejected by Meta");
     await db.update(whatsappMessagesTable).set({
       status: "failed",
       errorCode: meta.code ?? response.status,
@@ -512,7 +512,7 @@ router.post("/whatsapp/send-document", requirePermission("whatsapp", "create"), 
   const mediaJson = await mediaResp.json().catch(() => ({})) as MetaErrorJson & { id?: string };
   if (!mediaResp.ok || !mediaJson.id) {
     const meta = parseMetaError(mediaJson, mediaResp.status);
-    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: mediaResp.status, metaError: meta }, "WhatsApp media upload rejected by Meta");
+    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: mediaResp.status, metaError: meta, metaErrorRaw: mediaJson?.error ?? mediaJson }, "WhatsApp media upload rejected by Meta");
     res.status(mediaResp.status || 502).json({
       error: "WhatsApp media upload failed",
       message: meta.message,
@@ -590,7 +590,7 @@ router.post("/whatsapp/send-document", requirePermission("whatsapp", "create"), 
   };
   if (!sendResp.ok) {
     const meta = parseMetaError(sendJson, sendResp.status);
-    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: sendResp.status, metaError: meta }, "WhatsApp document send rejected by Meta");
+    req.log.warn({ accountId: account.id, envVarName: account.accessTokenEnv, status: sendResp.status, metaError: meta, metaErrorRaw: sendJson?.error ?? sendJson }, "WhatsApp document send rejected by Meta");
     await db.update(whatsappMessagesTable).set({
       status: "failed",
       errorCode: meta.code ?? sendResp.status,

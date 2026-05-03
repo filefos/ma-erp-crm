@@ -628,7 +628,7 @@ interface TestResult {
   qualityRating?: string;
   codeVerificationStatus?: string;
   nameStatus?: string;
-  error?: { status?: number; message?: string; code?: number; subcode?: number; type?: string; fbtraceId?: string };
+  error?: { httpStatus?: number; message?: string; code?: number; subcode?: number; type?: string; fbtraceId?: string };
 }
 
 function AccountRow({ account: a }: AccountRowProps) {
@@ -703,7 +703,7 @@ function AccountRow({ account: a }: AccountRowProps) {
               {result.error?.code != null && `code ${result.error.code}`}
               {result.error?.subcode != null && ` · subcode ${result.error.subcode}`}
               {result.error?.type && ` · ${result.error.type}`}
-              {result.error?.status != null && ` · HTTP ${result.error.status}`}
+              {result.error?.httpStatus != null && ` · HTTP ${result.error.httpStatus}`}
             </div>
           )}
           {result.error?.fbtraceId && <div className="font-mono text-[11px] text-red-800/80">fbtrace_id: {result.error.fbtraceId}</div>}
