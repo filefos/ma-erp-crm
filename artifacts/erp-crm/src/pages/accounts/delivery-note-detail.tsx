@@ -24,6 +24,10 @@ export function DeliveryNoteDetail({ id }: Props) {
   const { data: dn, isLoading } = useGetDeliveryNote(dnId, {
     query: { queryKey: getGetDeliveryNoteQueryKey(dnId), enabled: !!dnId },
   });
+  const tInvId = (dn as any)?.taxInvoiceId as number | undefined;
+  const { data: taxInv } = useGetTaxInvoice(tInvId!, {
+    query: { queryKey: getGetTaxInvoiceQueryKey(tInvId!), enabled: !!tInvId },
+  });
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading…</div>;
   if (!dn) return <div className="text-muted-foreground p-8">Delivery Note not found.</div>;
@@ -59,6 +63,13 @@ export function DeliveryNoteDetail({ id }: Props) {
           <Link href="/accounts/delivery-notes"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[dn.status] ?? "bg-gray-100"}`}>{dn.status}</Badge>
+        {tInvId ? (
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/accounts/invoices/${tInvId}`}>
+              <Receipt className="w-4 h-4 mr-1" />Tax Invoice {(taxInv as any)?.invoiceNumber ?? `#${tInvId}`}
+            </Link>
+          </Button>
+        ) : null}
         <div className="ml-auto flex gap-2">
           <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} recipientEmail={(dn as any).clientEmail ?? undefined} companyId={dn.companyId ?? undefined} docTypeLabel="Delivery Note" />
         </div>
