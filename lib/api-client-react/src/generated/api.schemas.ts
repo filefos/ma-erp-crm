@@ -1303,6 +1303,10 @@ export interface OfferLetter {
   convertedAt?: string;
   createdById?: number;
   createdByName?: string;
+  /** Snapshot of the letterhead brand ("prime" | "elite") at issue time. */
+  letterheadBrand?: string;
+  /** Snapshot of the company's legal name at issue time. */
+  companyLegalName?: string;
   createdAt: string;
 }
 

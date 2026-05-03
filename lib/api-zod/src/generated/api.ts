@@ -4731,6 +4731,16 @@ export const ListOfferLettersResponseItem = zod.object({
   convertedAt: zod.string().optional(),
   createdById: zod.number().optional(),
   createdByName: zod.string().optional(),
+  letterheadBrand: zod
+    .string()
+    .optional()
+    .describe(
+      'Snapshot of the letterhead brand (\"prime\" | \"elite\") at issue time.',
+    ),
+  companyLegalName: zod
+    .string()
+    .optional()
+    .describe("Snapshot of the company's legal name at issue time."),
   createdAt: zod.string(),
 });
 export const ListOfferLettersResponse = zod.array(ListOfferLettersResponseItem);
@@ -4791,6 +4801,16 @@ export const GetOfferLetterResponse = zod.object({
   convertedAt: zod.string().optional(),
   createdById: zod.number().optional(),
   createdByName: zod.string().optional(),
+  letterheadBrand: zod
+    .string()
+    .optional()
+    .describe(
+      'Snapshot of the letterhead brand (\"prime\" | \"elite\") at issue time.',
+    ),
+  companyLegalName: zod
+    .string()
+    .optional()
+    .describe("Snapshot of the company's legal name at issue time."),
   createdAt: zod.string(),
 });
 
@@ -4847,6 +4867,16 @@ export const UpdateOfferLetterResponse = zod.object({
   convertedAt: zod.string().optional(),
   createdById: zod.number().optional(),
   createdByName: zod.string().optional(),
+  letterheadBrand: zod
+    .string()
+    .optional()
+    .describe(
+      'Snapshot of the letterhead brand (\"prime\" | \"elite\") at issue time.',
+    ),
+  companyLegalName: zod
+    .string()
+    .optional()
+    .describe("Snapshot of the company's legal name at issue time."),
   createdAt: zod.string(),
 });
 
@@ -4891,6 +4921,16 @@ export const SetOfferLetterStatusResponse = zod.object({
   convertedAt: zod.string().optional(),
   createdById: zod.number().optional(),
   createdByName: zod.string().optional(),
+  letterheadBrand: zod
+    .string()
+    .optional()
+    .describe(
+      'Snapshot of the letterhead brand (\"prime\" | \"elite\") at issue time.',
+    ),
+  companyLegalName: zod
+    .string()
+    .optional()
+    .describe("Snapshot of the company's legal name at issue time."),
   createdAt: zod.string(),
 });
 

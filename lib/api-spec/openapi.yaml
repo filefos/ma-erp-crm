@@ -6297,6 +6297,12 @@ components:
           type: integer
         createdByName:
           type: string
+        letterheadBrand:
+          type: string
+          description: Snapshot of the letterhead brand ("prime" | "elite") at issue time.
+        companyLegalName:
+          type: string
+          description: Snapshot of the company's legal name at issue time.
         createdAt:
           type: string
       required: [id, letterNumber, companyId, templateType, status, candidateName, version, createdAt]

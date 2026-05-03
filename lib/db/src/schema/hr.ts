@@ -98,6 +98,10 @@ export const offerLettersTable = pgTable("offer_letters", {
   allowances: doublePrecision("allowances"),
   workerType: text("worker_type"), // staff | labor
   notes: text("notes"),
+  // Letterhead snapshot — captured at create time so the rendered letter is
+  // deterministic even if the company is later renamed.
+  letterheadBrand: text("letterhead_brand"),    // "prime" | "elite"
+  companyLegalName: text("company_legal_name"), // legal name as of issue
   // Status-stamps
   issuedAt: timestamp("issued_at"),
   acceptedAt: timestamp("accepted_at"),

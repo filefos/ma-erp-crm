@@ -324,6 +324,11 @@ async function runMigrations() {
     )`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS offer_letters_company_status_idx ON offer_letters(company_id, status)`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS offer_letters_employee_idx ON offer_letters(employee_id)`);
+    // Letterhead snapshot — back-fill columns for older rows
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS letterhead_brand TEXT`);
+    await db.execute(sql`ALTER TABLE offer_letters ADD COLUMN IF NOT EXISTS company_legal_name TEXT`);
+    // Race-free letter number sequence — replaces fragile count(*)+1 numbering.
+    await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS offer_letter_number_seq START 1`);
 
     // Grant default permissions on the new "offer_letters" module to existing
     // roles so HR users see the module without needing a re-seed. Idempotent.

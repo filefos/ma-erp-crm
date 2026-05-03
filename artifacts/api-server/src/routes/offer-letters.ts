@@ -24,8 +24,20 @@ async function enrichOffer(o: typeof offerLettersTable.$inferSelect): Promise<an
 
 async function nextLetterNumber(): Promise<string> {
   const year = new Date().getFullYear();
-  const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(offerLettersTable);
-  return `OL-${year}-${String((count ?? 0) + 1).padStart(5, "0")}`;
+  // Use a Postgres sequence so concurrent INSERTs cannot collide on the unique
+  // letter_number constraint. Sequence is monotonic across years; the year
+  // prefix is informational, not a per-year counter.
+  const result: any = await db.execute(sql`SELECT nextval('offer_letter_number_seq') AS n`);
+  const n = Number(result.rows?.[0]?.n ?? result[0]?.n ?? 1);
+  return `OL-${year}-${String(n).padStart(5, "0")}`;
+}
+
+async function snapshotLetterhead(companyId: number): Promise<{ letterheadBrand: string | null; companyLegalName: string | null }> {
+  const [c] = await db.select().from(companiesTable).where(eq(companiesTable.id, companyId));
+  if (!c) return { letterheadBrand: null, companyLegalName: null };
+  const blob = `${(c as any).shortName ?? ""} ${c.name ?? ""}`.toLowerCase();
+  const brand = blob.includes("elite") ? "elite" : blob.includes("prime") ? "prime" : null;
+  return { letterheadBrand: brand, companyLegalName: c.name ?? null };
 }
 
 // LIST
@@ -57,11 +69,14 @@ router.post("/offer-letters", requirePermission("offer_letters", "create"), requ
     res.status(400).json({ error: "companyId, templateType and candidateName are required" }); return;
   }
   const letterNumber = await nextLetterNumber();
+  const snap = await snapshotLetterhead(body.companyId);
   const [row] = await db.insert(offerLettersTable).values({
     ...body,
     letterNumber,
     status: "draft",
     version: 1,
+    letterheadBrand: snap.letterheadBrand,
+    companyLegalName: snap.companyLegalName,
     createdById: req.user?.id ?? null,
   }).returning();
   res.status(201).json(await enrichOffer(row));
@@ -122,6 +137,9 @@ router.post("/offer-letters/:id/reissue", requirePermission("offer_letters", "cr
   if (!src) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [src]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const letterNumber = await nextLetterNumber();
+  // Re-snapshot the letterhead at re-issue time so a renamed/rebranded company
+  // produces an updated, deterministic snapshot for the new draft.
+  const snap = await snapshotLetterhead(src.companyId);
   const [row] = await db.insert(offerLettersTable).values({
     letterNumber,
     companyId: src.companyId,
@@ -141,6 +159,8 @@ router.post("/offer-letters/:id/reissue", requirePermission("offer_letters", "cr
     notes: src.notes,
     parentOfferId: src.id,
     version: src.version + 1,
+    letterheadBrand: snap.letterheadBrand,
+    companyLegalName: snap.companyLegalName,
     createdById: req.user?.id ?? null,
   }).returning();
   res.status(201).json(await enrichOffer(row));

@@ -34,10 +34,13 @@ export function OfferLetterDetail({ id }: Props) {
   const [, setLocation] = useLocation();
   const { data: offer, isLoading } = useGetOfferLetter(oid, { query: { queryKey: getGetOfferLetterQueryKey(oid), enabled: !!oid } });
   const { data: companies } = useListCompanies();
-  // Resolve the letterhead deterministically from companyId so a future rename
-  // of the company record cannot retroactively flip the letterhead on a
-  // historical issued letter.
+  // Prefer the snapshot stored on the offer record (locked-in at issue time so
+  // renaming a company later cannot retroactively change a historical letter).
+  // Fall back to a live company-id lookup only for older rows that pre-date the
+  // snapshot columns.
   const resolvedLetterhead: "prime" | "elite" | undefined = (() => {
+    const snap = (offer as any)?.letterheadBrand;
+    if (snap === "prime" || snap === "elite") return snap;
     if (!offer || !companies) return undefined;
     const c = (companies as any[]).find(x => x.id === offer.companyId);
     if (!c) return undefined;
@@ -46,6 +49,7 @@ export function OfferLetterDetail({ id }: Props) {
     if (blob.includes("prime")) return "prime";
     return undefined;
   })();
+  const snapshotLegalName: string | undefined = (offer as any)?.companyLegalName ?? undefined;
   const update = useUpdateOfferLetter({ mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: getGetOfferLetterQueryKey(oid) }) } });
   const setStatus = useSetOfferLetterStatus({ mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: getGetOfferLetterQueryKey(oid) }) } });
   const reissue = useReissueOfferLetter({
@@ -243,7 +247,7 @@ export function OfferLetterDetail({ id }: Props) {
                     allowances: editing && isDraft ? Number(draft.allowances || 0) : (offer as any).allowances,
                     templateType: editing && isDraft ? draft.templateType : offer.templateType,
                     workerType: editing && isDraft ? draft.workerType : (offer as any).workerType,
-                    companyName: (offer as any).companyName,
+                    companyName: snapshotLegalName ?? (offer as any).companyName,
                     companyId: offer.companyId,
                     letterhead: resolvedLetterhead,
                     issuedAt: offer.issuedAt,
