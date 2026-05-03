@@ -121,6 +121,19 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     return captureElementToPdfBase64(el, `${docNumber}.pdf`);
   };
 
+  const downloadBase64Pdf = (base64: string, filename: string) => {
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  };
+
   const handleWhatsAppSend = async () => {
     const digits = normalizePhone(waPhone);
     if (!digits) {
@@ -131,47 +144,13 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     try {
       toast({ title: "Preparing PDF…", description: `Building ${label} ${docNumber}` });
       const { base64, filename } = await generatePdf();
-      const token = localStorage.getItem("erp_token");
-      const activeCompany = (() => {
-        try {
-          const raw = localStorage.getItem("erp_active_company_id");
-          return raw ? Number(raw) : null;
-        } catch { return null; }
-      })();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      if (activeCompany != null && Number.isFinite(activeCompany)) {
-        headers["X-Active-Company-Id"] = String(activeCompany);
-      }
-      const resp = await fetch("/api/whatsapp/send-document", {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({
-          to: digits,
-          filename,
-          contentBase64: base64,
-          contentType: "application/pdf",
-          caption: waMessage,
-        }),
+      downloadBase64Pdf(base64, filename);
+      const url = `https://wa.me/${digits}?text=${encodeURIComponent(waMessage)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+      toast({
+        title: "WhatsApp opened ✓",
+        description: `PDF downloaded as ${filename}. Attach it in the WhatsApp chat that just opened.`,
       });
-      const json = await resp.json().catch(() => ({})) as {
-        message?: string; code?: number; subcode?: number; type?: string; fbtraceId?: string;
-      };
-      if (!resp.ok) {
-        const parts: string[] = [];
-        if (json.code != null) parts.push(`code ${json.code}`);
-        if (json.subcode != null) parts.push(`subcode ${json.subcode}`);
-        if (json.type) parts.push(json.type);
-        const tag = parts.length ? `[${parts.join(" · ")}] ` : "";
-        toast({
-          title: "WhatsApp send failed",
-          description: `${tag}${json.message ?? `HTTP ${resp.status}`}`,
-          variant: "destructive",
-        });
-        return;
-      }
-      toast({ title: "Sent via WhatsApp ✓", description: `Delivered to +${digits}` });
       setWaOpen(false);
     } catch (err) {
       toast({ title: "Send failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
@@ -190,25 +169,13 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     try {
       toast({ title: "Preparing PDF…", description: `Building ${label} ${docNumber}` });
       const { base64, filename } = await generatePdf();
-      const resp = await fetch("/api/emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          action: "send",
-          companyId: companyId ?? null,
-          toAddress: to,
-          subject: mailSubject,
-          body: mailBody,
-          attachments: [{ filename, content: base64, contentType: "application/pdf" }],
-        }),
+      downloadBase64Pdf(base64, filename);
+      const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`;
+      window.location.href = url;
+      toast({
+        title: "Email opened ✓",
+        description: `PDF downloaded as ${filename}. Attach it in the email that just opened in Outlook.`,
       });
-      const json = await resp.json().catch(() => ({}));
-      if (!resp.ok) {
-        toast({ title: "Email send failed", description: json?.message ?? `HTTP ${resp.status}`, variant: "destructive" });
-        return;
-      }
-      toast({ title: "Email sent ✓", description: `Delivered to ${to}` });
       setMailOpen(false);
     } catch (err) {
       toast({ title: "Send failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
@@ -315,7 +282,7 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
               Send {label} {docNumber} via WhatsApp
             </DialogTitle>
             <DialogDescription>
-              Enter the recipient's WhatsApp number with country code (e.g. 9715XXXXXXXX). The PDF is delivered to their WhatsApp directly.
+              The PDF will be downloaded to your computer and WhatsApp will open with the recipient and message ready. Just attach the downloaded PDF in the WhatsApp chat and tap send.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-1">
@@ -325,13 +292,13 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
               <p className="text-[11px] text-gray-500">Country code required. Spaces and symbols are ignored.</p>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="wa-message">Message (sent as caption)</Label>
+              <Label htmlFor="wa-message">Pre-filled WhatsApp message</Label>
               <Textarea id="wa-message" value={waMessage} onChange={(e) => setWaMessage(e.target.value)} rows={5} disabled={waSending} />
             </div>
           </div>
           <DialogFooter>
             <Button onClick={() => void handleWhatsAppSend()} disabled={waSending || !normalizePhone(waPhone)} className="bg-[#25D366] hover:bg-[#1ea952] text-white w-full sm:w-auto">
-              {waSending ? (<><Loader2 className="w-4 h-4 mr-1 animate-spin" />Sending…</>) : (<><MessageCircle className="w-4 h-4 mr-1" />Send Now</>)}
+              {waSending ? (<><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing…</>) : (<><MessageCircle className="w-4 h-4 mr-1" />Download PDF & Open WhatsApp</>)}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -346,7 +313,7 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
               Send {label} {docNumber} via Email
             </DialogTitle>
             <DialogDescription>
-              Enter the recipient's email. The PDF is attached and delivered immediately via your company's email account.
+              The PDF will be downloaded to your computer and Outlook will open with the recipient, subject and message ready. Just attach the downloaded PDF in Outlook and click send.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-1">
@@ -365,7 +332,7 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
           </div>
           <DialogFooter>
             <Button onClick={() => void handleEmailSend()} disabled={mailSending || !mailTo.trim()} className="bg-[#1e6ab0] hover:bg-[#0f2d5a] text-white w-full sm:w-auto">
-              {mailSending ? (<><Loader2 className="w-4 h-4 mr-1 animate-spin" />Sending…</>) : (<><Mail className="w-4 h-4 mr-1" />Send Now</>)}
+              {mailSending ? (<><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing…</>) : (<><Mail className="w-4 h-4 mr-1" />Download PDF & Open Outlook</>)}
             </Button>
           </DialogFooter>
         </DialogContent>
