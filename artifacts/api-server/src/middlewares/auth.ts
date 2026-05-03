@@ -245,11 +245,21 @@ export async function hasPermission(user: User | undefined, module: string, acti
  * Module-level permission check. Consults user_permissions overrides first,
  * then falls back to the role's permissions row. super_admin always passes.
  */
+// Roles (department codes) that get FULL access on certain shared modules,
+// regardless of their permissionLevel matrix. Mirrors the layout.tsx
+// ROLE_GROUPS / LPO_INTAKE_EXTRAS cross-panel access policy.
+const ROLE_FULL_ACCESS: Record<string, string[]> = {
+  lpos: ["accountant", "accounts", "accounts_manager", "finance"],
+  proforma_invoices: ["accountant", "accounts", "accounts_manager", "finance"],
+};
+
 export function requirePermission(module: string, action: PermissionAction) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await requireAuth(req, res, async () => {
       const u = req.user!;
       if (u.permissionLevel === "super_admin") return next();
+      const fullRoles = ROLE_FULL_ACCESS[module];
+      if (fullRoles && u.role && fullRoles.includes(u.role)) return next();
       const col = ACTION_COLUMN[action];
 
       const [override] = await db.select().from(userPermissionsTable)
