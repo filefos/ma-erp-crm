@@ -251,7 +251,7 @@ export function PurchaseOrderDetail({ id }: Props) {
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
             <Pencil className="w-3.5 h-3.5 mr-1" />Edit
           </Button>
-          <ExportButtons docNumber={(po as any).poNumber ?? po.id?.toString() ?? "PO"} />
+          <ExportButtons docNumber={(po as any).poNumber ?? po.id?.toString() ?? "PO"} recipientPhone={(po as any).supplierPhone ?? undefined} docTypeLabel="Purchase Order" />
         </div>
       </div>
 

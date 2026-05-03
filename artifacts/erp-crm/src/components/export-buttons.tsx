@@ -1,3 +1,4 @@
+import { useState } from "react";
 import ExcelJS from "exceljs";
 import { Button } from "@/components/ui/button";
 import {
@@ -6,10 +7,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, FileText, FileSpreadsheet, ChevronDown, Printer } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Download,
+  FileText,
+  FileSpreadsheet,
+  ChevronDown,
+  Printer,
+  MessageCircle,
+} from "lucide-react";
 
 interface ExportButtonsProps {
   docNumber: string;
+  /** Optional default WhatsApp number for the recipient (any format). */
+  recipientPhone?: string;
+  /** Optional document type label, e.g. "Quotation", "Tax Invoice". */
+  docTypeLabel?: string;
+}
+
+function normalizePhone(raw: string): string {
+  return (raw || "").replace(/[^0-9]/g, "");
 }
 
 function getPrintEl(): HTMLElement | null {
@@ -56,12 +83,38 @@ function extractTableRows(table: HTMLTableElement): (string | number)[][] {
   return rows;
 }
 
-export function ExportButtons({ docNumber }: ExportButtonsProps) {
+export function ExportButtons({ docNumber, recipientPhone, docTypeLabel }: ExportButtonsProps) {
+  const [waOpen, setWaOpen] = useState(false);
+  const [waPhone, setWaPhone] = useState(recipientPhone ?? "");
+  const [waMessage, setWaMessage] = useState(
+    `Dear Sir/Madam,\n\nPlease find attached ${docTypeLabel ?? "document"} ${docNumber} for your kind reference.\n\nKindly review and revert.\n\nBest regards.`,
+  );
+
   const handlePrint = () => {
     const prev = document.title;
     document.title = docNumber;
     window.print();
     setTimeout(() => { document.title = prev; }, 3000);
+  };
+
+  const openWhatsApp = () => {
+    const digits = normalizePhone(waPhone);
+    if (!digits) return;
+    const encoded = encodeURIComponent(waMessage);
+    const url = `https://wa.me/${digits}?text=${encoded}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleSendViaWhatsApp = () => {
+    setWaOpen(true);
+  };
+
+  const handleSaveAndOpen = () => {
+    const digits = normalizePhone(waPhone);
+    if (!digits) return;
+    handlePrint();
+    setTimeout(openWhatsApp, 600);
+    setWaOpen(false);
   };
 
   const handleWord = () => {
@@ -145,6 +198,69 @@ export function ExportButtons({ docNumber }: ExportButtonsProps) {
       <Button size="sm" variant="outline" onClick={handlePrint}>
         <Printer className="w-4 h-4 mr-1" />Print / PDF
       </Button>
+
+      <Button
+        size="sm"
+        onClick={handleSendViaWhatsApp}
+        className="bg-[#25D366] hover:bg-[#1ea952] text-white border-0"
+      >
+        <MessageCircle className="w-4 h-4 mr-1" />Send via WhatsApp
+      </Button>
+
+      <Dialog open={waOpen} onOpenChange={setWaOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#0f2d5a]">
+              <MessageCircle className="w-5 h-5 text-[#25D366]" />
+              Send {docTypeLabel ?? "document"} {docNumber} via WhatsApp
+            </DialogTitle>
+            <DialogDescription>
+              Enter the recipient's WhatsApp number with country code (e.g. 9715XXXXXXXX).
+              The PDF will download to this device — drop it into the WhatsApp chat that opens.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1">
+              <Label htmlFor="wa-phone">WhatsApp Number *</Label>
+              <Input
+                id="wa-phone"
+                value={waPhone}
+                onChange={(e) => setWaPhone(e.target.value)}
+                placeholder="971501234567"
+                inputMode="tel"
+                autoFocus
+              />
+              <p className="text-[11px] text-gray-500">
+                Country code required. Spaces and symbols are ignored.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="wa-message">Message</Label>
+              <Textarea
+                id="wa-message"
+                value={waMessage}
+                onChange={(e) => setWaMessage(e.target.value)}
+                rows={5}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2 flex-col sm:flex-row">
+            <Button variant="outline" onClick={openWhatsApp} disabled={!normalizePhone(waPhone)}>
+              Open WhatsApp Only
+            </Button>
+            <Button
+              onClick={handleSaveAndOpen}
+              disabled={!normalizePhone(waPhone)}
+              className="bg-[#25D366] hover:bg-[#1ea952] text-white"
+            >
+              <Printer className="w-4 h-4 mr-1" />
+              Save PDF &amp; Open WhatsApp
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
