@@ -5,10 +5,12 @@
  * Prime Max & Elite Prefab ERP CRM API
  * OpenAPI spec version: 0.1.0
  */
+import type { SubmitSupplierRegistrationBodyAttachmentsItemDocumentType } from "./submitSupplierRegistrationBodyAttachmentsItemDocumentType";
 
 export type SubmitSupplierRegistrationBodyAttachmentsItem = {
   filename: string;
   contentType: string;
   /** base64-encoded file content */
   content: string;
+  documentType?: SubmitSupplierRegistrationBodyAttachmentsItemDocumentType;
 };

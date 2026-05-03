@@ -674,10 +674,24 @@ export interface SupplierCategoryItem {
   isActive: boolean;
 }
 
+export type SupplierRegistrationAttachmentDocumentType =
+  (typeof SupplierRegistrationAttachmentDocumentType)[keyof typeof SupplierRegistrationAttachmentDocumentType];
+
+export const SupplierRegistrationAttachmentDocumentType = {
+  trade_licence: "trade_licence",
+  vat_certificate: "vat_certificate",
+  bank_reference: "bank_reference",
+  signatory_id: "signatory_id",
+  iso_certificate: "iso_certificate",
+  insurance: "insurance",
+  other: "other",
+} as const;
+
 export interface SupplierRegistrationAttachment {
   filename: string;
   contentType: string;
   size: number;
+  documentType?: SupplierRegistrationAttachmentDocumentType;
 }
 
 export interface SupplierReferenceClient {
@@ -752,45 +766,59 @@ export interface SupplierRegistration {
   createdAt: string;
 }
 
+export type SubmitSupplierRegistrationBodyAttachmentsItemDocumentType =
+  (typeof SubmitSupplierRegistrationBodyAttachmentsItemDocumentType)[keyof typeof SubmitSupplierRegistrationBodyAttachmentsItemDocumentType];
+
+export const SubmitSupplierRegistrationBodyAttachmentsItemDocumentType = {
+  trade_licence: "trade_licence",
+  vat_certificate: "vat_certificate",
+  bank_reference: "bank_reference",
+  signatory_id: "signatory_id",
+  iso_certificate: "iso_certificate",
+  insurance: "insurance",
+  other: "other",
+} as const;
+
 export type SubmitSupplierRegistrationBodyAttachmentsItem = {
   filename: string;
   contentType: string;
   /** base64-encoded file content */
   content: string;
+  documentType?: SubmitSupplierRegistrationBodyAttachmentsItemDocumentType;
 };
 
 export interface SubmitSupplierRegistrationBody {
   companyId: number;
   companyName: string;
   tradeName?: string;
-  tradeLicenseNo?: string;
-  licenseAuthority?: string;
-  licenseExpiry?: string;
+  tradeLicenseNo: string;
+  licenseAuthority: string;
+  licenseExpiry: string;
   establishedYear?: string;
   companySize?: string;
-  country?: string;
+  country: string;
   city?: string;
   emirate?: string;
   poBox?: string;
   address?: string;
   website?: string;
   contactPerson: string;
-  designation?: string;
+  designation: string;
   email: string;
-  phone?: string;
+  phone: string;
   whatsapp?: string;
-  tenderContactName?: string;
+  tenderContactName: string;
   tenderContactMobile?: string;
-  tenderContactEmail?: string;
+  tenderContactEmail: string;
   trn?: string;
   vatRegistered?: boolean;
   vatCertificateExpiry?: string;
   chamberMembership?: string;
-  bankName?: string;
+  bankName: string;
   bankBranch?: string;
-  bankAccountName?: string;
-  bankAccountNumber?: string;
-  iban?: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  iban: string;
   swift?: string;
   currency?: string;
   categories: string[];

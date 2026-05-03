@@ -22,12 +22,17 @@ import {
   hasPermission,
 } from "../middlewares/auth";
 import { logger } from "../lib/logger";
+import { SubmitSupplierRegistrationBody as SubmitSupplierRegistrationSchema } from "@workspace/api-zod";
 
 const router = Router();
 
 // Per-file attachment cap (5 MB per spec).
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_FILES = 6; // trade licence, VAT, bank ref, EID, ISO, insurance
+
+// Documents the applicant MUST attach (VAT cert is conditionally required when
+// they declare themselves VAT-registered; checked separately below).
+const REQUIRED_DOC_TYPES = ["trade_licence", "bank_reference", "signatory_id"] as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -202,36 +207,63 @@ const submitLimiter = rateLimit({
 });
 
 router.post("/supplier-register", submitLimiter, async (req, res): Promise<void> => {
-  const b = req.body ?? {};
-  if (!b.companyId || !b.companyName || !b.contactPerson || !b.email) {
-    res.status(400).json({ error: "Missing required fields" });
+  // Strict schema validation derived from the OpenAPI spec (zod). Enforces
+  // every required field per the Required Fields contract for the public form.
+  const parsed = SubmitSupplierRegistrationSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    const path = first?.path.join(".") || "body";
+    res.status(400).json({ error: `Invalid submission (${path}): ${first?.message ?? "validation failed"}`, issues: parsed.error.issues });
     return;
   }
+  const b = parsed.data;
+
   if (!b.agreedTerms || !b.agreedCodeOfConduct) {
     res.status(400).json({ error: "Both declarations must be accepted to submit." });
     return;
   }
-  if (!Array.isArray(b.categories) || b.categories.length === 0) {
+  if (b.categories.length === 0) {
     res.status(400).json({ error: "Please select at least one supply category" });
     return;
   }
+  if (b.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) {
+    res.status(400).json({ error: "A valid contact email is required." });
+    return;
+  }
+  if (b.vatRegistered && !b.trn?.trim()) {
+    res.status(400).json({ error: "VAT TRN is required when VAT-registered." });
+    return;
+  }
+
   const [target] = await db.select().from(companiesTable).where(eq(companiesTable.id, Number(b.companyId)));
   if (!target) { res.status(400).json({ error: "Invalid company" }); return; }
 
   // Normalize attachments
-  const rawAtts: Array<{ filename: string; contentType: string; content: string }> = Array.isArray(b.attachments) ? b.attachments : [];
+  const rawAtts = Array.isArray(b.attachments) ? b.attachments : [];
   if (rawAtts.length > MAX_FILES) { res.status(400).json({ error: `Maximum ${MAX_FILES} attachments allowed` }); return; }
   const attachments = rawAtts.map(a => ({
     filename: String(a.filename ?? "file").slice(0, 200),
     contentType: String(a.contentType ?? "application/octet-stream"),
     size: typeof a.content === "string" ? Math.floor((a.content.length * 3) / 4) : 0,
     content: typeof a.content === "string" ? a.content : "",
+    documentType: a.documentType ?? "other",
   }));
   for (const a of attachments) {
     if (a.size > MAX_FILE_BYTES) {
       res.status(400).json({ error: `File ${a.filename} exceeds 5MB limit` });
       return;
     }
+  }
+  // Required documents per spec: trade licence, bank reference, signatory ID
+  // (VAT certificate additionally required when applicant is VAT-registered).
+  const presentTypes = new Set<string>(attachments.map(a => a.documentType));
+  const missing: string[] = REQUIRED_DOC_TYPES.filter(t => !presentTypes.has(t));
+  if (b.vatRegistered && !presentTypes.has("vat_certificate")) missing.push("vat_certificate");
+  if (missing.length > 0) {
+    res.status(400).json({
+      error: `Missing required documents: ${missing.join(", ")}. Please upload all mandatory supporting documents before submitting.`,
+    });
+    return;
   }
 
   const ip = (req.ip ?? "").slice(0, 64);

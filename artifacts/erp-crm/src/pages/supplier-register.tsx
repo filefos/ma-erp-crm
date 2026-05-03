@@ -17,12 +17,26 @@ import {
   CheckCircle2, AlertCircle, Loader2, ArrowRight, ArrowLeft, Plus, X,
 } from "lucide-react";
 
+type DocumentType =
+  | "trade_licence" | "vat_certificate" | "bank_reference"
+  | "signatory_id" | "iso_certificate" | "insurance" | "other";
+
 interface UploadedFile {
   filename: string;
   contentType: string;
   content: string;
   size: number;
+  documentType: DocumentType;
 }
+
+const DOC_SLOTS: Array<{ id: DocumentType; label: string; required: boolean | "vatOnly"; hint?: string }> = [
+  { id: "trade_licence",   label: "Trade Licence",                required: true,      hint: "Valid trade licence (PDF/JPG)" },
+  { id: "vat_certificate", label: "VAT Certificate",              required: "vatOnly", hint: "Required if VAT-registered" },
+  { id: "bank_reference",  label: "Bank Reference Letter",        required: true,      hint: "Letter from your bank confirming account details" },
+  { id: "signatory_id",    label: "Signatory Passport / Emirates ID", required: true,  hint: "ID of authorised signatory" },
+  { id: "iso_certificate", label: "ISO 9001 Certificate",         required: false,     hint: "Optional" },
+  { id: "insurance",       label: "Insurance Certificate",        required: false,     hint: "Optional" },
+];
 
 interface ReferenceClient { name: string; contact: string }
 
@@ -124,32 +138,33 @@ export default function SupplierRegisterPage() {
     }));
   }
 
-  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const list = Array.from(e.target.files ?? []);
-    if (files.length + list.length > MAX_FILES) {
-      setError(`Maximum ${MAX_FILES} files allowed.`);
-      return;
-    }
-    const next: UploadedFile[] = [];
-    for (const f of list) {
-      if (f.size > MAX_FILE_BYTES) {
-        setError(`${f.name} exceeds 5MB limit.`);
-        return;
-      }
-      const buf = await f.arrayBuffer();
-      const bin = new Uint8Array(buf);
-      let raw = "";
-      for (let i = 0; i < bin.byteLength; i++) raw += String.fromCharCode(bin[i]);
-      const base64 = btoa(raw);
-      next.push({ filename: f.name, contentType: f.type || "application/octet-stream", content: base64, size: f.size });
-    }
-    setFiles(p => [...p, ...next]);
-    setError(null);
+  async function onSlotFileChange(slot: DocumentType, e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
     e.target.value = "";
+    if (!f) return;
+    if (f.size > MAX_FILE_BYTES) { setError(`${f.name} exceeds 5MB limit.`); return; }
+    const buf = await f.arrayBuffer();
+    const bin = new Uint8Array(buf);
+    let raw = "";
+    for (let i = 0; i < bin.byteLength; i++) raw += String.fromCharCode(bin[i]);
+    const base64 = btoa(raw);
+    const upload: UploadedFile = {
+      filename: f.name,
+      contentType: f.type || "application/octet-stream",
+      content: base64,
+      size: f.size,
+      documentType: slot,
+    };
+    setFiles(p => {
+      const others = p.filter(x => x.documentType !== slot);
+      if (others.length + 1 > MAX_FILES) { setError(`Maximum ${MAX_FILES} files allowed.`); return p; }
+      return [...others, upload];
+    });
+    setError(null);
   }
 
-  function removeFile(idx: number) {
-    setFiles(p => p.filter((_, i) => i !== idx));
+  function removeSlotFile(slot: DocumentType) {
+    setFiles(p => p.filter(x => x.documentType !== slot));
   }
 
   function setRef(idx: number, key: keyof ReferenceClient, value: string) {
@@ -165,19 +180,35 @@ export default function SupplierRegisterPage() {
       if (!form.companyId) return "Please select the company you are applying to.";
       if (!form.companyName.trim()) return "Legal company name is required.";
       if (!form.tradeLicenseNo.trim()) return "Trade Licence Number is required.";
+      if (!form.licenseAuthority.trim()) return "Trade Licence issuing authority is required.";
       if (!form.licenseExpiry) return "Trade Licence expiry date is required.";
+      if (!form.country.trim()) return "Country is required.";
     }
     if (s === 2) {
       if (!form.contactPerson.trim()) return "Authorised signatory name is required.";
-      if (!form.email.trim() || !form.email.includes("@")) return "A valid email is required.";
+      if (!form.designation.trim()) return "Signatory designation is required.";
+      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "A valid contact email is required.";
       if (!form.phone.trim()) return "Phone number is required.";
-      if (form.vatRegistered && !form.trn.trim()) return "TRN is required when VAT registered.";
+      if (!form.tenderContactName.trim()) return "Tender / RFQ contact name is required.";
+      if (!form.tenderContactEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.tenderContactEmail)) return "A valid tender contact email is required.";
+      if (form.vatRegistered && !form.trn.trim()) return "VAT TRN is required when VAT-registered.";
     }
     if (s === 3) {
       if (form.categories.length === 0) return "Please select at least one supply category.";
+      if (form.categories.includes("Other") && !form.categoriesOther.trim()) return "Please describe the Other category.";
     }
     if (s === 4) {
-      if (form.bankName && !form.iban) return "IBAN is required when a bank is provided.";
+      if (!form.bankName.trim()) return "Bank name is required.";
+      if (!form.bankAccountName.trim()) return "Account holder name is required.";
+      if (!form.bankAccountNumber.trim()) return "Account number is required.";
+      if (!form.iban.trim()) return "IBAN is required.";
+    }
+    if (s === 6) {
+      const present = new Set(files.map(f => f.documentType));
+      const missing = DOC_SLOTS.filter(d =>
+        d.required === true || (d.required === "vatOnly" && form.vatRegistered),
+      ).filter(d => !present.has(d.id));
+      if (missing.length > 0) return `Please upload all required documents: ${missing.map(d => d.label).join(", ")}.`;
     }
     return null;
   }
@@ -197,7 +228,7 @@ export default function SupplierRegisterPage() {
   async function onSubmit() {
     if (!form.agreedTerms) { setError("Please confirm the truth-and-accuracy declaration."); return; }
     if (!form.agreedCodeOfConduct) { setError("Please accept the Code of Conduct & anti-bribery policy."); return; }
-    for (let s = 1; s <= 4; s++) {
+    for (let s = 1; s <= 6; s++) {
       const err = validateStep(s);
       if (err) { setStep(s); setError(err); return; }
     }
@@ -208,7 +239,7 @@ export default function SupplierRegisterPage() {
         data: {
           ...form,
           referenceClients: cleanRefs,
-          attachments: files.map(f => ({ filename: f.filename, contentType: f.contentType, content: f.content })),
+          attachments: files.map(f => ({ filename: f.filename, contentType: f.contentType, content: f.content, documentType: f.documentType })),
         },
       });
       const co = companies?.find(c => c.id === form.companyId);
@@ -560,40 +591,52 @@ export default function SupplierRegisterPage() {
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">Supporting Documents</h2>
               <p className="text-sm text-muted-foreground">
-                Trade Licence, VAT Certificate, Bank Reference Letter, Passport / EID of signatory.
-                Optional: ISO 9001, Insurance Certificate. PDF or JPG, max <strong>5 MB each</strong> (up to {MAX_FILES} files).
+                Upload each document into its labelled slot. PDF, JPG or PNG, <strong>5 MB max per file</strong>.
+                Items marked <span className="text-red-600 font-semibold">*</span> are required.
               </p>
-              <div className="border-2 border-dashed rounded-xl p-6 text-center">
-                <Paperclip className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                <Label htmlFor="files" className="cursor-pointer text-[#1e6ab0] font-medium">
-                  Click to upload files
-                </Label>
-                <input
-                  id="files"
-                  type="file"
-                  multiple
-                  className="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={onFileChange}
-                />
-                <div className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG · 5 MB max per file</div>
-              </div>
-              {files.length > 0 && (
-                <div className="space-y-2">
-                  {files.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between border rounded-lg p-2.5 bg-muted/30">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
+              <div className="space-y-2.5">
+                {DOC_SLOTS.map(slot => {
+                  const required = slot.required === true || (slot.required === "vatOnly" && form.vatRegistered);
+                  const uploaded = files.find(f => f.documentType === slot.id);
+                  const inputId = `doc-${slot.id}`;
+                  return (
+                    <div key={slot.id} className={`border rounded-lg p-3 ${required && !uploaded ? "border-red-200 bg-red-50/30 dark:bg-red-900/10" : "bg-muted/20"}`}>
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div className="min-w-0">
-                          <div className="text-sm font-medium truncate">{f.filename}</div>
-                          <div className="text-[11px] text-muted-foreground">{(f.size / 1024).toFixed(1)} KB</div>
+                          <div className="text-sm font-medium">
+                            {slot.label}
+                            {required && <span className="text-red-600 ml-1">*</span>}
+                          </div>
+                          {slot.hint && <div className="text-[11px] text-muted-foreground">{slot.hint}</div>}
                         </div>
+                        {uploaded ? (
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <div className="text-xs truncate max-w-[180px]">{uploaded.filename}</div>
+                            <span className="text-[10px] text-muted-foreground">{(uploaded.size / 1024).toFixed(1)} KB</span>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => removeSlotFile(slot.id)}>
+                              <X className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <Label htmlFor={inputId} className="cursor-pointer inline-flex items-center gap-1 text-xs text-[#1e6ab0] font-medium border border-[#1e6ab0]/40 rounded-md px-2.5 py-1 hover:bg-[#1e6ab0]/5">
+                              <Plus className="w-3.5 h-3.5" /> Upload
+                            </Label>
+                            <input
+                              id={inputId}
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={e => onSlotFileChange(slot.id, e)}
+                            />
+                          </>
+                        )}
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => removeFile(i)}>Remove</Button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
           )}
 

@@ -5117,6 +5117,9 @@ components:
         filename: { type: string }
         contentType: { type: string }
         size: { type: integer }
+        documentType:
+          type: string
+          enum: [trade_licence, vat_certificate, bank_reference, signatory_id, iso_certificate, insurance, other]
       required: [filename, contentType, size]
 
     SupplierReferenceClient:
@@ -5252,10 +5255,13 @@ components:
               filename: { type: string }
               contentType: { type: string }
               content: { type: string, description: "base64-encoded file content" }
+              documentType:
+                type: string
+                enum: [trade_licence, vat_certificate, bank_reference, signatory_id, iso_certificate, insurance, other]
             required: [filename, contentType, content]
         agreedTerms: { type: boolean }
         agreedCodeOfConduct: { type: boolean }
-      required: [companyId, companyName, contactPerson, email, agreedTerms, agreedCodeOfConduct, categories]
+      required: [companyId, companyName, tradeLicenseNo, licenseAuthority, licenseExpiry, country, contactPerson, designation, email, phone, tenderContactName, tenderContactEmail, bankName, bankAccountName, bankAccountNumber, iban, contactPerson, agreedTerms, agreedCodeOfConduct, categories]
 
     SupplierApplicationDecisionBody:
       type: object

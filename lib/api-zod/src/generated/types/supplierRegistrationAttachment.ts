@@ -5,9 +5,11 @@
  * Prime Max & Elite Prefab ERP CRM API
  * OpenAPI spec version: 0.1.0
  */
+import type { SupplierRegistrationAttachmentDocumentType } from "./supplierRegistrationAttachmentDocumentType";
 
 export interface SupplierRegistrationAttachment {
   filename: string;
   contentType: string;
   size: number;
+  documentType?: SupplierRegistrationAttachmentDocumentType;
 }
