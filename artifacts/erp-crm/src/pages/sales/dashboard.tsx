@@ -144,45 +144,10 @@ export function SalesDashboard() {
     return r === "sales" || r.includes("sales") || r === "manager" || r === "main_admin" || r === "admin";
   }), [users]);
 
-  const leaderboard = useMemo(() => {
-    const now = new Date();
-    return salesUsers
-      .map((u: any) => {
-        const userDeals = deals.filter((d: any) => d.assignedToId === u.id || d.assignedToName === u.name);
-        const quoted = quotations.filter((q: any) => q.preparedById === u.id || q.preparedByName === u.name)
-          .reduce((s: number, q: any) => s + Number(q.grandTotal ?? 0), 0);
-        const won = userDeals.filter((d: any) => d.stage === "won")
-          .reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
-        const userTargets = targets.filter((t: any) => t.userId === u.id && t.year === year);
-        const target = userTargets.reduce((s: number, t: any) => {
-          if (t.period === "yearly")    return s + Number(t.targetAmount ?? 0);
-          if (t.period === "quarterly") return s + Number(t.targetAmount ?? 0) * 4;
-          if (t.period === "monthly")   return s + Number(t.targetAmount ?? 0) * 12;
-          return s;
-        }, 0);
-        const sparkline: number[] = [];
-        for (let i = 5; i >= 0; i--) {
-          const ms = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const me = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-          const v = userDeals.filter((d: any) => {
-            if (d.stage !== "won") return false;
-            const dt = d.closedAt ?? d.updatedAt ?? d.createdAt;
-            if (!dt) return false;
-            const t = new Date(dt).getTime();
-            return t >= ms.getTime() && t < me.getTime();
-          }).reduce((s: number, d: any) => s + Number(d.value ?? 0), 0);
-          sparkline.push(v);
-        }
-        return { id: u.id, name: u.name, quoted, won, target, sparkline, attainment: target > 0 ? Math.round((won / target) * 100) : null };
-      })
-      .filter((r: any) => r.quoted > 0 || r.won > 0 || r.target > 0)
-      .sort((a: any, b: any) => b.won - a.won)
-      .slice(0, 8);
-  }, [salesUsers, quotations, deals, targets, year]);
-
-  // ---- Full salesperson roster for the dedicated performance row (unsliced) ----
+  // Single source of truth for salesperson stats — used by both the dedicated
+  // Salesperson Performance row and the legacy compact leaderboard panel below.
   const salesPerformance = useMemo(() => {
-    const now = new Date();
+    const nowD = new Date();
     return salesUsers
       .map((u: any) => {
         const userDeals = deals.filter((d: any) => d.assignedToId === u.id || d.assignedToName === u.name);
@@ -199,8 +164,8 @@ export function SalesDashboard() {
         }, 0);
         const sparkline: number[] = [];
         for (let i = 5; i >= 0; i--) {
-          const ms = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const me = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+          const ms = new Date(nowD.getFullYear(), nowD.getMonth() - i, 1);
+          const me = new Date(nowD.getFullYear(), nowD.getMonth() - i + 1, 1);
           const v = userDeals.filter((d: any) => {
             if (d.stage !== "won") return false;
             const dt = d.closedAt ?? d.updatedAt ?? d.createdAt;
@@ -219,6 +184,9 @@ export function SalesDashboard() {
       .filter((r: any) => r.quoted > 0 || r.won > 0 || r.target > 0)
       .sort((a: any, b: any) => b.won - a.won);
   }, [salesUsers, quotations, deals, targets, year]);
+
+  // Legacy compact leaderboard panel keeps its top-8 cap.
+  const leaderboard = useMemo(() => salesPerformance.slice(0, 8), [salesPerformance]);
 
   // ---- Recent quotations ----
   const recentQuotations = useMemo(
@@ -368,7 +336,7 @@ export function SalesDashboard() {
             {salesPerformance.map((row: any, i: number) => (
               <Link
                 key={row.id}
-                href="/crm/leaderboard"
+                href={`/crm/leaderboard#sp-${row.id}`}
                 className="block group"
                 data-testid={`card-salesperson-${row.id}`}
               >
@@ -399,13 +367,13 @@ export function SalesDashboard() {
                     <div className="mb-2">
                       <div className="flex items-center justify-between text-[10px] mb-1">
                         <span className="text-muted-foreground">Target {fmtAED(row.target)}</span>
-                        <span className={`font-bold ${row.attainment >= 100 ? "text-emerald-700" : row.attainment >= 75 ? "text-[#1e6ab0]" : row.attainment >= 50 ? "text-orange-600" : "text-red-600"}`}>
+                        <span className={`font-bold ${row.attainment >= 100 ? "text-emerald-700" : row.attainment >= 75 ? "text-[#1e6ab0]" : "text-orange-600"}`}>
                           {row.attainment}%
                         </span>
                       </div>
                       <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${row.attainment >= 100 ? "bg-gradient-to-r from-emerald-500 to-emerald-600" : row.attainment >= 75 ? "bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" : row.attainment >= 50 ? "bg-gradient-to-r from-orange-400 to-orange-500" : "bg-gradient-to-r from-red-400 to-red-500"}`}
+                          className={`h-full ${row.attainment >= 100 ? "bg-gradient-to-r from-emerald-500 to-emerald-600" : row.attainment >= 75 ? "bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" : row.attainment >= 50 ? "bg-gradient-to-r from-orange-400 to-orange-500" : "bg-gradient-to-r from-orange-500 to-orange-700"}`}
                           style={{ width: `${Math.min(100, row.attainment)}%` }}
                         />
                       </div>
