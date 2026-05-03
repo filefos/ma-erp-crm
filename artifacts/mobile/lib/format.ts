@@ -138,6 +138,84 @@ export function activityTypeLabel(t?: string): string {
   return ACTIVITY_TYPES.find(x => x.value === (t ?? "").toLowerCase())?.label ?? (t ?? "—");
 }
 
+// ---------------------------------------------------------------------------
+// Accounts module statuses & meta
+// ---------------------------------------------------------------------------
+
+export const PAYMENT_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "unpaid",  label: "Unpaid",  tone: "destructive" },
+  { value: "partial", label: "Partial", tone: "orange" },
+  { value: "paid",    label: "Paid",    tone: "success" },
+];
+
+export const CHEQUE_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "draft",     label: "Draft",     tone: "muted" },
+  { value: "approved",  label: "Approved",  tone: "blue" },
+  { value: "printed",   label: "Printed",   tone: "navy" },
+  { value: "issued",    label: "Issued",    tone: "orange" },
+  { value: "cleared",   label: "Cleared",   tone: "success" },
+  { value: "bounced",   label: "Bounced",   tone: "destructive" },
+  { value: "cancelled", label: "Cancelled", tone: "destructive" },
+];
+
+export const EXPENSE_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "pending",  label: "Pending",  tone: "orange" },
+  { value: "approved", label: "Approved", tone: "success" },
+  { value: "rejected", label: "Rejected", tone: "destructive" },
+];
+
+export const JE_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "draft",    label: "Draft",    tone: "muted" },
+  { value: "approved", label: "Approved", tone: "success" },
+  { value: "rejected", label: "Rejected", tone: "destructive" },
+];
+
+export const ACCOUNT_TYPES: { value: string; label: string }[] = [
+  { value: "asset",     label: "Asset" },
+  { value: "liability", label: "Liability" },
+  { value: "equity",    label: "Equity" },
+  { value: "revenue",   label: "Revenue" },
+  { value: "expense",   label: "Expense" },
+];
+
+export const EXPENSE_CATEGORIES: { value: string; label: string }[] = [
+  { value: "office",        label: "Office" },
+  { value: "travel",        label: "Travel" },
+  { value: "fuel",          label: "Fuel" },
+  { value: "utilities",     label: "Utilities" },
+  { value: "rent",          label: "Rent" },
+  { value: "salary",        label: "Salary" },
+  { value: "materials",     label: "Materials" },
+  { value: "subcontractor", label: "Subcontractor" },
+  { value: "marketing",     label: "Marketing" },
+  { value: "professional",  label: "Professional fees" },
+  { value: "other",         label: "Other" },
+];
+
+export const PAYMENT_METHODS: { value: string; label: string }[] = [
+  { value: "cash",          label: "Cash" },
+  { value: "cheque",        label: "Cheque" },
+  { value: "bank_transfer", label: "Bank transfer" },
+  { value: "card",          label: "Card" },
+  { value: "online",        label: "Online" },
+  { value: "other",         label: "Other" },
+];
+
+export function paymentStatusMeta(s?: string): StatusMeta { return find(PAYMENT_STATUSES, s); }
+export function chequeStatusMeta(s?: string): StatusMeta { return find(CHEQUE_STATUSES, s); }
+export function expenseStatusMeta(s?: string): StatusMeta { return find(EXPENSE_STATUSES, s); }
+export function jeStatusMeta(s?: string): StatusMeta { return find(JE_STATUSES, s); }
+
+export function accountTypeLabel(t?: string): string {
+  return ACCOUNT_TYPES.find(x => x.value === (t ?? "").toLowerCase())?.label ?? (t ?? "—");
+}
+export function expenseCategoryLabel(t?: string): string {
+  return EXPENSE_CATEGORIES.find(x => x.value === (t ?? "").toLowerCase())?.label ?? (t ?? "—");
+}
+export function paymentMethodLabel(t?: string): string {
+  return PAYMENT_METHODS.find(x => x.value === (t ?? "").toLowerCase())?.label ?? (t ?? "—");
+}
+
 export function activityTypeIcon(t?: string): "phone" | "mail" | "users" | "map-pin" | "rotate-cw" | "check-square" | "edit-3" | "circle" {
   switch ((t ?? "").toLowerCase()) {
     case "call":       return "phone";
