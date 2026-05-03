@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, dealsTable, usersTable, companiesTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -23,6 +23,8 @@ async function enrichDeal(deal: typeof dealsTable.$inferSelect) {
 router.get("/deals", requirePermission("deals", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(dealsTable).orderBy(sql`${dealsTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["assignedToId"]);
   const { stage, companyId, assignedTo } = req.query;
   if (stage) rows = rows.filter(r => r.stage === stage);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -43,6 +45,8 @@ router.get("/deals/:id", requirePermission("deals", "view"), async (req, res): P
   const [deal] = await db.select().from(dealsTable).where(eq(dealsTable.id, id));
   if (!deal) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [deal]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, deal.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichDeal(deal));
 });
 
@@ -51,6 +55,8 @@ router.put("/deals/:id", requirePermission("deals", "edit"), requireBodyCompanyA
   const [existing] = await db.select().from(dealsTable).where(eq(dealsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [deal] = await db.update(dealsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(dealsTable.id, id)).returning();
   res.json(await enrichDeal(deal));
 });
@@ -59,6 +65,10 @@ router.delete("/deals/:id", requirePermission("deals", "delete"), async (req, re
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(dealsTable).where(eq(dealsTable.id, id));
   if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (existing) {
+    const ownerScope = await getOwnerScope(req);
+    if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
+  }
   await db.delete(dealsTable).where(eq(dealsTable.id, id));
   res.json({ success: true });
 });

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, leadsTable, usersTable, notificationsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -18,6 +18,8 @@ async function enrichLead(lead: typeof leadsTable.$inferSelect) {
 router.get("/leads", requirePermission("leads", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(leadsTable).orderBy(sql`${leadsTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["assignedToId"]);
   const { status, companyId, assignedTo, search, leadScore } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -34,6 +36,8 @@ router.get("/leads", requirePermission("leads", "view"), async (req, res): Promi
 router.get("/leads/pipeline", requirePermission("leads", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(leadsTable).orderBy(sql`${leadsTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["assignedToId"]);
   const { companyId } = req.query;
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
   const enriched = await Promise.all(rows.map(enrichLead));
@@ -60,6 +64,8 @@ router.post("/leads/follow-up-check", requirePermission("leads", "view"), async 
   let dueLeads = await db.select().from(leadsTable)
     .where(and(eq(leadsTable.isActive, true), sql`${leadsTable.nextFollowUp} IS NOT NULL AND ${leadsTable.nextFollowUp} <= ${today}`));
   dueLeads = scopeFilter(req, dueLeads);
+  const ownerScope = await getOwnerScope(req);
+  dueLeads = ownerScopeFilter(ownerScope, dueLeads, ["assignedToId"]);
   dueLeads = dueLeads.filter(l => !["won", "lost"].includes(l.status));
 
   let created = 0;
@@ -131,6 +137,8 @@ router.get("/leads/:id", requirePermission("leads", "view"), async (req, res): P
   const [lead] = await db.select().from(leadsTable).where(eq(leadsTable.id, id));
   if (!lead) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [lead]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, lead.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await enrichLead(lead));
 });
 
@@ -139,6 +147,8 @@ router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyA
   const [existing] = await db.select().from(leadsTable).where(eq(leadsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [lead] = await db.update(leadsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
   res.json(await enrichLead(lead));
 });
@@ -147,6 +157,10 @@ router.delete("/leads/:id", requirePermission("leads", "delete"), async (req, re
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(leadsTable).where(eq(leadsTable.id, id));
   if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (existing) {
+    const ownerScope = await getOwnerScope(req);
+    if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
+  }
   await db.delete(leadsTable).where(eq(leadsTable.id, id));
   res.json({ success: true });
 });

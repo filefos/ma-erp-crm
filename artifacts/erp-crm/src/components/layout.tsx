@@ -157,7 +157,7 @@ const ADMIN_LEVELS = new Set(["super_admin", "company_admin"]);
 // in addition to their domain groups so they can read/send mail and view
 // their own engagement metrics.
 const DEPT_GROUPS: Record<string, string[]> = {
-  Sales:        ["CRM", "Sales", "Email"],
+  Sales:        ["CRM", "Sales"],
   Accounts:     ["Accounts", "Email"],
   Finance:      ["Accounts", "Reports", "Email"],
   Procurement:  ["Procurement", "Email"],
@@ -171,7 +171,7 @@ const DEPT_GROUPS: Record<string, string[]> = {
 };
 // Fallback by role code (for users with role-driven access when department is missing).
 const ROLE_GROUPS: Record<string, string[]> = {
-  sales:       ["CRM", "Sales", "Email"],
+  sales:       ["CRM", "Sales"],
   accounts:    ["Accounts", "Email"],
   finance:     ["Accounts", "Reports", "Email"],
   procurement: ["Procurement", "Email"],

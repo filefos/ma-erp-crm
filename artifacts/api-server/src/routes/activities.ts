@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, activitiesTable, usersTable, leadsTable, dealsTable, contactsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth, requirePermission } from "../middlewares/auth";
+import { requireAuth, requirePermission, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -25,6 +25,8 @@ async function resolveCompanyId(a: typeof activitiesTable.$inferSelect): Promise
 
 router.get("/activities", requirePermission("activities", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(activitiesTable).orderBy(sql`${activitiesTable.createdAt} desc`);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["createdById"]);
   const { leadId, dealId, contactId, type } = req.query;
   if (leadId) rows = rows.filter(r => r.leadId === parseInt(leadId as string, 10));
   if (dealId) rows = rows.filter(r => r.dealId === parseInt(dealId as string, 10));
@@ -75,6 +77,8 @@ router.put("/activities/:id", requirePermission("activities", "edit"), async (re
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(activitiesTable).where(eq(activitiesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, existing.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
   // Scope check before allowing mutation.
   const scope = req.companyScope;
   if (scope !== null && scope !== undefined) {
@@ -92,6 +96,8 @@ router.delete("/activities/:id", requirePermission("activities", "delete"), asyn
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(activitiesTable).where(eq(activitiesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, existing.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
   const scope = req.companyScope;
   if (scope !== null && scope !== undefined) {
     const cid = await resolveCompanyId(existing);

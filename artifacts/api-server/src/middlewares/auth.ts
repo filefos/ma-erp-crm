@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { getUserFromToken } from "../lib/auth";
 import type { User } from "@workspace/db";
-import { db, userPermissionsTable, permissionsTable, rolesTable, userCompanyAccessTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { db, userPermissionsTable, permissionsTable, rolesTable, userCompanyAccessTable, usersTable } from "@workspace/db";
+import { and, eq, inArray } from "drizzle-orm";
 
 declare global {
   namespace Express {
@@ -112,6 +112,72 @@ export function requirePermissionLevel(min: keyof typeof PERMISSION_RANK) {
       next();
     });
   };
+}
+
+// ----------------------------------------------------------------------------
+// Per-user / per-team ownership scoping (CRM + Sales modules)
+// ----------------------------------------------------------------------------
+//
+// Rules:
+//   - super_admin / company_admin → unrestricted (within company scope).
+//   - department_admin / manager  → all users in the same department(s),
+//                                   within the caller's company scope.
+//   - user / data_entry / viewer  → only themselves.
+// Records with NULL owner are HIDDEN from non-admin users.
+
+export type OwnerScope =
+  | { kind: "all" }
+  | { kind: "users"; userIds: Set<number> };
+
+const TEAM_LEADER_LEVELS = new Set(["department_admin", "manager"]);
+const ADMIN_LEVELS = new Set(["super_admin", "company_admin"]);
+
+export async function getOwnerScope(req: Request): Promise<OwnerScope> {
+  const u = req.user;
+  if (!u) return { kind: "users", userIds: new Set() };
+  const lvl = u.permissionLevel ?? "user";
+  if (ADMIN_LEVELS.has(lvl)) return { kind: "all" };
+  if (TEAM_LEADER_LEVELS.has(lvl)) {
+    const ids = new Set<number>([u.id]);
+    if (u.departmentId != null) {
+      const companyIds = req.companyScope ?? null;
+      const conds = [eq(usersTable.departmentId, u.departmentId)];
+      if (companyIds && companyIds.length > 0) {
+        conds.push(inArray(usersTable.companyId, companyIds));
+      }
+      const teammates = await db
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(and(...conds));
+      for (const t of teammates) ids.add(t.id);
+    }
+    return { kind: "users", userIds: ids };
+  }
+  return { kind: "users", userIds: new Set([u.id]) };
+}
+
+/** True if `ownerId` is allowed by the scope. NULL/undefined owners are not allowed for restricted scopes. */
+export function inOwnerScope(scope: OwnerScope, ownerId: number | null | undefined): boolean {
+  if (scope.kind === "all") return true;
+  if (ownerId == null) return false;
+  return scope.userIds.has(ownerId);
+}
+
+/**
+ * Filters rows where ANY of the given owner fields matches the scope.
+ * Use multiple owner fields when ownership can come from any of several
+ * columns (e.g. preparedById OR approvedById on quotations).
+ */
+export function ownerScopeFilter<T extends Record<string, any>>(
+  scope: OwnerScope,
+  rows: T[],
+  ownerFields: (keyof T)[],
+): T[] {
+  if (scope.kind === "all") return rows;
+  return rows.filter(r => ownerFields.some(f => {
+    const v = r[f];
+    return typeof v === "number" && scope.userIds.has(v);
+  }));
 }
 
 export function isAdmin(user?: User): boolean {

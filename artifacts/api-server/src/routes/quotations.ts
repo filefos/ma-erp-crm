@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, quotationsTable, quotationItemsTable, companiesTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -37,6 +37,8 @@ async function enrichQuotation(q: typeof quotationsTable.$inferSelect) {
 router.get("/quotations", requirePermission("quotations", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(quotationsTable).orderBy(sql`${quotationsTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["preparedById", "approvedById"]);
   const { status, companyId, search } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -93,6 +95,10 @@ router.get("/quotations/:id", requirePermission("quotations", "view"), async (re
   const [q] = await db.select().from(quotationsTable).where(eq(quotationsTable.id, id));
   if (!q) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [q]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!ownerScopeFilter(ownerScope, [q], ["preparedById", "approvedById"]).length) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
   res.json(await enrichQuotation(q));
 });
 
@@ -102,6 +108,10 @@ router.put("/quotations/:id", requirePermission("quotations", "edit"), requireBo
   const [existing] = await db.select().from(quotationsTable).where(eq(quotationsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!ownerScopeFilter(ownerScope, [existing], ["preparedById", "approvedById"]).length) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
 
   const items = data.items ?? [];
   let subtotal = 0;
@@ -136,6 +146,12 @@ router.delete("/quotations/:id", requirePermission("quotations", "delete"), asyn
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(quotationsTable).where(eq(quotationsTable.id, id));
   if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (existing) {
+    const ownerScope = await getOwnerScope(req);
+    if (!ownerScopeFilter(ownerScope, [existing], ["preparedById", "approvedById"]).length) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+  }
   await db.delete(quotationItemsTable).where(eq(quotationItemsTable.quotationId, id));
   await db.delete(quotationsTable).where(eq(quotationsTable.id, id));
   res.json({ success: true });
@@ -146,6 +162,10 @@ router.post("/quotations/:id/approve", requirePermission("quotations", "approve"
   const [existing] = await db.select().from(quotationsTable).where(eq(quotationsTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!ownerScopeFilter(ownerScope, [existing], ["preparedById", "approvedById"]).length) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
   const [q] = await db.update(quotationsTable).set({
     status: "approved", approvedById: req.user?.id, updatedAt: new Date(),
   }).where(eq(quotationsTable.id, id)).returning();

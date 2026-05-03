@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable } from "@workspace/db";
+import { eq, sql, inArray } from "drizzle-orm";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -25,6 +25,8 @@ function parsePiItems(pi: typeof proformaInvoicesTable.$inferSelect) {
 router.get("/proforma-invoices", requirePermission("proforma_invoices", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(proformaInvoicesTable).orderBy(sql`${proformaInvoicesTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["preparedById"]);
   const { status, companyId } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -51,6 +53,8 @@ router.get("/proforma-invoices/:id", requirePermission("proforma_invoices", "vie
   const [pi] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
   if (!pi) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [pi]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, pi.preparedById)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(parsePiItems(pi));
 });
 
@@ -59,6 +63,8 @@ router.put("/proforma-invoices/:id", requirePermission("proforma_invoices", "edi
   const [existing] = await db.select().from(proformaInvoicesTable).where(eq(proformaInvoicesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, existing.preparedById)) { res.status(403).json({ error: "Forbidden" }); return; }
   const { items: _items, ...rest } = req.body;
   const updateData: Record<string, unknown> = { ...rest, updatedAt: new Date() };
   if (_items !== undefined) updateData.items = JSON.stringify(_items);
@@ -162,10 +168,37 @@ router.put("/delivery-notes/:id", requirePermission("delivery_notes", "edit"), r
   res.json({ ...dn, items });
 });
 
-// LPOs
+// LPOs — ownership scoping flows through the linked quotation's preparedById/approvedById.
+async function lpoOwnerIds(lpo: { quotationId: number | null }): Promise<{ preparedById: number | null; approvedById: number | null }> {
+  if (lpo.quotationId == null) return { preparedById: null, approvedById: null };
+  const [q] = await db
+    .select({ preparedById: quotationsTable.preparedById, approvedById: quotationsTable.approvedById })
+    .from(quotationsTable)
+    .where(eq(quotationsTable.id, lpo.quotationId));
+  return { preparedById: q?.preparedById ?? null, approvedById: q?.approvedById ?? null };
+}
+
 router.get("/lpos", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(lposTable).orderBy(sql`${lposTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  if (ownerScope.kind !== "all") {
+    // Batch-load all linked quotations in one query to avoid N+1.
+    const qIds = Array.from(new Set(rows.map(r => r.quotationId).filter((x): x is number => x != null)));
+    const ownerByQuotation = new Map<number, { preparedById: number | null; approvedById: number | null }>();
+    if (qIds.length > 0) {
+      const qs = await db
+        .select({ id: quotationsTable.id, preparedById: quotationsTable.preparedById, approvedById: quotationsTable.approvedById })
+        .from(quotationsTable)
+        .where(inArray(quotationsTable.id, qIds));
+      for (const q of qs) ownerByQuotation.set(q.id, { preparedById: q.preparedById, approvedById: q.approvedById });
+    }
+    rows = rows.filter(lpo => {
+      const owners = lpo.quotationId != null ? ownerByQuotation.get(lpo.quotationId) : undefined;
+      if (!owners) return false;
+      return inOwnerScope(ownerScope, owners.preparedById) || inOwnerScope(ownerScope, owners.approvedById);
+    });
+  }
   const { status, companyId } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -189,6 +222,13 @@ router.get("/lpos/:id/attachments/:idx", requirePermission("lpos", "view"), asyn
   const [lpo] = await db.select().from(lposTable).where(eq(lposTable.id, id));
   if (!lpo) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [lpo]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (ownerScope.kind !== "all") {
+    const owners = await lpoOwnerIds(lpo);
+    if (!inOwnerScope(ownerScope, owners.preparedById) && !inOwnerScope(ownerScope, owners.approvedById)) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+  }
   const atts = (lpo.attachments ?? []) as Array<{ filename: string; contentType: string; size: number; content?: string }>;
   const att = atts[idx];
   if (!att) { res.status(404).json({ error: "Attachment not found" }); return; }
@@ -205,6 +245,13 @@ router.get("/lpos/:id", requirePermission("lpos", "view"), async (req, res): Pro
   const [lpo] = await db.select().from(lposTable).where(eq(lposTable.id, id));
   if (!lpo) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [lpo]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (ownerScope.kind !== "all") {
+    const owners = await lpoOwnerIds(lpo);
+    if (!inOwnerScope(ownerScope, owners.preparedById) && !inOwnerScope(ownerScope, owners.approvedById)) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+  }
   const [co] = lpo.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, lpo.companyId)) : [undefined];
   res.json({ ...lpo, companyRef: co?.name });
 });
@@ -214,6 +261,13 @@ router.put("/lpos/:id", requirePermission("lpos", "edit"), requireBodyCompanyAcc
   const [existing] = await db.select().from(lposTable).where(eq(lposTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (ownerScope.kind !== "all") {
+    const owners = await lpoOwnerIds(existing);
+    if (!inOwnerScope(ownerScope, owners.preparedById) && !inOwnerScope(ownerScope, owners.approvedById)) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+  }
   const [lpo] = await db.update(lposTable).set({ ...req.body, updatedAt: new Date() }).where(eq(lposTable.id, id)).returning();
   res.json(lpo);
 });
