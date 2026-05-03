@@ -2264,6 +2264,19 @@ export const DeleteSalesTargetResponse = zod.object({
 });
 
 /**
+ * @summary List active companies for the public supplier registration portal
+ */
+export const ListPublicCompaniesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  shortName: zod.string().nullish(),
+  prefix: zod.string().nullish(),
+});
+export const ListPublicCompaniesResponse = zod.array(
+  ListPublicCompaniesResponseItem,
+);
+
+/**
  * @summary List active supplier categories (public)
  */
 export const ListSupplierCategoriesResponseItem = zod.object({

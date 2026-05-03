@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  useListAuthCompanies,
+  useListPublicCompanies,
   useListSupplierCategories,
   useSubmitSupplierRegistration,
 } from "@workspace/api-client-react";
@@ -62,7 +62,7 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_FILES = 6;
 
 export default function SupplierRegisterPage() {
-  const { data: companies } = useListAuthCompanies();
+  const { data: companies } = useListPublicCompanies();
   const { data: categories } = useListSupplierCategories();
   const submit = useSubmitSupplierRegistration();
 

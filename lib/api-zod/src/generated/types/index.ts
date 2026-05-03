@@ -107,6 +107,7 @@ export * from "./listPaymentsMadeParams";
 export * from "./listPaymentsReceivedParams";
 export * from "./listProformaInvoicesParams";
 export * from "./listProjectsParams";
+export * from "./listPublicCompanies200Item";
 export * from "./listPurchaseOrdersParams";
 export * from "./listPurchaseRequestsParams";
 export * from "./listQuotationsParams";

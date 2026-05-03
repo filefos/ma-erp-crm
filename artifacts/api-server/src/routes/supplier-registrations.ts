@@ -186,6 +186,22 @@ async function notifyProcurement(opts: {
   }
 }
 
+// ─── Public: list active companies (no auth) ───────────────────────────────
+
+router.get("/public/companies", async (_req, res) => {
+  const rows = await db
+    .select({
+      id: companiesTable.id,
+      name: companiesTable.name,
+      shortName: companiesTable.shortName,
+      prefix: companiesTable.prefix,
+    })
+    .from(companiesTable)
+    .where(eq(companiesTable.isActive, true))
+    .orderBy(companiesTable.id);
+  res.json(rows);
+});
+
 // ─── Public: list categories ────────────────────────────────────────────────
 
 router.get("/supplier-categories", async (_req, res) => {

@@ -1439,6 +1439,28 @@ paths:
                   ok: { type: boolean }
 
   # SUPPLIER SELF-REGISTRATION (PUBLIC PORTAL + ADMIN REVIEW)
+  /public/companies:
+    get:
+      operationId: listPublicCompanies
+      tags: [suppliers]
+      summary: List active companies for the public supplier registration portal
+      security: []
+      responses:
+        "200":
+          description: Companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    name: { type: string }
+                    shortName: { type: string, nullable: true }
+                    prefix: { type: string, nullable: true }
+                  required: [id, name]
+
   /supplier-categories:
     get:
       operationId: listSupplierCategories

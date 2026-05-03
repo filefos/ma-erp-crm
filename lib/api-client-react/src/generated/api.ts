@@ -108,6 +108,7 @@ import type {
   ListPaymentsReceivedParams,
   ListProformaInvoicesParams,
   ListProjectsParams,
+  ListPublicCompanies200Item,
   ListPurchaseOrdersParams,
   ListPurchaseRequestsParams,
   ListQuotationsParams,
@@ -5954,6 +5955,84 @@ export const useDeleteSalesTarget = <
 > => {
   return useMutation(getDeleteSalesTargetMutationOptions(options));
 };
+
+/**
+ * @summary List active companies for the public supplier registration portal
+ */
+export const getListPublicCompaniesUrl = () => {
+  return `/api/public/companies`;
+};
+
+export const listPublicCompanies = async (
+  options?: RequestInit,
+): Promise<ListPublicCompanies200Item[]> => {
+  return customFetch<ListPublicCompanies200Item[]>(
+    getListPublicCompaniesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListPublicCompaniesQueryKey = () => {
+  return [`/api/public/companies`] as const;
+};
+
+export const getListPublicCompaniesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPublicCompanies>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listPublicCompanies>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPublicCompaniesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listPublicCompanies>>
+  > = ({ signal }) => listPublicCompanies({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPublicCompanies>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListPublicCompaniesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPublicCompanies>>
+>;
+export type ListPublicCompaniesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List active companies for the public supplier registration portal
+ */
+
+export function useListPublicCompanies<
+  TData = Awaited<ReturnType<typeof listPublicCompanies>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listPublicCompanies>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListPublicCompaniesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List active supplier categories (public)

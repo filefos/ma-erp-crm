@@ -1796,6 +1796,13 @@ export type DeleteSalesTarget200 = {
   ok?: boolean;
 };
 
+export type ListPublicCompanies200Item = {
+  id: number;
+  name: string;
+  shortName?: string | null;
+  prefix?: string | null;
+};
+
 export type ListSupplierApplicationsParams = {
   status?: string;
 };
