@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Prime Max & Elite Prefab ERP CRM"
+title = "MA ERP-CRM"
 version = "1.0.0"
 id = "artifacts/erp-crm"
 router = "path"

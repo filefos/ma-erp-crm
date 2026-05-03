@@ -51,7 +51,7 @@ export function Login() {
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center gap-3">
             <div className="bg-white/15 rounded-2xl px-6 py-4 backdrop-blur ring-1 ring-white/20">
-              <div className="text-3xl font-extrabold tracking-widest text-white leading-none">ASIF</div>
+              <div className="text-3xl font-extrabold tracking-widest text-white leading-none">MA</div>
               <div className="text-sm font-bold tracking-[0.4em] text-white/75 mt-1">ERP</div>
             </div>
           </div>
@@ -79,7 +79,7 @@ export function Login() {
           <div className="lg:hidden flex items-center gap-3 mb-4">
             <img
               src="/prime-max-logo.png"
-              alt="Prime Max & Elite Prefab"
+              alt="MA ERP-CRM"
               className="h-10 w-auto object-contain"
             />
           </div>

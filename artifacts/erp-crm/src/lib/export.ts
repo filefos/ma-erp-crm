@@ -255,7 +255,7 @@ export function printTable(
   </table>
 
   <div class="footer">
-    <div class="left"><strong>Prime Max &amp; Elite Prefab Smart ERP CRM</strong> — Confidential</div>
+    <div class="left"><strong>MA ERP-CRM</strong> — Confidential</div>
     <div class="right">Generated: ${printDate}</div>
   </div>
 

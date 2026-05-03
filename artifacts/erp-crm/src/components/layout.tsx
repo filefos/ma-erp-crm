@@ -422,7 +422,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="w-10 h-10 bg-[#1e6ab0] rounded-xl flex items-center justify-center mx-auto">
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <div className="text-white/60 text-sm">Loading ERP CRM...</div>
+          <div className="text-white/60 text-sm">Loading MA ERP-CRM...</div>
         </div>
       </div>
     );
