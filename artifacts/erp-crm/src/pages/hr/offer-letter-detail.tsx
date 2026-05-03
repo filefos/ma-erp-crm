@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   useGetOfferLetter, useUpdateOfferLetter, useSetOfferLetterStatus,
-  useReissueOfferLetter, useConvertOfferLetterToEmployee,
+  useReissueOfferLetter, useConvertOfferLetterToEmployee, useListCompanies,
   getGetOfferLetterQueryKey, getListOfferLettersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,6 +33,19 @@ export function OfferLetterDetail({ id }: Props) {
   const qc = useQueryClient();
   const [, setLocation] = useLocation();
   const { data: offer, isLoading } = useGetOfferLetter(oid, { query: { queryKey: getGetOfferLetterQueryKey(oid), enabled: !!oid } });
+  const { data: companies } = useListCompanies();
+  // Resolve the letterhead deterministically from companyId so a future rename
+  // of the company record cannot retroactively flip the letterhead on a
+  // historical issued letter.
+  const resolvedLetterhead: "prime" | "elite" | undefined = (() => {
+    if (!offer || !companies) return undefined;
+    const c = (companies as any[]).find(x => x.id === offer.companyId);
+    if (!c) return undefined;
+    const blob = `${c.shortName ?? ""} ${c.name ?? ""}`.toLowerCase();
+    if (blob.includes("elite")) return "elite";
+    if (blob.includes("prime")) return "prime";
+    return undefined;
+  })();
   const update = useUpdateOfferLetter({ mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: getGetOfferLetterQueryKey(oid) }) } });
   const setStatus = useSetOfferLetterStatus({ mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: getGetOfferLetterQueryKey(oid) }) } });
   const reissue = useReissueOfferLetter({
@@ -232,6 +245,7 @@ export function OfferLetterDetail({ id }: Props) {
                     workerType: editing && isDraft ? draft.workerType : (offer as any).workerType,
                     companyName: (offer as any).companyName,
                     companyId: offer.companyId,
+                    letterhead: resolvedLetterhead,
                     issuedAt: offer.issuedAt,
                     notes: editing && isDraft ? draft.notes : offer.notes,
                   }}

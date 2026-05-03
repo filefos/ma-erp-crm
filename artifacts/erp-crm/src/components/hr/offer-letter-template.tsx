@@ -13,6 +13,10 @@ export interface OfferLetterDoc {
   workerType?: string | null;
   companyName?: string | null;
   companyId: number;
+  // Explicit letterhead choice resolved by the caller from companyId — preferred
+  // over name-based detection so historical letters render deterministically
+  // even if a company is later renamed.
+  letterhead?: "prime" | "elite";
   issuedAt?: string | null;
   notes?: string | null;
 }
@@ -38,8 +42,12 @@ const PRIME_LEGAL = "PRIME MAX PREFAB HOUSES IND. LLC.";
 const ELITE_LEGAL = "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC";
 
 export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetterDoc }>(({ doc }, ref) => {
+  // Prefer the caller-provided explicit letterhead choice. Fall back to a
+  // name-based check only when the caller did not resolve one.
   const lower = (doc.companyName ?? "").toLowerCase();
-  const isPrime = lower.includes("prime");
+  const isPrime = doc.letterhead
+    ? doc.letterhead === "prime"
+    : lower.includes("prime") || (!lower.includes("elite") && lower.length > 0);
   const legalName = isPrime ? PRIME_LEGAL : ELITE_LEGAL;
   const totalSalary = (doc.basicSalary ?? 0) + (doc.allowances ?? 0);
   const dutyLine = doc.templateType === "labour" ? LABOUR_DUTY : STAFF_DUTY;
