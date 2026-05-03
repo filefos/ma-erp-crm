@@ -789,18 +789,19 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <div className="print-tc-text border border-gray-400 p-4 text-[11px] whitespace-pre-line bg-gray-50 mb-4" style={{ lineHeight: "1.7" }}>
-              {data.termsConditions ?? STANDARD_TC}
-            </div>
-
-            {/* Cheque favor — highlighted on terms page */}
-            <div
-              className="border-2 border-orange-500 bg-orange-50 p-3 mb-4 text-center"
-              style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
-            >
-              <div className="text-[12px] font-black uppercase tracking-wide text-[#0f2d5a]">
-                All cheques shall be prepared in favor of "{co.name}"
-              </div>
+            <div className="print-tc-text border border-gray-400 p-4 text-[11px] bg-gray-50 mb-4" style={{ lineHeight: "1.7" }}>
+              {(data.termsConditions ?? STANDARD_TC).split("\n").map((line, i) => {
+                const isCheque = /cheque(s)?\s+shall\s+be\s+prepared\s+in\s+favor/i.test(line);
+                return (
+                  <div
+                    key={i}
+                    className={isCheque ? "bg-orange-100 px-1 font-semibold text-[#0f2d5a] inline-block" : ""}
+                    style={isCheque ? ({ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties) : undefined}
+                  >
+                    {line || "\u00A0"}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Signature */}
