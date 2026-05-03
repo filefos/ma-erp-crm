@@ -1,9 +1,9 @@
 import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 
-// Walk upward from `targetY` looking for a horizontal row whose pixels are all
-// (near-)white, so we don't slice through a line of text. Returns the original
-// targetY if no clean break is found inside the search window.
+// Walk upward from `targetY` looking for the lowest horizontal row whose
+// pixels are all (near-)white inside the search window. Returns the original
+// targetY if no clean break is found, or the canvas is tainted.
 function findSafeCutY(canvas: HTMLCanvasElement, targetY: number, windowPx: number): number {
   const ctx = canvas.getContext("2d");
   if (!ctx) return targetY;
@@ -14,18 +14,17 @@ function findSafeCutY(canvas: HTMLCanvasElement, targetY: number, windowPx: numb
   try {
     data = ctx.getImageData(0, startY, canvas.width, h).data;
   } catch {
-    // Tainted canvas (cross-origin image without CORS) — fall back to hard cut.
     return targetY;
   }
-  // Sample every 4th pixel horizontally for speed; threshold tuned for
-  // anti-aliased serif text on white.
-  const step = 4;
-  const whiteThreshold = 245;
+  const step = 2;
+  const whiteThreshold = 248;
+  // Walk from the bottom of the window up — first clean row wins, so we get
+  // the cut closest to the page boundary (largest possible page).
   for (let y = h - 1; y >= 0; y--) {
     let rowOk = true;
-    const rowStart = y * canvas.width * 4;
+    const rowOffset = y * canvas.width * 4;
     for (let x = 0; x < canvas.width; x += step) {
-      const i = rowStart + x * 4;
+      const i = rowOffset + x * 4;
       if (data[i] < whiteThreshold || data[i + 1] < whiteThreshold || data[i + 2] < whiteThreshold) {
         rowOk = false;
         break;
@@ -52,8 +51,14 @@ export async function captureElementToPdfBase64(el: HTMLElement, filename: strin
   const imgWidth = pageWidth;
   const ratio = canvas.width / imgWidth;
   const sliceHeightPx = Math.floor(pageHeight * ratio);
-  // Search window for a clean cut, ~10% of a page in canvas pixels.
-  const cutWindowPx = Math.floor(sliceHeightPx * 0.1);
+  // Search up to 35% of a page above the target boundary for a clean cut.
+  // A wider window means we almost always find whitespace rather than slicing
+  // through text, even on dense pages like the offer letter rules list.
+  const cutWindowPx = Math.floor(sliceHeightPx * 0.35);
+  // Minimum advance per page so we never produce zero-height slices or get
+  // stuck in a loop. 5% of a page is enough to make forward progress while
+  // still allowing very short final pages.
+  const minAdvancePx = Math.floor(sliceHeightPx * 0.05);
 
   let y = 0;
   let pageIndex = 0;
@@ -61,11 +66,12 @@ export async function captureElementToPdfBase64(el: HTMLElement, filename: strin
     let endY = Math.min(y + sliceHeightPx, canvas.height);
     if (endY < canvas.height) {
       const safeEnd = findSafeCutY(canvas, endY, cutWindowPx);
-      // Only take the safe cut if it actually advances; otherwise fall back to
-      // the hard cut so we never produce an empty/looping slice.
-      if (safeEnd > y + sliceHeightPx * 0.5) endY = safeEnd;
+      // Accept any safe cut that meaningfully advances. We prefer a slightly
+      // shorter page over a hard cut through text.
+      if (safeEnd > y + minAdvancePx) endY = safeEnd;
     }
     const sliceH = endY - y;
+    if (sliceH <= 0) break;
     const sliceCanvas = document.createElement("canvas");
     sliceCanvas.width = canvas.width;
     sliceCanvas.height = sliceH;
