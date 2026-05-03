@@ -1,0 +1,152 @@
+// Shared formatting / status helpers for CRM + Sales screens.
+
+export type Tone = "navy" | "blue" | "orange" | "muted" | "success" | "destructive";
+
+export function fmtAed(n: number | string | undefined | null): string {
+  const v = typeof n === "string" ? parseFloat(n) : n;
+  if (v == null || !Number.isFinite(v)) return "AED 0";
+  return `AED ${v.toLocaleString("en-AE", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+export function fmtCompact(n: number | string | undefined | null): string {
+  const v = typeof n === "string" ? parseFloat(n) : n;
+  if (v == null || !Number.isFinite(v)) return "—";
+  if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(1)}k`;
+  return v.toFixed(0);
+}
+
+export function num(v: unknown, fallback = 0): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  return fallback;
+}
+
+export function fmtDate(value?: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function fmtDateShort(value?: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+}
+
+export function fmtRelative(value?: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  const diff = (d.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  if (Math.abs(diff) < 1) return diff < 0 ? "Today (overdue)" : "Today";
+  if (diff < 0) return `${Math.round(-diff)}d overdue`;
+  if (diff < 7) return `In ${Math.round(diff)}d`;
+  return fmtDate(value);
+}
+
+export function isOverdue(value?: string | null): boolean {
+  if (!value) return false;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return false;
+  return d.getTime() < Date.now() - 60_000;
+}
+
+// ---------------------------------------------------------------------------
+// Status / stage metadata
+// ---------------------------------------------------------------------------
+
+export interface StatusMeta { label: string; tone: Tone }
+
+export const LEAD_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "new",                 label: "New",               tone: "blue" },
+  { value: "contacted",           label: "Contacted",         tone: "navy" },
+  { value: "qualified",           label: "Qualified",         tone: "orange" },
+  { value: "site_visit",          label: "Site visit",        tone: "orange" },
+  { value: "quotation_required",  label: "Quote required",    tone: "orange" },
+  { value: "quotation_sent",      label: "Quote sent",        tone: "orange" },
+  { value: "negotiation",         label: "Negotiation",       tone: "orange" },
+  { value: "won",                 label: "Won",               tone: "success" },
+  { value: "lost",                label: "Lost",              tone: "destructive" },
+];
+
+export const LEAD_SCORES: { value: string; label: string; tone: Tone }[] = [
+  { value: "hot",  label: "Hot",  tone: "destructive" },
+  { value: "warm", label: "Warm", tone: "orange" },
+  { value: "cold", label: "Cold", tone: "blue" },
+];
+
+export const DEAL_STAGES: { value: string; label: string; tone: Tone }[] = [
+  { value: "new",            label: "New",            tone: "blue" },
+  { value: "qualification",  label: "Qualification",  tone: "navy" },
+  { value: "proposal",       label: "Proposal",       tone: "orange" },
+  { value: "negotiation",    label: "Negotiation",    tone: "orange" },
+  { value: "won",            label: "Won",            tone: "success" },
+  { value: "lost",           label: "Lost",           tone: "destructive" },
+];
+
+export const ACTIVITY_TYPES: { value: string; label: string }[] = [
+  { value: "call",       label: "Call" },
+  { value: "email",      label: "Email" },
+  { value: "meeting",    label: "Meeting" },
+  { value: "site_visit", label: "Site visit" },
+  { value: "follow_up",  label: "Follow-up" },
+  { value: "task",       label: "Task" },
+  { value: "note",       label: "Note" },
+  { value: "other",      label: "Other" },
+];
+
+export const QUOTATION_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "draft",     label: "Draft",     tone: "muted" },
+  { value: "sent",      label: "Sent",      tone: "blue" },
+  { value: "approved",  label: "Approved",  tone: "success" },
+  { value: "rejected",  label: "Rejected",  tone: "destructive" },
+  { value: "expired",   label: "Expired",   tone: "muted" },
+];
+
+export const PI_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "draft",     label: "Draft",     tone: "muted" },
+  { value: "sent",      label: "Sent",      tone: "blue" },
+  { value: "paid",      label: "Paid",      tone: "success" },
+  { value: "cancelled", label: "Cancelled", tone: "destructive" },
+];
+
+export const LPO_STATUSES: { value: string; label: string; tone: Tone }[] = [
+  { value: "active",    label: "Active",    tone: "success" },
+  { value: "closed",    label: "Closed",    tone: "muted" },
+  { value: "cancelled", label: "Cancelled", tone: "destructive" },
+];
+
+function find(list: { value: string; label: string; tone: Tone }[], v?: string): StatusMeta {
+  const hit = list.find(x => x.value === (v ?? "").toLowerCase());
+  return hit ?? { label: v ?? "—", tone: "muted" };
+}
+
+export function leadStatusMeta(s?: string): StatusMeta { return find(LEAD_STATUSES, s); }
+export function leadScoreMeta(s?: string): StatusMeta { return find(LEAD_SCORES, s); }
+export function dealStageMeta(s?: string): StatusMeta { return find(DEAL_STAGES, s); }
+export function quotationStatusMeta(s?: string): StatusMeta { return find(QUOTATION_STATUSES, s); }
+export function piStatusMeta(s?: string): StatusMeta { return find(PI_STATUSES, s); }
+export function lpoStatusMeta(s?: string): StatusMeta { return find(LPO_STATUSES, s); }
+
+export function activityTypeLabel(t?: string): string {
+  return ACTIVITY_TYPES.find(x => x.value === (t ?? "").toLowerCase())?.label ?? (t ?? "—");
+}
+
+export function activityTypeIcon(t?: string): "phone" | "mail" | "users" | "map-pin" | "rotate-cw" | "check-square" | "edit-3" | "circle" {
+  switch ((t ?? "").toLowerCase()) {
+    case "call":       return "phone";
+    case "email":      return "mail";
+    case "meeting":    return "users";
+    case "site_visit": return "map-pin";
+    case "follow_up":  return "rotate-cw";
+    case "task":       return "check-square";
+    case "note":       return "edit-3";
+    default:           return "circle";
+  }
+}
