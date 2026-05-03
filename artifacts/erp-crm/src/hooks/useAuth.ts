@@ -34,12 +34,20 @@ export function useAuth() {
 
   const loginMutation = useLogin({
     mutation: {
-      onSuccess: (data) => {
+      onSuccess: (data, variables) => {
         localStorage.setItem("erp_token", data.token);
-        if ((data.user as { companyId?: number | null })?.companyId) {
-          localStorage.setItem("erp_active_company_id", String((data.user as { companyId: number }).companyId));
+        // Prefer the workspace the user explicitly picked at the login screen;
+        // fall back to their primary company. Drop any stale value from a
+        // previous session so the new user never inherits the old workspace.
+        const requested = (variables?.data as { companyId?: number | null } | undefined)?.companyId;
+        const primary = (data.user as { companyId?: number | null })?.companyId;
+        const chosen = requested ?? primary ?? null;
+        if (chosen != null) {
+          localStorage.setItem("erp_active_company_id", String(chosen));
+        } else {
+          localStorage.removeItem("erp_active_company_id");
         }
-        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        queryClient.clear();
         setLocation("/dashboard");
       }
     }
@@ -49,12 +57,14 @@ export function useAuth() {
     mutation: {
       onSuccess: () => {
         localStorage.removeItem("erp_token");
+        localStorage.removeItem("erp_active_company_id");
         queryClient.clear();
         setLocation("/login");
       },
       onError: () => {
         // Fallback clear
         localStorage.removeItem("erp_token");
+        localStorage.removeItem("erp_active_company_id");
         queryClient.clear();
         setLocation("/login");
       }

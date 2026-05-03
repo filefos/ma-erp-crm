@@ -4,7 +4,12 @@ import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { useListNotifications } from "@workspace/api-client-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, Users, Briefcase, Calendar, FileText, FileBox, Receipt,
   Banknote, Landmark, ShoppingCart, Package, Folders, HardHat, Clock,
@@ -51,7 +56,6 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/sales/dashboard", label: "Sales Dashboard", icon: LayoutDashboard },
       { href: "/sales/quotations", label: "Quotations", icon: FileText },
-      { href: "/sales/proforma-invoices", label: "Proforma Invoices", icon: FileCheck },
       { href: "/sales/lpos", label: "LPOs", icon: ClipboardList },
     ],
   },
@@ -60,6 +64,7 @@ const NAV: NavGroup[] = [
     icon: Receipt,
     items: [
       { href: "/accounts", label: "Accounts Dashboard", icon: LayoutDashboard },
+      { href: "/sales/proforma-invoices", label: "Proforma Invoices", icon: FileCheck },
       { href: "/accounts/invoices", label: "Tax Invoices", icon: Receipt },
       { href: "/accounts/delivery-notes", label: "Delivery Notes", icon: TruckIcon },
       { href: "/accounts/expenses", label: "Expenses", icon: Banknote },
@@ -320,6 +325,65 @@ function DashboardLink() {
   );
 }
 
+type AccessibleCompany = { id: number; name: string; shortName: string | null; prefix: string | null };
+
+function useMyCompanies() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("erp_token") : null;
+  return useQuery<AccessibleCompany[]>({
+    queryKey: ["auth", "my-companies"],
+    enabled: !!token,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const res = await fetch("/api/auth/my-companies", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to load companies");
+      return res.json();
+    },
+  });
+}
+
+function CompanySwitcher() {
+  const { data: companies } = useMyCompanies();
+  const { activeCompanyId, companyShort, setActiveCompany } = useActiveCompany();
+
+  if (!companies || companies.length <= 1) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-2 max-w-[220px]" data-testid="company-switcher">
+          <Building2 className="h-3.5 w-3.5 text-[#1e6ab0] shrink-0" />
+          <span className="truncate text-xs font-medium">{companyShort}</span>
+          <ChevronDown className="h-3 w-3 opacity-60 shrink-0" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="text-xs">Switch workspace</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {companies.map(c => {
+          const isActive = c.id === activeCompanyId;
+          return (
+            <DropdownMenuItem
+              key={c.id}
+              onClick={() => { if (!isActive) setActiveCompany(c.id); }}
+              className={isActive ? "bg-[#1e6ab0]/10 font-medium" : ""}
+              data-testid={`company-option-${c.id}`}
+            >
+              <Building2 className="h-3.5 w-3.5 mr-2 text-[#1e6ab0]" />
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium truncate">{c.shortName ?? c.name}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{c.name}</div>
+              </div>
+              {isActive && <span className="ml-2 text-[10px] text-[#1e6ab0]">Active</span>}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function NotificationBell() {
   const [, navigate] = useLocation();
   const { data: notifications } = useListNotifications();
@@ -526,6 +590,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1" />
 
+          <CompanySwitcher />
           <NotificationBell />
         </header>
 

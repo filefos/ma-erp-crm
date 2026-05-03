@@ -39,6 +39,28 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     if (ids.length === 0 && user.companyId) ids.push(user.companyId);
     req.companyScope = ids;
   }
+
+  // Honor the active-company header so a user with access to multiple
+  // workspaces (Prime Max + Elite) sees ONLY the company they're currently
+  // viewing in the UI. The clamp is always intersected with the user's
+  // allowed scope — it can never widen access.
+  const headerVal = req.headers["x-active-company-id"];
+  const headerStr = Array.isArray(headerVal) ? headerVal[0] : headerVal;
+  if (typeof headerStr === "string" && headerStr.trim() !== "") {
+    const activeId = parseInt(headerStr, 10);
+    if (Number.isFinite(activeId)) {
+      if (req.companyScope === null) {
+        // super_admin: clamp to the chosen company.
+        req.companyScope = [activeId];
+      } else if (req.companyScope.includes(activeId)) {
+        req.companyScope = [activeId];
+      }
+      // If the chosen id is not in the user's allowed set, ignore the header
+      // and fall back to the unclamped scope rather than producing a 403 — the
+      // UI may simply be out of sync after a permission change.
+    }
+  }
+
   next();
 }
 

@@ -7,6 +7,7 @@ export type ErrorType<T = unknown> = ApiError<T>;
 export type BodyType<T> = T;
 
 export type AuthTokenGetter = () => Promise<string | null> | string | null;
+export type ActiveCompanyGetter = () => Promise<number | null> | number | null;
 
 const NO_BODY_STATUS = new Set([204, 205, 304]);
 const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
@@ -17,6 +18,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _activeCompanyGetter: ActiveCompanyGetter | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -42,6 +44,18 @@ export function setBaseUrl(url: string | null): void {
  */
 export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
   _authTokenGetter = getter;
+}
+
+/**
+ * Register a getter that supplies the user's currently-selected company id.
+ * Before every fetch the getter is invoked; when it returns a non-null number,
+ * an `X-Active-Company-Id` header is attached to the request so the server can
+ * clamp the user's company scope to that single workspace.
+ *
+ * Pass `null` to clear the getter.
+ */
+export function setActiveCompanyGetter(getter: ActiveCompanyGetter | null): void {
+  _activeCompanyGetter = getter;
 }
 
 function isRequest(input: RequestInfo | URL): input is Request {
@@ -355,6 +369,15 @@ export async function customFetch<T = unknown>(
     const token = await _authTokenGetter();
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
+    }
+  }
+
+  // Attach active company header so the backend can clamp the user's company
+  // scope to the workspace they have currently selected in the UI.
+  if (_activeCompanyGetter && !headers.has("x-active-company-id")) {
+    const cid = await _activeCompanyGetter();
+    if (cid != null && Number.isFinite(cid)) {
+      headers.set("x-active-company-id", String(cid));
     }
   }
 

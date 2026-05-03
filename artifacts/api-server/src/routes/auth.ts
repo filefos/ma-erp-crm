@@ -17,6 +17,33 @@ router.get("/auth/companies", async (_req, res): Promise<void> => {
   res.json(companies);
 });
 
+// Companies the currently authenticated user may switch into. Used by the
+// company switcher in the app shell. Returns at most the user's allowed scope.
+router.get("/auth/my-companies", requireAuth, async (req, res): Promise<void> => {
+  const all = await db.select({
+    id: companiesTable.id,
+    name: companiesTable.name,
+    shortName: companiesTable.shortName,
+    prefix: companiesTable.prefix,
+  }).from(companiesTable).where(eq(companiesTable.isActive, true)).orderBy(companiesTable.id);
+
+  // NOTE: req.companyScope here may already be clamped to the active workspace
+  // by the X-Active-Company-Id header. We intentionally re-read the user's
+  // full access list so the switcher can show every workspace they may pick.
+  const u = req.user!;
+  if (u.permissionLevel === "super_admin") {
+    res.json(all);
+    return;
+  }
+  const access = await db.select({ companyId: userCompanyAccessTable.companyId })
+    .from(userCompanyAccessTable)
+    .where(eq(userCompanyAccessTable.userId, u.id));
+  let ids = access.map(a => a.companyId).filter((x): x is number => typeof x === "number");
+  if (ids.length === 0 && u.companyId) ids = [u.companyId];
+  const allowed = new Set(ids);
+  res.json(all.filter(c => allowed.has(c.id)));
+});
+
 router.post("/auth/login", async (req, res): Promise<void> => {
   const { email, password, companyId: requestedCompanyId } = req.body;
   if (!email || !password) {
