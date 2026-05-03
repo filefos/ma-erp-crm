@@ -334,6 +334,175 @@ router.post("/whatsapp/send", requirePermission("whatsapp", "create"), async (re
   res.status(201).json({ message: updated, threadId: thread.id, waMessageId });
 });
 
+// ==================== SEND DOCUMENT (PDF) ====================
+
+interface SendDocumentBody {
+  to: string;
+  filename: string;
+  contentBase64: string;
+  contentType?: string;
+  caption?: string;
+  accountId?: number;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  projectId?: number;
+}
+
+router.post("/whatsapp/send-document", requirePermission("whatsapp", "create"), async (req, res): Promise<void> => {
+  const data = req.body as SendDocumentBody;
+  const toWa = normalizeWa(data.to ?? "");
+  if (!toWa) { res.status(400).json({ error: "Bad request", message: "Recipient phone is required" }); return; }
+  if (!data.contentBase64 || !data.filename) {
+    res.status(400).json({ error: "Bad request", message: "filename and contentBase64 are required" });
+    return;
+  }
+
+  const account = data.accountId
+    ? (await db.select().from(whatsappAccountsTable).where(eq(whatsappAccountsTable.id, data.accountId)))[0]
+    : await defaultAccount(null);
+  if (!account || !account.isActive) {
+    res.status(400).json({ error: "Bad request", message: "No active WhatsApp account configured. Add one in Admin → WhatsApp." });
+    return;
+  }
+  if (!scopeFilter(req, [account]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const token = getAccountToken(account);
+  if (!token) {
+    res.status(503).json({ error: "Service unavailable", message: `Access token env "${account.accessTokenEnv}" is not set` });
+    return;
+  }
+
+  // Decode the base64 PDF.
+  let buf: Buffer;
+  try {
+    const cleaned = data.contentBase64.replace(/^data:[^;]+;base64,/, "");
+    buf = Buffer.from(cleaned, "base64");
+  } catch {
+    res.status(400).json({ error: "Bad request", message: "Invalid base64 content" });
+    return;
+  }
+  const contentType = data.contentType ?? "application/pdf";
+
+  // 1) Upload media to Meta.
+  const uploadUrl = `https://graph.facebook.com/${GRAPH_VERSION}/${account.phoneNumberId}/media`;
+  const form = new FormData();
+  form.set("messaging_product", "whatsapp");
+  form.set("type", contentType);
+  form.set("file", new Blob([new Uint8Array(buf)], { type: contentType }), data.filename);
+
+  let mediaResp: Response;
+  try {
+    mediaResp = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+  } catch (err) {
+    res.status(502).json({ error: "Bad gateway", message: err instanceof Error ? err.message : "Failed to reach WhatsApp media API" });
+    return;
+  }
+  const mediaJson = await mediaResp.json().catch(() => ({})) as { id?: string; error?: { message?: string; code?: number } };
+  if (!mediaResp.ok || !mediaJson.id) {
+    res.status(mediaResp.status || 502).json({
+      error: "WhatsApp media upload failed",
+      message: mediaJson.error?.message ?? `HTTP ${mediaResp.status}`,
+    });
+    return;
+  }
+  const mediaId = mediaJson.id;
+
+  // 2) Ensure thread.
+  let [thread] = await db.select().from(whatsappThreadsTable)
+    .where(and(eq(whatsappThreadsTable.accountId, account.id), eq(whatsappThreadsTable.peerWaId, toWa)));
+  if (!thread) {
+    const [t] = await db.insert(whatsappThreadsTable).values({
+      accountId: account.id,
+      peerWaId: toWa,
+      peerName: null,
+      leadId: data.leadId ?? null,
+      dealId: data.dealId ?? null,
+      contactId: data.contactId ?? null,
+      projectId: data.projectId ?? null,
+      companyId: account.companyId ?? null,
+      unreadCount: 0,
+    }).returning();
+    thread = t;
+  }
+
+  // 3) Insert queued message row.
+  const [queued] = await db.insert(whatsappMessagesTable).values({
+    threadId: thread.id,
+    accountId: account.id,
+    direction: "out",
+    fromWa: account.displayPhone ?? null,
+    toWa,
+    messageType: "document",
+    body: data.caption ?? null,
+    mediaUrl: data.filename,
+    status: "queued",
+    sentById: req.user?.id ?? null,
+  }).returning();
+
+  // 4) Send the document message.
+  const messagesUrl = `https://graph.facebook.com/${GRAPH_VERSION}/${account.phoneNumberId}/messages`;
+  const payload = {
+    messaging_product: "whatsapp",
+    to: toWa,
+    recipient_type: "individual",
+    type: "document",
+    document: {
+      id: mediaId,
+      filename: data.filename,
+      ...(data.caption ? { caption: data.caption } : {}),
+    },
+  };
+  let sendResp: Response;
+  try {
+    sendResp = await fetch(messagesUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    await db.update(whatsappMessagesTable).set({
+      status: "failed",
+      errorText: err instanceof Error ? err.message : "Network error",
+    }).where(eq(whatsappMessagesTable.id, queued.id));
+    res.status(502).json({ error: "Bad gateway", message: "Failed to reach WhatsApp Cloud API" });
+    return;
+  }
+  const sendJson = await sendResp.json().catch(() => ({})) as {
+    messages?: Array<{ id: string }>;
+    error?: { code?: number; message?: string };
+  };
+  if (!sendResp.ok) {
+    await db.update(whatsappMessagesTable).set({
+      status: "failed",
+      errorCode: sendJson.error?.code ?? sendResp.status,
+      errorText: sendJson.error?.message ?? `HTTP ${sendResp.status}`,
+    }).where(eq(whatsappMessagesTable.id, queued.id));
+    res.status(sendResp.status).json({ error: "WhatsApp send failed", message: sendJson.error?.message ?? `HTTP ${sendResp.status}` });
+    return;
+  }
+
+  const waMessageId = sendJson.messages?.[0]?.id ?? null;
+  const now = new Date();
+  await db.update(whatsappMessagesTable).set({
+    waMessageId,
+    status: "sent",
+    sentAt: now,
+  }).where(eq(whatsappMessagesTable.id, queued.id));
+  await db.update(whatsappThreadsTable).set({
+    lastMessageAt: now,
+    lastMessagePreview: `📄 ${data.filename}`,
+    lastDirection: "out",
+    updatedAt: now,
+  }).where(eq(whatsappThreadsTable.id, thread.id));
+
+  await audit(req, { action: "send", entity: "whatsapp_message", entityId: queued.id, details: `document=${data.filename} to=${toWa}` });
+  res.status(201).json({ ok: true, mediaId, waMessageId, threadId: thread.id });
+});
+
 // ==================== TEMPLATES (proxy Meta) ====================
 
 router.get("/whatsapp/templates", requirePermission("whatsapp", "view"), async (req, res): Promise<void> => {

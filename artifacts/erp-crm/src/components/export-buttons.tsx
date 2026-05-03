@@ -25,7 +25,10 @@ import {
   ChevronDown,
   Printer,
   MessageCircle,
+  Loader2,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 
 interface ExportButtonsProps {
   docNumber: string;
@@ -84,11 +87,13 @@ function extractTableRows(table: HTMLTableElement): (string | number)[][] {
 }
 
 export function ExportButtons({ docNumber, recipientPhone, docTypeLabel }: ExportButtonsProps) {
+  const { toast } = useToast();
   const [waOpen, setWaOpen] = useState(false);
   const [waPhone, setWaPhone] = useState(recipientPhone ?? "");
   const [waMessage, setWaMessage] = useState(
     `Dear Sir/Madam,\n\nPlease find attached ${docTypeLabel ?? "document"} ${docNumber} for your kind reference.\n\nKindly review and revert.\n\nBest regards.`,
   );
+  const [sending, setSending] = useState(false);
 
   const handlePrint = () => {
     const prev = document.title;
@@ -97,24 +102,58 @@ export function ExportButtons({ docNumber, recipientPhone, docTypeLabel }: Expor
     setTimeout(() => { document.title = prev; }, 3000);
   };
 
-  const openWhatsApp = () => {
-    const digits = normalizePhone(waPhone);
-    if (!digits) return;
-    const encoded = encodeURIComponent(waMessage);
-    const url = `https://wa.me/${digits}?text=${encoded}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  };
-
   const handleSendViaWhatsApp = () => {
     setWaOpen(true);
   };
 
-  const handleSaveAndOpen = () => {
+  const handleSendNow = async () => {
     const digits = normalizePhone(waPhone);
-    if (!digits) return;
-    handlePrint();
-    setTimeout(openWhatsApp, 600);
-    setWaOpen(false);
+    if (!digits) {
+      toast({ title: "Phone number required", description: "Enter the recipient's WhatsApp number with country code.", variant: "destructive" });
+      return;
+    }
+    const el = getPrintEl();
+    if (!el) {
+      toast({ title: "Document not ready", description: "Could not find the printable document on this page.", variant: "destructive" });
+      return;
+    }
+    setSending(true);
+    try {
+      toast({ title: "Preparing PDF…", description: `Building ${docTypeLabel ?? "document"} ${docNumber}` });
+      const { base64, filename } = await captureElementToPdfBase64(el, `${docNumber}.pdf`);
+
+      const resp = await fetch("/api/whatsapp/send-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          to: digits,
+          filename,
+          contentBase64: base64,
+          contentType: "application/pdf",
+          caption: waMessage,
+        }),
+      });
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        toast({
+          title: "WhatsApp send failed",
+          description: json?.message ?? `HTTP ${resp.status}`,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({ title: "Sent via WhatsApp ✓", description: `Delivered to +${digits}` });
+      setWaOpen(false);
+    } catch (err) {
+      toast({
+        title: "Send failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleWord = () => {
@@ -207,16 +246,16 @@ export function ExportButtons({ docNumber, recipientPhone, docTypeLabel }: Expor
         <MessageCircle className="w-4 h-4 mr-1" />Send via WhatsApp
       </Button>
 
-      <Dialog open={waOpen} onOpenChange={setWaOpen}>
+      <Dialog open={waOpen} onOpenChange={(o) => { if (!sending) setWaOpen(o); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#0f2d5a]">
               <MessageCircle className="w-5 h-5 text-[#25D366]" />
-              Send {docTypeLabel ?? "document"} {docNumber} via WhatsApp
+              Send {docTypeLabel ?? "document"} {docNumber}
             </DialogTitle>
             <DialogDescription>
               Enter the recipient's WhatsApp number with country code (e.g. 9715XXXXXXXX).
-              The PDF will download to this device — drop it into the WhatsApp chat that opens.
+              The PDF will be delivered to their WhatsApp directly — no other steps required.
             </DialogDescription>
           </DialogHeader>
 
@@ -230,33 +269,35 @@ export function ExportButtons({ docNumber, recipientPhone, docTypeLabel }: Expor
                 placeholder="971501234567"
                 inputMode="tel"
                 autoFocus
+                disabled={sending}
               />
               <p className="text-[11px] text-gray-500">
                 Country code required. Spaces and symbols are ignored.
               </p>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="wa-message">Message</Label>
+              <Label htmlFor="wa-message">Message (sent as caption)</Label>
               <Textarea
                 id="wa-message"
                 value={waMessage}
                 onChange={(e) => setWaMessage(e.target.value)}
                 rows={5}
+                disabled={sending}
               />
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-2 flex-col sm:flex-row">
-            <Button variant="outline" onClick={openWhatsApp} disabled={!normalizePhone(waPhone)}>
-              Open WhatsApp Only
-            </Button>
+          <DialogFooter>
             <Button
-              onClick={handleSaveAndOpen}
-              disabled={!normalizePhone(waPhone)}
-              className="bg-[#25D366] hover:bg-[#1ea952] text-white"
+              onClick={() => void handleSendNow()}
+              disabled={sending || !normalizePhone(waPhone)}
+              className="bg-[#25D366] hover:bg-[#1ea952] text-white w-full sm:w-auto"
             >
-              <Printer className="w-4 h-4 mr-1" />
-              Save PDF &amp; Open WhatsApp
+              {sending ? (
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Sending…</>
+              ) : (
+                <><MessageCircle className="w-4 h-4 mr-1" />Send Now</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
