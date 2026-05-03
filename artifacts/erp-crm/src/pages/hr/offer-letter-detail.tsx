@@ -118,6 +118,30 @@ export function OfferLetterDetail({ id }: Props) {
   const [rejectionReason, setRejectionReason] = useState("");
   const [downloading, setDownloading] = useState(false);
 
+  // NOTE: All hook calls must happen before the early returns below to satisfy
+  // the rules of hooks (React throws "Rendered more hooks than during the
+  // previous render" otherwise — this regressed when companyLogoUrl made the
+  // companies query loading state observable to this component).
+
+  // Auto-suggest the commission toggle when designation looks like a sales role.
+  // Mirrors the create dialog: only flips OFF -> ON, never disables. Guards on
+  // offer presence + edit status internally so it can sit above the early
+  // returns.
+  const canEditAuto = !!offer && !(offer as any).convertedEmployeeId;
+  useEffect(() => {
+    if (!offer || !editing || !canEditAuto) return;
+    const t = String(draft.designation ?? "").toLowerCase();
+    const looksLikeSales = /\bsales(man|person|woman|\s+executive)?\b/.test(t) || t.includes("sales");
+    if (looksLikeSales && !draft.commissionEnabled) {
+      setDraft((p: any) => ({
+        ...p,
+        commissionEnabled: true,
+        ...Object.fromEntries(Object.entries(COMMISSION_DEFAULTS).map(([k, v]) =>
+          [k, p[k] === "" || p[k] == null ? v : p[k]])),
+      }));
+    }
+  }, [draft.designation, editing, canEditAuto, draft.commissionEnabled, offer]);
+
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading…</div>;
   if (!offer) return <div className="p-8 text-muted-foreground">Offer letter not found.</div>;
 
@@ -167,17 +191,6 @@ export function OfferLetterDetail({ id }: Props) {
         [k, p[k] === "" || p[k] == null ? v : p[k]])),
     }));
   };
-
-  // Auto-suggest the commission toggle when designation looks like a sales role.
-  // Mirrors the create dialog: only flips OFF -> ON, never disables.
-  useEffect(() => {
-    if (!editing || !canEdit) return;
-    const t = String(draft.designation ?? "").toLowerCase();
-    const looksLikeSales = /\bsales(man|person|woman|\s+executive)?\b/.test(t) || t.includes("sales");
-    if (looksLikeSales && !draft.commissionEnabled) {
-      enableCommissionWithDefaults();
-    }
-  }, [draft.designation, editing, canEdit]);
 
   const downloadPdf = async () => {
     if (!previewRef.current) return;
