@@ -83,6 +83,52 @@ router.post(
 );
 
 router.post(
+  "/admin/users/:id/freeze",
+  requirePermissionLevel("super_admin"),
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) {
+      res.status(400).json({ error: "Invalid user id" });
+      return;
+    }
+    if (id === req.user!.id) {
+      res.status(400).json({ error: "You cannot freeze your own account" });
+      return;
+    }
+    const frozen = req.body?.frozen !== false;
+    const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+    if (!target) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    await db
+      .update(usersTable)
+      .set({
+        isActive: !frozen,
+        status: frozen ? "inactive" : "active",
+        updatedAt: new Date(),
+      })
+      .where(eq(usersTable.id, id));
+
+    await db.insert(auditLogsTable).values({
+      userId: req.user!.id,
+      userName: req.user!.name,
+      action: frozen ? "freeze_user" : "unfreeze_user",
+      entity: "user",
+      entityId: id,
+      details: `${frozen ? "Froze" : "Unfroze"} user ${target.email} by ${req.user!.email}`,
+      ipAddress: req.ip ?? null,
+    });
+
+    res.json({
+      ok: true,
+      frozen,
+      message: `${target.email} has been ${frozen ? "frozen" : "unfrozen"}.`,
+    });
+  },
+);
+
+router.post(
   "/admin/users/:id/reset-account",
   requirePermissionLevel("super_admin"),
   async (req, res): Promise<void> => {
@@ -95,11 +141,6 @@ router.post(
     const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id));
     if (!target) {
       res.status(404).json({ error: "User not found" });
-      return;
-    }
-
-    if (target.permissionLevel === "super_admin" && target.id !== req.user!.id) {
-      res.status(403).json({ error: "Cannot reset another super_admin account" });
       return;
     }
 

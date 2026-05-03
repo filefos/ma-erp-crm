@@ -269,15 +269,12 @@ router.post("/users/:id/change-password", requirePermissionLevel("company_admin"
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
   if (!user) { res.status(404).json({ error: "Not found" }); return; }
 
-  // Rank protection: cannot reset a password for a user of equal or higher rank,
-  // and only super_admin may reset another super_admin's password.
+  // Rank protection: cannot reset a password for a user of higher rank.
+  // super_admin can reset ANY user's password (including other super_admins),
+  // since the super_admin role is the ultimate operator of the system.
   const targetRank = PERMISSION_RANK[user.permissionLevel ?? "user"] ?? 0;
-  if (targetRank >= callerRank && req.user!.id !== id) {
+  if (callerLevel !== "super_admin" && targetRank >= callerRank && req.user!.id !== id) {
     res.status(403).json({ error: "Forbidden", message: "Cannot reset password for a user with equal or higher access than yours" });
-    return;
-  }
-  if (user.permissionLevel === "super_admin" && callerLevel !== "super_admin") {
-    res.status(403).json({ error: "Forbidden", message: "Only super_admin may reset a super_admin password" });
     return;
   }
 

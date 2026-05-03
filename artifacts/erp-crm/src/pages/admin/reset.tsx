@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle, Loader2, RotateCcw, KeyRound, UserCog, ShieldAlert,
+  Lock, Unlock,
 } from "lucide-react";
 
 const FACTORY_PHRASE = "FACTORY RESET";
@@ -197,10 +198,11 @@ function UserResetSection() {
                 </SelectTrigger>
                 <SelectContent>
                   {(users ?? [])
-                    .filter(u => u.id !== me?.id && u.permissionLevel !== "super_admin")
+                    .filter(u => u.id !== me?.id)
                     .map(u => (
                       <SelectItem key={u.id} value={String(u.id)}>
                         {u.name} — {u.email}
+                        {u.permissionLevel === "super_admin" ? " (super admin)" : ""}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -334,6 +336,7 @@ function UserPasswordSection() {
                   .map(u => (
                     <SelectItem key={u.id} value={String(u.id)}>
                       {u.name} — {u.email}
+                      {u.permissionLevel === "super_admin" ? " (super admin)" : ""}
                     </SelectItem>
                   ))}
               </SelectContent>
@@ -376,6 +379,109 @@ function UserPasswordSection() {
   );
 }
 
+// ---------- FREEZE / UNFREEZE ----------
+function FreezeSection() {
+  const { data: users, refetch } = useListUsers();
+  const { user: me } = useAuth();
+  const [userId, setUserId] = useState<string>("");
+  const [busy, setBusy] = useState<"freeze" | "unfreeze" | null>(null);
+  const { toast } = useToast();
+
+  const target = users?.find(u => String(u.id) === userId);
+  const isCurrentlyFrozen = target?.isActive === false || target?.status === "inactive";
+
+  async function run(frozen: boolean) {
+    if (!userId) return;
+    setBusy(frozen ? "freeze" : "unfreeze");
+    try {
+      const r = await fetch(`/api/admin/users/${userId}/freeze`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ frozen }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error((data as { error?: string }).error ?? `HTTP ${r.status}`);
+      toast({
+        title: frozen ? "User frozen" : "User unfrozen",
+        description: `${target?.email} ${frozen ? "can no longer sign in" : "can sign in again"}.`,
+      });
+      await refetch();
+    } catch (e) {
+      toast({
+        title: "Action failed",
+        description: e instanceof Error ? e.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Card className="border-slate-300 bg-slate-50/40 dark:bg-slate-950/20 dark:border-slate-700">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Lock className="w-4 h-4" />Freeze / Unfreeze User
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Immediately block a user from signing in (freeze) or restore access (unfreeze).
+          Their data and history are preserved — only login is disabled.
+        </p>
+        <div className="space-y-1.5">
+          <Label className="text-xs">User</Label>
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger data-testid="select-user-freeze">
+              <SelectValue placeholder="Select user…" />
+            </SelectTrigger>
+            <SelectContent>
+              {(users ?? [])
+                .filter(u => u.id !== me?.id)
+                .map(u => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    {u.name} — {u.email}
+                    {u.permissionLevel === "super_admin" ? " (super admin)" : ""}
+                    {(u.isActive === false || u.status === "inactive") ? " — FROZEN" : ""}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {target && (
+          <div className="text-xs text-muted-foreground">
+            Status: <strong>{isCurrentlyFrozen ? "Frozen (cannot sign in)" : "Active"}</strong>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={!userId || isCurrentlyFrozen || !!busy}
+            onClick={() => run(true)}
+            data-testid="btn-freeze-user"
+          >
+            {busy === "freeze"
+              ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" />Freezing…</>
+              : <><Lock className="w-3.5 h-3.5 mr-1.5" />Freeze User</>}
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            disabled={!userId || !isCurrentlyFrozen || !!busy}
+            onClick={() => run(false)}
+            data-testid="btn-unfreeze-user"
+          >
+            {busy === "unfreeze"
+              ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" />Unfreezing…</>
+              : <><Unlock className="w-3.5 h-3.5 mr-1.5" />Unfreeze User</>}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ---------- PAGE ----------
 export function AdminResetCenter() {
   const { user } = useAuth();
@@ -397,6 +503,7 @@ export function AdminResetCenter() {
         </p>
       </div>
       <UserPasswordSection />
+      <FreezeSection />
       <UserResetSection />
       <FactoryResetSection />
     </div>
