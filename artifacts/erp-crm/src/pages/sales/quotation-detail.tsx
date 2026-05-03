@@ -59,9 +59,21 @@ export function QuotationDetail({ id }: Props) {
 
   const approve = useApproveQuotation({
     mutation: {
-      onSuccess: () => {
+      onSuccess: (resp: any) => {
         queryClient.invalidateQueries({ queryKey: getGetQuotationQueryKey(qid) });
         toast({ title: "Quotation approved." });
+        if (resp?.generatedDealId) {
+          toast({
+            title: "Deal auto-created",
+            description: "A new deal has been added to the sales pipeline.",
+          });
+          queryClient.invalidateQueries({ queryKey: ["/deals"] });
+        } else if (resp?.dealId) {
+          toast({ title: "Quotation linked to existing deal" });
+        }
+        for (const w of (resp?.warnings ?? []) as string[]) {
+          toast({ title: "Heads-up", description: w });
+        }
       },
     },
   });

@@ -520,31 +520,46 @@ export const UpdateLeadBody = zod.object({
   companyId: zod.number().optional(),
 });
 
-export const UpdateLeadResponse = zod.object({
-  id: zod.number(),
-  leadNumber: zod.string(),
-  leadName: zod.string(),
-  companyName: zod.string().optional(),
-  contactPerson: zod.string().optional(),
-  phone: zod.string().optional(),
-  whatsapp: zod.string().optional(),
-  email: zod.string().optional(),
-  location: zod.string().optional(),
-  source: zod.string().optional(),
-  requirementType: zod.string().optional(),
-  quantity: zod.number().optional(),
-  budget: zod.number().optional(),
-  status: zod.string(),
-  assignedToId: zod.number().optional(),
-  assignedToName: zod.string().optional(),
-  notes: zod.string().optional(),
-  nextFollowUp: zod.string().optional(),
-  leadScore: zod.string(),
-  companyId: zod.number().optional(),
-  companyRef: zod.string().optional(),
-  createdAt: zod.string(),
-  updatedAt: zod.string().optional(),
-});
+export const UpdateLeadResponse = zod
+  .object({
+    id: zod.number(),
+    leadNumber: zod.string(),
+    leadName: zod.string(),
+    companyName: zod.string().optional(),
+    contactPerson: zod.string().optional(),
+    phone: zod.string().optional(),
+    whatsapp: zod.string().optional(),
+    email: zod.string().optional(),
+    location: zod.string().optional(),
+    source: zod.string().optional(),
+    requirementType: zod.string().optional(),
+    quantity: zod.number().optional(),
+    budget: zod.number().optional(),
+    status: zod.string(),
+    assignedToId: zod.number().optional(),
+    assignedToName: zod.string().optional(),
+    notes: zod.string().optional(),
+    nextFollowUp: zod.string().optional(),
+    leadScore: zod.string(),
+    companyId: zod.number().optional(),
+    companyRef: zod.string().optional(),
+    createdAt: zod.string(),
+    updatedAt: zod.string().optional(),
+  })
+  .and(
+    zod.object({
+      generatedQuotationId: zod
+        .number()
+        .optional()
+        .describe(
+          'Quotation auto-created (or pre-existing) when status flipped to \"won\".',
+        ),
+      warnings: zod
+        .array(zod.string())
+        .optional()
+        .describe("Soft warnings about auto-creation (e.g. missing company)."),
+    }),
+  );
 
 /**
  * @summary Delete lead
@@ -1001,24 +1016,33 @@ export const UpdateDealBody = zod.object({
   notes: zod.string().optional(),
 });
 
-export const UpdateDealResponse = zod.object({
-  id: zod.number(),
-  dealNumber: zod.string(),
-  title: zod.string(),
-  clientName: zod.string().optional(),
-  value: zod.number().optional(),
-  stage: zod.string(),
-  probability: zod.number().optional(),
-  expectedCloseDate: zod.string().optional(),
-  assignedToId: zod.number().optional(),
-  assignedToName: zod.string().optional(),
-  companyId: zod.number().optional(),
-  companyRef: zod.string().optional(),
-  leadId: zod.number().optional(),
-  notes: zod.string().optional(),
-  createdAt: zod.string(),
-  updatedAt: zod.string().optional(),
-});
+export const UpdateDealResponse = zod
+  .object({
+    id: zod.number(),
+    dealNumber: zod.string(),
+    title: zod.string(),
+    clientName: zod.string().optional(),
+    value: zod.number().optional(),
+    stage: zod.string(),
+    probability: zod.number().optional(),
+    expectedCloseDate: zod.string().optional(),
+    assignedToId: zod.number().optional(),
+    assignedToName: zod.string().optional(),
+    companyId: zod.number().optional(),
+    companyRef: zod.string().optional(),
+    leadId: zod.number().optional(),
+    notes: zod.string().optional(),
+    createdAt: zod.string(),
+    updatedAt: zod.string().optional(),
+  })
+  .and(
+    zod.object({
+      generatedProformaInvoiceId: zod.number().optional(),
+      generatedTaxInvoiceId: zod.number().optional(),
+      generatedDeliveryNoteId: zod.number().optional(),
+      warnings: zod.array(zod.string()).optional(),
+    }),
+  );
 
 /**
  * @summary Delete deal
@@ -1378,54 +1402,72 @@ export const ApproveQuotationParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const ApproveQuotationResponse = zod.object({
-  id: zod.number(),
-  quotationNumber: zod.string(),
-  companyId: zod.number(),
-  companyRef: zod.string().optional(),
-  clientName: zod.string(),
-  clientEmail: zod.string().optional(),
-  clientPhone: zod.string().optional(),
-  clientContactPerson: zod.string().optional(),
-  customerTrn: zod.string().optional(),
-  projectName: zod.string().optional(),
-  projectLocation: zod.string().optional(),
-  status: zod.string(),
-  subtotal: zod.number().optional(),
-  discount: zod.number().optional(),
-  vatPercent: zod.number().optional(),
-  vatAmount: zod.number().optional(),
-  grandTotal: zod.number(),
-  paymentTerms: zod.string().optional(),
-  deliveryTerms: zod.string().optional(),
-  validity: zod.string().optional(),
-  termsConditions: zod.string().optional(),
-  techSpecs: zod.string().optional(),
-  additionalItems: zod.string().optional(),
-  preparedById: zod.number().optional(),
-  preparedByName: zod.string().optional(),
-  approvedById: zod.number().optional(),
-  approvedByName: zod.string().optional(),
-  leadId: zod.number().optional(),
-  dealId: zod.number().optional(),
-  items: zod
-    .array(
-      zod.object({
-        id: zod.number(),
-        quotationId: zod.number().optional(),
-        description: zod.string(),
-        quantity: zod.number(),
-        unit: zod.string(),
-        rate: zod.number(),
-        amount: zod.number(),
-        discount: zod.number().optional(),
-        sortOrder: zod.number().optional(),
-      }),
-    )
-    .optional(),
-  createdAt: zod.string(),
-  updatedAt: zod.string().optional(),
-});
+export const ApproveQuotationResponse = zod
+  .object({
+    id: zod.number(),
+    quotationNumber: zod.string(),
+    companyId: zod.number(),
+    companyRef: zod.string().optional(),
+    clientName: zod.string(),
+    clientEmail: zod.string().optional(),
+    clientPhone: zod.string().optional(),
+    clientContactPerson: zod.string().optional(),
+    customerTrn: zod.string().optional(),
+    projectName: zod.string().optional(),
+    projectLocation: zod.string().optional(),
+    status: zod.string(),
+    subtotal: zod.number().optional(),
+    discount: zod.number().optional(),
+    vatPercent: zod.number().optional(),
+    vatAmount: zod.number().optional(),
+    grandTotal: zod.number(),
+    paymentTerms: zod.string().optional(),
+    deliveryTerms: zod.string().optional(),
+    validity: zod.string().optional(),
+    termsConditions: zod.string().optional(),
+    techSpecs: zod.string().optional(),
+    additionalItems: zod.string().optional(),
+    preparedById: zod.number().optional(),
+    preparedByName: zod.string().optional(),
+    approvedById: zod.number().optional(),
+    approvedByName: zod.string().optional(),
+    leadId: zod.number().optional(),
+    dealId: zod.number().optional(),
+    items: zod
+      .array(
+        zod.object({
+          id: zod.number(),
+          quotationId: zod.number().optional(),
+          description: zod.string(),
+          quantity: zod.number(),
+          unit: zod.string(),
+          rate: zod.number(),
+          amount: zod.number(),
+          discount: zod.number().optional(),
+          sortOrder: zod.number().optional(),
+        }),
+      )
+      .optional(),
+    createdAt: zod.string(),
+    updatedAt: zod.string().optional(),
+  })
+  .and(
+    zod.object({
+      generatedDealId: zod
+        .number()
+        .optional()
+        .describe(
+          "Deal auto-created on approval (only set when a new deal was created).",
+        ),
+      dealId: zod
+        .number()
+        .optional()
+        .describe(
+          "Resolved deal id linked to this quotation (newly created or pre-existing).",
+        ),
+      warnings: zod.array(zod.string()).optional(),
+    }),
+  );
 
 /**
  * @summary List proforma invoices

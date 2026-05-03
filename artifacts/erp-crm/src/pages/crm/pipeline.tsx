@@ -38,7 +38,22 @@ export function SalesPipeline() {
 
   const update = useUpdateDeal({
     mutation: {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() }),
+      onSuccess: (resp: any) => {
+        queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() });
+        if (resp?.generatedProformaInvoiceId || resp?.generatedTaxInvoiceId || resp?.generatedDeliveryNoteId) {
+          const parts: string[] = [];
+          if (resp.generatedProformaInvoiceId) parts.push("Proforma Invoice");
+          if (resp.generatedTaxInvoiceId) parts.push("Tax Invoice");
+          if (resp.generatedDeliveryNoteId) parts.push("Delivery Note");
+          toast({ title: "Closing documents auto-created", description: parts.join(" + ") + " ready in Accounts." });
+          queryClient.invalidateQueries({ queryKey: ["/proforma-invoices"] });
+          queryClient.invalidateQueries({ queryKey: ["/tax-invoices"] });
+          queryClient.invalidateQueries({ queryKey: ["/delivery-notes"] });
+        }
+        for (const w of (resp?.warnings ?? []) as string[]) {
+          toast({ title: "Heads-up", description: w });
+        }
+      },
       onError: (err: any) => toast({ title: "Could not move deal", description: err?.message ?? "Update failed", variant: "destructive" }),
     },
   });

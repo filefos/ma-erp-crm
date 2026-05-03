@@ -69,13 +69,23 @@ export function LeadDetail({ id }: Props) {
 
   const update = useUpdateLead({
     mutation: {
-      onSuccess: () => {
+      onSuccess: (resp: any) => {
         // Invalidate the list view AND this lead's detail cache — otherwise
         // useGetLead(lid) keeps showing the stale row after save.
         queryClient.invalidateQueries({ queryKey: ["/leads"] });
         queryClient.invalidateQueries({ queryKey: getGetLeadQueryKey(lid) });
         setEditing(false);
         toast({ title: "Lead updated" });
+        if (resp?.generatedQuotationId) {
+          toast({
+            title: "Draft Quotation auto-created",
+            description: "Open the new quotation to add line items and send it.",
+          });
+          queryClient.invalidateQueries({ queryKey: ["/quotations"] });
+        }
+        for (const w of (resp?.warnings ?? []) as string[]) {
+          toast({ title: "Heads-up", description: w });
+        }
       },
     },
   });

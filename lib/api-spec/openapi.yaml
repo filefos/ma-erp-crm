@@ -462,11 +462,11 @@ paths:
               $ref: "#/components/schemas/CreateLeadBody"
       responses:
         "200":
-          description: Lead updated
+          description: Lead updated. When status transitions to "won", a draft quotation is auto-created (idempotent) and its id returned in generatedQuotationId.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Lead"
+                $ref: "#/components/schemas/LeadUpdateResponse"
     delete:
       operationId: deleteLead
       tags: [leads]
@@ -686,11 +686,11 @@ paths:
               $ref: "#/components/schemas/CreateDealBody"
       responses:
         "200":
-          description: Deal updated
+          description: Deal updated. When stage transitions to "won", a Proforma Invoice, Tax Invoice and Delivery Note are auto-created (idempotent) from the linked quotation and their ids returned.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Deal"
+                $ref: "#/components/schemas/DealUpdateResponse"
     delete:
       operationId: deleteDeal
       tags: [deals]
@@ -919,11 +919,11 @@ paths:
             type: integer
       responses:
         "200":
-          description: Quotation approved
+          description: Quotation approved. A deal is auto-created (or linked to existing one for the source lead) and the resulting dealId is returned.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Quotation"
+                $ref: "#/components/schemas/QuotationApproveResponse"
 
   # PROFORMA INVOICES
   /proforma-invoices:
@@ -6701,3 +6701,49 @@ components:
         projects:
           type: array
           items: { $ref: "#/components/schemas/WhatsappLinkSearchHit" }
+
+    LeadUpdateResponse:
+      allOf:
+        - $ref: "#/components/schemas/Lead"
+        - type: object
+          properties:
+            generatedQuotationId:
+              type: integer
+              description: Quotation auto-created (or pre-existing) when status flipped to "won".
+            warnings:
+              type: array
+              items:
+                type: string
+              description: Soft warnings about auto-creation (e.g. missing company).
+
+    DealUpdateResponse:
+      allOf:
+        - $ref: "#/components/schemas/Deal"
+        - type: object
+          properties:
+            generatedProformaInvoiceId:
+              type: integer
+            generatedTaxInvoiceId:
+              type: integer
+            generatedDeliveryNoteId:
+              type: integer
+            warnings:
+              type: array
+              items:
+                type: string
+
+    QuotationApproveResponse:
+      allOf:
+        - $ref: "#/components/schemas/Quotation"
+        - type: object
+          properties:
+            generatedDealId:
+              type: integer
+              description: Deal auto-created on approval (only set when a new deal was created).
+            dealId:
+              type: integer
+              description: Resolved deal id linked to this quotation (newly created or pre-existing).
+            warnings:
+              type: array
+              items:
+                type: string

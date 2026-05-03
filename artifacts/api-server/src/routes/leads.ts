@@ -1,10 +1,56 @@
 import { Router } from "express";
-import { db, leadsTable, usersTable, notificationsTable } from "@workspace/db";
+import { db, leadsTable, usersTable, notificationsTable, quotationsTable, companiesTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
+
+// Auto-create a draft quotation from a lead when its status flips to "won".
+// Idempotent: if any quotation already exists for this lead, return that one.
+// Wrapped in a transaction so the read-modify-write is atomic.
+async function autoCreateQuotationForLead(
+  lead: typeof leadsTable.$inferSelect,
+  preparedById: number | undefined,
+): Promise<{ generatedQuotationId?: number; warnings: string[] }> {
+  const warnings: string[] = [];
+  if (!lead.companyId) {
+    warnings.push("Lead has no company assigned — quotation not created.");
+    return { warnings };
+  }
+  return await db.transaction(async (tx) => {
+    const [existing] = await tx.select({ id: quotationsTable.id })
+      .from(quotationsTable).where(eq(quotationsTable.leadId, lead.id)).limit(1);
+    if (existing) return { generatedQuotationId: existing.id, warnings };
+
+    const [co] = await tx.select({ prefix: companiesTable.prefix })
+      .from(companiesTable).where(eq(companiesTable.id, lead.companyId!));
+    const prefix = co?.prefix ?? "PM";
+    const count = await tx.select({ count: sql<number>`count(*)::int` })
+      .from(quotationsTable).where(eq(quotationsTable.companyId, lead.companyId!));
+    const num = (count[0]?.count ?? 0) + 1;
+    const quotationNumber = `${prefix}-QTN-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
+
+    const clientName = lead.companyName || lead.leadName || "Unknown Client";
+    const [q] = await tx.insert(quotationsTable).values({
+      quotationNumber,
+      companyId: lead.companyId!,
+      clientName,
+      clientEmail: lead.email ?? undefined,
+      clientPhone: lead.phone ?? undefined,
+      clientContactPerson: lead.contactPerson ?? undefined,
+      projectLocation: lead.location ?? undefined,
+      projectName: lead.requirementType ?? undefined,
+      status: "draft",
+      leadId: lead.id,
+      preparedById: preparedById ?? undefined,
+    }).returning();
+    if (!lead.email && !lead.phone) {
+      warnings.push("Lead has no email or phone — quotation client contact details may be incomplete.");
+    }
+    return { generatedQuotationId: q.id, warnings };
+  });
+}
 
 async function enrichLead(lead: typeof leadsTable.$inferSelect) {
   let assignedToName: string | undefined;
@@ -150,7 +196,13 @@ router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyA
   const ownerScope = await getOwnerScope(req);
   if (!inOwnerScope(ownerScope, existing.assignedToId)) { res.status(403).json({ error: "Forbidden" }); return; }
   const [lead] = await db.update(leadsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
-  res.json(await enrichLead(lead));
+  // Auto-create draft quotation when lead status transitions to "won".
+  let auto: { generatedQuotationId?: number; warnings: string[] } = { warnings: [] };
+  if (existing.status !== "won" && lead.status === "won") {
+    auto = await autoCreateQuotationForLead(lead, req.user?.id);
+  }
+  const enriched = await enrichLead(lead);
+  res.json({ ...enriched, ...auto });
 });
 
 router.delete("/leads/:id", requirePermission("leads", "delete"), async (req, res): Promise<void> => {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, quotationsTable, quotationItemsTable, companiesTable, usersTable } from "@workspace/db";
+import { db, quotationsTable, quotationItemsTable, companiesTable, usersTable, dealsTable, leadsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
@@ -166,10 +166,64 @@ router.post("/quotations/:id/approve", requirePermission("quotations", "approve"
   if (!ownerScopeFilter(ownerScope, [existing], ["preparedById", "approvedById"]).length) {
     res.status(403).json({ error: "Forbidden" }); return;
   }
-  const [q] = await db.update(quotationsTable).set({
-    status: "approved", approvedById: req.user?.id, updatedAt: new Date(),
-  }).where(eq(quotationsTable.id, id)).returning();
-  res.json(await enrichQuotation(q));
+  // Approve + (auto-create or link deal) atomically.
+  const result = await db.transaction(async (tx) => {
+    const warnings: string[] = [];
+    const [q] = await tx.update(quotationsTable).set({
+      status: "approved", approvedById: req.user?.id, updatedAt: new Date(),
+    }).where(eq(quotationsTable.id, id)).returning();
+
+    let generatedDealId: number | undefined;
+    let dealId: number | undefined = q.dealId ?? undefined;
+
+    if (!dealId && q.leadId) {
+      // Link to an OPEN deal for this lead (skip closed-won/closed-lost ones).
+      const [linkedDeal] = await tx.select({ id: dealsTable.id })
+        .from(dealsTable)
+        .where(sql`${dealsTable.leadId} = ${q.leadId} AND ${dealsTable.stage} NOT IN ('won', 'lost')`)
+        .orderBy(sql`${dealsTable.createdAt} desc`).limit(1);
+      if (linkedDeal) dealId = linkedDeal.id;
+    }
+    if (!dealId) {
+      if (!q.companyId) {
+        warnings.push("Quotation has no company — deal not created.");
+      } else {
+        const count = await tx.select({ count: sql<number>`count(*)::int` }).from(dealsTable);
+        const num = (count[0]?.count ?? 0) + 1;
+        const dealNumber = `DEAL-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
+        let assignedToId: number | null = null;
+        if (q.leadId) {
+          const [l] = await tx.select({ assignedToId: leadsTable.assignedToId })
+            .from(leadsTable).where(eq(leadsTable.id, q.leadId));
+          assignedToId = l?.assignedToId ?? null;
+        }
+        const [newDeal] = await tx.insert(dealsTable).values({
+          dealNumber,
+          title: q.projectName ? `${q.clientName} — ${q.projectName}` : q.clientName,
+          clientName: q.clientName,
+          value: q.grandTotal ?? 0,
+          stage: "proposal",
+          probability: 60,
+          assignedToId: assignedToId ?? req.user?.id ?? null,
+          companyId: q.companyId,
+          leadId: q.leadId ?? null,
+          notes: `Auto-created from approved quotation ${q.quotationNumber}.`,
+        }).returning();
+        dealId = newDeal.id;
+        generatedDealId = newDeal.id;
+      }
+    }
+
+    if (dealId && q.dealId !== dealId) {
+      await tx.update(quotationsTable).set({ dealId, updatedAt: new Date() })
+        .where(eq(quotationsTable.id, q.id));
+      q.dealId = dealId;
+    }
+    return { q, generatedDealId, dealId, warnings };
+  });
+
+  const enriched = await enrichQuotation(result.q);
+  res.json({ ...enriched, generatedDealId: result.generatedDealId, dealId: result.dealId, warnings: result.warnings });
 });
 
 export default router;

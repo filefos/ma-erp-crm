@@ -1716,6 +1716,28 @@ export interface WhatsappLinkSearchResponse {
   projects?: WhatsappLinkSearchHit[];
 }
 
+export type LeadUpdateResponse = Lead & {
+  /** Quotation auto-created (or pre-existing) when status flipped to "won". */
+  generatedQuotationId?: number;
+  /** Soft warnings about auto-creation (e.g. missing company). */
+  warnings?: string[];
+};
+
+export type DealUpdateResponse = Deal & {
+  generatedProformaInvoiceId?: number;
+  generatedTaxInvoiceId?: number;
+  generatedDeliveryNoteId?: number;
+  warnings?: string[];
+};
+
+export type QuotationApproveResponse = Quotation & {
+  /** Deal auto-created on approval (only set when a new deal was created). */
+  generatedDealId?: number;
+  /** Resolved deal id linked to this quotation (newly created or pre-existing). */
+  dealId?: number;
+  warnings?: string[];
+};
+
 export type ListUsersParams = {
   departmentId?: number;
   companyId?: number;

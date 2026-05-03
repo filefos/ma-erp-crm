@@ -65,6 +65,7 @@ import type {
   CreateWhatsappAccountBody,
   DashboardSummary,
   Deal,
+  DealUpdateResponse,
   DeleteChartOfAccount200,
   DeleteJournalEntry200,
   DeletePaymentMade200,
@@ -86,6 +87,7 @@ import type {
   InventoryItem,
   JournalEntry,
   Lead,
+  LeadUpdateResponse,
   LeadsPipeline,
   ListActivitiesParams,
   ListAssetsParams,
@@ -135,6 +137,7 @@ import type {
   PurchaseOrder,
   PurchaseRequest,
   Quotation,
+  QuotationApproveResponse,
   RejectPurchaseOrderBody,
   RejectPurchaseRequestBody,
   Rfq,
@@ -1837,8 +1840,8 @@ export const updateLead = async (
   id: number,
   createLeadBody: CreateLeadBody,
   options?: RequestInit,
-): Promise<Lead> => {
-  return customFetch<Lead>(getUpdateLeadUrl(id), {
+): Promise<LeadUpdateResponse> => {
+  return customFetch<LeadUpdateResponse>(getUpdateLeadUrl(id), {
     ...options,
     method: "PUT",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -2800,8 +2803,8 @@ export const updateDeal = async (
   id: number,
   createDealBody: CreateDealBody,
   options?: RequestInit,
-): Promise<Deal> => {
-  return customFetch<Deal>(getUpdateDealUrl(id), {
+): Promise<DealUpdateResponse> => {
+  return customFetch<DealUpdateResponse>(getUpdateDealUrl(id), {
     ...options,
     method: "PUT",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -3759,8 +3762,8 @@ export const getApproveQuotationUrl = (id: number) => {
 export const approveQuotation = async (
   id: number,
   options?: RequestInit,
-): Promise<Quotation> => {
-  return customFetch<Quotation>(getApproveQuotationUrl(id), {
+): Promise<QuotationApproveResponse> => {
+  return customFetch<QuotationApproveResponse>(getApproveQuotationUrl(id), {
     ...options,
     method: "POST",
   });
