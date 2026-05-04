@@ -6,12 +6,14 @@ export const proformaInvoicesTable = pgTable("proforma_invoices", {
   id: serial("id").primaryKey(),
   piNumber: text("pi_number").notNull().unique(),
   companyId: integer("company_id").notNull(),
+  clientCode: text("client_code"),
   clientName: text("client_name").notNull(),
   clientEmail: text("client_email"),
   clientPhone: text("client_phone"),
   projectName: text("project_name"),
   projectLocation: text("project_location"),
   quotationId: integer("quotation_id"),
+  lpoId: integer("lpo_id"),
   subtotal: doublePrecision("subtotal").default(0),
   vatPercent: doublePrecision("vat_percent").default(5),
   vatAmount: doublePrecision("vat_amount").default(0),
@@ -23,6 +25,7 @@ export const proformaInvoicesTable = pgTable("proforma_invoices", {
   items: text("items").default("[]"),
   preparedById: integer("prepared_by_id"),
   approvedById: integer("approved_by_id"),
+  createdById: integer("created_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -32,12 +35,16 @@ export const taxInvoicesTable = pgTable("tax_invoices", {
   invoiceNumber: text("invoice_number").notNull().unique(),
   companyId: integer("company_id").notNull(),
   companyTrn: text("company_trn"),
+  clientCode: text("client_code"),
   clientName: text("client_name").notNull(),
   clientTrn: text("client_trn"),
   invoiceDate: text("invoice_date"),
   supplyDate: text("supply_date"),
   quotationId: integer("quotation_id"),
+  lpoId: integer("lpo_id"),
   projectId: integer("project_id"),
+  paymentTerms: text("payment_terms"),
+  items: text("items").default("[]"),
   subtotal: doublePrecision("subtotal").default(0),
   vatPercent: doublePrecision("vat_percent").default(5),
   vatAmount: doublePrecision("vat_amount").default(0),
@@ -46,6 +53,7 @@ export const taxInvoicesTable = pgTable("tax_invoices", {
   balance: doublePrecision("balance").default(0),
   paymentStatus: text("payment_status").notNull().default("unpaid"),
   status: text("status").notNull().default("active"),
+  createdById: integer("created_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -54,6 +62,7 @@ export const deliveryNotesTable = pgTable("delivery_notes", {
   id: serial("id").primaryKey(),
   dnNumber: text("dn_number").notNull().unique(),
   companyId: integer("company_id").notNull(),
+  clientCode: text("client_code"),
   clientName: text("client_name").notNull(),
   projectName: text("project_name"),
   deliveryLocation: text("delivery_location"),
@@ -63,8 +72,11 @@ export const deliveryNotesTable = pgTable("delivery_notes", {
   deliveryDate: text("delivery_date"),
   status: text("status").notNull().default("pending"),
   taxInvoiceId: integer("tax_invoice_id"),
+  quotationId: integer("quotation_id"),
+  lpoId: integer("lpo_id"),
   projectId: integer("project_id"),
   items: text("items").default("[]"),
+  createdById: integer("created_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -73,6 +85,7 @@ export const lposTable = pgTable("lpos", {
   id: serial("id").primaryKey(),
   lpoNumber: text("lpo_number").notNull().unique(),
   companyId: integer("company_id").notNull(),
+  clientCode: text("client_code"),
   clientName: text("client_name").notNull(),
   projectRef: text("project_ref"),
   projectId: integer("project_id"),
@@ -84,9 +97,17 @@ export const lposTable = pgTable("lpos", {
   paymentTerms: text("payment_terms"),
   status: text("status").notNull().default("active"),
   notes: text("notes"),
+  items: text("items").default("[]"),
   attachments: jsonb("attachments").default([]),
+  createdById: integer("created_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Per-company sequence counter for Client Codes
+export const clientCodeSeqsTable = pgTable("client_code_seqs", {
+  companyId: integer("company_id").primaryKey(),
+  lastSeq: integer("last_seq").notNull().default(0),
 });
 
 export const insertProformaInvoiceSchema = createInsertSchema(proformaInvoicesTable).omit({ id: true, piNumber: true, createdAt: true, updatedAt: true });

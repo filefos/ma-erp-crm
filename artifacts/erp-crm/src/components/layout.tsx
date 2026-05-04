@@ -39,15 +39,9 @@ const NAV: NavGroup[] = [
     icon: Users,
     items: [
       { href: "/crm", label: "CRM Dashboard", icon: LayoutDashboard },
-      { href: "/crm/pipeline", label: "Sales Pipeline", icon: Briefcase },
-      { href: "/crm/follow-ups", label: "Follow-up Center", icon: Calendar },
-      { href: "/crm/leaderboard", label: "Sales Leaderboard", icon: TrendingUp },
-      { href: "/crm/reports", label: "CRM Reports", icon: BarChart },
-      { href: "/crm/leads", label: "Leads", icon: Users },
       { href: "/crm/contacts", label: "Contacts", icon: HardHat },
-      { href: "/crm/deals", label: "Deals", icon: Briefcase },
-      { href: "/crm/activities", label: "Activities", icon: Calendar },
-      { href: "/crm/whatsapp", label: "WhatsApp Inbox", icon: MessageCircle },
+      { href: "/crm/leads", label: "Leads", icon: Users },
+      { href: "/crm/reports", label: "CRM Reports", icon: BarChart },
     ],
   },
   {
@@ -55,6 +49,9 @@ const NAV: NavGroup[] = [
     icon: FileText,
     items: [
       { href: "/sales/dashboard", label: "Sales Dashboard", icon: LayoutDashboard },
+      { href: "/crm/leaderboard", label: "Sales Leaderboard", icon: TrendingUp },
+      { href: "/crm/pipeline", label: "Sales Pipeline Board", icon: Briefcase },
+      { href: "/crm/follow-ups", label: "Follow-up Center", icon: Calendar },
       { href: "/sales/quotations", label: "Quotations", icon: FileText },
       { href: "/sales/lpos", label: "LPOs", icon: ClipboardList },
     ],
