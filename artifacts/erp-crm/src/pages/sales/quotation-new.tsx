@@ -146,20 +146,20 @@ export function QuotationNew() {
   const [showTC, setShowTC] = useState(false);
   const [customSpecSection, setCustomSpecSection] = useState("");
 
-  // Prefill form once the lead is loaded.
+  // Prefill form once the lead is loaded. Field names mirror leads schema.
   useEffect(() => {
     if (!leadForPrefill) return;
     const l = leadForPrefill as any;
     setForm(p => ({
       ...p,
       companyId: l.companyId ? String(l.companyId) : p.companyId,
-      clientName: l.clientName ?? p.clientName,
-      clientContactPerson: l.contactPerson ?? p.clientContactPerson,
+      clientName: l.companyName ?? l.leadName ?? p.clientName,
+      clientContactPerson: l.leadName ?? p.clientContactPerson,
       clientEmail: l.email ?? p.clientEmail,
       clientPhone: l.phone ?? p.clientPhone,
       customerTrn: l.trnNumber ?? p.customerTrn,
-      projectName: l.title ?? p.projectName,
-      projectLocation: l.address ?? p.projectLocation,
+      projectName: l.requirementType ?? p.projectName,
+      projectLocation: l.officeAddress ?? l.location ?? p.projectLocation,
     }));
   }, [leadForPrefill]);
 
