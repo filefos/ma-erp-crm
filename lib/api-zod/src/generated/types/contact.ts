@@ -15,6 +15,8 @@ export interface Contact {
   companyName?: string;
   designation?: string;
   companyId?: number;
+  clientCode?: string;
+  createdById?: number;
   notes?: string;
   createdAt: string;
 }

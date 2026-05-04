@@ -2,9 +2,30 @@ import { Router, Request } from "express";
 import { db, contactsTable, leadsTable } from "@workspace/db";
 import { eq, sql, inArray, and } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope } from "../middlewares/auth";
+import { genClientCode, findDuplicateContact } from "../lib/client-code";
 
 const router = Router();
 router.use(requireAuth);
+
+// Pre-create dedupe check used by the UI before opening the conversion form.
+// Scoped strictly to the caller's accessible companies — no cross-company probing.
+router.get("/contacts/check-duplicate", requirePermission("contacts", "view"), async (req, res): Promise<void> => {
+  const phone = (req.query.phone as string | undefined) ?? null;
+  const email = (req.query.email as string | undefined) ?? null;
+  const requestedCompanyId = req.query.companyId ? parseInt(req.query.companyId as string, 10) : undefined;
+  if (!requestedCompanyId) {
+    res.status(400).json({ error: "companyId is required" });
+    return;
+  }
+  // companyScope === null means admin (all companies allowed); otherwise must be in scope.
+  const scope = req.companyScope;
+  if (scope !== null && scope !== undefined && !scope.includes(requestedCompanyId)) {
+    res.status(403).json({ error: "companyId not in your scope" });
+    return;
+  }
+  const dup = await findDuplicateContact(requestedCompanyId, phone, email);
+  res.json({ duplicate: dup ?? null });
+});
 
 /**
  * For restricted scopes, return the set of `companyName` values from leads the user owns.
@@ -59,7 +80,21 @@ router.get("/contacts", requirePermission("contacts", "view"), async (req, res):
 });
 
 router.post("/contacts", requirePermission("contacts", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
-  const [contact] = await db.insert(contactsTable).values(req.body).returning();
+  const dup = await findDuplicateContact(req.body.companyId ?? null, req.body.phone, req.body.email);
+  if (dup) {
+    res.status(409).json({
+      error: "Contact already exists",
+      message: `A contact with this ${dup.phone === req.body.phone ? "phone" : "email"} already exists.`,
+      existingContactId: dup.id,
+      existingContact: dup,
+    });
+    return;
+  }
+  const data: any = { ...req.body, createdById: req.user?.id };
+  if (req.body.companyId && !data.clientCode) {
+    data.clientCode = await genClientCode(req.body.companyId);
+  }
+  const [contact] = await db.insert(contactsTable).values(data).returning();
   res.status(201).json(contact);
 });
 

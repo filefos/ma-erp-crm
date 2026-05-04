@@ -209,9 +209,11 @@ export interface UpdateDepartmentBody {
 export interface Lead {
   id: number;
   leadNumber: string;
+  clientCode?: string;
   leadName: string;
   companyName?: string;
   contactPerson?: string;
+  designation?: string;
   phone?: string;
   whatsapp?: string;
   email?: string;
@@ -226,6 +228,12 @@ export interface Lead {
   notes?: string;
   nextFollowUp?: string;
   leadScore: string;
+  companyType?: string;
+  website?: string;
+  licenseNumber?: string;
+  trnNumber?: string;
+  officeAddress?: string;
+  createdById?: number;
   companyId?: number;
   companyRef?: string;
   createdAt: string;
@@ -236,6 +244,7 @@ export interface CreateLeadBody {
   leadName: string;
   companyName?: string;
   contactPerson?: string;
+  designation?: string;
   phone?: string;
   whatsapp?: string;
   email?: string;
@@ -249,6 +258,13 @@ export interface CreateLeadBody {
   notes?: string;
   nextFollowUp?: string;
   leadScore?: string;
+  companyType?: string;
+  website?: string;
+  licenseNumber?: string;
+  trnNumber?: string;
+  officeAddress?: string;
+  contactId?: number;
+  clientCode?: string;
   companyId?: number;
 }
 
@@ -273,6 +289,8 @@ export interface Contact {
   companyName?: string;
   designation?: string;
   companyId?: number;
+  clientCode?: string;
+  createdById?: number;
   notes?: string;
   createdAt: string;
 }

@@ -5,27 +5,94 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Search, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronDown } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListContactsQueryKey } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
+
+type ContactForm = {
+  name: string; email: string; phone: string; whatsapp: string;
+  companyName: string; designation: string;
+};
+const emptyForm: ContactForm = { name: "", email: "", phone: "", whatsapp: "", companyName: "", designation: "" };
 
 export function ContactsList() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: contacts, isLoading } = useListContacts({ search: search || undefined });
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompany } = useActiveCompany();
   const filtered = filterByCompany(contacts ?? []);
-  const create = useCreateContact({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }); setOpen(false); } } });
+  const create = useCreateContact();
   const del = useDeleteContact({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }); } } });
 
-  const [form, setForm] = useState({ name: "", email: "", phone: "", whatsapp: "", companyName: "", designation: "" });
-
+  const [form, setForm] = useState<ContactForm>(emptyForm);
   const filteredWithSno = filtered.map((c, idx) => ({ ...c, sno: idx + 1 }));
+
+  // Save handler shared by both buttons. If `convert` is true, after saving we
+  // navigate to the Leads page with the new contact pre-filled and the form open.
+  const handleSave = async (convert: boolean) => {
+    try {
+      const payload: any = { ...form };
+      if (activeCompany?.id) payload.companyId = activeCompany.id;
+      const created = await create.mutateAsync({ data: payload });
+      queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() });
+      setOpen(false);
+      setForm(emptyForm);
+      if (convert) {
+        sessionStorage.setItem("prefillLeadFromContact", JSON.stringify({ ...created, fromContact: true }));
+        setLocation("/crm/leads?openNew=1");
+      } else {
+        toast({
+          title: "Contact saved",
+          description: created.clientCode ? `Client Code: ${created.clientCode}` : "Saved.",
+        });
+      }
+    } catch (err: any) {
+      const status = err?.response?.status ?? err?.status;
+      const data = err?.response?.data ?? err?.data;
+      if (status === 409 && data?.existingContactId) {
+        const existing = data.existingContact;
+        toast({
+          title: "Contact already exists",
+          description: data.message || `Showing existing contact${existing?.name ? `: ${existing.name}` : ""}.`,
+          variant: "destructive",
+        });
+        // Surface the existing record by filtering the list to it, then highlight.
+        const term = existing?.phone || existing?.email || existing?.name || "";
+        if (term) setSearch(term);
+        setOpen(false);
+        setForm(emptyForm);
+        // Highlight the row briefly so the user can see it.
+        setTimeout(() => {
+          const row = document.querySelector(`[data-contact-row="${data.existingContactId}"]`);
+          if (row) {
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.classList.add("ring-2", "ring-amber-400", "bg-amber-50");
+            setTimeout(() => row.classList.remove("ring-2", "ring-amber-400", "bg-amber-50"), 3000);
+          }
+        }, 200);
+      } else {
+        toast({ title: "Failed to save contact", description: err?.message || "Unknown error", variant: "destructive" });
+      }
+    }
+  };
+
+  // "Convert To Lead" toolbar button: per spec, opens the FULL Lead form
+  // directly without saving a contact first.
+  const goCreateLeadDirect = () => {
+    sessionStorage.removeItem("prefillLeadFromContact");
+    setLocation("/crm/leads?openNew=1");
+  };
 
   return (
     <div className="space-y-4">
@@ -46,6 +113,7 @@ export function ContactsList() {
             data={filteredWithSno}
             columns={[
               { header: "S.No.", key: "sno" },
+              { header: "Client Code", key: "clientCode" },
               { header: "Name", key: "name" },
               { header: "Company", key: "companyName" },
               { header: "Designation", key: "designation" },
@@ -57,25 +125,56 @@ export function ContactsList() {
             title="Contacts"
             defaultLandscape={true}
           />
+          <Button variant="outline" onClick={goCreateLeadDirect} data-testid="button-convert-to-lead">
+            <ArrowRight className="w-4 h-4 mr-2" />Convert To Lead
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" data-testid="button-import-contacts">
+                <Upload className="w-4 h-4 mr-2" />Import Contacts <ChevronDown className="w-3.5 h-3.5 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => toast({ title: "Excel import", description: "Coming in next phase." })}>From Excel (.xlsx)</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast({ title: "CSV import", description: "Coming in next phase." })}>From CSV (.csv)</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast({ title: "PDF import", description: "Coming in next phase." })}>From PDF (.pdf)</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Contact</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Add Contact</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              {[["name","Name *"],["email","Email"],["phone","Phone"],["whatsapp","WhatsApp"],["companyName","Company"],["designation","Designation"]].map(([k,l]) => (
-                <div key={k} className="space-y-1">
-                  <Label>{l}</Label>
-                  <Input value={(form as any)[k]} onChange={e => setForm(p => ({...p,[k]:e.target.value}))} />
-                </div>
-              ))}
-            </div>
-            <Button className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => create.mutate({ data: form as any })} disabled={!form.name || create.isPending}>
-              {create.isPending ? "Saving..." : "Save Contact"}
-            </Button>
-          </DialogContent>
-        </Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Contact</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Add Contact</DialogTitle></DialogHeader>
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                {([["name","Name *"],["designation","Designation"],["phone","Mobile"],["whatsapp","WhatsApp"],["email","Email"],["companyName","Company"]] as const).map(([k,l]) => (
+                  <div key={k} className="space-y-1">
+                    <Label>{l}</Label>
+                    <Input value={form[k]} onChange={e => setForm(p => ({...p,[k]:e.target.value}))} />
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <Button
+                  className="bg-[#0f2d5a] hover:bg-[#1e6ab0] flex-1"
+                  onClick={() => handleSave(false)}
+                  disabled={!form.name || create.isPending}
+                  data-testid="button-save-contact"
+                >
+                  {create.isPending ? "Saving..." : "Save Contact"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-[#0f2d5a] text-[#0f2d5a]"
+                  onClick={() => handleSave(true)}
+                  disabled={!form.name || create.isPending}
+                  data-testid="button-save-and-convert"
+                >
+                  Save & Convert to Lead <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <div className="relative max-w-sm">
@@ -87,20 +186,22 @@ export function ContactsList() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-14 text-center">#</TableHead>
+              <TableHead>Client Code</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Designation</TableHead>
-              <TableHead>Phone</TableHead>
+              <TableHead>Mobile</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow> :
             filtered.map((c, idx) => (
-              <TableRow key={c.id}>
+              <TableRow key={c.id} data-contact-row={c.id}>
                 <TableCell className="text-center text-muted-foreground text-sm font-mono">{idx + 1}</TableCell>
+                <TableCell className="font-mono text-xs">{c.clientCode || "-"}</TableCell>
                 <TableCell className="font-medium">{c.name}</TableCell>
                 <TableCell>{c.companyName || "-"}</TableCell>
                 <TableCell>{c.designation || "-"}</TableCell>

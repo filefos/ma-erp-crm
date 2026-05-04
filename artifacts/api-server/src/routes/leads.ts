@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { db, leadsTable, usersTable, notificationsTable, quotationsTable, quotationItemsTable, companiesTable } from "@workspace/db";
+import { db, leadsTable, usersTable, notificationsTable, quotationsTable, quotationItemsTable, companiesTable, contactsTable } from "@workspace/db";
 import { eq, and, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 import { notifyUsers } from "../lib/push";
+import { genClientCode } from "../lib/client-code";
 
 const router = Router();
 router.use(requireAuth);
@@ -191,11 +192,34 @@ router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAc
   const num = (count[0]?.count ?? 0) + 1;
   const year = new Date().getFullYear();
   const leadNumber = `LEAD-${year}-${String(num).padStart(4, "0")}`;
+
+  // Resolve Client Code: if a contactId is provided and that contact already has one,
+  // inherit it. Otherwise auto-generate per company. If no companyId, leave null.
+  // SECURITY: only honor contactId if it belongs to a company the caller can access.
+  let clientCode: string | undefined = data.clientCode;
+  if (!clientCode && data.contactId) {
+    const scope = req.companyScope;
+    const [linked] = await db.select().from(contactsTable).where(eq(contactsTable.id, data.contactId));
+    const inScope = linked && linked.companyId && (scope === null || scope === undefined || scope.includes(linked.companyId));
+    if (linked && inScope) {
+      if (linked.clientCode) clientCode = linked.clientCode;
+      if (!linked.clientCode && data.companyId === linked.companyId) {
+        clientCode = await genClientCode(data.companyId);
+        await db.update(contactsTable).set({ clientCode, updatedAt: new Date() }).where(eq(contactsTable.id, linked.id));
+      }
+    }
+  }
+  if (!clientCode && data.companyId) {
+    clientCode = await genClientCode(data.companyId);
+  }
+
   const [lead] = await db.insert(leadsTable).values({
     leadNumber,
+    clientCode,
     leadName: data.leadName,
     companyName: data.companyName,
     contactPerson: data.contactPerson,
+    designation: data.designation,
     phone: data.phone,
     whatsapp: data.whatsapp,
     email: data.email,
@@ -209,7 +233,13 @@ router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAc
     notes: data.notes,
     nextFollowUp: data.nextFollowUp,
     leadScore: data.leadScore ?? "cold",
+    companyType: data.companyType,
+    website: data.website,
+    licenseNumber: data.licenseNumber,
+    trnNumber: data.trnNumber,
+    officeAddress: data.officeAddress,
     companyId: data.companyId,
+    createdById: req.user?.id,
   }).returning();
   if (lead.assignedToId && lead.assignedToId !== req.user?.id) {
     void notifyUsers({

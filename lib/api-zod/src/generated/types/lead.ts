@@ -9,9 +9,11 @@
 export interface Lead {
   id: number;
   leadNumber: string;
+  clientCode?: string;
   leadName: string;
   companyName?: string;
   contactPerson?: string;
+  designation?: string;
   phone?: string;
   whatsapp?: string;
   email?: string;
@@ -26,6 +28,12 @@ export interface Lead {
   notes?: string;
   nextFollowUp?: string;
   leadScore: string;
+  companyType?: string;
+  website?: string;
+  licenseNumber?: string;
+  trnNumber?: string;
+  officeAddress?: string;
+  createdById?: number;
   companyId?: number;
   companyRef?: string;
   createdAt: string;

@@ -4621,11 +4621,15 @@ components:
           type: integer
         leadNumber:
           type: string
+        clientCode:
+          type: string
         leadName:
           type: string
         companyName:
           type: string
         contactPerson:
+          type: string
+        designation:
           type: string
         phone:
           type: string
@@ -4655,6 +4659,18 @@ components:
           type: string
         leadScore:
           type: string
+        companyType:
+          type: string
+        website:
+          type: string
+        licenseNumber:
+          type: string
+        trnNumber:
+          type: string
+        officeAddress:
+          type: string
+        createdById:
+          type: integer
         companyId:
           type: integer
         companyRef:
@@ -4673,6 +4689,8 @@ components:
         companyName:
           type: string
         contactPerson:
+          type: string
+        designation:
           type: string
         phone:
           type: string
@@ -4699,6 +4717,20 @@ components:
         nextFollowUp:
           type: string
         leadScore:
+          type: string
+        companyType:
+          type: string
+        website:
+          type: string
+        licenseNumber:
+          type: string
+        trnNumber:
+          type: string
+        officeAddress:
+          type: string
+        contactId:
+          type: integer
+        clientCode:
           type: string
         companyId:
           type: integer
@@ -4763,6 +4795,10 @@ components:
         designation:
           type: string
         companyId:
+          type: integer
+        clientCode:
+          type: string
+        createdById:
           type: integer
         notes:
           type: string

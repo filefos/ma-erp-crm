@@ -10,6 +10,7 @@ export interface CreateLeadBody {
   leadName: string;
   companyName?: string;
   contactPerson?: string;
+  designation?: string;
   phone?: string;
   whatsapp?: string;
   email?: string;
@@ -23,5 +24,12 @@ export interface CreateLeadBody {
   notes?: string;
   nextFollowUp?: string;
   leadScore?: string;
+  companyType?: string;
+  website?: string;
+  licenseNumber?: string;
+  trnNumber?: string;
+  officeAddress?: string;
+  contactId?: number;
+  clientCode?: string;
   companyId?: number;
 }
