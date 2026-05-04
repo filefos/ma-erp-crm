@@ -1,0 +1,217 @@
+Conversion Flow:
+
+Contact → Lead
+Lead → Quotation
+Quotation → LPO
+LPO → Payment Tracking
+
+**PROJECT: ERP CRM + SALES MODULE MODIFICATION (STRICT REQUIREMENTS)**
+
+Do not over-engineer. Do not add extra features. Follow exactly.
+
+---
+
+## 1. MENU STRUCTURE CHANGES
+
+### REMOVE from **CRM (Main Category)**
+
+* Deals Panel
+* Activities Panel
+* WhatsApp Inbox
+
+---
+
+### MOVE / KEEP under **SALES (Main Category)**
+
+Under SALES:
+
+1. Sales Leaderboard ✅ (keep as is)
+2. Sales Pipeline Board
+3. Follow-up Center
+
+---
+
+## 2. FOLLOW-UP CENTER (IMPORTANT)
+
+Create a simple follow-up tracking system:
+
+Fields:
+
+* Client Code
+* Contact Name
+* Mobile
+* Follow-up Date
+* Next Promise Date
+* Notes
+* Status (Pending / Done)
+
+Purpose:
+
+* Salesman tracks payment follow-ups
+* Tracks next commitment date from client
+* Simple list/table view with filters
+
+---
+
+## 3. CONTACT → LEAD CONVERSION (VERY IMPORTANT CORE FEATURE)
+
+### CONTACT FORM FIELDS
+
+* Name
+* Designation
+* Mobile
+* WhatsApp
+* Email
+* Company
+
+---
+
+### SAVE OPTIONS (MANDATORY)
+
+After filling contact form, show 2 buttons:
+
+1. **Save Contact**
+   → Save only in Contacts Database
+
+2. **Save & Convert to Lead**
+   → Step 1: Save in Contacts Database
+   → Step 2: Open Lead Form automatically
+
+---
+
+## 4. LEAD FORM (AFTER CONVERSION)
+
+Auto-fill data from Contact + add new fields:
+
+* Client Code (Auto Generate)
+* Company Name (Legal Name)
+* Company Type
+* Company Website
+* License Number
+* TRN Number
+* Status (Active / Inactive)
+* Office Address
+
+---
+
+## 5. DIRECT "CONVERT TO LEAD" BUTTON
+
+Add button next to **"Add Contact"**:
+
+Button Name: **Convert To Lead**
+
+When clicked:
+→ Open FULL Lead Form directly (without saving contact first)
+
+---
+
+## 6. FULL LEAD DATA STRUCTURE
+
+Lead must include:
+
+(Contact Fields)
+
+* Name
+* Designation
+* Mobile
+* WhatsApp
+* Email
+* Company
+
+(Company Fields)
+
+* Client Code (Auto)
+* Company Name
+* Company Type
+* Website
+* License Number
+* TRN Number
+* Status
+* Address
+
+(Sales Fields)
+
+* Lead Source
+* Budget
+* Next Follow-up Date
+* Notes
+
+---
+
+## 7. LEAD → QUOTATION FLOW (CRITICAL)
+
+* Add button: **"To Quotation"** inside Lead
+* Add button in Quotation Panel: **"Leads to Quotation"**
+
+Function:
+
+* Fetch ALL data using **Client Code**
+* Auto-fill quotation details
+
+---
+
+## 8. QUOTATION REQUIREMENTS
+
+* Client Code must remain linked
+* Auto-generate **Quotation Number**
+* Include manual **Payment Terms field (textbox)**
+
+---
+
+## 9. LPO (LOCAL PURCHASE ORDER) MODULE
+
+Create LPO Panel:
+
+* Add button: **Import LPO**
+* Upload file (PDF / Excel / etc.)
+* System should:
+
+  * Store file
+  * Extract basic details (if possible)
+  * Register LPO in system
+
+---
+
+## 10. IMPORT CONTACTS
+
+Add Import Feature in Contacts:
+
+Dropdown:
+
+* Import via Excel
+* Import via CSV
+* Import via PDF
+
+---
+
+## 11. DATA FLOW (VERY IMPORTANT)
+
+* Client Code = PRIMARY KEY
+* Used across:
+
+  * Leads
+  * Quotation
+  * LPO
+  * Follow-up
+
+---
+
+## 12. MULTI-COMPANY RULE (CRITICAL)
+
+System must support:
+
+* Two companies
+* Completely separate data
+* No cross-access
+* No shared records
+
+---
+
+## FINAL INSTRUCTIONS
+
+* Keep UI simple (no unnecessary complexity)
+* Do not add extra modules
+* Focus on speed and usability
+* Follow exact field names and flow
+
+---
