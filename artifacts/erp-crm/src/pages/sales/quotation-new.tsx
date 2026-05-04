@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useCreateQuotation, useListCompanies } from "@workspace/api-client-react";
+import { useState, useEffect } from "react";
+import { useCreateQuotation, useListCompanies, useGetLead, getGetLeadQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,9 +101,18 @@ const DEFAULT_TC = `1. COMMERCIAL BASIS
 3. For any queries or clarifications, please contact our sales team. We shall be pleased to assist you.`;
 
 export function QuotationNew() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { data: companies } = useListCompanies();
+
+  // ?leadId=N → prefill the form from the lead.
+  const leadIdParam = (() => {
+    const m = (typeof window !== "undefined" ? window.location.search : "").match(/[?&]leadId=(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+  })();
+  const { data: leadForPrefill } = useGetLead(leadIdParam ?? 0, {
+    query: { queryKey: getGetLeadQueryKey(leadIdParam ?? 0), enabled: !!leadIdParam },
+  });
   const create = useCreateQuotation({
     mutation: {
       onSuccess: (data) => {
@@ -136,6 +145,23 @@ export function QuotationNew() {
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
   const [customSpecSection, setCustomSpecSection] = useState("");
+
+  // Prefill form once the lead is loaded.
+  useEffect(() => {
+    if (!leadForPrefill) return;
+    const l = leadForPrefill as any;
+    setForm(p => ({
+      ...p,
+      companyId: l.companyId ? String(l.companyId) : p.companyId,
+      clientName: l.clientName ?? p.clientName,
+      clientContactPerson: l.contactPerson ?? p.clientContactPerson,
+      clientEmail: l.email ?? p.clientEmail,
+      clientPhone: l.phone ?? p.clientPhone,
+      customerTrn: l.trnNumber ?? p.customerTrn,
+      projectName: l.title ?? p.projectName,
+      projectLocation: l.address ?? p.projectLocation,
+    }));
+  }, [leadForPrefill]);
 
   const handleSpecTypeChange = (key: SpecTypeKey) => {
     setSpecType(key);
@@ -184,6 +210,7 @@ export function QuotationNew() {
 
   const handleSubmit = (status: string) => {
     if (!form.companyId || !form.clientName) return;
+    const lead = leadForPrefill as any;
     create.mutate({
       data: {
         ...form,
@@ -191,6 +218,8 @@ export function QuotationNew() {
         companyId: parseInt(form.companyId, 10),
         items,
         additionalItems: JSON.stringify(additionalItems),
+        ...(leadIdParam ? { leadId: leadIdParam } : {}),
+        ...(lead?.clientCode ? { clientCode: lead.clientCode } : {}),
       } as any,
     });
   };

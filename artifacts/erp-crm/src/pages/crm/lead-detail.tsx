@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link, useLocation } from "wouter";
 import {
   ArrowLeft, Pencil, MessageCircle, Phone, Mail, MapPin, Calendar, Building2, X, Save,
-  Sparkles, Plus, CheckCircle2, Circle, Briefcase, Copy, Wand2, ListChecks, Brain, Trophy,
+  Sparkles, Plus, CheckCircle2, Circle, Briefcase, Copy, Wand2, ListChecks, Brain, Trophy, FileText,
 } from "lucide-react";
 import { WhatsAppButton } from "@/components/whatsapp-button";
 import { useQueryClient } from "@tanstack/react-query";
@@ -211,9 +211,16 @@ export function LeadDetail({ id }: Props) {
         </Button>
         <div className="ml-auto flex gap-2 flex-wrap">
           {!editing && l.status !== "won" && l.status !== "lost" && (
-            <Button variant="outline" size="sm" onClick={openConvert} data-testid="button-convert-deal" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50">
-              <Briefcase className="w-4 h-4 mr-1.5" />Convert to Deal
-            </Button>
+            <>
+              <Button variant="outline" size="sm" asChild data-testid="button-convert-quotation" className="border-blue-500 text-blue-700 hover:bg-blue-50">
+                <Link href={`/sales/quotations/new?leadId=${l.id}`}>
+                  <FileText className="w-4 h-4 mr-1.5" />Convert to Quotation
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={openConvert} data-testid="button-convert-deal" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50">
+                <Briefcase className="w-4 h-4 mr-1.5" />Convert to Deal
+              </Button>
+            </>
           )}
           {!editing && (
             <Button variant="outline" size="sm" onClick={startEditing} data-testid="button-edit-lead">

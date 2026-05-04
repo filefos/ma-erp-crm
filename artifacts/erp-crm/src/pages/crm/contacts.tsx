@@ -30,7 +30,7 @@ export function ContactsList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: contacts, isLoading } = useListContacts({ search: search || undefined });
-  const { filterByCompany, activeCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
   const filtered = filterByCompany(contacts ?? []);
   const create = useCreateContact();
   const del = useDeleteContact({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }); } } });
@@ -43,7 +43,7 @@ export function ContactsList() {
   const handleSave = async (convert: boolean) => {
     try {
       const payload: any = { ...form };
-      if (activeCompany?.id) payload.companyId = activeCompany.id;
+      if (activeCompanyId) payload.companyId = activeCompanyId;
       const created = await create.mutateAsync({ data: payload });
       queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() });
       setOpen(false);

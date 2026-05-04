@@ -86,9 +86,21 @@ router.post("/proforma-invoices", requirePermission("proforma_invoices", "create
   const piNumber = await genDocNumber(data.companyId, "PI", proformaInvoicesTable);
   const itemsStr = JSON.stringify(data.items ?? []);
   const { items: _items, ...rest } = data;
+
+  // Inherit Client Code from quotation/lpo if not provided.
+  let clientCode: string | undefined = rest.clientCode;
+  if (!clientCode && rest.quotationId) {
+    const [q] = await db.select({ clientCode: quotationsTable.clientCode }).from(quotationsTable).where(eq(quotationsTable.id, rest.quotationId));
+    if (q?.clientCode) clientCode = q.clientCode;
+  }
+  if (!clientCode && rest.lpoId) {
+    const [l] = await db.select({ clientCode: lposTable.clientCode }).from(lposTable).where(eq(lposTable.id, rest.lpoId));
+    if (l?.clientCode) clientCode = l.clientCode;
+  }
+
   const [pi] = await db.insert(proformaInvoicesTable).values({
-    ...rest, piNumber, preparedById: req.user?.id, items: itemsStr,
-  }).returning();
+    ...rest, piNumber, clientCode, preparedById: req.user?.id, createdById: req.user?.id, items: itemsStr,
+  } as any).returning();
   res.status(201).json(parsePiItems(pi));
 });
 
@@ -149,8 +161,50 @@ router.get("/tax-invoices", requirePermission("tax_invoices", "view"), async (re
 router.post("/tax-invoices", requirePermission("tax_invoices", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const invoiceNumber = await genDocNumber(data.companyId, "INV", taxInvoicesTable);
-  const balance = (data.grandTotal ?? 0) - (data.amountPaid ?? 0);
-  const [inv] = await db.insert(taxInvoicesTable).values({ ...data, invoiceNumber, balance }).returning();
+
+  // Inherit Client Code from quotation/lpo if not provided.
+  let clientCode: string | undefined = data.clientCode;
+  if (!clientCode && data.quotationId) {
+    const [q] = await db.select({ clientCode: quotationsTable.clientCode }).from(quotationsTable).where(eq(quotationsTable.id, data.quotationId));
+    if (q?.clientCode) clientCode = q.clientCode;
+  }
+  if (!clientCode && data.lpoId) {
+    const [l] = await db.select({ clientCode: lposTable.clientCode }).from(lposTable).where(eq(lposTable.id, data.lpoId));
+    if (l?.clientCode) clientCode = l.clientCode;
+  }
+
+  // Per-line VAT override: if items contain a `vatPercent` per line, recompute totals from items.
+  // Default per-line VAT is the document vatPercent (or 5% UAE).
+  const docVat = data.vatPercent ?? 5;
+  const items: any[] = Array.isArray(data.items) ? data.items : [];
+  let subtotal = data.subtotal ?? 0;
+  let vatAmount = data.vatAmount ?? 0;
+  let grandTotal = data.grandTotal ?? 0;
+  if (items.length > 0 && items.some(i => typeof i.amount === "number" || typeof i.rate === "number")) {
+    subtotal = 0; vatAmount = 0;
+    for (const it of items) {
+      const lineAmount = typeof it.amount === "number" ? it.amount : (it.quantity ?? 1) * (it.rate ?? 0);
+      const lineVat = typeof it.vatPercent === "number" ? it.vatPercent : docVat;
+      subtotal += lineAmount;
+      vatAmount += lineAmount * lineVat / 100;
+    }
+    subtotal = +subtotal.toFixed(2);
+    vatAmount = +vatAmount.toFixed(2);
+    grandTotal = +(subtotal + vatAmount).toFixed(2);
+  }
+  const balance = grandTotal - (data.amountPaid ?? 0);
+
+  // tax_invoices.items column is text — serialize if array passed in.
+  const itemsField = items.length > 0 ? JSON.stringify(items) : data.items;
+
+  const [inv] = await db.insert(taxInvoicesTable).values({
+    ...data,
+    invoiceNumber,
+    clientCode,
+    items: itemsField,
+    subtotal, vatPercent: docVat, vatAmount, grandTotal, balance,
+    createdById: req.user?.id,
+  } as any).returning();
   res.status(201).json(inv);
 });
 
@@ -194,9 +248,25 @@ router.get("/delivery-notes", requirePermission("delivery_notes", "view"), async
 router.post("/delivery-notes", requirePermission("delivery_notes", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const dnNumber = await genDocNumber(data.companyId, "DN", deliveryNotesTable);
+
+  // Inherit Client Code from quotation/lpo/tax-invoice if not provided.
+  let clientCode: string | undefined = data.clientCode;
+  if (!clientCode && data.quotationId) {
+    const [q] = await db.select({ clientCode: quotationsTable.clientCode }).from(quotationsTable).where(eq(quotationsTable.id, data.quotationId));
+    if (q?.clientCode) clientCode = q.clientCode;
+  }
+  if (!clientCode && data.lpoId) {
+    const [l] = await db.select({ clientCode: lposTable.clientCode }).from(lposTable).where(eq(lposTable.id, data.lpoId));
+    if (l?.clientCode) clientCode = l.clientCode;
+  }
+  if (!clientCode && data.taxInvoiceId) {
+    const [t] = await db.select({ clientCode: taxInvoicesTable.clientCode }).from(taxInvoicesTable).where(eq(taxInvoicesTable.id, data.taxInvoiceId));
+    if (t?.clientCode) clientCode = t.clientCode;
+  }
+
   const [dn] = await db.insert(deliveryNotesTable).values({
-    ...data, dnNumber, items: JSON.stringify(data.items ?? []),
-  }).returning();
+    ...data, dnNumber, clientCode, createdById: req.user?.id, items: JSON.stringify(data.items ?? []),
+  } as any).returning();
   res.status(201).json({ ...dn, items: data.items ?? [] });
 });
 
@@ -268,9 +338,87 @@ router.get("/lpos", requirePermission("lpos", "view"), async (req, res): Promise
 router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
   const lpoNumber = await genDocNumber(data.companyId, "LPO", lposTable);
-  const [lpo] = await db.insert(lposTable).values({ ...data, lpoNumber }).returning();
+
+  // Inherit Client Code from linked quotation if not provided.
+  let clientCode: string | undefined = data.clientCode;
+  let quotation: typeof quotationsTable.$inferSelect | undefined;
+  if (data.quotationId) {
+    const [q] = await db.select().from(quotationsTable).where(eq(quotationsTable.id, data.quotationId));
+    quotation = q;
+    if (!clientCode && q?.clientCode) clientCode = q.clientCode;
+  }
+
+  const [lpo] = await db.insert(lposTable).values({
+    ...data, lpoNumber, clientCode, createdById: req.user?.id,
+  } as any).returning();
   await notifyAccountsOfLpo(req, lpo, "created");
-  res.status(201).json(lpo);
+
+  // AUTO-CREATE draft Proforma + draft Tax Invoice from this LPO.
+  // Per spec: "LPO uses AI extract → user reviews → auto-create BOTH draft Proforma + draft Tax Invoice."
+  const today = new Date().toISOString().split("T")[0];
+  const value = Number(lpo.lpoValue ?? quotation?.grandTotal ?? 0);
+  const vatPercent = 5;
+  const subtotal = +(value / (1 + vatPercent / 100)).toFixed(2);
+  const vatAmount = +(value - subtotal).toFixed(2);
+
+  let createdPi: any = null;
+  let createdTi: any = null;
+  try {
+    const piNumber = await genDocNumber(lpo.companyId, "PI", proformaInvoicesTable);
+    const [pi] = await db.insert(proformaInvoicesTable).values({
+      piNumber,
+      companyId: lpo.companyId,
+      clientCode,
+      clientName: lpo.clientName,
+      projectName: lpo.projectRef ?? quotation?.projectName ?? null,
+      quotationId: lpo.quotationId,
+      lpoId: lpo.id,
+      subtotal, vatPercent, vatAmount,
+      total: value,
+      paymentTerms: lpo.paymentTerms,
+      validityDate: today,
+      status: "draft",
+      preparedById: req.user?.id,
+      createdById: req.user?.id,
+      items: lpo.items ?? "[]",
+    } as any).returning();
+    createdPi = pi;
+  } catch (err) {
+    req.log?.warn({ err }, "Failed to auto-create draft Proforma from LPO");
+  }
+  try {
+    const invoiceNumber = await genDocNumber(lpo.companyId, "INV", taxInvoicesTable);
+    const [ti] = await db.insert(taxInvoicesTable).values({
+      invoiceNumber,
+      companyId: lpo.companyId,
+      clientCode,
+      clientName: lpo.clientName,
+      invoiceDate: today,
+      supplyDate: today,
+      quotationId: lpo.quotationId,
+      lpoId: lpo.id,
+      paymentTerms: lpo.paymentTerms,
+      items: lpo.items ?? "[]",
+      subtotal, vatPercent, vatAmount,
+      grandTotal: value,
+      amountPaid: 0,
+      balance: value,
+      paymentStatus: "unpaid",
+      status: "draft",
+      createdById: req.user?.id,
+    } as any).returning();
+    createdTi = ti;
+  } catch (err) {
+    req.log?.warn({ err }, "Failed to auto-create draft Tax Invoice from LPO");
+  }
+
+  res.status(201).json({
+    ...lpo,
+    autoCreated: {
+      proformaInvoice: createdPi ? { id: createdPi.id, piNumber: createdPi.piNumber } : null,
+      taxInvoice: createdTi ? { id: createdTi.id, invoiceNumber: createdTi.invoiceNumber } : null,
+    },
+  });
 });
 
 router.get("/lpos/:id/attachments/:idx", requirePermission("lpos", "view"), async (req, res): Promise<void> => {

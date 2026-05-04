@@ -73,7 +73,25 @@ export function LposList() {
 
   const createMutation = useCreateLpo({
     mutation: {
-      onSuccess: () => { invalidate(); setCreateOpen(false); setForm(EMPTY_FORM); setAttachments([]); toast({ title: "LPO registered." }); },
+      onSuccess: (resp: any) => {
+        invalidate();
+        setCreateOpen(false);
+        setForm(EMPTY_FORM);
+        setAttachments([]);
+        toast({ title: "LPO registered." });
+        const auto = resp?.autoCreated;
+        if (auto?.proformaInvoice || auto?.taxInvoice) {
+          const parts: string[] = [];
+          if (auto.proformaInvoice) parts.push(`Proforma ${auto.proformaInvoice.piNumber}`);
+          if (auto.taxInvoice) parts.push(`Tax Invoice ${auto.taxInvoice.invoiceNumber}`);
+          toast({
+            title: "Draft invoices auto-created",
+            description: parts.join(" + ") + " — review them in Accounts.",
+          });
+          queryClient.invalidateQueries({ queryKey: ["/proforma-invoices"] });
+          queryClient.invalidateQueries({ queryKey: ["/tax-invoices"] });
+        }
+      },
       onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }),
     },
   });

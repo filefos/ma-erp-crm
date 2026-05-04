@@ -67,6 +67,13 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
   const vatAmount = discountedSubtotal * vatPercent / 100;
   const grandTotal = discountedSubtotal + vatAmount;
 
+  // Inherit Client Code from lead (single pipeline rule).
+  let clientCode: string | undefined = data.clientCode;
+  if (!clientCode && data.leadId) {
+    const [lead] = await db.select({ clientCode: leadsTable.clientCode }).from(leadsTable).where(eq(leadsTable.id, data.leadId));
+    if (lead?.clientCode) clientCode = lead.clientCode;
+  }
+
   const [quotation] = await db.insert(quotationsTable).values({
     quotationNumber, companyId: data.companyId, clientName: data.clientName,
     clientEmail: data.clientEmail, clientPhone: data.clientPhone,
@@ -77,7 +84,8 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
     validity: data.validity, termsConditions: data.termsConditions,
     techSpecs: data.techSpecs, additionalItems: data.additionalItems,
     preparedById: req.user?.id, leadId: data.leadId, dealId: data.dealId,
-  }).returning();
+    clientCode, createdById: req.user?.id,
+  } as any).returning();
 
   if (items.length > 0) {
     await db.insert(quotationItemsTable).values(items.map((item: any, i: number) => ({

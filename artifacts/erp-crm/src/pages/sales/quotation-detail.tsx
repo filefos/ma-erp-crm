@@ -182,12 +182,14 @@ export function QuotationDetail({ id }: Props) {
       clientName: q.clientName,
       projectName: q.projectName,
       deliveryDate: new Date().toISOString().split("T")[0],
+      quotationId: q.id,
       items: items.map(i => ({
         description: i.description,
         quantity: i.quantity,
         unit: i.unit ?? "nos",
       })),
-    } });
+      ...({ clientCode: (q as any).clientCode } as Record<string, unknown>),
+    } as any });
   };
 
   const handleConfirmConvert = async () => {
@@ -225,7 +227,7 @@ export function QuotationDetail({ id }: Props) {
             total: ci.total,
             paymentTerms: termsText,
             validityDate: q.validity,
-            ...({ vatPercent, clientEmail: q.clientEmail, clientPhone: q.clientPhone } as Record<string, unknown>),
+            ...({ vatPercent, clientEmail: q.clientEmail, clientPhone: q.clientPhone, clientCode: (q as any).clientCode } as Record<string, unknown>),
           } });
           created.push({ name: res.piNumber, id: res.id });
         } else {
@@ -240,6 +242,7 @@ export function QuotationDetail({ id }: Props) {
             vatAmount: ci.vatAmount,
             grandTotal: ci.total,
             paymentStatus: "unpaid",
+            ...({ clientCode: (q as any).clientCode } as Record<string, unknown>),
           } });
           created.push({ name: res.invoiceNumber, id: res.id });
         }
