@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, usersTable, notificationsTable, departmentsTable } from "@workspace/db";
 import { and, eq, or, sql, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
+import { aiAvailable, chatWithVision } from "../lib/ai";
 
 const router = Router();
 router.use(requireAuth);
@@ -333,6 +334,95 @@ router.get("/lpos", requirePermission("lpos", "view"), async (req, res): Promise
     return { ...lpo, companyRef: co?.name };
   }));
   res.json(enriched);
+});
+
+// AI-extract LPO fields from an uploaded image (jpg/png/webp). Returns a JSON
+// object the user reviews before saving. Body: { fileBase64, contentType }.
+router.post("/lpos/extract", requirePermission("lpos", "create"), async (req, res): Promise<void> => {
+  if (!aiAvailable()) {
+    res.status(503).json({ error: "AI not configured" });
+    return;
+  }
+  const fileBase64 = String(req.body?.fileBase64 ?? "");
+  const contentType = String(req.body?.contentType ?? "image/png").toLowerCase();
+  if (!fileBase64) { res.status(400).json({ error: "fileBase64 required" }); return; }
+  const ALLOWED = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+  if (!ALLOWED.has(contentType)) {
+    res.status(400).json({ error: "Only JPG / PNG / WEBP images are supported. For PDFs, take a screenshot of each page." });
+    return;
+  }
+  // Reject obviously malformed base64 and cap size at ~10MB decoded.
+  if (!/^[A-Za-z0-9+/]+=*$/.test(fileBase64)) {
+    res.status(400).json({ error: "Invalid base64 payload" });
+    return;
+  }
+  const approxBytes = Math.floor((fileBase64.length * 3) / 4);
+  if (approxBytes > 10 * 1024 * 1024) {
+    res.status(413).json({ error: "Image exceeds 10MB limit" });
+    return;
+  }
+  const dataUrl = `data:${contentType};base64,${fileBase64}`;
+  const sys = `You are an expert at extracting purchase order (LPO/PO) fields from scanned documents. Output ONLY a JSON object with these keys (use empty string when unknown, no extra commentary):
+{
+  "lpoNumber": "...",
+  "lpoDate": "YYYY-MM-DD",
+  "clientName": "...",
+  "lpoValue": 0,
+  "projectRef": "...",
+  "paymentTerms": "...",
+  "scope": "...",
+  "deliverySchedule": "...",
+  "notes": ""
+}
+- lpoValue must be a number (no currency symbols, no commas).
+- lpoDate must be ISO YYYY-MM-DD; if only month/year is visible, use the 1st.
+- Keep scope concise (one or two sentences).`;
+  let raw = "";
+  try {
+    raw = await chatWithVision(sys, "Extract LPO fields from this document.", dataUrl, { maxCompletionTokens: 1200 });
+  } catch (err: any) {
+    req.log?.warn({ err }, "AI LPO extract failed");
+    res.status(502).json({ error: err?.message ?? "AI extract failed" });
+    return;
+  }
+  // Be tolerant of code-fenced output.
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  let parsed: any;
+  try { parsed = JSON.parse(cleaned); }
+  catch {
+    res.status(502).json({ error: "AI returned non-JSON output" });
+    return;
+  }
+  // Whitelist + clamp fields so model output cannot leak unexpected keys
+  // or oversized strings into the form state.
+  const clip = (v: unknown, max: number): string => {
+    if (typeof v !== "string") return "";
+    return v.slice(0, max);
+  };
+  const num = (v: unknown): number => {
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string") {
+      const n = parseFloat(v.replace(/[^0-9.\-]/g, ""));
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+  };
+  const isoDate = (v: unknown): string => {
+    const s = clip(v, 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+  };
+  const extracted = {
+    lpoNumber: clip(parsed.lpoNumber, 100),
+    lpoDate: isoDate(parsed.lpoDate),
+    clientName: clip(parsed.clientName, 200),
+    lpoValue: num(parsed.lpoValue),
+    projectRef: clip(parsed.projectRef, 200),
+    paymentTerms: clip(parsed.paymentTerms, 200),
+    scope: clip(parsed.scope, 1000),
+    deliverySchedule: clip(parsed.deliverySchedule, 500),
+    notes: clip(parsed.notes, 1000),
+  };
+  res.json({ extracted });
 });
 
 router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {

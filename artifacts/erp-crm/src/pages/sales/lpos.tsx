@@ -14,10 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Plus, Pencil, Paperclip, FileIcon, X, Download,
-  Building2, Calendar, DollarSign, FileText, ClipboardList,
+  Building2, Calendar, DollarSign, FileText, ClipboardList, Sparkles, Upload,
 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
+import { extractLpoFields } from "@/lib/ai-client";
 
 const BASE = import.meta.env.BASE_URL;
 const MAX_MB = 20;
@@ -64,6 +65,8 @@ export function LposList() {
   const [editForm, setEditForm] = useState<LpoForm>(EMPTY_FORM);
   const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
   const [editAttachments, setEditAttachments] = useState<AttachmentMeta[]>([]);
+  const [aiExtracting, setAiExtracting] = useState(false);
+  const aiInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: lpos = [], isLoading } = useListLpos();
   const { data: companies = [] } = useListCompanies();
@@ -160,6 +163,51 @@ export function LposList() {
       companyId: String(lpo.companyId),
     });
     setEditAttachments(((lpo as any).attachments ?? []) as AttachmentMeta[]);
+  };
+
+  const handleAiExtract = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (aiInputRef.current) aiInputRef.current.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Use an image (JPG/PNG/WEBP). For PDFs, screenshot the page.", variant: "destructive" });
+      return;
+    }
+    if (file.size > MAX_MB * 1024 * 1024) {
+      toast({ title: `${file.name} exceeds ${MAX_MB}MB.`, variant: "destructive" });
+      return;
+    }
+    setAiExtracting(true);
+    try {
+      const fileBase64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve((r.result as string).split(",")[1]);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      const json = await extractLpoFields(fileBase64, file.type);
+      const x = json.extracted ?? {};
+      // Auto-attach the source file too so the LPO has the image on save.
+      const srcAtt: AttachmentMeta = { filename: file.name, content: fileBase64, contentType: file.type, size: file.size };
+      setAttachments(p => [...p, srcAtt]);
+      setForm(p => ({
+        ...p,
+        clientName: x.clientName || p.clientName,
+        lpoNumber: x.lpoNumber || p.lpoNumber,
+        lpoDate: x.lpoDate || p.lpoDate,
+        lpoValue: x.lpoValue != null && x.lpoValue !== "" ? String(x.lpoValue) : p.lpoValue,
+        projectRef: x.projectRef || p.projectRef,
+        paymentTerms: x.paymentTerms || p.paymentTerms,
+        scope: x.scope || p.scope,
+        deliverySchedule: x.deliverySchedule || p.deliverySchedule,
+        notes: x.notes || p.notes,
+      }));
+      toast({ title: "Fields extracted — please review before saving." });
+    } catch (err: any) {
+      toast({ title: err?.message ?? "AI extract failed", variant: "destructive" });
+    } finally {
+      setAiExtracting(false);
+    }
   };
 
   const handleCreate = () => {
@@ -290,6 +338,32 @@ export function LposList() {
       <Dialog open={createOpen} onOpenChange={v => { setCreateOpen(v); if (!v) setAttachments([]); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Register New LPO</DialogTitle></DialogHeader>
+
+          {/* AI extract bar */}
+          <div className="flex items-center justify-between gap-3 p-3 rounded-md border border-dashed border-blue-300 bg-blue-50/50">
+            <div className="text-sm">
+              <div className="font-medium text-blue-900 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" /> Extract from LPO image
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Upload a JPG/PNG/WEBP of the client&apos;s LPO. AI will pre-fill the fields below for your review.
+              </div>
+            </div>
+            <input ref={aiInputRef} type="file" accept="image/*" className="hidden" onChange={handleAiExtract} />
+            <Button
+              type="button" variant="outline" size="sm"
+              className="border-blue-400 text-blue-700 hover:bg-blue-100"
+              onClick={() => aiInputRef.current?.click()}
+              disabled={aiExtracting}
+            >
+              {aiExtracting ? (
+                <>Extracting…</>
+              ) : (
+                <><Upload className="w-4 h-4 mr-1.5" />AI Extract</>
+              )}
+            </Button>
+          </div>
+
           <LpoFormFields
             form={form} setForm={setForm}
             attachments={attachments} setAttachments={setAttachments}
