@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle, Loader2, RotateCcw, KeyRound, UserCog, ShieldAlert,
-  Lock, Unlock,
+  Lock, Unlock, Trash2,
 } from "lucide-react";
 
 const FACTORY_PHRASE = "FACTORY RESET";
@@ -483,6 +483,141 @@ function FreezeSection() {
   );
 }
 
+// ---------- DELETE USER ----------
+function DeleteUserSection() {
+  const { data: users, refetch } = useListUsers();
+  const { user: me } = useAuth();
+  const qc = useQueryClient();
+  const [userId, setUserId] = useState<string>("");
+  const [open, setOpen] = useState(false);
+  const [phrase, setPhrase] = useState("");
+  const [busy, setBusy] = useState(false);
+  const { toast } = useToast();
+
+  const target = users?.find(u => String(u.id) === userId);
+  const DELETE_PHRASE = "DELETE";
+
+  async function run() {
+    if (!userId || phrase.trim() !== DELETE_PHRASE) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/admin/users/${userId}/purge`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ confirm: DELETE_PHRASE }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error((data as { error?: string }).error ?? `HTTP ${r.status}`);
+      toast({
+        title: "User deleted",
+        description: `${target?.email} has been removed. The email is now free to be re-used.`,
+      });
+      setOpen(false);
+      setUserId("");
+      setPhrase("");
+      await refetch();
+      await qc.invalidateQueries();
+    } catch (e) {
+      toast({
+        title: "Delete failed",
+        description: e instanceof Error ? e.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <Card className="border-red-300 bg-red-50/40 dark:bg-red-950/20 dark:border-red-900">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2 text-red-700 dark:text-red-400">
+            <Trash2 className="w-4 h-4" />Delete User
+            <Badge variant="destructive" className="ml-auto text-[10px]">PERMANENT</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Permanently remove a user from the system. Their login is destroyed, their email address
+            is freed for re-use, and they disappear from all selection lists. Audit history and any
+            records they created (leads, quotations, invoices, etc.) are preserved for accounting purposes.
+          </p>
+          <div className="space-y-1.5">
+            <Label className="text-xs">User to delete</Label>
+            <Select value={userId} onValueChange={setUserId}>
+              <SelectTrigger data-testid="select-user-delete">
+                <SelectValue placeholder="Select user…" />
+              </SelectTrigger>
+              <SelectContent>
+                {(users ?? [])
+                  .filter(u => u.id !== me?.id && u.status !== "deleted")
+                  .map(u => (
+                    <SelectItem key={u.id} value={String(u.id)}>
+                      {u.name} — {u.email}
+                      {u.permissionLevel === "super_admin" ? " (main admin)" : ""}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={!userId}
+            onClick={() => { setPhrase(""); setOpen(true); }}
+            data-testid="btn-open-delete-user"
+          >
+            <Trash2 className="w-3.5 h-3.5 mr-1.5" />Delete User
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Dialog open={open} onOpenChange={(v) => { if (!busy) setOpen(v); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
+              <AlertTriangle className="w-5 h-5" />Confirm User Deletion
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{target?.name}</strong> ({target?.email}).
+              They will no longer be able to sign in, and their email address will be free to be
+              re-used for a new account. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="confirm-delete-phrase" className="text-sm">
+              Type <strong>{DELETE_PHRASE}</strong> to confirm:
+            </Label>
+            <Input
+              id="confirm-delete-phrase"
+              value={phrase}
+              onChange={(e) => setPhrase(e.target.value)}
+              placeholder={DELETE_PHRASE}
+              autoComplete="off"
+              disabled={busy}
+              data-testid="input-confirm-delete"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={run}
+              disabled={busy || phrase.trim() !== DELETE_PHRASE}
+              data-testid="btn-confirm-delete-user"
+            >
+              {busy
+                ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin" />Deleting…</>
+                : <><Trash2 className="w-4 h-4 mr-1.5" />Delete permanently</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 // ---------- PAGE ----------
 export function AdminResetCenter() {
   const { user } = useAuth();
@@ -506,6 +641,7 @@ export function AdminResetCenter() {
       <UserPasswordSection />
       <FreezeSection />
       <UserResetSection />
+      <DeleteUserSection />
       <FactoryResetSection />
     </div>
   );

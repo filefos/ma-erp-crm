@@ -129,6 +129,87 @@ router.post(
 );
 
 router.post(
+  "/admin/users/:id/purge",
+  requirePermissionLevel("super_admin"),
+  async (req, res): Promise<void> => {
+    const id = parseInt(req.params.id, 10);
+    if (!Number.isFinite(id)) {
+      res.status(400).json({ error: "Invalid user id" });
+      return;
+    }
+    if (id === req.user!.id) {
+      res.status(400).json({ error: "You cannot delete your own account" });
+      return;
+    }
+
+    const confirm = (req.body?.confirm ?? "").toString().trim();
+    const expected = "DELETE";
+    if (confirm !== expected) {
+      res.status(400).json({ error: `Confirmation required. Type "${expected}" to proceed.` });
+      return;
+    }
+
+    const [target] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+    if (!target) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+
+    if (target.permissionLevel === "super_admin") {
+      const otherAdmins = await db
+        .select({ id: usersTable.id })
+        .from(usersTable)
+        .where(eq(usersTable.permissionLevel, "super_admin"));
+      const remaining = otherAdmins.filter((u) => u.id !== id);
+      if (remaining.length === 0) {
+        res.status(400).json({ error: "Cannot delete the last main admin." });
+        return;
+      }
+    }
+
+    const stamp = Date.now();
+    const scrambledEmail = `deleted-${id}-${stamp}@deleted.local`;
+    const randomHash = await bcrypt.hash(`purged-${id}-${stamp}-${Math.random()}`, 10);
+
+    await db
+      .update(usersTable)
+      .set({
+        email: scrambledEmail,
+        name: "(deleted user)",
+        phone: null,
+        passwordHash: randomHash,
+        isActive: false,
+        status: "deleted",
+        permissionLevel: "user",
+        updatedAt: new Date(),
+      })
+      .where(eq(usersTable.id, id));
+
+    const cleared = await db
+      .delete(notificationsTable)
+      .where(eq(notificationsTable.userId, id))
+      .returning({ id: notificationsTable.id });
+
+    await db.insert(auditLogsTable).values({
+      userId: req.user!.id,
+      userName: req.user!.name,
+      action: "delete_user",
+      entity: "user",
+      entityId: id,
+      details: `Main admin ${req.user!.email} permanently deleted user ${target.email} (was ${target.name}). ${cleared.length} notifications cleared. Original email released for re-use.`,
+      ipAddress: req.ip ?? null,
+    });
+
+    res.json({
+      ok: true,
+      releasedEmail: target.email,
+      notificationsCleared: cleared.length,
+      message: `User ${target.email} has been deleted. The email address is now free to be re-used.`,
+    });
+  },
+);
+
+router.post(
   "/admin/users/:id/reset-account",
   requirePermissionLevel("super_admin"),
   async (req, res): Promise<void> => {
