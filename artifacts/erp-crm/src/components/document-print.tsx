@@ -557,22 +557,20 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <table className="text-[10px] w-full border-collapse">
                     <tbody>
                       <tr>
-                        <td className="px-2 py-1 font-bold text-[#0f2d5a] whitespace-nowrap border-b border-gray-200">{co.bank.bankName}</td>
-                        <td className="px-2 py-1 border-b border-gray-200">
-                          <span className="font-semibold">Account Title: </span>{co.bank.accountTitle}
-                        </td>
+                        <td className="px-2 py-[2px] text-gray-500 whitespace-nowrap border-b border-gray-200 w-[38%]">Account Title</td>
+                        <td className="px-2 py-[2px] font-semibold border-b border-gray-200">{co.bank.accountTitle}</td>
                       </tr>
                       <tr>
-                        <td className="px-2 py-1 text-gray-500 border-b border-gray-200">Swift Code: <span className="font-semibold text-black">{co.bank.swift}</span></td>
-                        <td className="px-2 py-1 border-b border-gray-200">
-                          <span className="font-semibold">IBAN: </span>{co.bank.iban}
-                        </td>
+                        <td className="px-2 py-[2px] text-gray-500 whitespace-nowrap border-b border-gray-200">Account #</td>
+                        <td className="px-2 py-[2px] font-semibold border-b border-gray-200">{co.bank.accountNumber}</td>
                       </tr>
                       <tr>
-                        <td className="px-2 py-1 text-gray-500">Currency: <span className="font-semibold text-black">{co.bank.currency}</span></td>
-                        <td className="px-2 py-1">
-                          <span className="font-semibold">Account Number: </span>{co.bank.accountNumber}
-                        </td>
+                        <td className="px-2 py-[2px] text-gray-500 whitespace-nowrap border-b border-gray-200">IBAN</td>
+                        <td className="px-2 py-[2px] font-semibold border-b border-gray-200">{co.bank.iban}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-2 py-[2px] text-gray-500 whitespace-nowrap">Swift Code</td>
+                        <td className="px-2 py-[2px] font-semibold">{co.bank.swift}</td>
                       </tr>
                     </tbody>
                   </table>
