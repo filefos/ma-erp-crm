@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   useGetOfferLetter, useUpdateOfferLetter, useSetOfferLetterStatus,
   useReissueOfferLetter, useConvertOfferLetterToEmployee, useListCompanies,
-  useListOfferLetterAttachments, useDeleteOfferLetterAttachment,
+  useListOfferLetterAttachments, useUploadOfferLetterAttachment, useDeleteOfferLetterAttachment,
   getGetOfferLetterQueryKey, getListOfferLettersQueryKey, getListOfferLetterAttachmentsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,9 +21,9 @@ import {
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
-import { authHeaders } from "@/lib/ai-client";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/hooks/useAuth";
 
 const COMMISSION_DEFAULTS = {
   commissionTargetAmount: 200000,
@@ -51,7 +51,14 @@ export function OfferLetterDetail({ id }: Props) {
   const qc = useQueryClient();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { can } = usePermissions();
+  const { can, isSuperAdmin } = usePermissions();
+  const { user: authUser } = useAuth();
+  // Mirrors the server-side isHrOrAdmin() check: shows upload/delete controls
+  // only to users who will actually be authorized server-side, preventing
+  // confusing 403s for users who have offer_letters:edit but are not HR/admin.
+  const isHrOrAdmin = isSuperAdmin
+    || (authUser as any)?.permissionLevel === "company_admin"
+    || ((authUser as any)?.role ?? "").toLowerCase().includes("hr");
   const { data: offer, isLoading } = useGetOfferLetter(oid, { query: { queryKey: getGetOfferLetterQueryKey(oid), enabled: !!oid } });
   const { data: companies } = useListCompanies();
   // Prefer the snapshot stored on the offer record (locked-in at issue time so
@@ -133,6 +140,9 @@ export function OfferLetterDetail({ id }: Props) {
     query: { queryKey: attachmentsQueryKey, enabled: !!oid },
   });
   const attachments = (attachmentsData ?? []) as any[];
+  const uploadAttachment = useUploadOfferLetterAttachment({
+    mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: attachmentsQueryKey }) },
+  });
   const deleteAttachment = useDeleteOfferLetterAttachment({
     mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: attachmentsQueryKey }) },
   });
@@ -142,7 +152,6 @@ export function OfferLetterDetail({ id }: Props) {
     setUploading(true);
     setAttError(null);
     let successCount = 0;
-    const BASE_URL = import.meta.env.BASE_URL;
     try {
       for (const f of Array.from(files)) {
         if (f.size > 8 * 1024 * 1024) {
@@ -151,21 +160,10 @@ export function OfferLetterDetail({ id }: Props) {
           toast({ title: "File too large", description: msg, variant: "destructive" });
           continue;
         }
-        const form = new FormData();
-        form.append("file", f, f.name);
-        const uploadRes = await fetch(`${BASE_URL}api/offer-letters/${oid}/attachments`, {
-          method: "POST",
-          headers: { ...authHeaders() },
-          body: form,
-        });
-        if (!uploadRes.ok) {
-          const errBody = await uploadRes.json().catch(() => ({}));
-          throw new Error(errBody?.message ?? errBody?.error ?? `Upload failed (${uploadRes.status})`);
-        }
+        await uploadAttachment.mutateAsync({ id: oid, data: { file: f as any } });
         successCount++;
       }
       if (successCount > 0) {
-        await qc.invalidateQueries({ queryKey: attachmentsQueryKey });
         toast({ title: successCount === 1 ? "File uploaded" : `${successCount} files uploaded`, description: "Documents saved successfully." });
       }
     } catch (e: any) {
@@ -509,7 +507,7 @@ export function OfferLetterDetail({ id }: Props) {
           <CardTitle className="flex items-center gap-2">
             <Paperclip className="w-4 h-4" /> Academic &amp; Supporting Documents
           </CardTitle>
-          {(canEdit && can("offer_letters", "edit")) && (
+          {(canEdit && can("offer_letters", "edit") && isHrOrAdmin) && (
             <div>
               <input
                 ref={fileInputRef}
@@ -537,7 +535,7 @@ export function OfferLetterDetail({ id }: Props) {
           {attLoading ? (
             <div className="text-sm text-muted-foreground">Loading…</div>
           ) : attachments.length === 0 ? (
-            <div className="text-sm text-muted-foreground">No documents uploaded yet. Accepted: PDF, JPG, PNG, DOC/DOCX (max 8&nbsp;MB each).</div>
+            <div className="text-sm text-muted-foreground">No documents uploaded yet. Accepted: PDF, JPG, PNG, DOCX (max 8&nbsp;MB each).</div>
           ) : (
             <ul className="divide-y rounded border">
               {attachments.map((a) => (
@@ -557,7 +555,7 @@ export function OfferLetterDetail({ id }: Props) {
                       </a>
                     </Button>
                   )}
-                  {(canEdit && can("offer_letters", "edit")) && (
+                  {(canEdit && can("offer_letters", "edit") && isHrOrAdmin) && (
                     <Button
                       size="sm"
                       variant="ghost"
