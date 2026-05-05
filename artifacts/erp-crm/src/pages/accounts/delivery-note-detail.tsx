@@ -2,6 +2,7 @@ import {
   useGetDeliveryNote, getGetDeliveryNoteQueryKey,
   useGetTaxInvoice, getGetTaxInvoiceQueryKey,
 } from "@workspace/api-client-react";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
@@ -20,6 +21,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function DeliveryNoteDetail({ id }: Props) {
   const dnId = parseInt(id, 10);
+  const { user } = useAuth();
 
   const { data: dn, isLoading } = useGetDeliveryNote(dnId, {
     query: { queryKey: getGetDeliveryNoteQueryKey(dnId), enabled: !!dnId },
@@ -54,6 +56,8 @@ export function DeliveryNoteDetail({ id }: Props) {
       quantity: i.quantity,
       unit: i.unit,
     })),
+    printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
+    clientCode: (dn as any).clientCode ?? undefined,
   };
 
   return (

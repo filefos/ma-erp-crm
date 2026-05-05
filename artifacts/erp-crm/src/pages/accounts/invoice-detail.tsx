@@ -12,6 +12,7 @@ import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { authHeaders } from "@/lib/ai-client";
 
 interface Props { id: string }
@@ -26,6 +27,7 @@ export function InvoiceDetail({ id }: Props) {
   const invId = parseInt(id, 10);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [converting, setConverting] = useState(false);
   const [creatingJournal, setCreatingJournal] = useState(false);
 
@@ -111,6 +113,8 @@ export function InvoiceDetail({ id }: Props) {
       total: i.amount ?? i.total,
       vatPercent: i.vatPercent,
     })),
+    printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
+    clientCode: (inv as any).clientCode ?? undefined,
   };
 
   const handleCreateDN = () => {

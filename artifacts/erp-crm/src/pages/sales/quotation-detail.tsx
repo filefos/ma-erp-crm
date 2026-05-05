@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import {
   useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
   useCreateTaxInvoice, useCreateDeliveryNote,
@@ -48,6 +49,7 @@ export function QuotationDetail({ id }: Props) {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [converting, setConverting] = useState<string | null>(null);
   const [convertOpen, setConvertOpen] = useState<ConvertTarget | null>(null);
   const [installments, setInstallments] = useState<Installment[]>([]);
@@ -179,6 +181,8 @@ export function QuotationDetail({ id }: Props) {
       total: i.amount,
     })),
     preparedByName: (q as any).preparedByName,
+    printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
+    clientCode: (q as any).clientCode ?? undefined,
   };
 
   const handleConvertToDN = () => {

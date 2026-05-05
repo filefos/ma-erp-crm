@@ -133,6 +133,8 @@ export function PurchaseOrderDetail({ id }: Props) {
       total: i.amount,
     })),
     preparedByName,
+    printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
+    clientCode: (po as any).clientCode ?? undefined,
   };
 
   if (editing) {

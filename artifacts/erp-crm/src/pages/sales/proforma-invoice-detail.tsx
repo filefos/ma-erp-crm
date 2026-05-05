@@ -13,6 +13,7 @@ import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props { id: string }
 
@@ -26,6 +27,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const pid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [converting, setConverting] = useState(false);
 
   const { data: pi, isLoading } = useGetProformaInvoice(pid, {
@@ -93,6 +95,8 @@ export function ProformaInvoiceDetail({ id }: Props) {
       total: i.amount ?? i.total,
     })),
     preparedByName: (pi as any).preparedByName,
+    printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
+    clientCode: (pi as any).clientCode ?? undefined,
   };
 
   const handleConvertToTax = () => {

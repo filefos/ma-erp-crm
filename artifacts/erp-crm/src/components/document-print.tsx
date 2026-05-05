@@ -68,6 +68,8 @@ export interface DocumentData {
   supplierContact?: string;
   supplierPhone?: string;
   supplierEmail?: string;
+  printedByUniqueId?: string;
+  clientCode?: string;
 }
 
 interface CompanyInfo {
@@ -707,7 +709,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               This is a computer generated document. No signature or stamp required.
             </div>
             <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
               <span className="font-semibold text-gray-500">Page 1 of 3</span>
             </div>
           </>
@@ -718,7 +720,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               This is a computer generated document. No signature or stamp required.
             </div>
             <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
               <span className="font-semibold text-gray-500">Page 1 of 1</span>
             </div>
           </>
@@ -783,7 +785,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               This is a computer generated document. No signature or stamp required.
             </div>
             <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
               <span className="font-semibold text-gray-500">Page 2 of 3</span>
             </div>
           </div>
@@ -850,7 +852,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               This is a computer generated document. No signature or stamp required.
             </div>
             <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
               <span className="font-semibold text-gray-500">Page 3 of 3</span>
             </div>
           </div>
@@ -886,7 +888,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             This is a computer generated document. No signature or stamp required.
           </div>
           <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-            <span>PRIME ERP SYSTEMS</span>
+            <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
             <span className="font-semibold text-gray-500">Additional Page {si + 1}</span>
           </div>
         </div>
