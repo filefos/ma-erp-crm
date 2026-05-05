@@ -211,6 +211,11 @@ const MODULE_GUIDANCE: Record<string, string> = {
   general:     "You are a general ERP assistant for Prime Max & Elite Prefab.",
 };
 
+const MODULE_PERMISSION: Record<string, string> = {
+  crm: "leads", sales: "quotations", procurement: "purchase_orders", inventory: "items",
+  projects: "projects", accounts: "tax_invoices", assets: "assets", hr: "employees", reports: "dashboard",
+};
+
 router.post("/ai/ask", async (req, res): Promise<void> => {
   const moduleId = String(req.body?.module ?? "general").toLowerCase();
   const question = String(req.body?.question ?? req.body?.message ?? "").trim();
@@ -225,6 +230,10 @@ router.post("/ai/ask", async (req, res): Promise<void> => {
   }
   if ((await callerAutomationLevel(req)) === "off") {
     res.status(403).json({ error: "AI disabled", message: "Your AI automation level is set to Off." }); return;
+  }
+  const permKey = MODULE_PERMISSION[moduleId];
+  if (permKey && !(await hasPermission(req.user, permKey, "view"))) {
+    res.status(403).json({ error: "Forbidden", message: `You don't have access to the ${moduleId} module.` }); return;
   }
 
   const guidance = MODULE_GUIDANCE[moduleId] ?? MODULE_GUIDANCE.general;
@@ -257,6 +266,9 @@ router.post("/ai/ask", async (req, res): Promise<void> => {
   } catch (err) {
     res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" });
     return;
+  }
+  if (!raw || !raw.trim()) {
+    raw = "I couldn't generate a suggestion for that. Try rephrasing or providing more context.";
   }
 
   await audit(req, {
