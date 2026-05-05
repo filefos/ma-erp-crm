@@ -384,7 +384,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </table>
           </>
         ) : (
-          <div className="flex gap-2 mb-2">
+          <div className="flex gap-2 mb-[2px]">
             {/* ── Company Detail (left) ── */}
             <table className="flex-1 border-collapse border border-gray-400">
               <thead>
