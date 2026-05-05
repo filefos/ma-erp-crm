@@ -34,6 +34,8 @@ export const stockEntriesTable = pgTable("stock_entries", {
   unitCost: doublePrecision("unit_cost"),
   reference: text("reference"),
   notes: text("notes"),
+  projectId: integer("project_id"),
+  projectRef: text("project_ref"),
   imageUrl: text("image_url"),
   approvalStatus: text("approval_status").notNull().default("pending"),
   approvedById: integer("approved_by_id"),

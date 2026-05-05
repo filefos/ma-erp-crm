@@ -108,16 +108,16 @@ export function DeliveryNotesList() {
       />
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search delivery notes..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder="Search by Project ID, DN no. or client..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
       <div className="border rounded-lg bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Project ID</TableHead>
               <TableHead>DN Number</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Project</TableHead>
-              <TableHead>Delivery Location</TableHead>
               <TableHead>Delivery Date</TableHead>
               <TableHead>Driver</TableHead>
               <TableHead>Vehicle</TableHead>
@@ -125,16 +125,22 @@ export function DeliveryNotesList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No delivery notes found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No delivery notes found.</TableCell></TableRow> :
             filtered?.map(n => (
               <TableRow key={n.id}>
+                <TableCell>
+                  {(n as any).projectRef ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#0f2d5a] text-white border border-blue-300/30 tracking-wide whitespace-nowrap">
+                      {(n as any).projectRef}
+                    </span>
+                  ) : <span className="text-muted-foreground text-xs">—</span>}
+                </TableCell>
                 <TableCell className="font-medium font-mono text-sm">
                   <Link href={`/accounts/delivery-notes/${n.id}`} className="text-primary hover:underline">{n.dnNumber}</Link>
                 </TableCell>
                 <TableCell className="font-medium">{n.clientName}</TableCell>
                 <TableCell>{n.projectName || "-"}</TableCell>
-                <TableCell className="max-w-[160px] truncate">{n.deliveryLocation || "-"}</TableCell>
                 <TableCell>{n.deliveryDate || "-"}</TableCell>
                 <TableCell>{n.driverName || "-"}</TableCell>
                 <TableCell className="font-mono text-xs">{(n as any).vehicleNumber || "-"}</TableCell>

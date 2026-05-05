@@ -10,6 +10,8 @@ import type { CreateRfqBodyItemsItem } from "./createRfqBodyItemsItem";
 export interface CreateRfqBody {
   companyId: number;
   purchaseRequestId?: number;
+  projectId?: number;
+  projectRef?: string;
   requiredDeliveryDate?: string;
   paymentTerms?: string;
   notes?: string;

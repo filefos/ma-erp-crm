@@ -14,6 +14,8 @@ export interface Rfq {
   companyId: number;
   purchaseRequestId?: number;
   prNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   status: string;
   requiredDeliveryDate?: string;
   paymentTerms?: string;

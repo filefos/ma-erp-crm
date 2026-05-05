@@ -392,6 +392,8 @@ export interface ProformaInvoice {
   companyRef?: string;
   clientName: string;
   projectName?: string;
+  projectId?: number;
+  projectRef?: string;
   quotationId?: number;
   quotationNumber?: string;
   subtotal?: number;
@@ -409,6 +411,8 @@ export interface CreateProformaInvoiceBody {
   companyId: number;
   clientName: string;
   projectName?: string;
+  projectId?: number;
+  projectRef?: string;
   quotationId?: number;
   subtotal?: number;
   vatAmount?: number;
@@ -432,6 +436,7 @@ export interface TaxInvoice {
   dueDate?: string;
   quotationId?: number;
   projectId?: number;
+  projectRef?: string;
   subtotal?: number;
   vatPercent?: number;
   vatAmount?: number;
@@ -451,6 +456,7 @@ export interface CreateTaxInvoiceBody {
   supplyDate?: string;
   quotationId?: number;
   projectId?: number;
+  projectRef?: string;
   projectName?: string;
   subtotal?: number;
   vatPercent?: number;
@@ -480,6 +486,7 @@ export interface DeliveryNote {
   status: string;
   taxInvoiceId?: number;
   projectId?: number;
+  projectRef?: string;
   items?: DeliveryNoteItemsItem[];
   createdAt: string;
 }
@@ -501,6 +508,7 @@ export interface CreateDeliveryNoteBody {
   deliveryDate?: string;
   taxInvoiceId?: number;
   projectId?: number;
+  projectRef?: string;
   items?: CreateDeliveryNoteBodyItemsItem[];
 }
 
@@ -913,6 +921,8 @@ export interface PurchaseOrder {
   supplierName?: string;
   companyId: number;
   purchaseRequestId?: number;
+  projectId?: number;
+  projectRef?: string;
   subtotal?: number;
   vatAmount?: number;
   total: number;
@@ -936,6 +946,8 @@ export interface CreatePurchaseOrderBody {
   supplierId: number;
   companyId: number;
   purchaseRequestId?: number;
+  projectId?: number;
+  projectRef?: string;
   subtotal?: number;
   vatAmount?: number;
   total: number;
@@ -963,6 +975,8 @@ export interface Rfq {
   companyId: number;
   purchaseRequestId?: number;
   prNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   status: string;
   requiredDeliveryDate?: string;
   paymentTerms?: string;
@@ -985,6 +999,8 @@ export type CreateRfqBodyItemsItem = {
 export interface CreateRfqBody {
   companyId: number;
   purchaseRequestId?: number;
+  projectId?: number;
+  projectRef?: string;
   requiredDeliveryDate?: string;
   paymentTerms?: string;
   notes?: string;
@@ -1007,6 +1023,8 @@ export interface SupplierQuotation {
   companyId: number;
   rfqId?: number;
   rfqNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   supplierId: number;
   supplierName?: string;
   supplierQuotationRef?: string;
@@ -1037,6 +1055,8 @@ export type CreateSupplierQuotationBodyItemsItem = {
 export interface CreateSupplierQuotationBody {
   companyId: number;
   rfqId?: number;
+  projectId?: number;
+  projectRef?: string;
   supplierId: number;
   supplierQuotationRef?: string;
   quotationDate?: string;
@@ -1108,6 +1128,8 @@ export interface StockEntry {
   unitCost?: number;
   reference?: string;
   notes?: string;
+  projectId?: number;
+  projectRef?: string;
   imageUrl?: string;
   approvalStatus: string;
   approvedById?: number;
@@ -1125,6 +1147,8 @@ export interface CreateStockEntryBody {
   unitCost?: number;
   reference?: string;
   notes?: string;
+  projectId?: number;
+  projectRef?: string;
   imageUrl?: string;
   companyId?: number;
 }
@@ -1477,6 +1501,8 @@ export interface Expense {
   supplierId?: number;
   supplierName?: string;
   invoiceNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   amount: number;
   vatAmount?: number;
   total: number;
@@ -1494,6 +1520,8 @@ export interface CreateExpenseBody {
   category: string;
   supplierId?: number;
   invoiceNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   amount: number;
   vatAmount?: number;
   total: number;
@@ -1700,6 +1728,8 @@ export interface PaymentReceived {
   customerName: string;
   invoiceRef?: string;
   taxInvoiceId?: number;
+  projectId?: number;
+  projectRef?: string;
   paymentDate: string;
   amount: number;
   paymentMethod: string;
@@ -1716,6 +1746,8 @@ export interface CreatePaymentReceivedBody {
   customerName: string;
   invoiceRef?: string;
   taxInvoiceId?: number;
+  projectId?: number;
+  projectRef?: string;
   paymentDate: string;
   amount: number;
   paymentMethod: string;
@@ -1732,6 +1764,8 @@ export interface PaymentMade {
   payeeName: string;
   expenseRef?: string;
   expenseId?: number;
+  projectId?: number;
+  projectRef?: string;
   paymentDate: string;
   amount: number;
   paymentMethod: string;
@@ -1748,6 +1782,8 @@ export interface CreatePaymentMadeBody {
   payeeName: string;
   expenseRef?: string;
   expenseId?: number;
+  projectId?: number;
+  projectRef?: string;
   paymentDate: string;
   amount: number;
   paymentMethod: string;
@@ -1775,6 +1811,8 @@ export interface JournalEntry {
   entryDate: string;
   description: string;
   reference?: string;
+  projectId?: number;
+  projectRef?: string;
   status: string;
   totalDebit?: number;
   totalCredit?: number;
@@ -1792,6 +1830,8 @@ export interface CreateJournalEntryBody {
   entryDate: string;
   description: string;
   reference?: string;
+  projectId?: number;
+  projectRef?: string;
   status?: string;
   lines?: JournalEntryLine[];
 }

@@ -14,6 +14,8 @@ export interface JournalEntry {
   entryDate: string;
   description: string;
   reference?: string;
+  projectId?: number;
+  projectRef?: string;
   status: string;
   totalDebit?: number;
   totalCredit?: number;

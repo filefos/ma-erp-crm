@@ -13,6 +13,8 @@ export interface Expense {
   supplierId?: number;
   supplierName?: string;
   invoiceNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   amount: number;
   vatAmount?: number;
   total: number;

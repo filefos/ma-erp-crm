@@ -11,6 +11,8 @@ export interface CreatePaymentReceivedBody {
   customerName: string;
   invoiceRef?: string;
   taxInvoiceId?: number;
+  projectId?: number;
+  projectRef?: string;
   paymentDate: string;
   amount: number;
   paymentMethod: string;

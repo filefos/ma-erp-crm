@@ -13,6 +13,8 @@ export interface ProformaInvoice {
   companyRef?: string;
   clientName: string;
   projectName?: string;
+  projectId?: number;
+  projectRef?: string;
   quotationId?: number;
   quotationNumber?: string;
   subtotal?: number;

@@ -10,6 +10,8 @@ export interface CreateExpenseBody {
   category: string;
   supplierId?: number;
   invoiceNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   amount: number;
   vatAmount?: number;
   total: number;

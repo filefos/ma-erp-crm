@@ -4580,6 +4580,10 @@ components:
           type: string
         projectName:
           type: string
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         quotationId:
           type: integer
         quotationNumber:
@@ -4612,6 +4616,10 @@ components:
         clientName:
           type: string
         projectName:
+          type: string
+        projectId:
+          type: integer
+        projectRef:
           type: string
         quotationId:
           type: integer
@@ -4658,6 +4666,8 @@ components:
           type: integer
         projectId:
           type: integer
+        projectRef:
+          type: string
         subtotal:
           type: number
         vatPercent:
@@ -4695,6 +4705,8 @@ components:
           type: integer
         projectId:
           type: integer
+        projectRef:
+          type: string
         projectName:
           type: string
         subtotal:
@@ -4740,6 +4752,8 @@ components:
           type: integer
         projectId:
           type: integer
+        projectRef:
+          type: string
         items:
           type: array
           items:
@@ -4779,6 +4793,8 @@ components:
           type: integer
         projectId:
           type: integer
+        projectRef:
+          type: string
         items:
           type: array
           items:
@@ -5300,6 +5316,10 @@ components:
           type: integer
         purchaseRequestId:
           type: integer
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         subtotal:
           type: number
         vatAmount:
@@ -5343,6 +5363,10 @@ components:
           type: integer
         purchaseRequestId:
           type: integer
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         subtotal:
           type: number
         vatAmount:
@@ -5381,6 +5405,8 @@ components:
         companyId: { type: integer }
         purchaseRequestId: { type: integer }
         prNumber: { type: string }
+        projectId: { type: integer }
+        projectRef: { type: string }
         status: { type: string }
         requiredDeliveryDate: { type: string }
         paymentTerms: { type: string }
@@ -5414,6 +5440,8 @@ components:
       properties:
         companyId: { type: integer }
         purchaseRequestId: { type: integer }
+        projectId: { type: integer }
+        projectRef: { type: string }
         requiredDeliveryDate: { type: string }
         paymentTerms: { type: string }
         notes: { type: string }
@@ -5439,6 +5467,8 @@ components:
         companyId: { type: integer }
         rfqId: { type: integer }
         rfqNumber: { type: string }
+        projectId: { type: integer }
+        projectRef: { type: string }
         supplierId: { type: integer }
         supplierName: { type: string }
         supplierQuotationRef: { type: string }
@@ -5472,6 +5502,8 @@ components:
       properties:
         companyId: { type: integer }
         rfqId: { type: integer }
+        projectId: { type: integer }
+        projectRef: { type: string }
         supplierId: { type: integer }
         supplierQuotationRef: { type: string }
         quotationDate: { type: string }
@@ -5602,6 +5634,10 @@ components:
           type: string
         notes:
           type: string
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         imageUrl:
           type: string
         approvalStatus:
@@ -5634,6 +5670,10 @@ components:
         reference:
           type: string
         notes:
+          type: string
+        projectId:
+          type: integer
+        projectRef:
           type: string
         imageUrl:
           type: string
@@ -6312,6 +6352,10 @@ components:
           type: string
         invoiceNumber:
           type: string
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         amount:
           type: number
         vatAmount:
@@ -6344,6 +6388,10 @@ components:
         supplierId:
           type: integer
         invoiceNumber:
+          type: string
+        projectId:
+          type: integer
+        projectRef:
           type: string
         amount:
           type: number
@@ -6739,6 +6787,10 @@ components:
           type: string
         taxInvoiceId:
           type: integer
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         paymentDate:
           type: string
         amount:
@@ -6770,6 +6822,10 @@ components:
           type: string
         taxInvoiceId:
           type: integer
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         paymentDate:
           type: string
         amount:
@@ -6801,6 +6857,10 @@ components:
           type: string
         expenseId:
           type: integer
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         paymentDate:
           type: string
         amount:
@@ -6832,6 +6892,10 @@ components:
           type: string
         expenseId:
           type: integer
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         paymentDate:
           type: string
         amount:
@@ -6884,6 +6948,10 @@ components:
           type: string
         reference:
           type: string
+        projectId:
+          type: integer
+        projectRef:
+          type: string
         status:
           type: string
         totalDebit:
@@ -6918,6 +6986,10 @@ components:
         description:
           type: string
         reference:
+          type: string
+        projectId:
+          type: integer
+        projectRef:
           type: string
         status:
           type: string

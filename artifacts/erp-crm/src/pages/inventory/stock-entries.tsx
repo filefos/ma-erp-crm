@@ -267,6 +267,7 @@ export function StockEntriesList() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-12"></TableHead>
+              <TableHead>Project ID</TableHead>
               <TableHead>Entry No.</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Item</TableHead>
@@ -279,8 +280,8 @@ export function StockEntriesList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered.length === 0 ? <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No stock entries found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered.length === 0 ? <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">No stock entries found.</TableCell></TableRow> :
             filtered.map((e: any) => {
               const isOut = ["stock_out"].includes(e.type);
               const total = (e.quantity || 0) * (e.unitCost || 0);
@@ -290,6 +291,13 @@ export function StockEntriesList() {
                     {e.imageUrl
                       ? <img src={e.imageUrl} alt="" className="w-9 h-9 rounded object-cover border" />
                       : <div className="w-9 h-9 rounded bg-slate-100 dark:bg-slate-800 border" />}
+                  </TableCell>
+                  <TableCell>
+                    {e.projectRef ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#0f2d5a] text-white border border-blue-300/30 tracking-wide whitespace-nowrap">
+                        {e.projectRef}
+                      </span>
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-primary">{e.entryNumber}</TableCell>
                   <TableCell><Badge variant="secondary" className={typeColors[e.type] ?? ""}>{e.type?.replace("_"," ")}</Badge></TableCell>

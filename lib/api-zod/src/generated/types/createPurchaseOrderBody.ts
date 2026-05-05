@@ -11,6 +11,8 @@ export interface CreatePurchaseOrderBody {
   supplierId: number;
   companyId: number;
   purchaseRequestId?: number;
+  projectId?: number;
+  projectRef?: string;
   subtotal?: number;
   vatAmount?: number;
   total: number;

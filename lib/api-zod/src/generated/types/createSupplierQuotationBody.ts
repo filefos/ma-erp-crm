@@ -10,6 +10,8 @@ import type { CreateSupplierQuotationBodyItemsItem } from "./createSupplierQuota
 export interface CreateSupplierQuotationBody {
   companyId: number;
   rfqId?: number;
+  projectId?: number;
+  projectRef?: string;
   supplierId: number;
   supplierQuotationRef?: string;
   quotationDate?: string;

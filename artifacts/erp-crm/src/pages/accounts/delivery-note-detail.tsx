@@ -43,6 +43,7 @@ export function DeliveryNoteDetail({ id }: Props) {
     companyRef: (dn as any).companyRef,
     clientName: dn.clientName,
     projectName: dn.projectName,
+    projectRef: (dn as any).projectRef ?? undefined,
     deliveryLocation: dn.deliveryLocation,
     vehicleNumber: dn.vehicleNumber,
     driverName: dn.driverName,
@@ -67,6 +68,11 @@ export function DeliveryNoteDetail({ id }: Props) {
           <Link href="/accounts/delivery-notes"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[dn.status] ?? "bg-gray-100"}`}>{dn.status}</Badge>
+        {(dn as any)?.projectRef && (
+          <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
+            PROJECT ID: {(dn as any).projectRef}
+          </Badge>
+        )}
         {(dn as any)?.clientCode && (
           <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
             {(dn as any).clientCode}

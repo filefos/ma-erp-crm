@@ -17,6 +17,8 @@ export interface StockEntry {
   unitCost?: number;
   reference?: string;
   notes?: string;
+  projectId?: number;
+  projectRef?: string;
   imageUrl?: string;
   approvalStatus: string;
   approvedById?: number;

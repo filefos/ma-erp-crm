@@ -134,7 +134,7 @@ export function PurchaseOrdersList() {
         <div className="ml-auto flex gap-3">
           <div className="relative max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search orders..." className="pl-8 w-56" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input placeholder="Search by Project ID, PO no. or supplier..." className="pl-8 w-64" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -150,6 +150,7 @@ export function PurchaseOrdersList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Project ID</TableHead>
               <TableHead>PO Number</TableHead>
               <TableHead>Supplier</TableHead>
               <TableHead>Delivery Date</TableHead>
@@ -159,10 +160,17 @@ export function PurchaseOrdersList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No purchase orders found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No purchase orders found.</TableCell></TableRow> :
             filtered?.map(po => (
               <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50">
+                <TableCell>
+                  {(po as any).projectRef ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#0f2d5a] text-white border border-blue-300/30 tracking-wide whitespace-nowrap">
+                      {(po as any).projectRef}
+                    </span>
+                  ) : <span className="text-muted-foreground text-xs">—</span>}
+                </TableCell>
                 <TableCell className="font-medium font-mono text-sm">
                   <Link href={`/procurement/purchase-orders/${po.id}`} className="text-primary hover:underline">
                     {po.poNumber}

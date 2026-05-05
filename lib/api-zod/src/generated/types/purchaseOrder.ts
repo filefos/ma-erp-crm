@@ -14,6 +14,8 @@ export interface PurchaseOrder {
   supplierName?: string;
   companyId: number;
   purchaseRequestId?: number;
+  projectId?: number;
+  projectRef?: string;
   subtotal?: number;
   vatAmount?: number;
   total: number;

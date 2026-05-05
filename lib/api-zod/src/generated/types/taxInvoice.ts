@@ -20,6 +20,7 @@ export interface TaxInvoice {
   dueDate?: string;
   quotationId?: number;
   projectId?: number;
+  projectRef?: string;
   subtotal?: number;
   vatPercent?: number;
   vatAmount?: number;

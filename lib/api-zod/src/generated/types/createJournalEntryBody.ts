@@ -12,6 +12,8 @@ export interface CreateJournalEntryBody {
   entryDate: string;
   description: string;
   reference?: string;
+  projectId?: number;
+  projectRef?: string;
   status?: string;
   lines?: JournalEntryLine[];
 }

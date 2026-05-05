@@ -297,6 +297,9 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
   const defaultLogo = data.companyId === 1 ? "/prime-max-logo.png" : undefined;
   const companyLogo = data.companyLogo ?? defaultLogo;
   const isDelivery = data.type === "delivery_note";
+  const _now = new Date();
+  const printDate = _now.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const printTime = _now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
   const isQuotation = data.type === "quotation";
   const isTax = data.type === "tax_invoice";
   const isPO = data.type === "purchase_order";
@@ -720,7 +723,11 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               This is a computer generated document. No signature or stamp required.
             </div>
             <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
+              <span className="font-mono tracking-wide">
+                {"PRIME ERP SYSTEM"}
+                {data.projectRef ? `\u00a0\u00a0|\u00a0\u00a0PROJECT ID: ${data.projectRef}` : ""}
+                {`\u00a0\u00a0|\u00a0\u00a0DATE: ${printDate}\u00a0\u00a0|\u00a0\u00a0TIME: ${printTime}\u00a0\u00a0|\u00a0\u00a0DOCUMENT #: ${data.docNumber}`}
+              </span>
               <span className="font-semibold text-gray-500">Page 1 of 1</span>
             </div>
           </>

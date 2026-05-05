@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, usersTable, notificationsTable, departmentsTable } from "@workspace/db";
+import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, usersTable, notificationsTable, departmentsTable, projectsTable } from "@workspace/db";
 import { and, eq, or, sql, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 import { aiAvailable, chatWithVision } from "../lib/ai";
@@ -51,6 +51,12 @@ async function notifyAccountsOfLpo(req: any, lpo: any, kind: "created" | "attach
   }
 }
 
+async function resolveProjectRef(projectId: number | undefined | null): Promise<string | undefined> {
+  if (!projectId) return undefined;
+  const [proj] = await db.select({ projectNumber: projectsTable.projectNumber }).from(projectsTable).where(eq(projectsTable.id, projectId));
+  return proj?.projectNumber ?? undefined;
+}
+
 async function genDocNumber(companyId: number, type: string, table: any) {
   const [co] = await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, companyId));
   const prefix = co?.prefix ?? "PM";
@@ -99,8 +105,9 @@ router.post("/proforma-invoices", requirePermission("proforma_invoices", "create
     if (l?.clientCode) clientCode = l.clientCode;
   }
 
+  const projectRef = rest.projectRef ?? await resolveProjectRef(rest.projectId);
   const [pi] = await db.insert(proformaInvoicesTable).values({
-    ...rest, piNumber, clientCode, preparedById: req.user?.id, createdById: req.user?.id, items: itemsStr,
+    ...rest, piNumber, clientCode, projectRef, preparedById: req.user?.id, createdById: req.user?.id, items: itemsStr,
   } as any).returning();
   res.status(201).json(parsePiItems(pi));
 });
@@ -152,7 +159,11 @@ router.get("/tax-invoices", requirePermission("tax_invoices", "view"), async (re
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
   if (search) {
     const s = (search as string).toLowerCase();
-    rows = rows.filter(r => r.invoiceNumber.toLowerCase().includes(s) || r.clientName.toLowerCase().includes(s));
+    rows = rows.filter(r =>
+      r.invoiceNumber.toLowerCase().includes(s) ||
+      r.clientName.toLowerCase().includes(s) ||
+      (r.projectRef ?? "").toLowerCase().includes(s)
+    );
   }
   const enriched = await Promise.all(rows.map(async (inv) => {
     const [co] = inv.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, inv.companyId)) : [undefined];
@@ -200,10 +211,12 @@ router.post("/tax-invoices", requirePermission("tax_invoices", "create"), requir
   // tax_invoices.items column is text — serialize if array passed in.
   const itemsField = items.length > 0 ? JSON.stringify(items) : data.items;
 
+  const projectRef = data.projectRef ?? await resolveProjectRef(data.projectId);
   const [inv] = await db.insert(taxInvoicesTable).values({
     ...data,
     invoiceNumber,
     clientCode,
+    projectRef,
     items: itemsField,
     subtotal, vatPercent: docVat, vatAmount, grandTotal, balance,
     createdById: req.user?.id,
@@ -275,8 +288,9 @@ router.post("/delivery-notes", requirePermission("delivery_notes", "create"), re
     if (t?.clientCode) clientCode = t.clientCode;
   }
 
+  const projectRefDn = data.projectRef ?? await resolveProjectRef(data.projectId);
   const [dn] = await db.insert(deliveryNotesTable).values({
-    ...data, dnNumber, clientCode, createdById: req.user?.id, items: JSON.stringify(data.items ?? []),
+    ...data, dnNumber, clientCode, projectRef: projectRefDn, createdById: req.user?.id, items: JSON.stringify(data.items ?? []),
   } as any).returning();
   res.status(201).json({ ...dn, items: data.items ?? [] });
 });

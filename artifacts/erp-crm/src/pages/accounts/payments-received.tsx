@@ -139,6 +139,7 @@ export function PaymentsReceivedList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Project ID</TableHead>
               <TableHead>Payment No.</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Invoice Ref</TableHead>
@@ -152,16 +153,23 @@ export function PaymentsReceivedList() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-12">
+                <TableCell colSpan={10} className="text-center py-12">
                   <ArrowDownCircle className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
                   <p className="text-muted-foreground">No payments received yet.</p>
                 </TableCell>
               </TableRow>
             ) : filtered.map(p => (
               <TableRow key={p.id} className="hover:bg-muted/40">
+                <TableCell>
+                  {(p as any).projectRef ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#0f2d5a] text-white border border-blue-300/30 tracking-wide whitespace-nowrap">
+                      {(p as any).projectRef}
+                    </span>
+                  ) : <span className="text-muted-foreground text-xs">—</span>}
+                </TableCell>
                 <TableCell className="font-mono text-sm font-medium text-primary">{p.paymentNumber}</TableCell>
                 <TableCell className="font-medium">{p.customerName}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{p.invoiceRef || "-"}</TableCell>

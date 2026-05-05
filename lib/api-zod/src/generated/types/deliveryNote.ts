@@ -22,6 +22,7 @@ export interface DeliveryNote {
   status: string;
   taxInvoiceId?: number;
   projectId?: number;
+  projectRef?: string;
   items?: DeliveryNoteItemsItem[];
   createdAt: string;
 }

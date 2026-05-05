@@ -131,6 +131,7 @@ export function ExpensesList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Project ID</TableHead>
               <TableHead>Expense No.</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
@@ -142,10 +143,17 @@ export function ExpensesList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No expenses found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No expenses found.</TableCell></TableRow> :
             filtered?.map(e => (
               <TableRow key={e.id}>
+                <TableCell>
+                  {(e as any).projectRef ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#0f2d5a] text-white border border-blue-300/30 tracking-wide whitespace-nowrap">
+                      {(e as any).projectRef}
+                    </span>
+                  ) : <span className="text-muted-foreground text-xs">—</span>}
+                </TableCell>
                 <TableCell className="font-medium text-primary">{e.expenseNumber}</TableCell>
                 <TableCell className="capitalize">{e.category}</TableCell>
                 <TableCell>{e.description || "-"}</TableCell>

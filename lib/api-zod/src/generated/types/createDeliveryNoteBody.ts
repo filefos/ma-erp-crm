@@ -18,5 +18,6 @@ export interface CreateDeliveryNoteBody {
   deliveryDate?: string;
   taxInvoiceId?: number;
   projectId?: number;
+  projectRef?: string;
   items?: CreateDeliveryNoteBodyItemsItem[];
 }

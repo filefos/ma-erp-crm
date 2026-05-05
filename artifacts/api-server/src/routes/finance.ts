@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable, taxInvoicesTable } from "@workspace/db";
+import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable, taxInvoicesTable, projectsTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, hasPermission } from "../middlewares/auth";
 import { notifyUsers } from "../lib/push";
@@ -103,7 +103,12 @@ router.post("/expenses", requirePermission("expenses", "create"), requireBodyCom
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(expensesTable);
   const num = (count[0]?.count ?? 0) + 1;
   const expenseNumber = `EXP-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
-  const [expense] = await db.insert(expensesTable).values({ ...data, expenseNumber, createdById: req.user?.id }).returning();
+  let projectRef: string | undefined = data.projectRef;
+  if (!projectRef && data.projectId) {
+    const [proj] = await db.select({ projectNumber: projectsTable.projectNumber }).from(projectsTable).where(eq(projectsTable.id, data.projectId));
+    projectRef = proj?.projectNumber ?? undefined;
+  }
+  const [expense] = await db.insert(expensesTable).values({ ...data, expenseNumber, projectRef, createdById: req.user?.id }).returning();
   // Notify approvers (company_admin / super_admin in scope) when a new
   // expense is created in pending state.
   if (expense.status === "pending") {
@@ -212,7 +217,12 @@ router.post("/payments-received", requirePermission("expenses", "create"), requi
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(paymentsReceivedTable);
   const num = (count[0]?.count ?? 0) + 1;
   const paymentNumber = `RCV-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
-  const [payment] = await db.insert(paymentsReceivedTable).values({ ...data, paymentNumber }).returning();
+  let projectRef: string | undefined = data.projectRef;
+  if (!projectRef && data.projectId) {
+    const [proj] = await db.select({ projectNumber: projectsTable.projectNumber }).from(projectsTable).where(eq(projectsTable.id, data.projectId));
+    projectRef = proj?.projectNumber ?? undefined;
+  }
+  const [payment] = await db.insert(paymentsReceivedTable).values({ ...data, paymentNumber, projectRef }).returning();
   res.status(201).json(payment);
 });
 
@@ -257,7 +267,12 @@ router.post("/payments-made", requirePermission("expenses", "create"), requireBo
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(paymentsMadeTable);
   const num = (count[0]?.count ?? 0) + 1;
   const paymentNumber = `PMT-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
-  const [payment] = await db.insert(paymentsMadeTable).values({ ...data, paymentNumber }).returning();
+  let projectRef: string | undefined = data.projectRef;
+  if (!projectRef && data.projectId) {
+    const [proj] = await db.select({ projectNumber: projectsTable.projectNumber }).from(projectsTable).where(eq(projectsTable.id, data.projectId));
+    projectRef = proj?.projectNumber ?? undefined;
+  }
+  const [payment] = await db.insert(paymentsMadeTable).values({ ...data, paymentNumber, projectRef }).returning();
   res.status(201).json(payment);
 });
 

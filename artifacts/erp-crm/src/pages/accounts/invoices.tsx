@@ -60,7 +60,7 @@ export function TaxInvoicesList() {
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search invoices..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input placeholder="Search by Project ID, invoice no. or client..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -74,6 +74,7 @@ export function TaxInvoicesList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Project ID</TableHead>
               <TableHead>Invoice No.</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Date</TableHead>
@@ -85,14 +86,21 @@ export function TaxInvoicesList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No invoices found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No invoices found.</TableCell></TableRow> :
             filtered?.map(inv => {
               const today = new Date().toISOString().slice(0, 10);
               const hasBalance = inv.paymentStatus !== "paid" && Number(inv.balance ?? 0) > 0;
               const isOverdue = hasBalance && Boolean(inv.dueDate && inv.dueDate < today);
               return (
                 <TableRow key={inv.id}>
+                  <TableCell>
+                    {(inv as any).projectRef ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#0f2d5a] text-white border border-blue-300/30 tracking-wide whitespace-nowrap">
+                        {(inv as any).projectRef}
+                      </span>
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
+                  </TableCell>
                   <TableCell className="font-medium">
                     <Link href={`/accounts/invoices/${inv.id}`} className="text-primary hover:underline">{inv.invoiceNumber}</Link>
                   </TableCell>

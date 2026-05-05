@@ -14,6 +14,7 @@ export interface CreateTaxInvoiceBody {
   supplyDate?: string;
   quotationId?: number;
   projectId?: number;
+  projectRef?: string;
   projectName?: string;
   subtotal?: number;
   vatPercent?: number;

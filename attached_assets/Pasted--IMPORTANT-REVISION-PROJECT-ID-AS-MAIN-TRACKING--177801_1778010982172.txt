@@ -1,0 +1,443 @@
+==================================================
+IMPORTANT REVISION: PROJECT ID AS MAIN TRACKING REFERENCE
+==================================================
+
+Think carefully before changing the system.
+
+Do not add anything extra that I am not asking.
+
+The rule is:
+
+CRM Module and Sales Module can identify and search by:
+- Client Code
+- User Unique ID
+- Lead ID
+- Client Name
+- Mobile
+- Email
+- LPO Number
+- Quotation Number
+- Project ID
+
+But all other modules must mainly identify and work by PROJECT ID only.
+
+This applies to:
+- Accounts Module
+- Procurement Module
+- Inventory Module
+- Project Module
+- Delivery Module
+- Documents / PDF Export
+- Reports related to project cost, project billing, project delivery, project procurement, and project inventory
+
+The purpose:
+After Sales receives/registers/imports the client LPO, the system creates one unique PROJECT ID.
+After that, all operational departments must follow that PROJECT ID as the main reference.
+
+==================================================
+1. DO NOT CHANGE CRM AND SALES LOGIC
+==================================================
+
+Do not remove existing CRM and Sales tracking.
+
+CRM and Sales should still show:
+- Client Code
+- User Unique ID
+- Lead ID
+- Client Name
+- Mobile
+- Email
+- Sales User
+- LPO Number
+- Quotation Number
+- Project ID
+
+CRM and Sales are the front-office modules.
+
+They manage:
+- Client inquiry
+- Lead tracking
+- Sales user tracking
+- Quotation
+- LPO registration
+- Project ID creation
+
+Important:
+Only Sales/LPO registration should create the Project ID.
+
+==================================================
+2. PROJECT ID CREATION LOGIC
+==================================================
+
+When Sales User registers LPO details or uploads/imports the client LPO document, the system must create a unique Project ID.
+
+Project ID format:
+PRJ-YYYY-000001
+
+Rules:
+- Project ID must be created only once per approved/verified LPO.
+- If LPO already has Project ID, do not create another Project ID.
+- Project ID must remain permanent.
+- Project ID must connect to Client, Lead, Quotation, LPO, Sales User, and Product/Service.
+- Project ID must be used by all other modules after creation.
+
+==================================================
+3. ACCOUNTS MODULE — PROJECT ID FOCUS ONLY
+==================================================
+
+In Accounts Module, the main tracking field must be PROJECT ID.
+
+Accounts users should mainly search, filter, create, and review records by Project ID.
+
+Accounts documents connected to Project ID:
+- Proforma Invoice
+- Tax Invoice
+- Payment Received
+- Payment Made
+- Expenses
+- Journal Entries
+- VAT Report where applicable
+- Client Statement where applicable
+- Project Balance Report
+
+Accounts screens must show Project ID clearly.
+
+Accounts search bar placeholder:
+“Search by Project ID or Document Number”
+
+Accounts filters:
+- Project ID
+- Document Type
+- Date Range
+- Payment Status
+- Invoice Status
+
+Do not make User Unique ID the main working reference inside Accounts.
+Do not make Client Code the main working reference inside Accounts.
+Client Code can exist in document details, but Accounts user’s main focus must be PROJECT ID.
+
+Accounts dashboard cards:
+- Project invoices
+- Project payments
+- Project balance
+- Project expenses
+- Project receivables
+- Project profitability
+
+==================================================
+4. PROCUREMENT MODULE — PROJECT ID FOCUS ONLY
+==================================================
+
+In Procurement Module, the main tracking field must be PROJECT ID.
+
+Procurement users should create and manage all procurement activities under Project ID.
+
+Procurement documents connected to Project ID:
+- Purchase Request
+- RFQ
+- Supplier Quotation
+- Purchase Order
+- Supplier Bill if available
+- Material Request
+- Procurement Comparison
+
+Procurement search bar placeholder:
+“Search by Project ID, PR Number, RFQ Number, or PO Number”
+
+Procurement filters:
+- Project ID
+- Supplier
+- Purchase Status
+- Approval Status
+- Date Range
+
+Procurement workflow:
+1. User selects Project ID.
+2. System loads project details.
+3. User creates Purchase Request or RFQ under that Project ID.
+4. Purchase Order remains linked to the same Project ID.
+5. Procurement cost updates project cost summary.
+
+Do not make Client Code the main field in Procurement.
+Do not make User Unique ID the main field in Procurement.
+Project ID is the main operational reference.
+
+==================================================
+5. INVENTORY MODULE — PROJECT ID FOCUS ONLY
+==================================================
+
+In Inventory Module, the main tracking field must be PROJECT ID.
+
+Inventory users should issue, receive, transfer, and adjust stock based on Project ID.
+
+Inventory documents connected to Project ID:
+- Stock Entry
+- Stock Issue
+- Stock Return
+- Stock Transfer
+- Material Delivery to Project
+- Material Consumption
+- Damage / Wastage if project related
+
+Inventory search bar placeholder:
+“Search by Project ID, Stock Entry Number, or Item Code”
+
+Inventory filters:
+- Project ID
+- Item Code
+- Warehouse
+- Stock Movement Type
+- Date Range
+
+Inventory workflow:
+1. User selects Project ID.
+2. System shows project material requirements.
+3. User issues stock to that Project ID.
+4. Stock cost updates project cost.
+5. Stock balance and project material usage remain connected to Project ID.
+
+Do not make Client Code the main field in Inventory.
+Do not make User Unique ID the main field in Inventory.
+Project ID is the main operational reference.
+
+==================================================
+6. PROJECT MODULE — PROJECT ID FOCUS ONLY
+==================================================
+
+Project Module must be fully centered on Project ID.
+
+Project Module search bar placeholder:
+“Search by Project ID”
+
+Project page must show:
+- Project ID
+- Project Name
+- Linked LPO
+- Linked Quotation
+- Project Value
+- Project Status
+- Invoiced Amount
+- Received Amount
+- Balance Amount
+- Procurement Cost
+- Inventory Cost
+- Expense Cost
+- Gross Profit
+- Delivery Status
+- Project Timeline
+- Related Documents
+
+Project Module should pull data from:
+- Sales LPO
+- Accounts invoices/payments
+- Procurement PO/RFQ
+- Inventory stock entries
+- Delivery notes
+- Project tasks
+
+Project dashboard cards:
+- Active Projects
+- Projects Pending Delivery
+- Projects Pending Invoice
+- Projects With Pending Procurement
+- Projects With Pending Stock Issue
+- Project Balance
+- Project Profitability
+
+==================================================
+7. DOCUMENTS / PDF / PRINT RULE
+==================================================
+
+For all documents after Project ID is created, Project ID must appear clearly.
+
+Documents where Project ID must appear:
+- Proforma Invoice
+- Tax Invoice
+- Delivery Note
+- Purchase Request
+- RFQ
+- Purchase Order
+- Stock Entry
+- Payment Receipt
+- Expense Voucher
+- Project Report
+
+Footer must include:
+PRIME ERP SYSTEM | PROJECT ID: {PROJECT_ID} | DATE: {DATE} | TIME: {TIME} | DOCUMENT #: {DOCUMENT_NUMBER} | PAGE: {PAGE_NUMBER}
+
+If the document is CRM or Sales related, it can also include:
+- User Unique ID
+- Client Code
+
+But for Accounts, Procurement, Inventory, and Project documents, the main footer reference must be PROJECT ID.
+
+Do not overcomplicate the footer with unnecessary fields in operational modules.
+Keep Project ID as the main reference.
+
+==================================================
+8. MODULE-WISE SEARCH RULE
+==================================================
+
+CRM Module search:
+Allow Client Code, User Unique ID, Lead ID, Mobile, Email, Project ID.
+
+Sales Module search:
+Allow Client Code, User Unique ID, Quotation Number, LPO Number, Project ID.
+
+Accounts Module search:
+Main search by Project ID and Document Number.
+
+Procurement Module search:
+Main search by Project ID and PR/RFQ/PO Number.
+
+Inventory Module search:
+Main search by Project ID, Stock Entry Number, and Item Code.
+
+Project Module search:
+Main search by Project ID only.
+
+==================================================
+9. DATABASE FIELD RULE
+==================================================
+
+Add project_id to all operational tables:
+
+accounts/proforma_invoices
+accounts/tax_invoices
+accounts/payments_received
+accounts/payments_made
+accounts/expenses
+accounts/journal_entries
+procurement/purchase_requests
+procurement/rfqs
+procurement/supplier_quotations
+procurement/purchase_orders
+inventory/stock_entries
+inventory/item_issues
+inventory/item_returns
+delivery_notes
+project_tasks
+project_reports
+
+Rules:
+- project_id must be required when document is project-related.
+- project_id must auto-fill if document is created from LPO.
+- project_id must not be manually changed after approval.
+- If project_id is missing, block project-related document approval.
+- Keep client_id and client_code in database for relation only, but do not make them the main search/display focus in operational modules.
+
+==================================================
+10. UI REQUIREMENTS
+==================================================
+
+In Accounts, Procurement, Inventory, and Project Module:
+
+Show Project ID:
+- At top of detail page
+- In list table
+- In filter panel
+- In document preview
+- In PDF footer
+- In export report
+
+Use Project ID badge style:
+Dark navy background, white text, light blue border.
+
+Example:
+PROJECT ID: PRJ-2026-000001
+
+Do not show too many unnecessary badges.
+Main badge must be Project ID.
+
+==================================================
+11. REPORTS
+==================================================
+
+Create Project ID based reports:
+
+- Project Financial Summary
+- Project Invoices
+- Project Payments
+- Project Balance
+- Project Procurement Summary
+- Project Purchase Orders
+- Project Inventory Usage
+- Project Delivery Summary
+- Project Profitability
+- Project Cost vs Revenue
+
+Each report must allow filtering by Project ID.
+
+==================================================
+12. ACCEPTANCE TESTING
+==================================================
+
+Test this exact flow:
+
+1. CRM creates lead.
+Expected:
+Lead can show Client Code and User Unique ID.
+
+2. Sales creates quotation.
+Expected:
+Quotation links to client and lead.
+
+3. Sales uploads/registers LPO.
+Expected:
+Project ID is created automatically.
+
+4. Accounts creates Proforma Invoice.
+Expected:
+User selects/searches Project ID.
+
+5. Accounts creates Tax Invoice.
+Expected:
+Project ID is visible and saved.
+
+6. Procurement creates Purchase Request.
+Expected:
+Project ID is required.
+
+7. Procurement creates Purchase Order.
+Expected:
+Project ID is linked.
+
+8. Inventory issues stock.
+Expected:
+Project ID is required.
+
+9. Project Module opens project page.
+Expected:
+All accounts, procurement, inventory, delivery, and payment records appear under same Project ID.
+
+10. Search Accounts by Client Code.
+Expected:
+Do not make this the main search. Accounts should focus on Project ID.
+
+11. Search Procurement by User Unique ID.
+Expected:
+Do not make this the main search. Procurement should focus on Project ID.
+
+12. Search Inventory by Client Code.
+Expected:
+Do not make this the main search. Inventory should focus on Project ID.
+
+==================================================
+FINAL INSTRUCTION
+==================================================
+
+Do exactly this only:
+
+CRM and Sales can use Client Code, User Unique ID, Lead ID, LPO, Quotation, and Project ID.
+
+All other operational modules must mainly identify and work by Project ID only.
+
+Accounts user main focus = Project ID.
+Procurement user main focus = Project ID.
+Inventory user main focus = Project ID.
+Project Module main focus = Project ID.
+
+Do not add extra logic I did not ask for.
+Do not remove existing CRM/Sales tracking.
+Do not make Client Code or User Unique ID the main focus outside CRM and Sales.
+Project ID is the main operational reference after LPO is registered.

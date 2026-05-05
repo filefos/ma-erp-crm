@@ -14,6 +14,8 @@ export interface CreateStockEntryBody {
   unitCost?: number;
   reference?: string;
   notes?: string;
+  projectId?: number;
+  projectRef?: string;
   imageUrl?: string;
   companyId?: number;
 }

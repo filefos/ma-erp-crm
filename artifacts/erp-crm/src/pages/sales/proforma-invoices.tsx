@@ -88,7 +88,8 @@ export function ProformaInvoicesList() {
   const filtered = filterByCompany(invoices ?? []).filter(i =>
     !search ||
     i.piNumber.toLowerCase().includes(search.toLowerCase()) ||
-    i.clientName.toLowerCase().includes(search.toLowerCase())
+    i.clientName.toLowerCase().includes(search.toLowerCase()) ||
+    ((i as any).projectRef ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   const totalValue = filtered?.reduce((s, i) => s + (i.total ?? 0), 0) ?? 0;
@@ -217,7 +218,7 @@ export function ProformaInvoicesList() {
       <div className="flex items-center justify-between">
         <div className="relative max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search proforma invoices..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
+          <Input placeholder="Search by Project ID, PI no. or client..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div className="text-sm text-muted-foreground">
           Total: <span className="font-semibold text-foreground">AED {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -228,6 +229,7 @@ export function ProformaInvoicesList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Project ID</TableHead>
               <TableHead>PI Number</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Project</TableHead>
@@ -237,10 +239,17 @@ export function ProformaInvoicesList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No proforma invoices found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No proforma invoices found.</TableCell></TableRow> :
             filtered?.map(inv => (
               <TableRow key={inv.id}>
+                <TableCell>
+                  {(inv as any).projectRef ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[#0f2d5a] text-white border border-blue-300/30 tracking-wide whitespace-nowrap">
+                      {(inv as any).projectRef}
+                    </span>
+                  ) : <span className="text-muted-foreground text-xs">—</span>}
+                </TableCell>
                 <TableCell className="font-medium font-mono text-sm">
                   <Link href={`/sales/proforma-invoices/${inv.id}`} className="text-primary hover:underline">{inv.piNumber}</Link>
                 </TableCell>

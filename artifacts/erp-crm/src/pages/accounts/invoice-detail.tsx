@@ -99,6 +99,7 @@ export function InvoiceDetail({ id }: Props) {
     clientName: inv.clientName,
     clientTrn: inv.clientTrn,
     companyTrn: (inv as any).companyTrn ?? undefined,
+    projectRef: (inv as any).projectRef ?? undefined,
     invoiceDate: inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
     supplyDate: inv.supplyDate ? new Date(inv.supplyDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
     subtotal: inv.subtotal,
@@ -143,6 +144,11 @@ export function InvoiceDetail({ id }: Props) {
         <Badge className={`capitalize ${PAYMENT_COLORS[inv.paymentStatus] ?? "bg-gray-100"}`}>
           {inv.paymentStatus}
         </Badge>
+        {(inv as any)?.projectRef && (
+          <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
+            PROJECT ID: {(inv as any).projectRef}
+          </Badge>
+        )}
         {(inv as any)?.clientCode && (
           <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
             {(inv as any).clientCode}

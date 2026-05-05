@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, inventoryItemsTable, stockEntriesTable, usersTable } from "@workspace/db";
+import { db, inventoryItemsTable, stockEntriesTable, usersTable, projectsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, inScope } from "../middlewares/auth";
 import { notifyUsers } from "../lib/push";
@@ -87,8 +87,13 @@ router.post("/stock-entries", requirePermission("stock_entries", "create"), requ
   const num = (count[0]?.count ?? 0) + 1;
   const entryNumber = `SE-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
 
+  let projectRef: string | undefined = data.projectRef;
+  if (!projectRef && data.projectId) {
+    const [proj] = await db.select({ projectNumber: projectsTable.projectNumber }).from(projectsTable).where(eq(projectsTable.id, data.projectId));
+    projectRef = proj?.projectNumber ?? undefined;
+  }
   const [entry] = await db.insert(stockEntriesTable).values({
-    ...data, entryNumber, createdById: req.user?.id, approvalStatus: "approved",
+    ...data, entryNumber, projectRef, createdById: req.user?.id, approvalStatus: "approved",
   }).returning();
 
   const delta = ["stock_in", "material_return"].includes(data.type) ? data.quantity : -Math.abs(data.quantity);

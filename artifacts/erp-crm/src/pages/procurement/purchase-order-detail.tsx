@@ -117,6 +117,7 @@ export function PurchaseOrderDetail({ id }: Props) {
     supplierName: (po as any).supplierName ?? supplier?.name ?? "—",
     supplierPhone: (supplier as any)?.phone ?? undefined,
     supplierEmail: (supplier as any)?.email ?? undefined,
+    projectRef: (po as any).projectRef ?? undefined,
     date: (po as any).createdAt
       ? new Date((po as any).createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
       : undefined,
@@ -249,6 +250,11 @@ export function PurchaseOrderDetail({ id }: Props) {
           <Link href="/procurement/purchase-orders"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[(po as any).status] ?? "bg-gray-100"}`}>{(po as any).status}</Badge>
+        {(po as any)?.projectRef && (
+          <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
+            PROJECT ID: {(po as any).projectRef}
+          </Badge>
+        )}
         {(po as any)?.clientCode && (
           <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
             {(po as any).clientCode}

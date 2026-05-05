@@ -10,6 +10,8 @@ export interface CreateProformaInvoiceBody {
   companyId: number;
   clientName: string;
   projectName?: string;
+  projectId?: number;
+  projectRef?: string;
   quotationId?: number;
   subtotal?: number;
   vatAmount?: number;

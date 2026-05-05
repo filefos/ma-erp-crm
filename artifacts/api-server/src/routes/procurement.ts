@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, suppliersTable, purchaseRequestsTable, purchaseOrdersTable, rfqsTable, supplierQuotationsTable, companiesTable, usersTable } from "@workspace/db";
+import { db, suppliersTable, purchaseRequestsTable, purchaseOrdersTable, rfqsTable, supplierQuotationsTable, companiesTable, usersTable, projectsTable } from "@workspace/db";
 import { eq, sql, and, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, inScope } from "../middlewares/auth";
 
@@ -419,8 +419,13 @@ router.post("/purchase-orders", requirePermission("purchase_orders", "create"), 
   const subtotal = items.reduce((s: number, i: any) => s + ((i.rate ?? i.unitPrice ?? 0) * (i.quantity ?? 1)), 0);
   const vatAmount = subtotal * 0.05;
   const total = subtotal + vatAmount;
+  let projectRef: string | undefined = data.projectRef;
+  if (!projectRef && data.projectId) {
+    const [proj] = await db.select({ projectNumber: projectsTable.projectNumber }).from(projectsTable).where(eq(projectsTable.id, data.projectId));
+    projectRef = proj?.projectNumber ?? undefined;
+  }
   const [po] = await db.insert(purchaseOrdersTable).values({
-    ...data, poNumber, preparedById: req.user?.id,
+    ...data, poNumber, projectRef, preparedById: req.user?.id,
     subtotal, vatAmount, total,
     items: JSON.stringify(items),
   }).returning();

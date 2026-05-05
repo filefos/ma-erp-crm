@@ -13,6 +13,8 @@ export interface SupplierQuotation {
   companyId: number;
   rfqId?: number;
   rfqNumber?: string;
+  projectId?: number;
+  projectRef?: string;
   supplierId: number;
   supplierName?: string;
   supplierQuotationRef?: string;

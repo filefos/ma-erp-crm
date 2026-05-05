@@ -11,6 +11,8 @@ export interface CreatePaymentMadeBody {
   payeeName: string;
   expenseRef?: string;
   expenseId?: number;
+  projectId?: number;
+  projectRef?: string;
   paymentDate: string;
   amount: number;
   paymentMethod: string;
