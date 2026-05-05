@@ -341,7 +341,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
       <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto p-4 shadow-lg rounded-lg">
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
-        <div className="overflow-hidden mb-3">
+        <div className="overflow-hidden mb-1">
           <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
             {companyLogo && (
               <img
@@ -718,7 +718,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {isQuotation && (
           <div className="print-page-break mt-8">
             {/* Page 2 Letterhead */}
-            <div className="overflow-hidden mb-3">
+            <div className="overflow-hidden mb-1">
               <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
                   <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
@@ -816,7 +816,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {isQuotation && (
           <div className="print-page-break mt-8">
             {/* Page 3 Letterhead */}
-            <div className="overflow-hidden mb-3">
+            <div className="overflow-hidden mb-1">
               <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
                   <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
@@ -883,7 +883,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
       ══════════════════════════════════════════════════════════════ */}
       {isQuotation && (data.customSections ?? []).map((sec, si) => (
         <div key={si} className="print-page-break mt-8">
-          <div className="overflow-hidden mb-3">
+          <div className="overflow-hidden mb-1">
             <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
               {companyLogo && (
                 <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
