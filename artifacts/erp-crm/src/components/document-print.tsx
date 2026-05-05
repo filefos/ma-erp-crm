@@ -342,22 +342,22 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="border-2 border-gray-700 mb-3">
-          <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+          <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
             {companyLogo && (
               <img
                 src={companyLogo}
                 alt="Company Logo"
                 className="object-contain rounded bg-white p-1 flex-shrink-0"
-                style={{ maxHeight: 64, maxWidth: 140, height: "auto" }}
+                style={{ maxHeight: 60, maxWidth: 130, height: "auto" }}
               />
             )}
-            <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
-              <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
-              <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+            <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
+              <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
+              <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
             </div>
           </div>
-          <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+          <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
             <span className="text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
           </div>
         </div>
@@ -719,17 +719,17 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           <div className="print-page-break mt-8">
             {/* Page 2 Letterhead */}
             <div className="border-2 border-gray-700 mb-3">
-              <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
-                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
+                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
                 )}
-                <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
-                  <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
-                  <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+                <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
+                  <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
+                  <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <span className="text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
               </div>
             </div>
@@ -817,17 +817,17 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           <div className="print-page-break mt-8">
             {/* Page 3 Letterhead */}
             <div className="border-2 border-gray-700 mb-3">
-              <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
-                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
+                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
                 )}
-                <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
-                  <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
-                  <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+                <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
+                  <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
+                  <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <span className="text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
               </div>
             </div>
@@ -884,17 +884,17 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
       {isQuotation && (data.customSections ?? []).map((sec, si) => (
         <div key={si} className="print-page-break mt-8">
           <div className="border-2 border-gray-700 mb-3">
-            <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
               {companyLogo && (
-                <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
+                <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
               )}
-              <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
-                <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
-                <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+              <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
+                <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
+                <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
                 <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
               </div>
             </div>
-            <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
               <span className="text-[15px] font-black tracking-widest uppercase">{sec.title || "ADDITIONAL SECTION"}</span>
             </div>
           </div>
