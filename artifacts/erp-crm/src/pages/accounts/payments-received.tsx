@@ -99,7 +99,7 @@ export function PaymentsReceivedList() {
   return (
     <div className="space-y-4">
       <AccountsPageHeader
-        title="Payments Received"
+        title="Receivable"
         subtitle="Record payments collected from customers."
         right={
           <>
@@ -115,7 +115,7 @@ export function PaymentsReceivedList() {
                 { header: "Reference", key: "referenceNumber" },
               ]}
               filename="payments-received"
-              title="Payments Received"
+              title="Receivable"
               size="sm"
             />
             <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
@@ -195,7 +195,7 @@ export function PaymentsReceivedList() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editId ? "Edit Payment" : "Record Payment Received"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? "Edit Receivable" : "Record Receivable"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="space-y-1 col-span-2">
               <Label>Company *</Label>
