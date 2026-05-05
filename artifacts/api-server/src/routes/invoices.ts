@@ -288,9 +288,30 @@ router.post("/delivery-notes", requirePermission("delivery_notes", "create"), re
     if (t?.clientCode) clientCode = t.clientCode;
   }
 
-  const projectRefDn = data.projectRef ?? await resolveProjectRef(data.projectId);
+  // Inherit projectRef / projectId from linked tax invoice or LPO if not provided
+  let resolvedProjectId: number | undefined = data.projectId ? parseInt(String(data.projectId), 10) : undefined;
+  let resolvedProjectRef: string | undefined = data.projectRef;
+  if (!resolvedProjectRef || !resolvedProjectId) {
+    if (data.taxInvoiceId) {
+      const [t] = await db.select({ projectRef: taxInvoicesTable.projectRef, projectId: taxInvoicesTable.projectId }).from(taxInvoicesTable).where(eq(taxInvoicesTable.id, data.taxInvoiceId));
+      if (!resolvedProjectRef && t?.projectRef) resolvedProjectRef = t.projectRef;
+      if (!resolvedProjectId && t?.projectId) resolvedProjectId = t.projectId;
+    }
+    if ((!resolvedProjectRef || !resolvedProjectId) && data.lpoId) {
+      const [l] = await db.select({ projectRef: lposTable.projectRef, projectId: lposTable.projectId }).from(lposTable).where(eq(lposTable.id, data.lpoId));
+      if (!resolvedProjectRef && (l as any)?.projectRef) resolvedProjectRef = (l as any).projectRef;
+      if (!resolvedProjectId && (l as any)?.projectId) resolvedProjectId = (l as any).projectId;
+    }
+    if (!resolvedProjectRef && resolvedProjectId) resolvedProjectRef = await resolveProjectRef(resolvedProjectId);
+  }
+
+  const projectRefDn = resolvedProjectRef ?? await resolveProjectRef(data.projectId);
   const [dn] = await db.insert(deliveryNotesTable).values({
-    ...data, dnNumber, clientCode, projectRef: projectRefDn, createdById: req.user?.id, items: JSON.stringify(data.items ?? []),
+    ...data, dnNumber, clientCode,
+    projectRef: projectRefDn,
+    projectId: resolvedProjectId ?? data.projectId,
+    createdById: req.user?.id,
+    items: JSON.stringify(data.items ?? []),
   } as any).returning();
   res.status(201).json({ ...dn, items: data.items ?? [] });
 });
