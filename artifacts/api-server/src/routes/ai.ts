@@ -287,4 +287,138 @@ router.post("/ai/ask", async (req, res): Promise<void> => {
   res.json({ result: raw, model: aiModelName() });
 });
 
+// ===== Accounts AI: Categorize Expenses =====
+router.post("/ai/accounts/categorize-expenses", async (req, res): Promise<void> => {
+  if (!aiAvailable()) { res.status(503).json({ error: "AI not configured" }); return; }
+  const expenses: unknown[] = Array.isArray(req.body?.expenses) ? req.body.expenses : [];
+  if (expenses.length === 0) { res.json({ result: "No expenses provided to categorize." }); return; }
+
+  const lines = expenses.slice(0, 30).map((e: any, i: number) =>
+    `${i + 1}. ${e.expenseNumber ?? "?"} | ${e.category ?? "uncategorized"} | AED ${(e.amount ?? 0).toFixed(2)} | ${e.notes ?? ""}`,
+  ).join("\n");
+
+  const system = [
+    "You are a UAE-based accounting expert using the chart of accounts common to construction and prefab companies.",
+    "Given a list of expenses, analyse each one and suggest a better GL category if the current one is vague or incorrect.",
+    "Format: numbered list matching the input. For each item: current category → suggested category + one-line reason.",
+    "Keep it concise. UAE context, AED currency.",
+  ].join(" ");
+
+  let result: string;
+  try {
+    result = await chat([
+      { role: "system", content: system },
+      { role: "user", content: `Expenses to review:\n${lines}` },
+    ], { maxCompletionTokens: 1200 });
+  } catch (err) {
+    res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" }); return;
+  }
+  res.json({ result });
+});
+
+// ===== Accounts AI: VAT Compliance Check =====
+router.post("/ai/accounts/vat-check", async (req, res): Promise<void> => {
+  if (!aiAvailable()) { res.status(503).json({ error: "AI not configured" }); return; }
+  const summary = req.body?.summary ?? {};
+
+  const ctx = [
+    `Input VAT (paid): AED ${(summary.inputVat ?? 0).toFixed(2)}`,
+    `Estimated Output VAT (5% of received): AED ${(summary.estimatedOutputVat ?? 0).toFixed(2)}`,
+    `Net VAT position: AED ${((summary.estimatedOutputVat ?? 0) - (summary.inputVat ?? 0)).toFixed(2)}`,
+    `Total expense records: ${summary.expenseCount ?? 0}`,
+  ].join("\n");
+
+  const system = [
+    "You are a UAE FTA VAT compliance advisor.",
+    "Given a VAT summary, flag any compliance risks and give 3-5 actionable recommendations.",
+    "Include: filing deadline reminders, TRN verification advice, input VAT recovery tips, and zero-rate category guidance.",
+    "Be direct and practical. UAE context.",
+  ].join(" ");
+
+  let result: string;
+  try {
+    result = await chat([
+      { role: "system", content: system },
+      { role: "user", content: `VAT summary:\n${ctx}` },
+    ], { maxCompletionTokens: 900 });
+  } catch (err) {
+    res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" }); return;
+  }
+  res.json({ result });
+});
+
+// ===== Accounts AI: Suggest Journal Entry =====
+router.post("/ai/accounts/suggest-journal", async (req, res): Promise<void> => {
+  if (!aiAvailable()) { res.status(503).json({ error: "AI not configured" }); return; }
+  const docType: string = req.body?.docType ?? "expense";
+  const doc: any = req.body?.doc ?? {};
+
+  const docLines: string[] = [];
+  if (doc.expenseNumber) docLines.push(`Reference: ${doc.expenseNumber}`);
+  if (doc.invoiceNumber) docLines.push(`Reference: ${doc.invoiceNumber}`);
+  if (doc.category) docLines.push(`Category: ${doc.category}`);
+  if (doc.amount != null) docLines.push(`Amount (excl. VAT): AED ${Number(doc.amount).toFixed(2)}`);
+  if (doc.vatAmount != null) docLines.push(`VAT Amount: AED ${Number(doc.vatAmount).toFixed(2)}`);
+  if (doc.total != null) docLines.push(`Total: AED ${Number(doc.total).toFixed(2)}`);
+  if (doc.paymentDate) docLines.push(`Date: ${doc.paymentDate}`);
+  if (doc.notes) docLines.push(`Notes: ${doc.notes}`);
+
+  const system = [
+    "You are a UAE-based management accountant.",
+    "Given a source document, produce a balanced double-entry journal entry in markdown table format.",
+    "Columns: Account | Debit (AED) | Credit (AED).",
+    "Use standard UAE chart of accounts accounts (e.g. Accounts Receivable, Revenue, VAT Output, VAT Input, Bank, Cash, Expense Account).",
+    "End with a one-line narration.",
+  ].join(" ");
+
+  let result: string;
+  try {
+    result = await chat([
+      { role: "system", content: system },
+      { role: "user", content: `Document type: ${docType}\n${docLines.join("\n") || "No details provided."}` },
+    ], { maxCompletionTokens: 800 });
+  } catch (err) {
+    res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" }); return;
+  }
+  res.json({ result });
+});
+
+// ===== Accounts AI: Validate Invoice Totals =====
+router.post("/ai/accounts/validate-invoice", async (req, res): Promise<void> => {
+  if (!aiAvailable()) { res.status(503).json({ error: "AI not configured" }); return; }
+  const invoice: any = req.body?.invoice ?? {};
+
+  const lines: string[] = [];
+  if (invoice.invoiceNumber) lines.push(`Invoice: ${invoice.invoiceNumber}`);
+  if (invoice.subtotal != null) lines.push(`Subtotal: AED ${Number(invoice.subtotal).toFixed(2)}`);
+  if (invoice.vatPercent != null) lines.push(`VAT %: ${invoice.vatPercent}%`);
+  if (invoice.vatAmount != null) lines.push(`VAT Amount: AED ${Number(invoice.vatAmount).toFixed(2)}`);
+  if (invoice.grandTotal != null) lines.push(`Grand Total: AED ${Number(invoice.grandTotal).toFixed(2)}`);
+  if (invoice.clientTrn) lines.push(`Client TRN: ${invoice.clientTrn}`);
+  if (invoice.companyTrn) lines.push(`Company TRN: ${invoice.companyTrn}`);
+  if (invoice.items?.length) {
+    lines.push(`Line items: ${invoice.items.length}`);
+    invoice.items.slice(0, 10).forEach((it: any, i: number) => {
+      lines.push(`  ${i + 1}. ${it.description ?? "item"} | qty ${it.quantity ?? 1} | unit ${it.unitPrice ?? 0} | VAT% ${it.vatPercent ?? 5}`);
+    });
+  }
+
+  const system = [
+    "You are a UAE FTA-compliant invoice auditor.",
+    "Check: subtotal + VAT = grand total (flag discrepancies), TRN format (15 digits), VAT % correctness per line, and missing mandatory fields.",
+    "Return a short audit report: ✅ Pass or ⚠️ Issue for each check, then a summary verdict.",
+  ].join(" ");
+
+  let result: string;
+  try {
+    result = await chat([
+      { role: "system", content: system },
+      { role: "user", content: lines.length ? lines.join("\n") : "No invoice data provided." },
+    ], { maxCompletionTokens: 700 });
+  } catch (err) {
+    res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" }); return;
+  }
+  res.json({ result });
+});
+
 export default router;

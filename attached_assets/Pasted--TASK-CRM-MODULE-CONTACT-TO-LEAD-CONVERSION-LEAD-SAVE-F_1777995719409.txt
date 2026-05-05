@@ -1,0 +1,191 @@
+**TASK: CRM MODULE – CONTACT TO LEAD CONVERSION + LEAD SAVE FIX**
+
+---
+
+## 🎯 OBJECTIVE
+
+Implement:
+
+1. **Contact → Editable Form → Convert to Lead**
+2. Fix **Lead Panel not saving / not displaying data**
+
+---
+
+# 🔹 1. CONTACT PANEL – EDIT & CONVERT FLOW
+
+## REQUIRED BEHAVIOR:
+
+When user clicks any contact from list:
+
+👉 Open SAME contact form in **editable mode**
+
+---
+
+## FORM MUST SHOW 2 BUTTONS:
+
+1. **Save to Contact**
+2. **Convert to Lead**
+
+---
+
+## 🔁 SAVE TO CONTACT
+
+* Update existing contact record
+* Use API:
+
+```bash id="api1"
+PUT /contacts/:id
+```
+
+* After save:
+
+  * Update contact list
+  * Show updated data
+
+---
+
+## 🔁 CONVERT TO LEAD
+
+When user clicks **Convert to Lead**:
+
+### SYSTEM MUST:
+
+1. Take contact data:
+
+   * Name
+   * Mobile
+   * Email
+   * Company
+
+2. Create new Lead:
+
+```bash id="api2"
+POST /leads
+```
+
+3. Save into `leads` table
+
+---
+
+## IMPORTANT:
+
+* Contact MUST remain saved
+* Lead must be created separately
+* No data loss
+
+---
+
+# 🔹 2. LEAD PANEL – NOT SAVING / NOT SHOWING (CRITICAL FIX)
+
+## PROBLEM:
+
+* Lead form submitted
+* Data not visible in Lead Panel
+
+---
+
+## REQUIRED FIX:
+
+### 1. SAVE LEAD
+
+Ensure:
+
+* API exists:
+
+```bash id="api3"
+POST /leads
+```
+
+* Data is inserted into database
+
+---
+
+### 2. FETCH LEADS
+
+Lead panel must load using:
+
+```bash id="api4"
+GET /leads
+```
+
+---
+
+### 3. UI UPDATE
+
+After saving lead:
+
+* Auto refresh list
+  OR
+* Add new lead instantly
+
+---
+
+# 🔗 3. COMMON FIX (VERY IMPORTANT)
+
+## FRONTEND CHECK
+
+* Ensure:
+
+  * onClick event is working
+  * API call is triggered
+  * No JavaScript errors
+
+---
+
+## BACKEND CHECK
+
+* Ensure:
+
+  * Route exists (`/leads`)
+  * Insert query works
+  * No validation failure
+
+---
+
+## DATABASE CHECK
+
+* Confirm:
+
+  * `leads` table exists
+  * Data is actually inserted
+
+---
+
+# 🔍 DEBUG (MANDATORY)
+
+Add logs:
+
+```javascript id="debug1"
+console.log("Contact Clicked", contactData);
+```
+
+```javascript id="debug2"
+console.log("Lead Saved", response);
+```
+
+```javascript id="debug3"
+console.log("Leads List", data);
+```
+
+---
+
+# 🚫 RESTRICTIONS
+
+* Do NOT change UI design
+* Do NOT remove fields
+* Only fix functionality
+
+---
+
+# 🚀 FINAL RESULT
+
+* Click contact → open editable form ✅
+* Save → updates contact ✅
+* Convert → creates lead ✅
+* Lead Panel → shows saved data ✅
+
+---
+
+**ALL POINTS MUST WORK WITHOUT FAIL.**
+
+---
