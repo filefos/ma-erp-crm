@@ -357,7 +357,7 @@ export function MainExecutiveDashboard() {
     { label: "Reports",     href: "/reports/dashboard",    icon: BarChart3,     tone: "from-rose-500 to-rose-700",      sub: "Cross-module analytics",                               allowed: can("dashboard") },
   ].filter(s => s.allowed);
 
-  const u = user as { name?: string; permissionLevel?: string } | undefined;
+  const u = user as { name?: string; permissionLevel?: string; uniqueUserId?: string | null } | undefined;
   const greeting = (() => {
     const h = now.getHours();
     if (h < 12) return "Good morning";
@@ -383,6 +383,11 @@ export function MainExecutiveDashboard() {
         title={`${greeting}, ${u?.name?.split(" ")[0] ?? "Team"}`}
         subtitle={`${companyShort} · Executive overview across every module · ${now.toLocaleDateString("en-AE", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}
       >
+        {u?.uniqueUserId && (
+          <Badge className="bg-white/10 text-[#c9a14a] border border-[#c9a14a]/40 hover:bg-white/10 font-mono text-[11px] tracking-wide">
+            {u.uniqueUserId}
+          </Badge>
+        )}
         <Badge className="bg-white/15 text-white border border-white/20 hover:bg-white/15 gap-1">
           <ShieldCheck className="w-3 h-3" />{u?.permissionLevel?.replace(/_/g, " ") ?? "User"}
         </Badge>

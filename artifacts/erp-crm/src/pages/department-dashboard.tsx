@@ -124,7 +124,7 @@ function PendingBadge({ count }: { count: number }) {
 
 export function DepartmentDashboard() {
   const { user } = useAuth();
-  const u = user as { name?: string; role?: string; departmentName?: string; companyName?: string; permissionLevel?: string } | undefined;
+  const u = user as { name?: string; role?: string; departmentName?: string; companyName?: string; permissionLevel?: string; uniqueUserId?: string | null } | undefined;
   const isAdmin = u?.permissionLevel === "super_admin" || u?.permissionLevel === "company_admin";
   const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary();
   const { data: pending } = useGetPendingApprovals();
@@ -168,7 +168,12 @@ export function DepartmentDashboard() {
         <div className="absolute right-0 top-0 w-48 h-48 bg-white/5 rounded-full -translate-y-12 translate-x-12" />
         <div className="absolute right-10 bottom-0 w-24 h-24 bg-white/5 rounded-full translate-y-8" />
         <p className="text-sm text-white/70 mb-0.5">{todayGreeting()},</p>
-        <h1 className="text-2xl font-bold tracking-tight relative">{u?.name ?? "User"}</h1>
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold tracking-tight relative">{u?.name ?? "User"}</h1>
+          {u?.uniqueUserId && (
+            <span className="font-mono text-sm text-[#c9a14a] tracking-wide">{u.uniqueUserId}</span>
+          )}
+        </div>
         <div className="text-sm text-white/80 mt-1.5 flex items-center gap-2 flex-wrap">
           <span>{u?.departmentName ?? "Department"} · {u?.companyName ?? "Workspace"}</span>
           <Badge className="bg-white/15 hover:bg-white/15 text-white border-0 font-mono text-[10px]">

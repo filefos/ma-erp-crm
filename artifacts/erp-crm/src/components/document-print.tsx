@@ -8,6 +8,7 @@ export interface DocumentItem {
   quantity: number;
   unit?: string;
   total?: number;
+  vatPercent?: number;
 }
 
 export interface AdditionalCommercialItem {
@@ -32,6 +33,7 @@ export interface DocumentData {
   clientPhone?: string;
   clientEmail?: string;
   clientTrn?: string;
+  companyTrn?: string;
   customerTrn?: string;
   projectRef?: string;
   projectName?: string;
@@ -421,7 +423,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <><LabelTd>Date</LabelTd><Td>{docDate}{data.validity ? ` | Valid: ${data.validity}` : ""}</Td></>
                 )}
               </tr>
-              <tr><LabelTd>Our TRN</LabelTd><Td>{co.trn}</Td><LabelTd>Customer TRN</LabelTd><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
+              <tr><LabelTd>Our TRN</LabelTd><Td>{data.companyTrn ?? co.trn}</Td><LabelTd>Customer TRN</LabelTd><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
             </tbody>
           </table>
         )}
@@ -451,7 +453,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <Th center>Size / Status</Th>
               {!isDelivery && <Th right>Price (AED)</Th>}
               <Th right>Qty.</Th>
-              {isTax && <Th right>VAT %</Th>}
+              {isTax && <Th center>VAT %</Th>}
               {!isDelivery && <Th right>Total (AED)</Th>}
             </tr>
           </thead>
@@ -470,7 +472,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <Td center>{item.sizeStatus ?? item.unit ?? "—"}</Td>
                 {!isDelivery && <Td right>{item.unitPrice != null ? formatAED(item.unitPrice) : "—"}</Td>}
                 <Td right>{item.quantity}</Td>
-                {isTax && <Td right>{vat}%</Td>}
+                {isTax && <Td center>{item.vatPercent ?? vat}%</Td>}
                 {!isDelivery && <Td right bold>{item.total != null ? formatAED(item.total) : "—"}</Td>}
               </tr>
             ))}

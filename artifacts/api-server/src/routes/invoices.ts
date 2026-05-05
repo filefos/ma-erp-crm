@@ -218,7 +218,9 @@ router.get("/tax-invoices/:id", requirePermission("tax_invoices", "view"), async
   if (!scopeFilter(req, [inv]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const ownerScope = await getOwnerScope(req);
   if (!inOwnerScope(ownerScope, inv.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
-  res.json(inv);
+  let items: unknown[] = [];
+  try { items = JSON.parse(inv.items ?? "[]"); } catch {}
+  res.json({ ...inv, items });
 });
 
 router.put("/tax-invoices/:id", requirePermission("tax_invoices", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {

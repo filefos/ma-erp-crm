@@ -81,6 +81,13 @@ export function InvoiceDetail({ id }: Props) {
     description: string; unit?: string; quantity: number; amount?: number;
   }[];
 
+  // Parse the invoice's own line items (stored as JSON text) and fall back
+  // to quotation items only when the invoice has none of its own.
+  const invItemsRaw: any[] = (() => {
+    try { return JSON.parse((inv as any).items ?? "[]"); } catch { return []; }
+  })();
+  const sourceItems = invItemsRaw.length > 0 ? invItemsRaw : qItems;
+
   const docData: DocumentData = {
     type: "tax_invoice",
     docNumber: inv.invoiceNumber,
@@ -88,6 +95,7 @@ export function InvoiceDetail({ id }: Props) {
     companyRef: (inv as any).companyRef,
     clientName: inv.clientName,
     clientTrn: inv.clientTrn,
+    companyTrn: (inv as any).companyTrn ?? undefined,
     invoiceDate: inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
     supplyDate: inv.supplyDate ? new Date(inv.supplyDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
     subtotal: inv.subtotal,
@@ -95,11 +103,13 @@ export function InvoiceDetail({ id }: Props) {
     vatAmount: inv.vatAmount,
     grandTotal: inv.grandTotal,
     paymentTerms: (inv as any).paymentTerms ?? undefined,
-    items: qItems.map(i => ({
+    items: sourceItems.map((i: any) => ({
       description: i.description,
-      sizeStatus: i.unit,
-      quantity: i.quantity,
-      total: i.amount,
+      sizeStatus: i.unit ?? i.sizeStatus,
+      unitPrice: i.rate ?? i.unitPrice,
+      quantity: i.quantity ?? 1,
+      total: i.amount ?? i.total,
+      vatPercent: i.vatPercent,
     })),
   };
 
