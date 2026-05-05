@@ -454,13 +454,13 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         <table className="w-full border-collapse border border-gray-400 mb-0">
           <thead>
             <tr style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-center w-8">S#</th>
-              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-left">Description</th>
-              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-center">Size / Status</th>
-              {!isDelivery && <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-right">Price (AED)</th>}
-              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-right">Qty.</th>
-              {isTax && <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-center">VAT %</th>}
-              {!isDelivery && <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-right">Total (AED)</th>}
+              <th className="border border-gray-400 px-2 py-1 text-xs font-bold text-white text-center w-8">S#</th>
+              <th className="border border-gray-400 px-2 py-1 text-xs font-bold text-white text-left">Description</th>
+              <th className="border border-gray-400 px-2 py-1 text-xs font-bold text-white text-center">Size / Status</th>
+              {!isDelivery && <th className="border border-gray-400 px-2 py-1 text-xs font-bold text-white text-right">Price</th>}
+              <th className="border border-gray-400 px-2 py-1 text-xs font-bold text-white text-right">Qty.</th>
+              {isTax && <th className="border border-gray-400 px-2 py-1 text-xs font-bold text-white text-center">VAT %</th>}
+              {!isDelivery && <th className="border border-gray-400 px-2 py-1 text-xs font-bold text-white text-right">Total</th>}
             </tr>
           </thead>
           <tbody>
