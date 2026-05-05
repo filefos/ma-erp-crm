@@ -374,7 +374,13 @@ export function UsersList() {
   const create = useCreateUser({ mutation: { onSuccess: () => { invalidate(); setOpen(false); } } });
   const update = useUpdateUser({ mutation: { onSuccess: invalidate } });
 
-  const filtered = users?.filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+  const filtered = (users ?? [])
+    .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      const at = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
+      const bt = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
+      return at - bt;
+    });
 
   const submit = () => {
     const allCompanyIds = (companies ?? []).map(c => c.id);
@@ -459,6 +465,7 @@ export function UsersList() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-24 font-mono">User ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Permission</TableHead>
@@ -466,12 +473,13 @@ export function UsersList() {
               <TableHead>Company</TableHead>
               <TableHead>Last Login</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No users found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No users found.</TableCell></TableRow> :
             filtered?.map(u => {
               const lvl = (u as { permissionLevel?: string }).permissionLevel ?? "user";
               const lvlMeta = PERMISSION_LEVELS.find(p => p.value === lvl);
@@ -479,8 +487,13 @@ export function UsersList() {
               const departmentId = (u as { departmentId?: number | null }).departmentId ?? null;
               const companyId = (u as { companyId?: number | null }).companyId ?? null;
               const phone = (u as { phone?: string | null }).phone ?? null;
+              const userCode = (u as any).userCode as string | null | undefined;
+              const createdAt = (u as any).createdAt as string | null | undefined;
               return (
                 <TableRow key={u.id} data-testid={`user-row-${u.id}`}>
+                  <TableCell className="font-mono text-xs font-semibold text-[#0f2d5a]">
+                    {userCode ?? "—"}
+                  </TableCell>
                   <TableCell className="font-medium">{u.name}</TableCell>
                   <TableCell className="text-sm">{u.email}</TableCell>
                   <TableCell>
@@ -497,6 +510,9 @@ export function UsersList() {
                     <Badge variant="secondary" className={u.isActive ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}>
                       {u.isActive ? "Active" : "Inactive"}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">
+                    {createdAt ? new Date(createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center gap-1 justify-end">

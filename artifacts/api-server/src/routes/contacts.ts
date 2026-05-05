@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, contactsTable } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 import { genClientCode, findDuplicateContact } from "../lib/client-code";
 
 const router = Router();
@@ -30,11 +30,11 @@ router.get("/contacts/check-duplicate", requirePermission("contacts", "view"), a
 
 router.get("/contacts", requirePermission("contacts", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(contactsTable).orderBy(contactsTable.name);
-  // Company-scope filter: restrict to companies the caller can access.
-  // We intentionally do NOT apply the ownerScope/lead-name filter here —
-  // contacts are a shared directory; filtering by "leads you own" hides
-  // freshly created contacts and makes the panel appear broken.
+  // Company-scope filter, then per-user isolation.
+  // Non-admin users see only contacts they created; admins see all.
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["createdById"]);
   const { search, companyId } = req.query;
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
   if (search) {

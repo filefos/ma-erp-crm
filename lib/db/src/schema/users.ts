@@ -14,6 +14,7 @@ export const usersTable = pgTable("users", {
   permissionLevel: text("permission_level").default("user"),
   status: text("status").notNull().default("active"),
   lastLoginAt: timestamp("last_login_at"),
+  userCode: text("user_code"),
   isActive: boolean("is_active").notNull().default(true),
   automationLevel: text("automation_level").notNull().default("suggest"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

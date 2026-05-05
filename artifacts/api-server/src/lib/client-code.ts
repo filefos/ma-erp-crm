@@ -47,3 +47,14 @@ export async function findDuplicateContact(
   const [match] = await db.select().from(contactsTable).where(where!).limit(1);
   return match ?? null;
 }
+
+/**
+ * Generate the next User Code in USR-NNNN format.
+ * Uses a global DB sequence (user_code_seq) to avoid race conditions.
+ */
+export async function genUserCode(tx: any = db): Promise<string> {
+  const result: any = await tx.execute(sql`SELECT nextval('user_code_seq') AS n`);
+  const row = Array.isArray(result) ? result[0] : (result?.rows?.[0] ?? result?.[0]);
+  const n = Number(row?.n ?? 1);
+  return `USR-${String(n).padStart(4, "0")}`;
+}

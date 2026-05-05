@@ -333,9 +333,14 @@ router.get("/lpos", requirePermission("lpos", "view"), async (req, res): Promise
       for (const q of qs) ownerByQuotation.set(q.id, { preparedById: q.preparedById, approvedById: q.approvedById });
     }
     rows = rows.filter(lpo => {
-      const owners = lpo.quotationId != null ? ownerByQuotation.get(lpo.quotationId) : undefined;
-      if (!owners) return false;
-      return inOwnerScope(ownerScope, owners.preparedById) || inOwnerScope(ownerScope, owners.approvedById);
+      // Direct ownership — covers manually entered LPOs with no quotation link.
+      if (inOwnerScope(ownerScope, lpo.createdById)) return true;
+      // Fallback: check the linked quotation's preparer / approver.
+      if (lpo.quotationId != null) {
+        const owners = ownerByQuotation.get(lpo.quotationId);
+        if (owners) return inOwnerScope(ownerScope, owners.preparedById) || inOwnerScope(ownerScope, owners.approvedById);
+      }
+      return false;
     });
   }
   const { status, companyId } = req.query;

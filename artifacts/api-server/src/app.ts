@@ -440,6 +440,27 @@ async function runMigrations() {
       }
     }
 
+    // User unique codes (USR-0001 format) ─ one-time setup + backfill
+    await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS user_code_seq START 1`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS user_code TEXT`);
+    await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS users_user_code_unique ON users(user_code) WHERE user_code IS NOT NULL`);
+    // Backfill existing users ordered by id
+    await db.execute(sql`
+      UPDATE users u
+      SET user_code = 'USR-' || LPAD(ranked.rn::text, 4, '0')
+      FROM (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY id ASC) AS rn
+        FROM users WHERE user_code IS NULL
+      ) ranked
+      WHERE u.id = ranked.id
+    `);
+    // Sync the sequence so new users pick up where backfill left off
+    await db.execute(sql`
+      SELECT setval('user_code_seq',
+        COALESCE(MAX(CAST(SUBSTRING(user_code FROM 5) AS INTEGER)), 0), true)
+      FROM users WHERE user_code IS NOT NULL
+    `);
+
     logger.info("Schema migrations applied");
   } catch (err) {
     logger.warn({ err }, "Migration warning (non-fatal)");

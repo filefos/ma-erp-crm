@@ -5,6 +5,7 @@ import { requireAuth, requirePermissionLevel } from "../middlewares/auth";
 import type { Request } from "express";
 import { hashPassword } from "../lib/auth";
 import { audit } from "../lib/audit";
+import { genUserCode } from "../lib/client-code";
 import { validateBody } from "../middlewares/validate";
 import { CreateUserBody, UpdateUserBody } from "@workspace/api-zod";
 
@@ -122,9 +123,11 @@ router.post("/users", requirePermissionLevel("company_admin"), validateBody(Crea
     }
   }
 
+  const userCode = await genUserCode();
   const [user] = await db.insert(usersTable).values({
     name, email: email.toLowerCase(), passwordHash: await hashPassword(password),
     phone, role: role ?? "user", departmentId, companyId, permissionLevel: permissionLevel ?? "user",
+    userCode,
   }).returning();
 
   // Maintain user_company_access rows

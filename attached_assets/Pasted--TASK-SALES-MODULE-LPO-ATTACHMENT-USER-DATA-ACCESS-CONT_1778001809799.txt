@@ -1,0 +1,146 @@
+**TASK: SALES MODULE – LPO ATTACHMENT + USER DATA ACCESS CONTROL + COMPANY ASSIGNMENT**
+
+---
+
+## 1. LPO PANEL – ATTACHMENT
+
+* Add upload option in LPO panel
+  👉 Button: **"Upload Attachment"**
+
+* Allow:
+
+  * LPO file
+  * Reference/supporting files
+
+* Support:
+
+  * PDF, Word, Excel, Images
+
+* Save in database:
+
+```sql
+attachments JSONB
+```
+
+* Show uploaded files with:
+
+  * View
+  * Download
+
+---
+
+## 2. USER DATA ACCESS CONTROL (VERY IMPORTANT)
+
+### REQUIREMENT:
+
+* Each user must see ONLY their own data
+
+Apply to:
+
+* Contacts
+* Leads
+* Deals
+* LPO
+
+---
+
+### RULE:
+
+* User 1 data → NOT visible to User 2 / User 3
+* Same contact name allowed for different users
+* Do NOT merge or delete
+
+---
+
+### DATABASE LOGIC:
+
+Add field in all tables:
+
+```sql
+user_id INT
+```
+
+---
+
+### FILTER:
+
+Every API must filter:
+
+```sql
+WHERE user_id = logged_in_user_id
+```
+
+---
+
+## 3. ADMIN PANEL (FULL ACCESS)
+
+* Admin can see ALL users data
+
+* Show:
+
+  * User ID
+  * Created date & time
+
+* Sort:
+  👉 First created record → show first
+
+---
+
+## 4. USER UNIQUE ID (MANDATORY)
+
+* Each user must have:
+  👉 Unique ID (auto generated)
+
+Example:
+
+```text
+USR-0001
+USR-0002
+```
+
+* This ID must be used across ALL modules
+
+---
+
+## 5. COMPANY ASSIGNMENT (USER CREATION)
+
+When creating user, show options:
+
+* BOTH COMPANIES
+* ELITE PREFABRICATED HOUSES TRADING CO
+* PRIME MAX PREFAB HOUSES IND. LLC.
+
+---
+
+### RULE:
+
+* User can access only assigned company data
+* If BOTH selected → access both companies
+
+---
+
+## 6. MODULE-WISE ID SYSTEM
+
+* Each module should generate unique ID:
+
+Examples:
+
+* Contacts → CNT-001
+* Leads → LED-001
+* LPO → LPO-001
+
+---
+
+## 🚀 FINAL RESULT
+
+* LPO attachments working
+* User data fully isolated
+* Admin has full control
+* Multi-company support working
+* Unique ID system across modules
+
+---
+
+**STRICT IMPLEMENTATION. NO DATA LEAK BETWEEN USERS.**
+
+---
