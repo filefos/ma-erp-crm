@@ -476,6 +476,43 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
   } as any).returning();
   await notifyAccountsOfLpo(req, lpo, "created");
 
+  // AUTO-ALLOCATE a Project Code immediately after LPO registration.
+  // Creates a new project record, then writes projectId + projectRef back onto the LPO.
+  let autoProject: { id: number; projectNumber: string } | null = null;
+  let resolvedProjectRef: string | null = lpo.projectRef ?? null;
+  let resolvedProjectId: number | null = null;
+  try {
+    const [co] = lpo.companyId
+      ? await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, lpo.companyId))
+      : [{ prefix: "PM" }];
+    const countRes = await db.select({ count: sql<number>`count(*)::int` }).from(projectsTable);
+    const num = (countRes[0]?.count ?? 0) + 1;
+    const projectNumber = `${co?.prefix ?? "PM"}-PRJ-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
+    const projectName = lpo.projectRef || lpo.clientName;
+    const [proj] = await db.insert(projectsTable).values({
+      projectNumber,
+      projectName,
+      clientName: lpo.clientName,
+      companyId: lpo.companyId,
+      lpoId: lpo.id,
+      projectValue: lpo.lpoValue ?? 0,
+      scope: lpo.scope ?? null,
+      stage: "new_project",
+      startDate: lpo.lpoDate ?? null,
+      quotationId: lpo.quotationId ?? null,
+    } as any).returning();
+    // Write project code back onto the LPO so every linked document can reference it.
+    await db.update(lposTable)
+      .set({ projectId: proj.id, projectRef: proj.projectNumber, updatedAt: new Date() })
+      .where(eq(lposTable.id, lpo.id));
+    resolvedProjectRef = proj.projectNumber;
+    resolvedProjectId = proj.id;
+    autoProject = { id: proj.id, projectNumber: proj.projectNumber };
+    req.log?.info({ lpoId: lpo.id, projectNumber }, "Auto-created project for LPO");
+  } catch (err) {
+    req.log?.warn({ err }, "Failed to auto-create project from LPO");
+  }
+
   // AUTO-CREATE draft Proforma + draft Tax Invoice from this LPO.
   // Per spec: "LPO uses AI extract → user reviews → auto-create BOTH draft Proforma + draft Tax Invoice."
   const today = new Date().toISOString().split("T")[0];
@@ -493,7 +530,9 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
       companyId: lpo.companyId,
       clientCode,
       clientName: lpo.clientName,
-      projectName: lpo.projectRef ?? quotation?.projectName ?? null,
+      projectName: resolvedProjectRef ?? quotation?.projectName ?? null,
+      projectRef: resolvedProjectRef ?? null,
+      projectId: resolvedProjectId ?? null,
       quotationId: lpo.quotationId,
       lpoId: lpo.id,
       subtotal, vatPercent, vatAmount,
@@ -518,6 +557,8 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
       clientName: lpo.clientName,
       invoiceDate: today,
       supplyDate: today,
+      projectRef: resolvedProjectRef ?? null,
+      projectId: resolvedProjectId ?? null,
       quotationId: lpo.quotationId,
       lpoId: lpo.id,
       paymentTerms: lpo.paymentTerms,
@@ -537,7 +578,10 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
 
   res.status(201).json({
     ...lpo,
+    projectRef: resolvedProjectRef,
+    projectId: resolvedProjectId,
     autoCreated: {
+      project: autoProject,
       proformaInvoice: createdPi ? { id: createdPi.id, piNumber: createdPi.piNumber } : null,
       taxInvoice: createdTi ? { id: createdTi.id, invoiceNumber: createdTi.invoiceNumber } : null,
     },

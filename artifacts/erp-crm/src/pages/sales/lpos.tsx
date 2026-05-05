@@ -81,8 +81,16 @@ export function LposList() {
         setCreateOpen(false);
         setForm(EMPTY_FORM);
         setAttachments([]);
-        toast({ title: "LPO registered." });
         const auto = resp?.autoCreated;
+        if (auto?.project) {
+          toast({
+            title: "LPO registered — Project code allocated",
+            description: `Project ${auto.project.projectNumber} created and linked to this LPO.`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["/projects"] });
+        } else {
+          toast({ title: "LPO registered." });
+        }
         if (auto?.proformaInvoice || auto?.taxInvoice) {
           const parts: string[] = [];
           if (auto.proformaInvoice) parts.push(`Proforma ${auto.proformaInvoice.piNumber}`);
@@ -248,7 +256,7 @@ export function LposList() {
             columns={[
               { header: "LPO Number", key: "lpoNumber" },
               { header: "Client", key: "clientName" },
-              { header: "Project Ref", key: "projectRef" },
+              { header: "Project Code", key: "projectRef" },
               { header: "LPO Value (AED)", key: "lpoValue", format: v => Number(v ?? 0).toFixed(2) },
               { header: "Status", key: "status" },
               { header: "LPO Date", key: "lpoDate" },
@@ -286,7 +294,7 @@ export function LposList() {
             <TableRow>
               <TableHead>LPO Number</TableHead>
               <TableHead>Client</TableHead>
-              <TableHead>Project Ref</TableHead>
+              <TableHead>Project Code</TableHead>
               <TableHead>LPO Date</TableHead>
               <TableHead className="text-right">LPO Value (AED)</TableHead>
               <TableHead>Payment Terms</TableHead>
@@ -307,7 +315,15 @@ export function LposList() {
               >
                 <TableCell className="font-medium text-primary font-mono text-sm">{l.lpoNumber}</TableCell>
                 <TableCell className="font-medium">{l.clientName}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{(l as any).projectRef || "-"}</TableCell>
+                <TableCell>
+                  {(l as any).projectRef ? (
+                    <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold bg-[#0f2d5a]/8 text-[#0f2d5a] border border-[#0f2d5a]/20 rounded-md px-2 py-0.5">
+                      {(l as any).projectRef}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
                 <TableCell>{(l as any).lpoDate || "-"}</TableCell>
                 <TableCell className="text-right font-medium">
                   AED {(l.lpoValue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -484,8 +500,8 @@ function LpoFormFields({
           </Select>
         </div>
         <div className="space-y-1">
-          <Label>Project Reference</Label>
-          <Input value={form.projectRef} onChange={f("projectRef")} placeholder="Project name or code" />
+          <Label>Project Name <span className="text-muted-foreground font-normal text-xs">(optional — Project Code auto-generated on save)</span></Label>
+          <Input value={form.projectRef} onChange={f("projectRef")} placeholder="e.g. Warehouse Extension Phase 2" />
         </div>
         <div className="space-y-1">
           <Label>Status</Label>
@@ -583,6 +599,22 @@ function LpoDetailView({ lpo }: { lpo: any }) {
 
   return (
     <div className="space-y-5 py-1">
+      {/* Auto-allocated project code banner */}
+      {lpo.projectRef && (
+        <div className="flex items-center gap-3 bg-[#0f2d5a]/5 border border-[#0f2d5a]/20 rounded-xl px-4 py-3">
+          <div className="w-8 h-8 rounded-lg bg-[#0f2d5a] flex items-center justify-center flex-shrink-0">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-[#0f2d5a]/70 font-medium mb-0.5">Auto-Allocated Project Code</div>
+            <div className="font-mono font-bold text-[#0f2d5a] text-lg tracking-wide">{lpo.projectRef}</div>
+          </div>
+          <div className="text-[10px] text-[#0f2d5a]/60 text-right leading-4">
+            Linked to<br />Projects module
+          </div>
+        </div>
+      )}
+
       {/* Key stats row */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-[#0f2d5a]/5 rounded-xl p-3 text-center">
@@ -604,7 +636,6 @@ function LpoDetailView({ lpo }: { lpo: any }) {
       {/* Details */}
       <div className="bg-white border border-gray-100 rounded-xl px-4 py-1">
         <InfoRow icon={Building2} label="Client Name" value={lpo.clientName} />
-        <InfoRow icon={FileText} label="Project Reference" value={lpo.projectRef} />
         <InfoRow icon={ClipboardList} label="Scope of Work" value={lpo.scope} />
         <InfoRow icon={Calendar} label="Delivery Schedule" value={lpo.deliverySchedule} />
         <InfoRow icon={DollarSign} label="Notes" value={lpo.notes} />
