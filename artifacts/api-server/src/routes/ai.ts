@@ -213,7 +213,7 @@ const MODULE_GUIDANCE: Record<string, string> = {
 
 router.post("/ai/ask", async (req, res): Promise<void> => {
   const moduleId = String(req.body?.module ?? "general").toLowerCase();
-  const question = String(req.body?.question ?? "").trim();
+  const question = String(req.body?.question ?? req.body?.message ?? "").trim();
   const ctx = req.body?.context;
   const history = Array.isArray(req.body?.history) ? req.body.history.slice(-6) : [];
 

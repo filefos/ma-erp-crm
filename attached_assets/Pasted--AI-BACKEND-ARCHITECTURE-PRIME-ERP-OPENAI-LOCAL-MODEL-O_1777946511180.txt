@@ -1,0 +1,235 @@
+**AI BACKEND ARCHITECTURE – PRIME ERP (OPENAI / LOCAL MODEL)**
+
+---
+
+## 🎯 OBJECTIVE
+
+Build a **controlled AI backend** that powers AI Assistant across all ERP modules.
+
+---
+
+# 🧱 1. ARCHITECTURE OVERVIEW
+
+Frontend (React)
+↓
+Backend API (Node.js / Express)
+↓
+AI Layer (Service)
+↓
+Model (OpenAI API OR Local Model)
+
+---
+
+# ⚙️ 2. CORE AI SERVICE (IMPORTANT)
+
+Create one central service:
+
+👉 `aiService.js`
+
+This will:
+
+* Receive request
+* Add ERP context
+* Call AI model
+* Return response
+
+---
+
+## 🔹 BASIC FUNCTION
+
+```javascript
+async function askAI(module, userInput, contextData) {
+    const prompt = buildPrompt(module, userInput, contextData);
+
+    const response = await callModel(prompt);
+
+    return response;
+}
+```
+
+---
+
+# 🧠 3. PROMPT ENGINE (VERY IMPORTANT)
+
+Create dynamic prompt builder:
+
+```javascript
+function buildPrompt(module, userInput, contextData) {
+    return `
+You are an ERP assistant for ${module} module.
+
+User Request:
+${userInput}
+
+System Data:
+${JSON.stringify(contextData)}
+
+Instructions:
+- Be accurate
+- Suggest only
+- Do not take actions
+- Keep response short and clear
+`;
+}
+```
+
+---
+
+# 🤖 4. MODEL OPTIONS
+
+## OPTION A: OPENAI (RECOMMENDED START)
+
+Install:
+
+```bash
+npm install openai
+```
+
+Example:
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+async function callModel(prompt) {
+    const response = await client.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+    });
+
+    return response.choices[0].message.content;
+}
+```
+
+---
+
+## OPTION B: LOCAL MODEL (ADVANCED)
+
+Use:
+
+* Ollama
+* Llama 3
+
+Example API:
+
+```javascript
+async function callModel(prompt) {
+    const res = await fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        body: JSON.stringify({
+            model: "llama3",
+            prompt: prompt
+        })
+    });
+
+    const data = await res.json();
+    return data.response;
+}
+```
+
+---
+
+# 📊 5. MODULE CONTEXT DATA (CRITICAL)
+
+Each module sends data:
+
+Example:
+
+### SALES:
+
+```javascript
+contextData = {
+    quotation: {...},
+    items: [...],
+    previousPrices: [...]
+}
+```
+
+### ACCOUNTS:
+
+```javascript
+contextData = {
+    invoices: [...],
+    payments: [...],
+    vat: 5
+}
+```
+
+👉 AI MUST use real ERP data
+
+---
+
+# 🔗 6. API ENDPOINT
+
+```javascript
+POST /api/ai/ask
+```
+
+Body:
+
+```json
+{
+  "module": "sales",
+  "message": "Suggest price",
+  "context": {}
+}
+```
+
+---
+
+# 🔐 7. CONTROL RULES
+
+* No auto execution
+* AI only returns suggestions
+* User must confirm action
+
+---
+
+# 📊 8. LOGGING
+
+Create table:
+
+```sql
+ai_logs
+- id
+- user_id
+- module
+- input
+- output
+- created_at
+```
+
+---
+
+# ⚡ 9. PERFORMANCE
+
+* Limit response size
+* Cache frequent queries
+* Use async calls
+
+---
+
+# 🎨 10. FRONTEND CONNECTION
+
+Button:
+👉 “Ask AI”
+
+Call API:
+
+```javascript
+fetch('/api/ai/ask', {...})
+```
+
+Show response in side panel
+
+---
+
+# 🚀 FINAL RULE
+
+* Keep AI simple
+* Use real ERP data
+* No automation without approval
+* Fast response
+
+---
