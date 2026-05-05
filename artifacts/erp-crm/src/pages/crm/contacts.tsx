@@ -8,7 +8,13 @@ import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
@@ -19,6 +25,7 @@ import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { authHeaders } from "@/lib/ai-client";
 
 type ContactForm = {
   name: string; email: string; phone: string; whatsapp: string;
@@ -47,8 +54,52 @@ export function ContactsList() {
   const del = useDeleteContact({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }); } } });
 
   const [form, setForm] = useState<ContactForm>(emptyForm);
-
   const filteredWithSno = filtered.map((c, idx) => ({ ...c, sno: idx + 1 }));
+
+  // ── Multi-select state ─────────────────────────────────────────────────────
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const allSelected = filtered.length > 0 && filtered.every(c => selected.has(c.id));
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(filtered.map(c => c.id)));
+  };
+  const toggleOne = (id: number) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    setBulkDeleting(true);
+    try {
+      const ids = Array.from(selected);
+      if (ids.length === 1) {
+        await del.mutateAsync({ id: ids[0] });
+      } else {
+        await fetch(`${import.meta.env.BASE_URL}api/contacts`, {
+          method: "DELETE",
+          headers: { ...authHeaders(), "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ ids }),
+        });
+        queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() });
+      }
+      clearSelection();
+      setConfirmDeleteOpen(false);
+      toast({ title: `${ids.length} contact${ids.length === 1 ? "" : "s"} deleted` });
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err?.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   // ── Edit dialog state ──────────────────────────────────────────────────────
   const [editOpen, setEditOpen] = useState(false);
@@ -249,6 +300,33 @@ export function ContactsList() {
         </div>
       </div>
 
+      {/* Bulk-action toolbar — visible when rows are selected */}
+      {selected.size > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 flex items-center gap-3">
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={toggleAll}
+            className="border-red-400"
+          />
+          <span className="text-sm font-medium text-red-700">
+            {selected.size} contact{selected.size === 1 ? "" : "s"} selected
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="ml-auto"
+            onClick={() => setConfirmDeleteOpen(true)}
+            disabled={bulkDeleting}
+          >
+            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+            Delete Selected ({selected.size})
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearSelection} className="text-muted-foreground">
+            Cancel
+          </Button>
+        </div>
+      )}
+
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search contacts..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
@@ -258,7 +336,14 @@ export function ContactsList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-14 text-center">#</TableHead>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={toggleAll}
+                  aria-label="Select all contacts"
+                />
+              </TableHead>
+              <TableHead className="w-12 text-center">#</TableHead>
               <TableHead>Client Code</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Company</TableHead>
@@ -270,11 +355,22 @@ export function ContactsList() {
           </TableHeader>
           <TableBody>
             {isLoading
-              ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+              ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
               : filtered.length === 0
-              ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow>
+              ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow>
               : filtered.map((c, idx) => (
-                <TableRow key={c.id} data-contact-row={c.id} className="hover:bg-muted/40">
+                <TableRow
+                  key={c.id}
+                  data-contact-row={c.id}
+                  className={`hover:bg-muted/40 transition-colors ${selected.has(c.id) ? "bg-red-50/60" : ""}`}
+                >
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(c.id)}
+                      onCheckedChange={() => toggleOne(c.id)}
+                      aria-label={`Select ${c.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="text-center text-muted-foreground text-sm font-mono">{idx + 1}</TableCell>
                   <TableCell className="font-mono text-xs">{c.clientCode || "-"}</TableCell>
                   <TableCell className="font-medium">
@@ -312,7 +408,8 @@ export function ContactsList() {
                       <Button
                         variant="ghost" size="icon"
                         className="text-red-500 hover:text-red-700"
-                        onClick={() => del.mutate({ id: c.id })}
+                        onClick={() => { setSelected(new Set([c.id])); setConfirmDeleteOpen(true); }}
+                        title="Delete contact"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -323,6 +420,32 @@ export function ContactsList() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selected.size === 1 ? "Contact" : `${selected.size} Contacts`}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              {selected.size === 1 ? "this contact" : `these ${selected.size} contacts`}?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setConfirmDeleteOpen(false); clearSelection(); }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+            >
+              {bulkDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Contact dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

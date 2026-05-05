@@ -43,7 +43,7 @@ export function LeadsList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [scoreFilter, setScoreFilter] = useState("all");
   const [monthFilter, setMonthFilter] = useState("all"); // "all" | "01".."12"
-  const [yearFilter, setYearFilter] = useState<string>(String(new Date().getFullYear()));
+  const [yearFilter, setYearFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [open, setOpen] = useState(false);
@@ -112,10 +112,11 @@ export function LeadsList() {
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
     if (scoreFilter !== "all" && l.leadScore !== scoreFilter) return false;
     const created = (l.createdAt ?? "").slice(0, 10); // YYYY-MM-DD
+    const yy = created.slice(0, 4);
+    if (yearFilter !== "all" && yy !== yearFilter) return false;
     if (monthFilter !== "all") {
       const mm = created.slice(5, 7);
-      const yy = created.slice(0, 4);
-      if (mm !== monthFilter || yy !== yearFilter) return false;
+      if (mm !== monthFilter) return false;
     }
     if (dateFrom && created < dateFrom) return false;
     if (dateTo && created > dateTo) return false;
@@ -163,10 +164,10 @@ export function LeadsList() {
 
   const yearOptions = (() => {
     const y = new Date().getFullYear();
-    return [String(y - 1), String(y), String(y + 1)];
+    return ["all", String(y - 2), String(y - 1), String(y), String(y + 1)];
   })();
 
-  const clearDateFilters = () => { setMonthFilter("all"); setDateFrom(""); setDateTo(""); };
+  const clearDateFilters = () => { setMonthFilter("all"); setYearFilter("all"); setDateFrom(""); setDateTo(""); };
 
   return (
     <div className="space-y-4">
@@ -309,8 +310,12 @@ export function LeadsList() {
             </SelectContent>
           </Select>
           <Select value={yearFilter} onValueChange={setYearFilter}>
-            <SelectTrigger className="w-20 h-7 border-0 bg-transparent"><SelectValue /></SelectTrigger>
-            <SelectContent>{yearOptions.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+            <SelectTrigger className="w-24 h-7 border-0 bg-transparent"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {yearOptions.map(y => (
+                <SelectItem key={y} value={y}>{y === "all" ? "All years" : y}</SelectItem>
+              ))}
+            </SelectContent>
           </Select>
         </div>
         <div className="flex items-center gap-1 border rounded-md px-2 py-1 bg-muted/30">
@@ -319,7 +324,7 @@ export function LeadsList() {
           <span className="text-xs text-muted-foreground">To</span>
           <Input type="date" className="h-7 w-36 border-0 bg-transparent text-xs" value={dateTo} onChange={e => setDateTo(e.target.value)} />
         </div>
-        {(monthFilter !== "all" || dateFrom || dateTo) && (
+        {(monthFilter !== "all" || yearFilter !== "all" || dateFrom || dateTo) && (
           <Button variant="ghost" size="sm" onClick={clearDateFilters}><X className="w-3 h-3 mr-1" />Clear dates</Button>
         )}
       </div>

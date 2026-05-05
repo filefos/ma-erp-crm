@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, contactsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 import { genClientCode, findDuplicateContact } from "../lib/client-code";
 
@@ -88,6 +88,21 @@ router.delete("/contacts/:id", requirePermission("contacts", "delete"), async (r
   if (existing && !scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(contactsTable).where(eq(contactsTable.id, id));
   res.json({ success: true });
+});
+
+router.delete("/contacts", requirePermission("contacts", "delete"), async (req, res): Promise<void> => {
+  const raw = req.body?.ids;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    res.status(400).json({ error: "ids array required" });
+    return;
+  }
+  const ids = raw.map(Number).filter(n => Number.isFinite(n));
+  if (ids.length === 0) { res.status(400).json({ error: "No valid ids" }); return; }
+  const rows = await db.select().from(contactsTable).where(inArray(contactsTable.id, ids));
+  const allowed = scopeFilter(req, rows).map(r => r.id);
+  if (allowed.length === 0) { res.status(403).json({ error: "Forbidden" }); return; }
+  await db.delete(contactsTable).where(inArray(contactsTable.id, allowed));
+  res.json({ deleted: allowed.length });
 });
 
 export default router;
