@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useListLeads, useCreateLead, useUpdateLead, useListCompanies, useListUsers } from "@workspace/api-client-react";
+import { useListLeads, useCreateLead, useUpdateLead, useListCompanies, useListUsers, getListLeadsQueryKey } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -62,7 +62,7 @@ export function LeadsList() {
   const create = useCreateLead({
     mutation: {
       onSuccess: (newLead: any) => {
-        queryClient.invalidateQueries({ queryKey: ["/leads"] });
+        queryClient.invalidateQueries({ queryKey: getListLeadsQueryKey() });
         setOpen(false);
         setForm(emptyForm);
         toast({
@@ -73,7 +73,7 @@ export function LeadsList() {
     },
   });
   const update = useUpdateLead({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/leads"] }) },
+    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListLeadsQueryKey() }) },
   });
 
   // Auto-open + prefill from /crm/contacts (Save & Convert / Convert To Lead).

@@ -451,13 +451,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <Th center>Size / Status</Th>
               {!isDelivery && <Th right>Price (AED)</Th>}
               <Th right>Qty.</Th>
+              {isTax && <Th right>VAT %</Th>}
               {!isDelivery && <Th right>Total (AED)</Th>}
             </tr>
           </thead>
           <tbody>
             {data.items.length === 0 && (
               <tr>
-                <Td colSpan={isDelivery ? 3 : 6} center>
+                <Td colSpan={isDelivery ? 3 : isTax ? 7 : 6} center>
                   <span className="text-gray-400 italic">No items</span>
                 </Td>
               </tr>
@@ -469,6 +470,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <Td center>{item.sizeStatus ?? item.unit ?? "—"}</Td>
                 {!isDelivery && <Td right>{item.unitPrice != null ? formatAED(item.unitPrice) : "—"}</Td>}
                 <Td right>{item.quantity}</Td>
+                {isTax && <Td right>{vat}%</Td>}
                 {!isDelivery && <Td right bold>{item.total != null ? formatAED(item.total) : "—"}</Td>}
               </tr>
             ))}

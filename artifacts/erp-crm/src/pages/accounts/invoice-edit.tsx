@@ -14,6 +14,7 @@ import { Link, useLocation } from "wouter";
 import { ArrowLeft, Save } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { PAYMENT_TERMS_PRESETS, getPresetByKey } from "@/lib/payment-terms";
 
 interface Props { id: string }
 
@@ -164,6 +165,21 @@ export function InvoiceEdit({ id }: Props) {
           </div>
           <div className="space-y-1 md:col-span-2">
             <Label>Payment Terms</Label>
+            <Select
+              onValueChange={(key) => {
+                const preset = getPresetByKey(key);
+                if (preset) setForm(p => ({ ...p, paymentTerms: preset.text }));
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Pick a standard preset…" />
+              </SelectTrigger>
+              <SelectContent>
+                {PAYMENT_TERMS_PRESETS.map(p => (
+                  <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Input
               value={form.paymentTerms}
               onChange={e => setForm(p => ({ ...p, paymentTerms: e.target.value }))}

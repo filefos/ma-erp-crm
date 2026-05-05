@@ -1,0 +1,175 @@
+**TASK: FIX CRM MODULE – CONTACT & LEAD NOT SAVING / NOT DISPLAYING**
+
+---
+
+## 🎯 OBJECTIVE
+
+Fix issue where:
+
+* Contact form is filled but **not showing in contact list**
+* Lead form is filled but **not showing in lead panel**
+
+---
+
+# 🚨 ISSUE 1: CONTACT PANEL
+
+## PROBLEM:
+
+* User fills contact form
+* Clicks save
+* Data is NOT visible in contact list
+
+---
+
+## REQUIRED FIX:
+
+### 1. SAVE FUNCTION
+
+* Ensure form submits data correctly to backend
+* API must store data in database
+
+---
+
+### 2. DATABASE CHECK
+
+* Insert record into `contacts` table
+* Validate:
+
+  * Name
+  * Mobile
+  * Email
+  * Company
+
+---
+
+### 3. FETCH FUNCTION
+
+* Contact list must fetch data using API:
+
+```bash id="api1"
+GET /contacts
+```
+
+---
+
+### 4. UI UPDATE
+
+* After saving:
+
+  * Refresh contact list automatically
+    OR
+  * Append new contact to list
+
+---
+
+# 🚨 ISSUE 2: LEAD PANEL
+
+## PROBLEM:
+
+* Lead form submitted
+* Lead NOT appearing in Lead Panel
+
+---
+
+## REQUIRED FIX:
+
+### 1. SAVE LEAD
+
+* Ensure POST API is working:
+
+```bash id="api2"
+POST /leads
+```
+
+* Save data into `leads` table
+
+---
+
+### 2. FETCH LEADS
+
+* Lead panel must load data using:
+
+```bash id="api3"
+GET /leads
+```
+
+---
+
+### 3. AUTO REFRESH
+
+* After saving lead:
+
+  * Refresh list
+    OR
+  * Add new lead instantly
+
+---
+
+# 🔗 COMMON FIX (VERY IMPORTANT)
+
+## FRONTEND BUG CHECK
+
+* Ensure:
+
+  * Form `onSubmit` is triggered
+  * API call is executed
+  * No console errors
+
+---
+
+## BACKEND BUG CHECK
+
+* Check:
+
+  * API route exists
+  * Correct database insert query
+  * No validation failure
+
+---
+
+## DATABASE CHECK
+
+* Confirm:
+
+  * Tables exist (`contacts`, `leads`)
+  * Data is actually inserted
+
+---
+
+# ⚠️ DEBUG STEPS (MANDATORY)
+
+Add logs:
+
+```javascript id="debug1"
+console.log("Form Submitted", formData);
+```
+
+```javascript id="debug2"
+console.log("API Response", response);
+```
+
+```javascript id="debug3"
+console.log("Fetched Data", data);
+```
+
+---
+
+# 🚫 RESTRICTIONS
+
+* Do NOT change UI design
+* Do NOT remove fields
+* Only fix data flow
+
+---
+
+# 🚀 FINAL RESULT
+
+* Contact form → Save → Visible in list ✅
+* Lead form → Save → Visible in panel ✅
+* No manual refresh required
+
+---
+
+**THIS IS A CRITICAL FIX. MUST WORK WITHOUT FAIL.**
+
+---

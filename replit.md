@@ -238,6 +238,23 @@ Final shipped behavior (supersedes any earlier descriptions in this file):
 - **Reports & Procurement Dashboards** no longer call `useGetDashboardSummary()` / `useGetProcurementDashboard()`. All figures derive from already company-filtered lists, eliminating cross-tenant leakage and zero-count clobbering from the previous `computed || summary` fallback.
 - **Sidebar nav** (`components/layout.tsx`): `visibleGroupsFor(user, canEmails)` filters by department/role mapping AND drops the Email group when `can("emails")` is false, keeping nav and route guards consistent.
 
+## CRM Bug Fixes (May 2026)
+
+### Contacts not appearing after save
+- **Root cause**: `GET /contacts` applied an `ownerScope` filter that only showed contacts whose `companyName` matched a lead assigned to the current user — newly created contacts with no matching lead were invisible.
+- **Fix**: Removed the lead-name gate from the contacts list endpoint (and GET-by-ID / PUT / DELETE for consistency). Contacts are now scoped by company only (`scopeFilter`), matching how every other module works. Cleaned up unused `ownedClientNames`, `contactInOwnerNames` helpers and `leadsTable`/`inArray`/`and`/`sql`/`Request` imports from `routes/contacts.ts`.
+
+### Leads not refreshing after save
+- **Root cause**: `useCreateLead` and `useUpdateLead` mutations in `leads.tsx` and `lead-detail.tsx` called `queryClient.invalidateQueries({ queryKey: ["/leads"] })` — but the generated React Query client uses `["/api/leads"]` as its actual key, so the list never refreshed.
+- **Fix**: Imported `getListLeadsQueryKey` from `@workspace/api-client-react` and used it in all three `onSuccess` handlers (create + update in `leads.tsx`, update in `lead-detail.tsx`).
+
+## A1 — UAE Accounts: Payment Terms & PDF Compliance (May 2026)
+
+Schema already had `paymentTerms`, `clientTrn`, `companyTrn`, `vatPercent`, `vatAmount` on both `proformaInvoicesTable` and `taxInvoicesTable`. The PDF footer "This is a computer generated document. No signature or stamp required." was already present on all doc types. Additions in this task:
+
+- **Payment Terms preset selector on Tax Invoice edit** (`pages/accounts/invoice-edit.tsx`): added the `PAYMENT_TERMS_PRESETS` dropdown (same as Proforma edit) so users can one-click fill standard terms (100% Advance, 75/25, 50/50, 25/75, 25/50/25, 25/25/25/25) then free-type to adjust. Import: `@/lib/payment-terms`.
+- **VAT % column per line in Tax Invoice PDF** (`components/document-print.tsx`): the items table now shows a "VAT %" column (showing the document-level VAT rate for each line) when `type === "tax_invoice"` — required for UAE FTA tax invoice compliance.
+
 ## Important Notes
 
 - `lib/api-zod/src/index.ts` must only contain `export * from "./generated/api";` — codegen overwrites it

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  useGetLead, useUpdateLead, getGetLeadQueryKey,
+  useGetLead, useUpdateLead, getGetLeadQueryKey, getListLeadsQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +63,7 @@ export function LeadDetail({ id }: Props) {
   const update = useUpdateLead({
     mutation: {
       onSuccess: (resp: any) => {
-        queryClient.invalidateQueries({ queryKey: ["/leads"] });
+        queryClient.invalidateQueries({ queryKey: getListLeadsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetLeadQueryKey(lid) });
         setEditing(false);
         toast({ title: "Lead updated" });
