@@ -468,7 +468,9 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <LabelTdHalf>{isTax ? "Invoice Date" : "Date"}</LabelTdHalf>
                   <Td>{docDate}{data.validity ? ` | Valid: ${data.validity}` : ""}{data.supplyDate ? ` | Supply: ${data.supplyDate}` : ""}</Td>
                 </tr>
-                <tr><LabelTdHalf>Company TRN</LabelTdHalf><Td>{data.companyTrn ?? co.trn}</Td></tr>
+                {(isTax || data.type === "proforma") && (
+                  <tr><LabelTdHalf>Company TRN</LabelTdHalf><Td>{data.companyTrn ?? co.trn}</Td></tr>
+                )}
               </tbody>
             </table>
 
@@ -488,7 +490,9 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <tr><LabelTdHalf>CLIENT ID</LabelTdHalf><Td>{data.clientCode ?? "—"}</Td></tr>
                 <tr><LabelTdHalf>Project Ref</LabelTdHalf><Td>{data.projectRef ?? data.projectName ?? ""}</Td></tr>
                 <tr><LabelTdHalf>Project / Site</LabelTdHalf><Td>{data.projectLocation ?? data.deliveryLocation ?? ""}</Td></tr>
-                <tr><LabelTdHalf>Customer TRN</LabelTdHalf><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
+                {(isTax || data.type === "proforma") && (
+                  <tr><LabelTdHalf>Customer TRN</LabelTdHalf><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
+                )}
               </tbody>
             </table>
           </div>
