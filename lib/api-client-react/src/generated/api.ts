@@ -48,7 +48,6 @@ import type {
   CreateJournalEntryBody,
   CreateLeadBody,
   CreateLpoBody,
-  CreateOfferLetterAttachmentBody,
   CreateOfferLetterBody,
   CreatePaymentMadeBody,
   CreatePaymentReceivedBody,
@@ -128,7 +127,6 @@ import type {
   Notification,
   OfferLetter,
   OfferLetterAttachment,
-  OfferLetterAttachmentUploadUrlResponse,
   PaymentMade,
   PaymentReceived,
   PayrollSummary,
@@ -142,7 +140,6 @@ import type {
   QuotationApproveResponse,
   RejectPurchaseOrderBody,
   RejectPurchaseRequestBody,
-  RequestOfferLetterAttachmentUploadUrlBody,
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
   Rfq,
@@ -164,6 +161,7 @@ import type {
   UpdateRolePermissionsBody,
   UpdateUserBody,
   UpdateUserPermissionsBody,
+  UploadOfferLetterAttachmentBody,
   User,
   UserModulePermission,
 } from "./api.schemas";
@@ -10983,102 +10981,6 @@ export const useDeleteEmployeeAttachment = <
 };
 
 /**
- * Returns a short-lived presigned PUT URL (uploadURL) and the resulting object storage path (objectPath). The client PUTs the file directly to uploadURL, then registers the completed upload via POST /offer-letters/{id}/attachments with the returned objectPath as the objectKey.
-
- * @summary Request a presigned upload URL for an offer letter attachment
- */
-export const getRequestOfferLetterAttachmentUploadUrlUrl = (id: number) => {
-  return `/api/offer-letters/${id}/attachments/upload-url`;
-};
-
-export const requestOfferLetterAttachmentUploadUrl = async (
-  id: number,
-  requestOfferLetterAttachmentUploadUrlBody: RequestOfferLetterAttachmentUploadUrlBody,
-  options?: RequestInit,
-): Promise<OfferLetterAttachmentUploadUrlResponse> => {
-  return customFetch<OfferLetterAttachmentUploadUrlResponse>(
-    getRequestOfferLetterAttachmentUploadUrlUrl(id),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(requestOfferLetterAttachmentUploadUrlBody),
-    },
-  );
-};
-
-export const getRequestOfferLetterAttachmentUploadUrlMutationOptions = <
-  TError = ErrorType<void>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
-    TError,
-    { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
-  TError,
-  { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
-  TContext
-> => {
-  const mutationKey = ["requestOfferLetterAttachmentUploadUrl"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
-    { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> }
-  > = (props) => {
-    const { id, data } = props ?? {};
-
-    return requestOfferLetterAttachmentUploadUrl(id, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type RequestOfferLetterAttachmentUploadUrlMutationResult = NonNullable<
-  Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>
->;
-export type RequestOfferLetterAttachmentUploadUrlMutationBody =
-  BodyType<RequestOfferLetterAttachmentUploadUrlBody>;
-export type RequestOfferLetterAttachmentUploadUrlMutationError =
-  ErrorType<void>;
-
-/**
- * @summary Request a presigned upload URL for an offer letter attachment
- */
-export const useRequestOfferLetterAttachmentUploadUrl = <
-  TError = ErrorType<void>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
-    TError,
-    { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
-  TError,
-  { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
-  TContext
-> => {
-  return useMutation(
-    getRequestOfferLetterAttachmentUploadUrlMutationOptions(options),
-  );
-};
-
-/**
  * @summary List attachments for an offer letter
  */
 export const getListOfferLetterAttachmentsUrl = (id: number) => {
@@ -11171,46 +11073,50 @@ export function useListOfferLetterAttachments<
 }
 
 /**
- * @summary Register an uploaded file as an offer letter attachment
+ * Accepts a single file via the "file" field in multipart/form-data. The server validates the MIME type (PDF, JPG, PNG, DOCX only) and size (max 8 MB), uploads the file to object storage, and returns the created attachment record. Requires offer_letters edit permission and HR/admin role.
+
+ * @summary Upload a file as an offer letter attachment (multipart/form-data)
  */
-export const getCreateOfferLetterAttachmentUrl = (id: number) => {
+export const getUploadOfferLetterAttachmentUrl = (id: number) => {
   return `/api/offer-letters/${id}/attachments`;
 };
 
-export const createOfferLetterAttachment = async (
+export const uploadOfferLetterAttachment = async (
   id: number,
-  createOfferLetterAttachmentBody: CreateOfferLetterAttachmentBody,
+  uploadOfferLetterAttachmentBody: UploadOfferLetterAttachmentBody,
   options?: RequestInit,
 ): Promise<OfferLetterAttachment> => {
+  const formData = new FormData();
+  formData.append(`file`, uploadOfferLetterAttachmentBody.file);
+
   return customFetch<OfferLetterAttachment>(
-    getCreateOfferLetterAttachmentUrl(id),
+    getUploadOfferLetterAttachmentUrl(id),
     {
       ...options,
       method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(createOfferLetterAttachmentBody),
+      body: formData,
     },
   );
 };
 
-export const getCreateOfferLetterAttachmentMutationOptions = <
-  TError = ErrorType<unknown>,
+export const getUploadOfferLetterAttachmentMutationOptions = <
+  TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+    Awaited<ReturnType<typeof uploadOfferLetterAttachment>>,
     TError,
-    { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+    { id: number; data: BodyType<UploadOfferLetterAttachmentBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+  Awaited<ReturnType<typeof uploadOfferLetterAttachment>>,
   TError,
-  { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+  { id: number; data: BodyType<UploadOfferLetterAttachmentBody> },
   TContext
 > => {
-  const mutationKey = ["createOfferLetterAttachment"];
+  const mutationKey = ["uploadOfferLetterAttachment"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -11220,45 +11126,45 @@ export const getCreateOfferLetterAttachmentMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createOfferLetterAttachment>>,
-    { id: number; data: BodyType<CreateOfferLetterAttachmentBody> }
+    Awaited<ReturnType<typeof uploadOfferLetterAttachment>>,
+    { id: number; data: BodyType<UploadOfferLetterAttachmentBody> }
   > = (props) => {
     const { id, data } = props ?? {};
 
-    return createOfferLetterAttachment(id, data, requestOptions);
+    return uploadOfferLetterAttachment(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateOfferLetterAttachmentMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createOfferLetterAttachment>>
+export type UploadOfferLetterAttachmentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadOfferLetterAttachment>>
 >;
-export type CreateOfferLetterAttachmentMutationBody =
-  BodyType<CreateOfferLetterAttachmentBody>;
-export type CreateOfferLetterAttachmentMutationError = ErrorType<unknown>;
+export type UploadOfferLetterAttachmentMutationBody =
+  BodyType<UploadOfferLetterAttachmentBody>;
+export type UploadOfferLetterAttachmentMutationError = ErrorType<void>;
 
 /**
- * @summary Register an uploaded file as an offer letter attachment
+ * @summary Upload a file as an offer letter attachment (multipart/form-data)
  */
-export const useCreateOfferLetterAttachment = <
-  TError = ErrorType<unknown>,
+export const useUploadOfferLetterAttachment = <
+  TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+    Awaited<ReturnType<typeof uploadOfferLetterAttachment>>,
     TError,
-    { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+    { id: number; data: BodyType<UploadOfferLetterAttachmentBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof createOfferLetterAttachment>>,
+  Awaited<ReturnType<typeof uploadOfferLetterAttachment>>,
   TError,
-  { id: number; data: BodyType<CreateOfferLetterAttachmentBody> },
+  { id: number; data: BodyType<UploadOfferLetterAttachmentBody> },
   TContext
 > => {
-  return useMutation(getCreateOfferLetterAttachmentMutationOptions(options));
+  return useMutation(getUploadOfferLetterAttachmentMutationOptions(options));
 };
 
 /**

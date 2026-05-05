@@ -1,4 +1,5 @@
 import { Router } from "express";
+import multer from "multer";
 import {
   db, offerLettersTable, offerLetterAttachmentsTable,
   employeesTable, companiesTable, usersTable,
@@ -261,9 +262,37 @@ router.post("/offer-letters/:id/convert-to-employee", requirePermission("offer_l
 });
 
 // --- Attachments (academic / supporting documents) ---------------------------
-// Files live in object storage; the row stores only the object key. Mirrors
-// the employee-attachments pattern. Clients call requestUploadUrl + PUT, then
-// register the resulting objectKey via POST.
+// Files are uploaded via multipart/form-data directly to the server, which
+// streams them to object storage. This keeps the client simple and avoids
+// exposing presigned GCS URLs to the browser.
+//
+// Authorization: the caller must have offer_letters edit permission AND must
+// be in the HR department OR hold company_admin / super_admin level.
+// This mirrors the HR-gated access described in the task spec.
+
+const ATTACHMENT_MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+// Only the document types explicitly required: PDF, JPG, PNG, DOCX
+const ATTACHMENT_ALLOWED_MIME = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
+
+// multer: memory storage, 8 MB limit, single "file" field
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: ATTACHMENT_MAX_BYTES },
+  fileFilter: (_req, file, cb) => {
+    const mime = (file.mimetype ?? "").split(";")[0]!.trim().toLowerCase();
+    if (ATTACHMENT_ALLOWED_MIME.has(mime)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Unsupported file type: ${mime}. Allowed: PDF, JPG, PNG, DOCX`));
+    }
+  },
+});
+
 type OfferGuard =
   | { ok: true; row: typeof offerLettersTable.$inferSelect }
   | { ok: false; status: 404 | 403 };
@@ -284,22 +313,15 @@ async function enrichAttachment(a: typeof offerLetterAttachmentsTable.$inferSele
   return { ...a, signedUrl, uploadedByName };
 }
 
-// Per-letter presigned upload URL — files land under offer-letters/{id}/ prefix
-// so the registration step can verify ownership without extra DB lookups.
-router.post("/offer-letters/:id/attachments/upload-url", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
-  const guard = await loadOfferOr403(req, id);
-  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
-  const { name } = req.body ?? {};
-  if (!name) { res.status(400).json({ error: "name is required" }); return; }
-  try {
-    const { uploadURL, objectPath } = await storageService.getObjectEntityUploadURLForPrefix(`offer-letters/${id}`);
-    res.json({ uploadURL, objectPath });
-  } catch (err: any) {
-    req.log.error({ err }, "Failed to generate offer-letter attachment upload URL");
-    res.status(500).json({ error: "Could not generate upload URL" });
-  }
-});
+// Inline helper: returns true if the user is HR staff or a platform/company admin.
+function isHrOrAdmin(req: any): boolean {
+  const user = req.user;
+  if (!user) return false;
+  const lvl: string = user.permissionLevel ?? "";
+  if (lvl === "super_admin" || lvl === "company_admin") return true;
+  const role: string = (user.role ?? "").toLowerCase();
+  return role === "hr" || role.includes("hr") || role.includes("human");
+}
 
 router.get("/offer-letters/:id/attachments", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
@@ -311,51 +333,59 @@ router.get("/offer-letters/:id/attachments", requirePermission("offer_letters", 
   res.json(await Promise.all(rows.map(enrichAttachment)));
 });
 
-const ATTACHMENT_MAX_BYTES = 8 * 1024 * 1024; // 8 MB
-const ATTACHMENT_ALLOWED_TYPES = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "image/jpeg", "image/png", "image/gif", "image/webp",
-  "text/plain",
-]);
-
-router.post("/offer-letters/:id/attachments", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
-  const guard = await loadOfferOr403(req, id);
-  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
-  const { fileName, objectKey, contentType, sizeBytes } = req.body ?? {};
-  if (!fileName || !objectKey) {
-    res.status(400).json({ error: "fileName and objectKey are required" }); return;
-  }
-  // Enforce per-letter prefix so only files uploaded via this letter's
-  // upload-url endpoint can be linked — prevents cross-letter key injection.
-  const expectedPrefix = `/objects/offer-letters/${id}/`;
-  if (typeof objectKey !== "string" || !objectKey.startsWith(expectedPrefix)) {
-    res.status(400).json({ error: "objectKey must be uploaded via this offer letter's upload-url endpoint" }); return;
-  }
-  // Server-side size cap (8 MB)
-  const size = typeof sizeBytes === "number" ? sizeBytes : null;
-  if (size !== null && size > ATTACHMENT_MAX_BYTES) {
-    res.status(413).json({ error: "File too large", message: "Maximum attachment size is 8 MB" }); return;
-  }
-  // Server-side MIME type allow-list
-  const mime = contentType ? String(contentType).split(";")[0]!.trim().toLowerCase() : null;
-  if (mime && !ATTACHMENT_ALLOWED_TYPES.has(mime)) {
-    res.status(415).json({ error: "Unsupported file type", message: "Allowed: PDF, Word, Excel, images, plain text" }); return;
-  }
-  const [row] = await db.insert(offerLetterAttachmentsTable).values({
-    offerLetterId: id,
-    fileName: String(fileName).slice(0, 255),
-    objectKey,
-    contentType: mime ?? null,
-    sizeBytes: size,
-    uploadedById: req.user?.id ?? null,
-  }).returning();
-  res.status(201).json(await enrichAttachment(row));
-});
+// POST /offer-letters/:id/attachments — multipart/form-data, field "file"
+// Server receives the file, validates it, and stores it to object storage.
+router.post(
+  "/offer-letters/:id/attachments",
+  requirePermission("offer_letters", "edit"),
+  (req, res, next) => {
+    if (!isHrOrAdmin(req)) {
+      res.status(403).json({ error: "Forbidden", message: "Only HR staff and company administrators can upload attachments." });
+      return;
+    }
+    next();
+  },
+  (req, res, next) => {
+    upload.single("file")(req, res, (err) => {
+      if (err) {
+        if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+          res.status(413).json({ error: "File too large", message: "Maximum attachment size is 8 MB" });
+        } else {
+          res.status(415).json({ error: "Unsupported file type", message: err.message ?? "Allowed: PDF, JPG, PNG, DOCX" });
+        }
+        return;
+      }
+      next();
+    });
+  },
+  async (req, res): Promise<void> => {
+    const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+    const guard = await loadOfferOr403(req, id);
+    if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) { res.status(400).json({ error: "file field is required (multipart/form-data)" }); return; }
+    try {
+      const mime = (file.mimetype ?? "").split(";")[0]!.trim().toLowerCase();
+      const objectKey = await storageService.uploadBufferToPrefix(
+        `offer-letters/${id}`,
+        file.buffer,
+        mime,
+      );
+      const [row] = await db.insert(offerLetterAttachmentsTable).values({
+        offerLetterId: id,
+        fileName: file.originalname.slice(0, 255),
+        objectKey,
+        contentType: mime,
+        sizeBytes: file.size,
+        uploadedById: req.user?.id ?? null,
+      }).returning();
+      res.status(201).json(await enrichAttachment(row));
+    } catch (err: any) {
+      req.log.error({ err }, "offer-letter attachment upload failed");
+      res.status(500).json({ error: "Upload failed" });
+    }
+  },
+);
 
 router.get("/offer-letters/:id/attachments/:attId/download", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
@@ -370,14 +400,25 @@ router.get("/offer-letters/:id/attachments/:attId/download", requirePermission("
   res.redirect(302, url);
 });
 
-router.delete("/offer-letters/:id/attachments/:attId", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
-  const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);
-  const guard = await loadOfferOr403(req, id);
-  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
-  await db.delete(offerLetterAttachmentsTable)
-    .where(and(eq(offerLetterAttachmentsTable.id, attId), eq(offerLetterAttachmentsTable.offerLetterId, id)));
-  res.json({ success: true });
-});
+router.delete(
+  "/offer-letters/:id/attachments/:attId",
+  requirePermission("offer_letters", "edit"),
+  (req, res, next) => {
+    if (!isHrOrAdmin(req)) {
+      res.status(403).json({ error: "Forbidden", message: "Only HR staff and company administrators can delete attachments." });
+      return;
+    }
+    next();
+  },
+  async (req, res): Promise<void> => {
+    const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+    const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);
+    const guard = await loadOfferOr403(req, id);
+    if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+    await db.delete(offerLetterAttachmentsTable)
+      .where(and(eq(offerLetterAttachmentsTable.id, attId), eq(offerLetterAttachmentsTable.offerLetterId, id)));
+    res.json({ success: true });
+  },
+);
 
 export default router;

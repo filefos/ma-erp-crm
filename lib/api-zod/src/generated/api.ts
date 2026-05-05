@@ -4676,30 +4676,6 @@ export const DeleteEmployeeAttachmentResponse = zod.object({
 });
 
 /**
- * Returns a short-lived presigned PUT URL (uploadURL) and the resulting object storage path (objectPath). The client PUTs the file directly to uploadURL, then registers the completed upload via POST /offer-letters/{id}/attachments with the returned objectPath as the objectKey.
-
- * @summary Request a presigned upload URL for an offer letter attachment
- */
-export const RequestOfferLetterAttachmentUploadUrlParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-export const RequestOfferLetterAttachmentUploadUrlBody = zod.object({
-  name: zod
-    .string()
-    .describe("Original file name (used to set the object key suffix)"),
-});
-
-export const RequestOfferLetterAttachmentUploadUrlResponse = zod.object({
-  uploadURL: zod
-    .string()
-    .describe("Presigned PUT URL — client uploads file bytes directly here"),
-  objectPath: zod
-    .string()
-    .describe("Object storage key to pass back as objectKey when registering"),
-});
-
-/**
  * @summary List attachments for an offer letter
  */
 export const ListOfferLetterAttachmentsParams = zod.object({
@@ -4723,17 +4699,18 @@ export const ListOfferLetterAttachmentsResponse = zod.array(
 );
 
 /**
- * @summary Register an uploaded file as an offer letter attachment
+ * Accepts a single file via the "file" field in multipart/form-data. The server validates the MIME type (PDF, JPG, PNG, DOCX only) and size (max 8 MB), uploads the file to object storage, and returns the created attachment record. Requires offer_letters edit permission and HR/admin role.
+
+ * @summary Upload a file as an offer letter attachment (multipart/form-data)
  */
-export const CreateOfferLetterAttachmentParams = zod.object({
+export const UploadOfferLetterAttachmentParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const CreateOfferLetterAttachmentBody = zod.object({
-  fileName: zod.string(),
-  objectKey: zod.string(),
-  contentType: zod.string().optional(),
-  sizeBytes: zod.number().optional(),
+export const UploadOfferLetterAttachmentBody = zod.object({
+  file: zod
+    .string()
+    .describe("File to upload (PDF, JPG, PNG, or DOCX; max 8 MB)"),
 });
 
 /**

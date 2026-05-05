@@ -1312,20 +1312,6 @@ export interface OfferLetterAttachment {
   uploadedAt: string;
 }
 
-export interface OfferLetterAttachmentUploadUrlResponse {
-  /** Presigned PUT URL — client uploads file bytes directly here */
-  uploadURL: string;
-  /** Object storage key to pass back as objectKey when registering */
-  objectPath: string;
-}
-
-export interface CreateOfferLetterAttachmentBody {
-  fileName: string;
-  objectKey: string;
-  contentType?: string;
-  sizeBytes?: number;
-}
-
 export interface OfferLetter {
   id: number;
   letterNumber: string;
@@ -2020,9 +2006,9 @@ export type ListAttendanceParams = {
   companyId?: number;
 };
 
-export type RequestOfferLetterAttachmentUploadUrlBody = {
-  /** Original file name (used to set the object key suffix) */
-  name: string;
+export type UploadOfferLetterAttachmentBody = {
+  /** File to upload (PDF, JPG, PNG, or DOCX; max 8 MB) */
+  file: string;
 };
 
 export type ListOfferLettersParams = {

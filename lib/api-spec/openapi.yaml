@@ -2620,48 +2620,6 @@ paths:
                 $ref: "#/components/schemas/SuccessResponse"
 
   # OFFER LETTER ATTACHMENTS
-  /offer-letters/{id}/attachments/upload-url:
-    post:
-      operationId: requestOfferLetterAttachmentUploadUrl
-      tags: [offer-letter-attachments]
-      summary: Request a presigned upload URL for an offer letter attachment
-      description: >
-        Returns a short-lived presigned PUT URL (uploadURL) and the resulting
-        object storage path (objectPath). The client PUTs the file directly to
-        uploadURL, then registers the completed upload via
-        POST /offer-letters/{id}/attachments with the returned objectPath as
-        the objectKey.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Original file name (used to set the object key suffix)
-              required: [name]
-      responses:
-        "200":
-          description: Presigned upload URL and object path
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OfferLetterAttachmentUploadUrlResponse"
-        "400":
-          description: name is required
-        "403":
-          description: Forbidden
-        "404":
-          description: Offer letter not found
-
   /offer-letters/{id}/attachments:
     get:
       operationId: listOfferLetterAttachments
@@ -2683,9 +2641,14 @@ paths:
                 items:
                   $ref: "#/components/schemas/OfferLetterAttachment"
     post:
-      operationId: createOfferLetterAttachment
+      operationId: uploadOfferLetterAttachment
       tags: [offer-letter-attachments]
-      summary: Register an uploaded file as an offer letter attachment
+      summary: Upload a file as an offer letter attachment (multipart/form-data)
+      description: >
+        Accepts a single file via the "file" field in multipart/form-data.
+        The server validates the MIME type (PDF, JPG, PNG, DOCX only) and size
+        (max 8 MB), uploads the file to object storage, and returns the created
+        attachment record. Requires offer_letters edit permission and HR/admin role.
       parameters:
         - name: id
           in: path
@@ -2695,16 +2658,29 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: "#/components/schemas/CreateOfferLetterAttachmentBody"
+              type: object
+              properties:
+                file:
+                  type: string
+                  description: File to upload (PDF, JPG, PNG, or DOCX; max 8 MB)
+              required: [file]
       responses:
         "201":
-          description: Attachment created
+          description: Attachment uploaded and created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/OfferLetterAttachment"
+        "400":
+          description: file field missing
+        "403":
+          description: Forbidden (requires HR or admin role)
+        "413":
+          description: File exceeds 8 MB limit
+        "415":
+          description: Unsupported file type
 
   /offer-letters/{id}/attachments/{attId}:
     delete:
@@ -6049,30 +6025,6 @@ components:
         uploadedAt:
           type: string
       required: [id, offerLetterId, fileName, objectKey, uploadedAt]
-
-    OfferLetterAttachmentUploadUrlResponse:
-      type: object
-      properties:
-        uploadURL:
-          type: string
-          description: Presigned PUT URL — client uploads file bytes directly here
-        objectPath:
-          type: string
-          description: Object storage key to pass back as objectKey when registering
-      required: [uploadURL, objectPath]
-
-    CreateOfferLetterAttachmentBody:
-      type: object
-      properties:
-        fileName:
-          type: string
-        objectKey:
-          type: string
-        contentType:
-          type: string
-        sizeBytes:
-          type: integer
-      required: [fileName, objectKey]
 
     OfferLetter:
       type: object

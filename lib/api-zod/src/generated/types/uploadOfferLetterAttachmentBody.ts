@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type RequestOfferLetterAttachmentUploadUrlBody = {
-  /** Original file name (used to set the object key suffix) */
-  name: string;
+export type UploadOfferLetterAttachmentBody = {
+  /** File to upload (PDF, JPG, PNG, or DOCX; max 8 MB) */
+  file: string;
 };

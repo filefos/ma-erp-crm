@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import {
   useGetOfferLetter, useUpdateOfferLetter, useSetOfferLetterStatus,
   useReissueOfferLetter, useConvertOfferLetterToEmployee, useListCompanies,
-  useListOfferLetterAttachments, useCreateOfferLetterAttachment, useDeleteOfferLetterAttachment,
+  useListOfferLetterAttachments, useDeleteOfferLetterAttachment,
   getGetOfferLetterQueryKey, getListOfferLettersQueryKey, getListOfferLetterAttachmentsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -133,9 +133,6 @@ export function OfferLetterDetail({ id }: Props) {
     query: { queryKey: attachmentsQueryKey, enabled: !!oid },
   });
   const attachments = (attachmentsData ?? []) as any[];
-  const createAttachment = useCreateOfferLetterAttachment({
-    mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: attachmentsQueryKey }) },
-  });
   const deleteAttachment = useDeleteOfferLetterAttachment({
     mutation: { onSuccess: () => qc.invalidateQueries({ queryKey: attachmentsQueryKey }) },
   });
@@ -154,26 +151,21 @@ export function OfferLetterDetail({ id }: Props) {
           toast({ title: "File too large", description: msg, variant: "destructive" });
           continue;
         }
-        const presignRes = await fetch(`${BASE_URL}api/offer-letters/${oid}/attachments/upload-url`, {
+        const form = new FormData();
+        form.append("file", f, f.name);
+        const uploadRes = await fetch(`${BASE_URL}api/offer-letters/${oid}/attachments`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders() },
-          body: JSON.stringify({ name: f.name, size: f.size, contentType: f.type || "application/octet-stream" }),
+          headers: { ...authHeaders() },
+          body: form,
         });
-        if (!presignRes.ok) throw new Error("Failed to get upload URL");
-        const { uploadURL, objectPath } = await presignRes.json();
-        const putRes = await fetch(uploadURL, {
-          method: "PUT",
-          body: f,
-          headers: { "Content-Type": f.type || "application/octet-stream" },
-        });
-        if (!putRes.ok) throw new Error(`Upload failed: ${putRes.status}`);
-        await createAttachment.mutateAsync({
-          id: oid,
-          data: { fileName: f.name, objectKey: objectPath, contentType: f.type || "application/octet-stream", sizeBytes: f.size },
-        });
+        if (!uploadRes.ok) {
+          const errBody = await uploadRes.json().catch(() => ({}));
+          throw new Error(errBody?.message ?? errBody?.error ?? `Upload failed (${uploadRes.status})`);
+        }
         successCount++;
       }
       if (successCount > 0) {
+        await qc.invalidateQueries({ queryKey: attachmentsQueryKey });
         toast({ title: successCount === 1 ? "File uploaded" : `${successCount} files uploaded`, description: "Documents saved successfully." });
       }
     } catch (e: any) {
@@ -523,7 +515,7 @@ export function OfferLetterDetail({ id }: Props) {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                accept=".pdf,.jpg,.jpeg,.png,.docx"
                 className="hidden"
                 onChange={(e) => onPickFiles(e.target.files)}
                 data-testid="input-offer-attachment-file"
@@ -565,7 +557,7 @@ export function OfferLetterDetail({ id }: Props) {
                       </a>
                     </Button>
                   )}
-                  {(canEdit && can("offer_letters", "delete")) && (
+                  {(canEdit && can("offer_letters", "edit")) && (
                     <Button
                       size="sm"
                       variant="ghost"

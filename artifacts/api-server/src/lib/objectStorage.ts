@@ -198,6 +198,30 @@ export class ObjectStorageService {
     return `/objects/${entityId}`;
   }
 
+  /**
+   * Upload a raw buffer directly to object storage under the given subpath.
+   * Returns the normalized /objects/... path for storing in the database.
+   * Use this for server-side multipart uploads so the server receives and
+   * stores the file in one step without requiring a client-side presign PUT.
+   */
+  async uploadBufferToPrefix(
+    subpath: string,
+    buffer: Buffer,
+    contentType: string,
+  ): Promise<string> {
+    const privateObjectDir = this.getPrivateObjectDir();
+    const objectId = randomUUID();
+    const fullPath = `${privateObjectDir}/${subpath}/${objectId}`;
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    await file.save(buffer, { contentType, resumable: false });
+    const normalized = this.normalizeObjectEntityPath(fullPath);
+    return normalized.startsWith("/objects/")
+      ? normalized
+      : `/objects/${subpath}/${objectId}`;
+  }
+
   async trySetObjectEntityAclPolicy(
     rawPath: string,
     aclPolicy: ObjectAclPolicy
