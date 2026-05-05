@@ -266,8 +266,8 @@ export function ActivityMonitor() {
               ) : sessions.map(s => (
                 <TableRow key={s.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => openDetail(s.userId)}>
                   <TableCell>
-                    <span className="font-mono text-xs bg-[#0f2d5a] text-white px-2 py-0.5 rounded">
-                      {s.uniqueUserId ?? `USR-${s.userId}`}
+                    <span className="font-mono text-[11px] font-bold bg-[#0f2d5a] text-white px-2 py-0.5 rounded tracking-wide whitespace-nowrap">
+                      {s.uniqueUserId ?? "—"}
                     </span>
                   </TableCell>
                   <TableCell className="font-medium flex items-center gap-1">

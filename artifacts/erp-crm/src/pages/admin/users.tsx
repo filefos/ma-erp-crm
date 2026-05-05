@@ -487,12 +487,14 @@ export function UsersList() {
               const departmentId = (u as { departmentId?: number | null }).departmentId ?? null;
               const companyId = (u as { companyId?: number | null }).companyId ?? null;
               const phone = (u as { phone?: string | null }).phone ?? null;
-              const userCode = (u as any).userCode as string | null | undefined;
+              const uniqueUserId = (u as any).uniqueUserId as string | null | undefined;
               const createdAt = (u as any).createdAt as string | null | undefined;
               return (
                 <TableRow key={u.id} data-testid={`user-row-${u.id}`}>
-                  <TableCell className="font-mono text-xs font-semibold text-[#0f2d5a]">
-                    {userCode ?? "—"}
+                  <TableCell>
+                    <span className="font-mono text-[11px] font-bold bg-[#0f2d5a] text-white px-2 py-0.5 rounded tracking-wide whitespace-nowrap">
+                      {uniqueUserId ?? "—"}
+                    </span>
                   </TableCell>
                   <TableCell className="font-medium">{u.name}</TableCell>
                   <TableCell className="text-sm">{u.email}</TableCell>

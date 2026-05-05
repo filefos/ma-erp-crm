@@ -412,7 +412,7 @@ function SidebarContent() {
   const { user, logout } = useAuth();
   const { companyShort, poweredBy } = useActiveCompany();
   const { can } = usePermissions();
-  const u = user as { name?: string; permissionLevel?: string; role?: string; departmentName?: string } | undefined;
+  const u = user as { name?: string; permissionLevel?: string; role?: string; departmentName?: string; uniqueUserId?: string | null } | undefined;
   const level = u?.permissionLevel ?? "user";
   const visibleGroups = visibleGroupsFor(u, can("emails"));
 
@@ -447,9 +447,11 @@ function SidebarContent() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-white truncate">{u?.name}</p>
-            <p className="text-[10px] text-white/40 truncate capitalize">
-              {level.replace(/_/g, " ")}
-            </p>
+            {u?.uniqueUserId ? (
+              <p className="text-[10px] font-mono text-[#c9a14a] truncate tracking-wide">{u.uniqueUserId}</p>
+            ) : (
+              <p className="text-[10px] text-white/40 truncate capitalize">{level.replace(/_/g, " ")}</p>
+            )}
           </div>
         </div>
         <Button variant="ghost" size="sm" asChild
