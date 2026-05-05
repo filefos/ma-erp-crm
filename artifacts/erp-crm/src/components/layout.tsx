@@ -587,26 +587,46 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-12 border-b bg-card flex items-center justify-between px-4 flex-shrink-0 gap-4">
-          {/* Mobile hamburger */}
-          <div className="flex items-center gap-3 md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-60 border-none">
-                <SidebarContent />
-              </SheetContent>
-            </Sheet>
+        <header className="bg-white flex-shrink-0">
+          {/* Navy top rule + gold hairline (letterhead band) */}
+          <div className="h-[2px] w-full bg-[#0f2d5a]" />
+          <div className="h-[1px] w-32 bg-[#c9a14a] mt-[1px] ml-4" />
+
+          <div className="h-12 flex items-center justify-between px-4 gap-4 border-b border-gray-200">
+            {/* Mobile hamburger */}
+            <div className="flex items-center gap-3 md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-60 border-none">
+                  <SidebarContent />
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {/* Brand wordmark */}
+            <div className="hidden md:flex items-baseline gap-2 min-w-0">
+              <span
+                className="text-[18px] font-extrabold text-[#0f2d5a] leading-none"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: "-0.01em" }}
+              >
+                PRIME ERP
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-gray-500 font-medium">Systems</span>
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Pill-grouped right actions */}
+            <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-1.5 py-1 shadow-sm">
+              <AskAIButton />
+              <CompanySwitcher />
+              <NotificationBell />
+            </div>
           </div>
-
-          <div className="flex-1" />
-
-          <AskAIButton />
-          <CompanySwitcher />
-          <NotificationBell />
         </header>
 
         {showBreadcrumb && (
