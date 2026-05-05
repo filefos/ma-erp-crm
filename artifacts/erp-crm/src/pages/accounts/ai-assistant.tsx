@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useListExpenses, useListPaymentsReceived, useListPaymentsMade, useListJournalEntries } from "@workspace/api-client-react";
+import { useListExpenses, useListPaymentsReceived, useListPaymentsMade, useListJournalEntries, useListTaxInvoices } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
   Bot, Sparkles, TrendingUp, TrendingDown, AlertTriangle, FileText, Tag, Bell,
@@ -95,6 +95,7 @@ export function AiAssistant() {
   const { data: paymentsReceived = [] } = useListPaymentsReceived();
   const { data: paymentsMade = [] } = useListPaymentsMade();
   const { data: journalEntries = [] } = useListJournalEntries();
+  const { data: taxInvoices = [] } = useListTaxInvoices();
   const { filterByCompany } = useActiveCompany();
 
   const data = {
@@ -102,6 +103,7 @@ export function AiAssistant() {
     paymentsReceived: filterByCompany(paymentsReceived),
     paymentsMade: filterByCompany(paymentsMade),
     journalEntries: filterByCompany(journalEntries),
+    taxInvoices: filterByCompany(taxInvoices),
   };
 
   const callAccountsAI = async (path: string, body: Record<string, unknown>): Promise<string | null> => {
@@ -140,7 +142,20 @@ export function AiAssistant() {
       const last = data.expenses[0];
       aiText = await callAccountsAI("/ai/accounts/suggest-journal", { docType: "expense", doc: last ?? {} });
     } else if (lower.includes("invoice") && (lower.includes("validate") || lower.includes("check"))) {
-      aiText = await callAccountsAI("/ai/accounts/validate-invoice", { invoice: {} });
+      const lastInv: any = data.taxInvoices[0] ?? {};
+      aiText = await callAccountsAI("/ai/accounts/validate-invoice", {
+        invoice: {
+          invoiceNumber: lastInv.invoiceNumber,
+          subtotal: lastInv.subtotal,
+          vatPercent: lastInv.vatPercent,
+          vatAmount: lastInv.vatAmount,
+          grandTotal: lastInv.grandTotal,
+          clientTrn: lastInv.clientTrn,
+          companyTrn: lastInv.companyTrn,
+          paymentTerms: lastInv.paymentTerms,
+          items: lastInv.items,
+        },
+      });
     }
 
     const response = aiText ?? generateResponse(prompt, data);
@@ -149,28 +164,65 @@ export function AiAssistant() {
   };
 
   const formatContent = (text: string) => {
-    return text.split("\n").map((line, i) => {
-      if (line.startsWith("**") && line.endsWith("**")) {
-        return <p key={i} className="font-bold text-[#0f2d5a] mt-2 first:mt-0">{line.replace(/\*\*/g, "")}</p>;
-      }
-      if (line.startsWith("• ")) {
-        const parts = line.slice(2).split(/\*\*(.*?)\*\*/g);
-        return <p key={i} className="flex gap-1.5 text-sm leading-relaxed">
-          <span className="text-[#1e6ab0] flex-shrink-0">•</span>
-          <span>{parts.map((p, j) => j % 2 === 1 ? <strong key={j}>{p}</strong> : p)}</span>
-        </p>;
-      }
-      if (line.match(/^\d+\./)) {
-        const parts = line.split(/\*\*(.*?)\*\*/g);
-        return <p key={i} className="text-sm leading-relaxed pl-2">{parts.map((p, j) => j % 2 === 1 ? <strong key={j}>{p}</strong> : p)}</p>;
-      }
+    const lines = text.split("\n");
+    const elements: React.ReactNode[] = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
       if (line.startsWith("|")) {
-        return null;
+        const tableLines: string[] = [];
+        while (i < lines.length && lines[i].startsWith("|")) {
+          tableLines.push(lines[i]);
+          i++;
+        }
+        const isSeparator = (l: string) => l.replace(/\|/g, "").replace(/[-: ]/g, "").trim() === "";
+        const dataRows = tableLines.filter(l => !isSeparator(l));
+        const parsed = dataRows.map(r =>
+          r.split("|").map(c => c.trim()).slice(1, -1),
+        );
+        if (parsed.length > 0) {
+          const [header, ...body] = parsed;
+          elements.push(
+            <div key={`t-${i}`} className="overflow-x-auto my-2">
+              <table className="text-xs border-collapse w-full">
+                <thead>
+                  <tr>{header.map((h, hi) => <th key={hi} className="border border-gray-200 bg-[#0f2d5a]/8 px-2 py-1.5 text-left font-semibold text-[#0f2d5a]">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {body.map((row, ri) => (
+                    <tr key={ri} className={ri % 2 === 1 ? "bg-gray-50" : ""}>
+                      {row.map((cell, ci) => <td key={ci} className="border border-gray-200 px-2 py-1">{cell}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>,
+          );
+        }
+        continue;
       }
-      if (!line.trim()) return <div key={i} className="h-1" />;
-      const parts = line.split(/\*\*(.*?)\*\*/g);
-      return <p key={i} className="text-sm leading-relaxed">{parts.map((p, j) => j % 2 === 1 ? <strong key={j}>{p}</strong> : p)}</p>;
-    });
+      if (line.startsWith("**") && line.endsWith("**")) {
+        elements.push(<p key={i} className="font-bold text-[#0f2d5a] mt-2 first:mt-0">{line.replace(/\*\*/g, "")}</p>);
+      } else if (line.startsWith("• ") || line.startsWith("- ")) {
+        const parts = line.slice(2).split(/\*\*(.*?)\*\*/g);
+        elements.push(
+          <p key={i} className="flex gap-1.5 text-sm leading-relaxed">
+            <span className="text-[#1e6ab0] flex-shrink-0">•</span>
+            <span>{parts.map((p, j) => j % 2 === 1 ? <strong key={j}>{p}</strong> : p)}</span>
+          </p>,
+        );
+      } else if (line.match(/^\d+\./)) {
+        const parts = line.split(/\*\*(.*?)\*\*/g);
+        elements.push(<p key={i} className="text-sm leading-relaxed pl-2">{parts.map((p, j) => j % 2 === 1 ? <strong key={j}>{p}</strong> : p)}</p>);
+      } else if (!line.trim()) {
+        elements.push(<div key={i} className="h-1" />);
+      } else {
+        const parts = line.split(/\*\*(.*?)\*\*/g);
+        elements.push(<p key={i} className="text-sm leading-relaxed">{parts.map((p, j) => j % 2 === 1 ? <strong key={j}>{p}</strong> : p)}</p>);
+      }
+      i++;
+    }
+    return elements;
   };
 
   return (
