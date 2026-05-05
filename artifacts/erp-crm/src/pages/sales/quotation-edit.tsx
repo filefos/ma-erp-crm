@@ -19,8 +19,12 @@ import {
   SPEC_TYPE_OPTIONS,
   DEFAULT_SPEC_TYPE,
   getSpecTemplate,
+  parseTechSpecs,
+  serializeTechSpecs,
   type SpecTypeKey,
+  type TechSpecSection,
 } from "@/lib/tech-spec-templates";
+import { TechSpecEditor } from "@/components/tech-spec-editor";
 import { PAYMENT_TERMS_PRESETS, getPresetByKey } from "@/lib/payment-terms";
 
 const BANK_DETAILS: Record<number, {
@@ -121,18 +125,7 @@ export function QuotationEdit({ id }: Props) {
   const [items, setItems] = useState<Item[]>([emptyItem()]);
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>(DEFAULT_ADDITIONAL_ITEMS);
   const [specType, setSpecType] = useState<SpecTypeKey>(DEFAULT_SPEC_TYPE);
-  const [customSpecSection, setCustomSpecSection] = useState("");
-
-  const handleAddSpecSection = () => {
-    const name = customSpecSection.trim();
-    if (!name) return;
-    const heading = name.toUpperCase();
-    setForm(p => {
-      const sep = p.techSpecs.endsWith("\n") ? "\n" : "\n\n";
-      return { ...p, techSpecs: `${p.techSpecs}${sep}${heading}\na. ` };
-    });
-    setCustomSpecSection("");
-  };
+  const [techSpecSections, setTechSpecSections] = useState<TechSpecSection[]>([]);
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
   const [bumpRev, setBumpRev] = useState(false);
@@ -140,7 +133,7 @@ export function QuotationEdit({ id }: Props) {
 
   const handleSpecTypeChange = (key: SpecTypeKey) => {
     setSpecType(key);
-    setForm(p => ({ ...p, techSpecs: getSpecTemplate(key) }));
+    setTechSpecSections(parseTechSpecs(getSpecTemplate(key)));
   };
 
   useEffect(() => {
@@ -178,6 +171,7 @@ export function QuotationEdit({ id }: Props) {
       quotationNumber: q.quotationNumber ?? "",
       preparedByName: raw.preparedByName ?? "",
     });
+    setTechSpecSections(parseTechSpecs(raw.techSpecs ?? ""));
     setItems(loadedItems.length > 0 ? loadedItems : [emptyItem()]);
     setAdditionalItems(loadedAdditional);
     try {
@@ -222,6 +216,7 @@ export function QuotationEdit({ id }: Props) {
       id: qid,
       data: {
         ...form,
+        techSpecs: serializeTechSpecs(techSpecSections),
         quotationNumber,
         status,
         companyId: parseInt(form.companyId, 10),
@@ -622,41 +617,10 @@ export function QuotationEdit({ id }: Props) {
                 Switching the type replaces the editor content with that template. You can edit the text afterwards. Printed as page 2.
               </p>
             </div>
-            <Textarea
-              value={form.techSpecs}
-              onChange={e => setForm(p => ({ ...p, techSpecs: e.target.value }))}
-              rows={20}
-              className="font-mono text-xs"
+            <TechSpecEditor
+              sections={techSpecSections}
+              onChange={setTechSpecSections}
             />
-            <div className="flex items-end gap-2 mt-3">
-              <div className="flex-1 space-y-1">
-                <Label className="text-xs font-medium">Add Custom Section</Label>
-                <Input
-                  value={customSpecSection}
-                  onChange={e => setCustomSpecSection(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddSpecSection();
-                    }
-                  }}
-                  placeholder="e.g. Plumbing, HVAC, Painting…"
-                  className="h-8 text-xs"
-                />
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleAddSpecSection}
-                disabled={!customSpecSection.trim()}
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add Section
-              </Button>
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Appends a new uppercase section heading and an "a." bullet at the end of the spec — fill in the rest in the editor above.
-            </p>
           </CardContent>
         )}
       </Card>

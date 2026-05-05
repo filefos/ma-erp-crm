@@ -1,5 +1,6 @@
 import React from "react";
 import { numberToWords, formatAED } from "@/lib/number-to-words";
+import { parseTechSpecs } from "@/lib/tech-spec-templates";
 
 export interface DocumentItem {
   description: string;
@@ -126,71 +127,6 @@ const DEFAULT_ADDITIONAL_ITEMS: AdditionalCommercialItem[] = [
   { description: "Additional Commercial Item", status: "Excluded", price: 0, quantity: 1 },
 ];
 
-const TECH_SPECS = [
-  {
-    title: "BASE FRAME",
-    points: [
-      "The steel base & top frame shall be constructed from MS I-BEAM 120X64, full perimeter beams with central runner and cross members.",
-      "Lifting eyes are provided at intermediate points at the Base of the cabin welded and painted in 01 coat of red oxide primer and 01 coat with matt enamel paint.",
-      "Base frame shall be painted with 02 coat paint, one with red oxide, one with rust free enamel paint.",
-    ],
-  },
-  {
-    title: "FLOOR SYSTEM",
-    points: [
-      "Floor Frame: The Floor frame shall be constructed from MS angle 50X50X2.7MM welded into the base & top frame, making the floor assembly one integral frame. (400mm joists spacing). Grit blasted to SA2.5 and painted with 02 coat system of epoxy paint.",
-      "Floor Decking: One layer of 18mm thick cement board, fixed to the base frame and floor frame. Bottom of the cement board is painted with bitumen paint.",
-      "Floor Finish in Dry Area: 1.5mm PVC vinyl sheet from a good brand.",
-      "Floor Finish in Wet Area: PVC vinyl sheet 1.5mm thick.",
-    ],
-  },
-  {
-    title: "WALL SYSTEM",
-    points: [
-      "External Finish: 06mm thick cement board finish with heavy texture paint (approved color). External wall joints covered by 6mm thick CFB joint strips.",
-      "Internal Finish in Dry Area: 12.5mm thick gypsum board finish with emulsion paint. Floor skirting MDF 50mm / PVC 75MM SKIRTING.",
-      "Internal Finish in Wet Area: 12mm thick MR GYPSUM board fixed to cold formed steel wall framing. Joints covered with MDF 5cm skirting.",
-      "Wall Framing: LGS profile framing GI studs 70x35x0.45 fixed together by screws at spacing of 610mm vertically & 1200mm horizontally.",
-      "Wall Insulation: 50mm thick glass-wool insulation 12kg/m3 density.",
-      "Dry Area: Emulsion paint (off-white color) applied to gypsum board. (National). Wet Area: Enamel paint (white color) applied to cement fiber board. (National).",
-    ],
-  },
-  {
-    title: "ROOFING",
-    points: [
-      "Roof Covering: 0.5mm thick GI Corrugated steel fixed on furry channel 0.5mm purlins as per drawing.",
-      "Trusses: Truss made of MS Angle 40x40x2.7mm.",
-    ],
-  },
-  {
-    title: "CEILING",
-    points: [
-      "Ceiling in Dry Area: 12mm gypsum board finish with fine texture paint.",
-      "Ceiling in Wet Areas: 12mm gypsum board finish with fine texture paint.",
-    ],
-  },
-  {
-    title: "DOORS",
-    points: [
-      "External Door: Supply and installation of Aluminum/PVC Door 900x2100mm. Door Lock: Mortice lockset with cylinder and SS door handles for all internal doors; Single cylinder with thumb turn latch for internal toilet doors.",
-      "Internal / Toilet Door: 900/700x2100mm PVC DOOR. Door Lock: Mortice lockset with cylinder and SS door handles for internal doors; Single cylinder with thumb turn latch for toilet doors.",
-    ],
-  },
-  {
-    title: "WINDOWS",
-    points: [
-      "External Windows: Powder coated aluminum frame (non-thermal break), 6mm thick clear glass, externally Hinged window (One shutter hinged & other fixed). 900x900mm.",
-      "Exhaust Window: Powder coated aluminum frame (non-thermal break), fixed Exhaust window with 6mm thick Single obscure glass. Size: 400x400mm.",
-    ],
-  },
-  {
-    title: "ELECTRICAL",
-    points: [
-      "Electrical Supply: Conduits and wiring by National / Du-cab / RR.",
-      "Tube light 36W ceiling light by MAX.",
-    ],
-  },
-];
 
 const STANDARD_TC = `1. COMMERCIAL BASIS
 
@@ -798,38 +734,71 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <table className="print-spec-table w-full border-collapse border border-gray-400 mb-3">
-              <thead>
-                <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                  <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-center w-8">Pt.</th>
-                  <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-left" colSpan={2}>
-                    TECHNICAL SPECIFICATION DETAIL
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {TECH_SPECS.map((section, si) => (
-                  <React.Fragment key={si}>
-                    <tr className="bg-gray-200" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                      <td className="border border-gray-400 px-2 py-1 font-bold text-xs text-center">
-                        {si + 1}
-                      </td>
-                      <td className="border border-gray-400 px-2 py-1 font-bold text-xs uppercase" colSpan={2}>
-                        {section.title}
-                      </td>
+            {(() => {
+              const specSections = parseTechSpecs(data.techSpecs ?? "");
+              const printStyle = { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties;
+              const navyBg = { ...printStyle, backgroundColor: "#0f2d5a" };
+              return (
+                <table className="print-spec-table w-full mb-3" style={{ borderCollapse: "collapse", border: "1.5px solid #666" }}>
+                  <thead>
+                    <tr style={navyBg}>
+                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "center", fontSize: "8.5pt", fontWeight: 700, padding: "5px 4px", width: 84 }}>
+                        Section
+                      </th>
+                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "center", fontSize: "8.5pt", fontWeight: 700, padding: "5px 2px", width: 28 }}>
+                        Pt.
+                      </th>
+                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "left", fontSize: "8.5pt", fontWeight: 700, padding: "5px 8px" }}>
+                        TECHNICAL SPECIFICATION DETAIL
+                      </th>
                     </tr>
-                    {section.points.map((pt, pi) => (
-                      <tr key={pi}>
-                        <td className="border border-gray-400 px-2 py-1 text-xs text-center align-top font-semibold text-gray-500">
-                          {String.fromCharCode(97 + pi)}.
-                        </td>
-                        <td className="border border-gray-400 px-2 py-1.5 text-xs" colSpan={2}>{pt}</td>
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {specSections.flatMap((section, si) => {
+                      const pts = section.points.length > 0 ? section.points : [""];
+                      return pts.map((pt, pi) => (
+                        <tr key={`${si}-${pi}`} style={{ backgroundColor: pi % 2 === 0 ? "#ffffff" : "#f4f7fb", ...printStyle }}>
+                          {pi === 0 && (
+                            <td
+                              rowSpan={pts.length}
+                              style={{
+                                ...navyBg,
+                                border: "1px solid #888",
+                                color: "white",
+                                textAlign: "center",
+                                fontWeight: 800,
+                                fontSize: "8pt",
+                                verticalAlign: "middle",
+                                padding: "4px 3px",
+                                lineHeight: 1.25,
+                                width: 84,
+                              }}
+                            >
+                              {section.title.split(/\s+/).map((word, wi) => (
+                                <div key={wi}>{word}</div>
+                              ))}
+                            </td>
+                          )}
+                          <td style={{ border: "1px solid #bbb", textAlign: "center", fontSize: "8.5pt", fontWeight: 600, padding: "3px 2px", verticalAlign: "top", color: "#333", width: 28 }}>
+                            {pt || pt === "" ? String.fromCharCode(97 + pi) : ""}
+                          </td>
+                          <td style={{ border: "1px solid #bbb", fontSize: "8.5pt", padding: "3px 8px", verticalAlign: "top", lineHeight: 1.45 }}>
+                            {pt
+                              ? pt.split("\n").map((line, li) => (
+                                  <React.Fragment key={li}>
+                                    {line}
+                                    {li < pt.split("\n").length - 1 && <br />}
+                                  </React.Fragment>
+                                ))
+                              : "\u00a0"}
+                          </td>
+                        </tr>
+                      ));
+                    })}
+                  </tbody>
+                </table>
+              );
+            })()}
 
             <div className="mt-3 text-center text-[10px] italic text-gray-500">
               This is a computer generated document. No signature or stamp required.
