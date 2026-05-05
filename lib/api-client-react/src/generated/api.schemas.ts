@@ -306,64 +306,6 @@ export interface CreateContactBody {
   notes?: string;
 }
 
-export interface Deal {
-  id: number;
-  dealNumber: string;
-  title: string;
-  clientName?: string;
-  value?: number;
-  stage: string;
-  probability?: number;
-  expectedCloseDate?: string;
-  assignedToId?: number;
-  assignedToName?: string;
-  companyId?: number;
-  companyRef?: string;
-  leadId?: number;
-  notes?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-export interface CreateDealBody {
-  title: string;
-  clientName?: string;
-  value?: number;
-  stage: string;
-  probability?: number;
-  expectedCloseDate?: string;
-  assignedToId?: number;
-  companyId?: number;
-  leadId?: number;
-  notes?: string;
-}
-
-export interface Activity {
-  id: number;
-  type: string;
-  subject: string;
-  description?: string;
-  dueDate?: string;
-  isDone: boolean;
-  leadId?: number;
-  dealId?: number;
-  contactId?: number;
-  createdById?: number;
-  createdByName?: string;
-  createdAt: string;
-}
-
-export interface CreateActivityBody {
-  type: string;
-  subject: string;
-  description?: string;
-  dueDate?: string;
-  isDone?: boolean;
-  leadId?: number;
-  dealId?: number;
-  contactId?: number;
-}
-
 export interface QuotationItem {
   id: number;
   quotationId?: number;
@@ -1854,149 +1796,6 @@ export interface CreateJournalEntryBody {
   lines?: JournalEntryLine[];
 }
 
-export interface WhatsappAccount {
-  id: number;
-  name: string;
-  phoneNumberId: string;
-  wabaId?: string;
-  displayPhone?: string;
-  accessTokenEnv: string;
-  companyId?: number;
-  isDefault: boolean;
-  isActive: boolean;
-  tokenConfigured?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface CreateWhatsappAccountBody {
-  name: string;
-  phoneNumberId: string;
-  wabaId?: string;
-  displayPhone?: string;
-  accessTokenEnv?: string;
-  companyId?: number;
-  isDefault?: boolean;
-  isActive?: boolean;
-}
-
-export interface WhatsappThread {
-  id: number;
-  accountId: number;
-  peerWaId: string;
-  peerName?: string;
-  leadId?: number;
-  dealId?: number;
-  contactId?: number;
-  projectId?: number;
-  lastMessageAt?: string;
-  lastMessagePreview?: string;
-  lastDirection?: string;
-  unreadCount: number;
-  companyId?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface UpdateWhatsappThreadBody {
-  peerName?: string;
-  leadId?: number;
-  dealId?: number;
-  contactId?: number;
-  projectId?: number;
-  unreadCount?: number;
-  companyId?: number;
-}
-
-export interface WhatsappMessage {
-  id: number;
-  threadId: number;
-  accountId: number;
-  direction: string;
-  waMessageId?: string;
-  fromWa?: string;
-  toWa?: string;
-  messageType: string;
-  body?: string;
-  mediaUrl?: string;
-  mediaCaption?: string;
-  templateName?: string;
-  templateLanguage?: string;
-  templateVars?: string;
-  status: string;
-  errorCode?: number;
-  errorText?: string;
-  sentAt?: string;
-  deliveredAt?: string;
-  readAt?: string;
-  receivedAt?: string;
-  sentById?: number;
-  createdAt: string;
-}
-
-export interface SendWhatsappBody {
-  accountId?: number;
-  threadId?: number;
-  to?: string;
-  body?: string;
-  templateName?: string;
-  templateLanguage?: string;
-  templateComponents?: unknown;
-  leadId?: number;
-  dealId?: number;
-  contactId?: number;
-  projectId?: number;
-}
-
-export interface SendWhatsappResponse {
-  message: WhatsappMessage;
-  threadId: number;
-  waMessageId?: string;
-}
-
-export type WhatsappAccountTestResultError = {
-  httpStatus?: number;
-  message?: string;
-  code?: number;
-  subcode?: number;
-  type?: string;
-  fbtraceId?: string;
-};
-
-export interface WhatsappAccountTestResult {
-  ok: boolean;
-  envVarName: string;
-  envVarSet: boolean;
-  displayPhoneNumber?: string;
-  verifiedName?: string;
-  qualityRating?: string;
-  codeVerificationStatus?: string;
-  nameStatus?: string;
-  error?: WhatsappAccountTestResultError;
-}
-
-export interface WhatsappTemplate {
-  name?: string;
-  language?: string;
-  status?: string;
-  category?: string;
-  id?: string;
-  components?: unknown[];
-}
-
-export interface WhatsappLinkSearchHit {
-  id: number;
-  label: string;
-  secondary?: string;
-}
-
-export interface WhatsappLinkSearchResponse {
-  leads?: WhatsappLinkSearchHit[];
-  deals?: WhatsappLinkSearchHit[];
-  contacts?: WhatsappLinkSearchHit[];
-  projects?: WhatsappLinkSearchHit[];
-}
-
 export type LeadUpdateResponse = Lead & {
   /** Linked quotation id — set whether newly created or pre-existing. */
   quotationId?: number;
@@ -2006,24 +1805,7 @@ export type LeadUpdateResponse = Lead & {
   warnings?: string[];
 };
 
-export type DealUpdateResponse = Deal & {
-  /** Linked Proforma Invoice id (newly created or pre-existing). */
-  proformaInvoiceId?: number;
-  /** Linked Tax Invoice id (newly created or pre-existing). */
-  taxInvoiceId?: number;
-  /** Linked Delivery Note id (newly created or pre-existing). */
-  deliveryNoteId?: number;
-  createdProformaInvoice?: boolean;
-  createdTaxInvoice?: boolean;
-  createdDeliveryNote?: boolean;
-  warnings?: string[];
-};
-
 export type QuotationApproveResponse = Quotation & {
-  /** Resolved deal id linked to this quotation (newly created or pre-existing). */
-  dealId?: number;
-  /** True if a new deal was created on this approval. */
-  createdDeal?: boolean;
   warnings?: string[];
 };
 
@@ -2049,19 +1831,6 @@ export type GetLeadsPipelineParams = {
 export type ListContactsParams = {
   search?: string;
   companyId?: number;
-};
-
-export type ListDealsParams = {
-  stage?: string;
-  companyId?: number;
-  assignedTo?: number;
-};
-
-export type ListActivitiesParams = {
-  leadId?: number;
-  dealId?: number;
-  contactId?: number;
-  type?: string;
 };
 
 export type ListQuotationsParams = {
@@ -2290,21 +2059,4 @@ export type ListJournalEntriesParams = {
 
 export type DeleteJournalEntry200 = {
   success?: boolean;
-};
-
-export type ListWhatsappThreadsParams = {
-  search?: string;
-  leadId?: number;
-  dealId?: number;
-  contactId?: number;
-  projectId?: number;
-  accountId?: number;
-};
-
-export type ListWhatsappTemplatesParams = {
-  accountId?: number;
-};
-
-export type SearchWhatsappLinkTargetsParams = {
-  q?: string;
 };

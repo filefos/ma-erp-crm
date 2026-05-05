@@ -1,7 +1,6 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
-  useGetLead, useUpdateLead, useListActivities, useCreateActivity, useUpdateActivity,
-  useCreateDeal, getListDealsQueryKey, getListActivitiesQueryKey, getGetLeadQueryKey,
+  useGetLead, useUpdateLead, getGetLeadQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,14 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link, useLocation } from "wouter";
 import {
   ArrowLeft, Pencil, MessageCircle, Phone, Mail, MapPin, Calendar, Building2, X, Save,
-  Sparkles, Plus, CheckCircle2, Circle, Briefcase, Copy, Wand2, ListChecks, Brain, Trophy, FileText,
+  Sparkles, Copy, Wand2, Brain, Trophy, FileText,
 } from "lucide-react";
-import { WhatsAppButton } from "@/components/whatsapp-button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import {
-  scoreLead, suggestNextAction, generateFollowUpMessage, generateWhatsAppMessage, summarizeClient,
+  scoreLead, suggestNextAction, generateFollowUpMessage, summarizeClient,
   predictDealSuccess, analyzeLostDeal, improveNotes,
 } from "@/lib/ai-crm";
 import { suggestFollowUp, type FollowUpSuggestion } from "@/lib/ai-client";
@@ -46,7 +44,6 @@ const statusColors: Record<string, string> = {
 };
 
 const STATUSES = ["new","contacted","qualified","site_visit","quotation_required","quotation_sent","negotiation","won","lost"];
-const ACTIVITY_TYPES = ["call", "email", "meeting", "site_visit", "follow_up", "task", "other"];
 
 interface Props { id: string }
 
@@ -56,13 +53,8 @@ export function LeadDetail({ id }: Props) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const { data: lead, isLoading } = useGetLead(lid);
-  const { data: allActivities } = useListActivities();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
-  const [convertOpen, setConvertOpen] = useState(false);
-  const [activityOpen, setActivityOpen] = useState(false);
-  const [activityForm, setActivityForm] = useState({ type: "follow_up", subject: "", description: "", dueDate: "" });
-  const [convertForm, setConvertForm] = useState({ title: "", value: "", probability: "50", expectedCloseDate: "" });
   const [aiText, setAiText] = useState<string>("");
   const [aiTitle, setAiTitle] = useState<string>("");
   const [aiFollowUp, setAiFollowUp] = useState<FollowUpSuggestion | null>(null);
@@ -71,8 +63,6 @@ export function LeadDetail({ id }: Props) {
   const update = useUpdateLead({
     mutation: {
       onSuccess: (resp: any) => {
-        // Invalidate the list view AND this lead's detail cache — otherwise
-        // useGetLead(lid) keeps showing the stale row after save.
         queryClient.invalidateQueries({ queryKey: ["/leads"] });
         queryClient.invalidateQueries({ queryKey: getGetLeadQueryKey(lid) });
         setEditing(false);
@@ -96,39 +86,12 @@ export function LeadDetail({ id }: Props) {
       },
     },
   });
-  const createActivity = useCreateActivity({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() });
-        setActivityOpen(false);
-        setActivityForm({ type: "follow_up", subject: "", description: "", dueDate: "" });
-        toast({ title: "Activity added" });
-      },
-    },
-  });
-  const updateActivity = useUpdateActivity({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() }) },
-  });
-  const createDeal = useCreateDeal({
-    mutation: {
-      onSuccess: (deal: any) => {
-        queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() });
-        setConvertOpen(false);
-        toast({ title: "Deal created", description: `${deal.dealNumber} from ${(lead as any)?.leadName}` });
-        navigate("/crm/deals");
-      },
-    },
-  });
-
-  const leadActivities = useMemo(
-    () => (allActivities ?? []).filter((a: any) => a.leadId === lid),
-    [allActivities, lid],
-  );
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading lead details...</div>;
   if (!lead) return <div className="text-muted-foreground p-8">Lead not found.</div>;
 
   const l = lead as any;
+  const leadActivities: any[] = [];
 
   const startEditing = () => {
     setForm({
@@ -173,36 +136,6 @@ export function LeadDetail({ id }: Props) {
     toast({ title: "Follow-up date applied", description: aiFollowUp.recommendedDate });
   };
 
-  const openConvert = () => {
-    setConvertForm({
-      title: l.requirementType ? `${l.leadName} — ${l.requirementType}` : l.leadName,
-      value: String(l.budget ?? ""),
-      probability: l.leadScore === "hot" ? "75" : l.leadScore === "warm" ? "50" : "25",
-      expectedCloseDate: "",
-    });
-    setConvertOpen(true);
-  };
-
-  const submitConvert = () => {
-    createDeal.mutate({
-      data: {
-        title: convertForm.title,
-        clientName: l.companyName ?? l.leadName,
-        value: parseFloat(convertForm.value) || 0,
-        probability: parseFloat(convertForm.probability) || 0,
-        stage: "qualification",
-        expectedCloseDate: convertForm.expectedCloseDate || undefined,
-        leadId: lid,
-        companyId: l.companyId,
-        notes: `Converted from lead ${l.leadNumber}.${l.notes ? "\n\nLead notes: " + l.notes : ""}`,
-      } as any,
-    });
-  };
-
-  const submitActivity = () => {
-    createActivity.mutate({ data: { ...activityForm, leadId: lid } as any });
-  };
-
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
@@ -211,16 +144,11 @@ export function LeadDetail({ id }: Props) {
         </Button>
         <div className="ml-auto flex gap-2 flex-wrap">
           {!editing && l.status !== "won" && l.status !== "lost" && (
-            <>
-              <Button variant="outline" size="sm" asChild data-testid="button-convert-quotation" className="border-blue-500 text-blue-700 hover:bg-blue-50">
-                <Link href={`/sales/quotations/new?leadId=${l.id}`}>
-                  <FileText className="w-4 h-4 mr-1.5" />Convert to Quotation
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" onClick={openConvert} data-testid="button-convert-deal" className="border-emerald-500 text-emerald-700 hover:bg-emerald-50">
-                <Briefcase className="w-4 h-4 mr-1.5" />Convert to Deal
-              </Button>
-            </>
+            <Button variant="outline" size="sm" asChild data-testid="button-convert-quotation" className="border-blue-500 text-blue-700 hover:bg-blue-50">
+              <Link href={`/sales/quotations/new?leadId=${l.id}`}>
+                <FileText className="w-4 h-4 mr-1.5" />Convert to Quotation
+              </Link>
+            </Button>
           )}
           {!editing && (
             <Button variant="outline" size="sm" onClick={startEditing} data-testid="button-edit-lead">
@@ -236,20 +164,11 @@ export function LeadDetail({ id }: Props) {
             </>
           )}
           {(l.whatsapp || l.phone) && (
-            <WhatsAppButton
-              phone={l.whatsapp || l.phone}
-              context="lead"
-              leadId={l.id}
-              defaultTemplateId={l.status === "new" ? "lead_intro" : "lead_followup"}
-              vars={{ name: l.contactPerson || l.leadName, companyName: l.companyName }}
-              variant="outline"
-              size="sm"
-              iconOnly={false}
-              label="WhatsApp"
-              iconClassName="w-4 h-4 mr-1.5 text-green-600"
-              className="text-green-700"
-              testId="button-wa-lead-detail"
-            />
+            <Button variant="outline" size="sm" asChild className="text-green-700 border-green-500 hover:bg-green-50" data-testid="button-wa-lead-detail">
+              <a href={`https://wa.me/${(l.whatsapp || l.phone).replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
+                <MessageCircle className="w-4 h-4 mr-1.5 text-green-600" />WhatsApp
+              </a>
+            </Button>
           )}
         </div>
       </div>
@@ -276,9 +195,9 @@ export function LeadDetail({ id }: Props) {
               <Select value={form.leadScore} onValueChange={v => setForm(p => ({...p, leadScore: v}))}>
                 <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="hot">🔥 Hot</SelectItem>
-                  <SelectItem value="warm">🌡️ Warm</SelectItem>
-                  <SelectItem value="cold">❄️ Cold</SelectItem>
+                  <SelectItem value="hot">Hot</SelectItem>
+                  <SelectItem value="warm">Warm</SelectItem>
+                  <SelectItem value="cold">Cold</SelectItem>
                 </SelectContent>
               </Select>
             ) : (
@@ -292,7 +211,6 @@ export function LeadDetail({ id }: Props) {
             ) : (
               <Badge variant="secondary" className={`${statusColors[l.status] ?? ""} capitalize`}>{l.status?.replace("_"," ")}</Badge>
             )}
-            {/* AI score chip */}
             <div className="flex items-center gap-1 bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] text-white rounded-full px-2.5 py-0.5 text-xs font-semibold" title={`AI score: ${ai.score}/100 (${ai.band})`}>
               <Sparkles className="w-3 h-3" />AI {ai.score}
             </div>
@@ -380,55 +298,11 @@ export function LeadDetail({ id }: Props) {
         )}
       </div>
 
-      {/* Tabs: Activity, AI Assistant */}
-      <Tabs defaultValue="activity" className="w-full">
+      {/* AI Assistant tab */}
+      <Tabs defaultValue="ai" className="w-full">
         <TabsList>
-          <TabsTrigger value="activity" data-testid="tab-activity"><ListChecks className="w-4 h-4 mr-1.5" />Activity Timeline</TabsTrigger>
           <TabsTrigger value="ai" data-testid="tab-ai"><Brain className="w-4 h-4 mr-1.5" />AI Assistant</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="activity" className="space-y-3">
-          <div className="bg-card border rounded-xl p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-semibold">Activity Timeline</h3>
-                <p className="text-xs text-muted-foreground">{leadActivities.length} touchpoint{leadActivities.length === 1 ? "" : "s"} for this lead</p>
-              </div>
-              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => setActivityOpen(true)} data-testid="button-add-activity">
-                <Plus className="w-4 h-4 mr-1.5" />Add Activity
-              </Button>
-            </div>
-
-            {leadActivities.length === 0 ? (
-              <div className="text-sm text-muted-foreground italic py-8 text-center">No activities logged yet. Add your first call, meeting or follow-up.</div>
-            ) : (
-              <ol className="relative border-l border-border/60 ml-3 space-y-4">
-                {leadActivities.map((a: any) => (
-                  <li key={a.id} className="ml-6">
-                    <span className={`absolute -left-[7px] flex items-center justify-center w-3.5 h-3.5 rounded-full ring-4 ring-background ${a.isDone ? "bg-emerald-500" : "bg-blue-500"}`} />
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className="capitalize text-[10px]">{a.type?.replace("_", " ")}</Badge>
-                          <span className="font-medium text-sm">{a.subject}</span>
-                          {a.isDone && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-[10px]">Done</Badge>}
-                        </div>
-                        {a.description && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{a.description}</p>}
-                        <div className="text-[11px] text-muted-foreground mt-1">
-                          {a.dueDate ? `Due ${a.dueDate}` : a.createdAt ? `Logged ${new Date(a.createdAt).toLocaleDateString()}` : ""}
-                          {a.createdByName ? ` · by ${a.createdByName}` : ""}
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => updateActivity.mutate({ id: a.id, data: { ...a, isDone: !a.isDone } as any })}>
-                        {a.isDone ? <Circle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        </TabsContent>
 
         <TabsContent value="ai" className="space-y-3">
           <div className="bg-card border rounded-xl p-4">
@@ -476,9 +350,6 @@ export function LeadDetail({ id }: Props) {
               <Button size="sm" variant="outline" onClick={() => showAi("Suggested Follow-up Email", generateFollowUpMessage(l))} data-testid="button-ai-followup">
                 <Wand2 className="w-3.5 h-3.5 mr-1.5" />Draft Follow-up Email
               </Button>
-              <Button size="sm" variant="outline" onClick={() => showAi("Suggested WhatsApp Message", generateWhatsAppMessage(l))} data-testid="button-ai-whatsapp">
-                <MessageCircle className="w-3.5 h-3.5 mr-1.5 text-green-600" />Draft WhatsApp Message
-              </Button>
               <Button size="sm" variant="outline" onClick={() => showAi("Client Snapshot", summarizeClient(l, leadActivities))} data-testid="button-ai-summary">
                 <Brain className="w-3.5 h-3.5 mr-1.5" />Summarize Client
               </Button>
@@ -490,8 +361,8 @@ export function LeadDetail({ id }: Props) {
                 <Trophy className="w-3.5 h-3.5 mr-1.5" />Predict Success
               </Button>
               {l.status === "lost" && (
-                <Button size="sm" variant="outline" onClick={() => showAi("Lost Deal Analysis", analyzeLostDeal(l, leadActivities))} data-testid="button-ai-lost">
-                  <Brain className="w-3.5 h-3.5 mr-1.5 text-red-600" />Analyze Lost Deal
+                <Button size="sm" variant="outline" onClick={() => showAi("Lost Lead Analysis", analyzeLostDeal(l, leadActivities))} data-testid="button-ai-lost">
+                  <Brain className="w-3.5 h-3.5 mr-1.5 text-red-600" />Analyze Lost Lead
                 </Button>
               )}
               <Button size="sm" variant="outline" onClick={() => showAi("Improved Notes", improveNotes(l.notes ?? ""))} data-testid="button-ai-notes">
@@ -526,13 +397,6 @@ export function LeadDetail({ id }: Props) {
                 </div>
               </div>
               <div className="space-y-1">
-                <div className="text-xs font-semibold flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-green-600" />WhatsApp message</div>
-                <Textarea value={aiFollowUp.whatsappMessage ?? ""} onChange={(e) => setAiFollowUp(p => p ? { ...p, whatsappMessage: e.target.value } : p)} rows={4} className="text-sm" />
-                <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="outline" onClick={() => copyText(aiFollowUp.whatsappMessage ?? "")}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button>
-                </div>
-              </div>
-              <div className="space-y-1">
                 <div className="text-xs font-semibold flex items-center gap-1"><Mail className="w-3.5 h-3.5" />Email — {aiFollowUp.emailSubject ?? "(no subject)"}</div>
                 <Textarea value={aiFollowUp.emailBody ?? ""} onChange={(e) => setAiFollowUp(p => p ? { ...p, emailBody: e.target.value } : p)} rows={6} className="text-sm" />
                 <div className="flex justify-end gap-2">
@@ -558,48 +422,6 @@ export function LeadDetail({ id }: Props) {
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setAiText("")}>Close</Button>
             <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => copyText(aiText)}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Convert to Deal dialog */}
-      <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-emerald-600" />Convert Lead to Deal</DialogTitle></DialogHeader>
-          <div className="space-y-3 pt-2">
-            <div className="text-xs text-muted-foreground">A new deal will be created in the Qualification stage with the values below.</div>
-            <div className="space-y-1"><Label>Deal Title *</Label><Input value={convertForm.title} onChange={e => setConvertForm(p => ({...p, title: e.target.value}))} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><Label>Value (AED)</Label><Input type="number" value={convertForm.value} onChange={e => setConvertForm(p => ({...p, value: e.target.value}))} /></div>
-              <div className="space-y-1"><Label>Probability (%)</Label><Input type="number" value={convertForm.probability} onChange={e => setConvertForm(p => ({...p, probability: e.target.value}))} /></div>
-            </div>
-            <div className="space-y-1"><Label>Expected Close Date</Label><Input type="date" value={convertForm.expectedCloseDate} onChange={e => setConvertForm(p => ({...p, expectedCloseDate: e.target.value}))} /></div>
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-700" onClick={submitConvert} disabled={!convertForm.title || createDeal.isPending} data-testid="button-submit-convert">
-              {createDeal.isPending ? "Creating..." : "Create Deal & Open Pipeline"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Activity dialog */}
-      <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add Activity to {l.leadName}</DialogTitle></DialogHeader>
-          <div className="space-y-3 pt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><Label>Type</Label>
-                <Select value={activityForm.type} onValueChange={v => setActivityForm(p => ({...p, type: v}))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{ACTIVITY_TYPES.map(t => <SelectItem key={t} value={t} className="capitalize">{t.replace("_"," ")}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1"><Label>Due Date</Label><Input type="date" value={activityForm.dueDate} onChange={e => setActivityForm(p => ({...p, dueDate: e.target.value}))} /></div>
-            </div>
-            <div className="space-y-1"><Label>Subject *</Label><Input value={activityForm.subject} onChange={e => setActivityForm(p => ({...p, subject: e.target.value}))} placeholder="e.g. Site visit at Al Quoz warehouse" /></div>
-            <div className="space-y-1"><Label>Notes</Label><Textarea value={activityForm.description} onChange={e => setActivityForm(p => ({...p, description: e.target.value}))} rows={3} /></div>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submitActivity} disabled={!activityForm.subject || createActivity.isPending}>
-              {createActivity.isPending ? "Saving..." : "Add Activity"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

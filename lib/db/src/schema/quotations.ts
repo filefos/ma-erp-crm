@@ -29,7 +29,6 @@ export const quotationsTable = pgTable("quotations", {
   preparedById: integer("prepared_by_id"),
   approvedById: integer("approved_by_id"),
   leadId: integer("lead_id"),
-  dealId: integer("deal_id"),
   createdById: integer("created_by_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

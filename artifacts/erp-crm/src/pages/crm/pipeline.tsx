@@ -1,332 +1,255 @@
 import { useMemo, useState } from "react";
-import { Link, useLocation } from "wouter";
-import { ToastAction } from "@/components/ui/toast";
-import {
-  useListDeals, useUpdateDeal, getListDealsQueryKey,
-  useListProformaInvoices, useListTaxInvoices, useListDeliveryNotes,
-} from "@workspace/api-client-react";
-import { FileText, Receipt, Package } from "lucide-react";
-import { useActiveCompany } from "@/hooks/useActiveCompany";
-import { useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { GripVertical, Search, TrendingUp, DollarSign, Briefcase, AlertTriangle } from "lucide-react";
+  import { Link, useLocation } from "wouter";
+  import {
+    useListLeads, useUpdateLead,
+    useListProformaInvoices, useListTaxInvoices, useListDeliveryNotes,
+  } from "@workspace/api-client-react";
+  import { FileText, Receipt, Package, GripVertical, Search, TrendingUp, DollarSign, Briefcase, AlertTriangle } from "lucide-react";
+  import { useActiveCompany } from "@/hooks/useActiveCompany";
+  import { useQueryClient } from "@tanstack/react-query";
+  import { Badge } from "@/components/ui/badge";
+  import { Input } from "@/components/ui/input";
+  import { useToast } from "@/hooks/use-toast";
+  import { ExecutiveHeader, Avatar } from "@/components/crm/premium";
 
-// Build a per-deal map of linked PI/INV/DN by parsing the "[deal:N]" trace tag
-// that the server writes into notes/projectName when auto-creating documents.
-function indexByDeal<T extends { id: number; notes?: string | null; projectName?: string | null }>(rows: T[] | undefined): Map<number, T> {
-  const m = new Map<number, T>();
-  for (const r of rows ?? []) {
-    const hay = `${r.notes ?? ""} ${r.projectName ?? ""}`;
-    const match = hay.match(/\[deal:(\d+)/);
-    if (match) {
-      const dealId = parseInt(match[1], 10);
-      if (!m.has(dealId)) m.set(dealId, r);
-    }
-  }
-  return m;
-}
-import { useToast } from "@/hooks/use-toast";
-import { ExecutiveHeader, Avatar } from "@/components/crm/premium";
+  interface Stage { key: string; label: string; description: string; accent: string; badge: string }
 
-interface Stage {
-  key: string;
-  label: string;
-  description: string;
-  accent: string;       // tailwind border colour for the column header
-  badge: string;        // tailwind classes for the count badge
-}
+  const STAGES: Stage[] = [
+    { key: "new",                label: "New",          description: "Just created",     accent: "border-blue-500",    badge: "bg-blue-100 text-blue-700" },
+    { key: "contacted",          label: "Contacted",    description: "Reached out",      accent: "border-indigo-500",  badge: "bg-indigo-100 text-indigo-700" },
+    { key: "qualified",          label: "Qualified",    description: "Discovery done",   accent: "border-purple-500",  badge: "bg-purple-100 text-purple-700" },
+    { key: "quotation_sent",     label: "Proposal",     description: "Quotation sent",   accent: "border-orange-500",  badge: "bg-orange-100 text-orange-700" },
+    { key: "negotiation",        label: "Negotiation",  description: "Closing",          accent: "border-orange-500",  badge: "bg-orange-100 text-orange-700" },
+    { key: "won",                label: "Won",          description: "Closed-won",       accent: "border-emerald-500", badge: "bg-emerald-100 text-emerald-700" },
+    { key: "lost",               label: "Lost",         description: "Closed-lost",      accent: "border-red-500",     badge: "bg-red-100 text-red-700" },
+  ];
 
-// 6 stages — matches the existing dealsTable.stage values so no migration is needed.
-const STAGES: Stage[] = [
-  { key: "new",           label: "New",           description: "Just created", accent: "border-blue-500",   badge: "bg-blue-100 text-blue-700" },
-  { key: "qualification", label: "Qualification", description: "Discovery",    accent: "border-purple-500", badge: "bg-purple-100 text-purple-700" },
-  { key: "proposal",      label: "Proposal",      description: "Quotation sent", accent: "border-orange-500",  badge: "bg-orange-100 text-orange-700" },
-  { key: "negotiation",   label: "Negotiation",   description: "Closing",      accent: "border-orange-500", badge: "bg-orange-100 text-orange-700" },
-  { key: "won",           label: "Won",           description: "Closed-won",   accent: "border-emerald-500", badge: "bg-emerald-100 text-emerald-700" },
-  { key: "lost",          label: "Lost",          description: "Closed-lost",  accent: "border-red-500",    badge: "bg-red-100 text-red-700" },
-];
+  export function SalesPipeline() {
+    const { data: leadsRaw, isLoading } = useListLeads({});
+    const { data: piRaw } = useListProformaInvoices();
+    const { data: tiRaw } = useListTaxInvoices();
+    const { data: dnRaw } = useListDeliveryNotes();
+    const { filterByCompany } = useActiveCompany();
+    const [, navigate] = useLocation();
+    const [search, setSearch] = useState("");
+    const [draggingId, setDraggingId] = useState<number | null>(null);
+    const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
 
-export function SalesPipeline() {
-  const { data: dealsRaw, isLoading } = useListDeals();
-  const { data: piRaw } = useListProformaInvoices();
-  const { data: tiRaw } = useListTaxInvoices();
-  const { data: dnRaw } = useListDeliveryNotes();
-  const piByDeal = useMemo(() => indexByDeal(piRaw as any), [piRaw]);
-  const tiByDeal = useMemo(() => indexByDeal(tiRaw as any), [tiRaw]);
-  const dnByDeal = useMemo(() => indexByDeal(dnRaw as any), [dnRaw]);
-  const { filterByCompany } = useActiveCompany();
-  const [, navigate] = useLocation();
-  const [search, setSearch] = useState("");
-  const [draggingId, setDraggingId] = useState<number | null>(null);
-  const [dragOverStage, setDragOverStage] = useState<string | null>(null);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const update = useUpdateDeal({
-    mutation: {
-      onSuccess: (resp: any) => {
-        queryClient.invalidateQueries({ queryKey: getListDealsQueryKey() });
-        if (resp?.createdProformaInvoice || resp?.createdTaxInvoice || resp?.createdDeliveryNote) {
-          const parts: string[] = [];
-          if (resp.createdProformaInvoice) parts.push("Proforma Invoice");
-          if (resp.createdTaxInvoice) parts.push("Tax Invoice");
-          if (resp.createdDeliveryNote) parts.push("Delivery Note");
-          const targetPath =
-            resp.createdDeliveryNote && resp.deliveryNoteId ? `/accounts/delivery-notes/${resp.deliveryNoteId}` :
-            resp.createdTaxInvoice && resp.taxInvoiceId ? `/accounts/invoices/${resp.taxInvoiceId}` :
-            resp.createdProformaInvoice && resp.proformaInvoiceId ? `/sales/proforma-invoices/${resp.proformaInvoiceId}` :
-            null;
-          toast({
-            title: "Closing documents auto-created",
-            description: parts.join(" + ") + " ready in Accounts.",
-            action: targetPath ? (
-              <ToastAction altText="Open document" onClick={() => navigate(targetPath)}>
-                Open
-              </ToastAction>
-            ) : undefined,
-          });
-          queryClient.invalidateQueries({ queryKey: ["/proforma-invoices"] });
-          queryClient.invalidateQueries({ queryKey: ["/tax-invoices"] });
-          queryClient.invalidateQueries({ queryKey: ["/delivery-notes"] });
-        } else if (resp?.proformaInvoiceId || resp?.taxInvoiceId || resp?.deliveryNoteId) {
-          // Stage transitioned again but docs already existed — no-op toast suppressed.
-        }
-        for (const w of (resp?.warnings ?? []) as string[]) {
-          toast({ title: "Heads-up", description: w });
-        }
+    const update = useUpdateLead({
+      mutation: {
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/leads"] }),
+        onError: (err: any) => toast({ title: "Could not move lead", description: err?.message ?? "Update failed", variant: "destructive" }),
       },
-      onError: (err: any) => toast({ title: "Could not move deal", description: err?.message ?? "Update failed", variant: "destructive" }),
-    },
-  });
+    });
 
-  const deals = useMemo(() => {
-    let rows = filterByCompany(dealsRaw ?? []);
-    if (search) {
-      const s = search.toLowerCase();
-      rows = rows.filter(d => d.title?.toLowerCase().includes(s) || d.clientName?.toLowerCase().includes(s) || d.dealNumber?.toLowerCase().includes(s));
-    }
-    return rows;
-  }, [dealsRaw, filterByCompany, search]);
+    const leads = useMemo(() => {
+      let rows = filterByCompany(leadsRaw ?? []);
+      if (search) {
+        const s = search.toLowerCase();
+        rows = rows.filter((l: any) =>
+          (l.leadName ?? "").toLowerCase().includes(s)
+          || (l.companyName ?? "").toLowerCase().includes(s)
+          || (l.leadNumber ?? "").toLowerCase().includes(s),
+        );
+      }
+      return rows;
+    }, [leadsRaw, filterByCompany, search]);
 
-  const dealsByStage = useMemo(() => {
-    const map: Record<string, typeof deals> = {};
-    for (const s of STAGES) map[s.key] = [];
-    for (const d of deals) {
-      const k = map[d.stage] ? d.stage : "new";
-      map[k].push(d);
-    }
-    return map;
-  }, [deals]);
+    const leadsByStage = useMemo(() => {
+      const map: Record<string, any[]> = {};
+      for (const s of STAGES) map[s.key] = [];
+      for (const l of leads as any[]) {
+        const k = map[l.status] ? l.status : "new";
+        map[k].push(l);
+      }
+      return map;
+    }, [leads]);
 
-  const totalValue = deals.reduce((s, d) => s + Number(d.value ?? 0), 0);
-  const openValue = deals.filter(d => !["won", "lost"].includes(d.stage)).reduce((s, d) => s + Number(d.value ?? 0), 0);
-  const wonValue = deals.filter(d => d.stage === "won").reduce((s, d) => s + Number(d.value ?? 0), 0);
+    const piByLead = useMemo(() => indexBy(piRaw, "leadId"), [piRaw]);
+    const tiByLead = useMemo(() => indexBy(tiRaw, "leadId"), [tiRaw]);
+    const dnByLead = useMemo(() => indexBy(dnRaw, "leadId"), [dnRaw]);
 
-  // A deal is "stuck" if it hasn't been updated for 7+ days and isn't in a closed stage.
-  const STUCK_DAYS = 7;
-  const isStuck = (d: any): boolean => {
-    if (["won", "lost"].includes(d.stage)) return false;
-    const last = new Date(d.updatedAt ?? d.createdAt ?? Date.now()).getTime();
-    return (Date.now() - last) / 86_400_000 >= STUCK_DAYS;
-  };
-  const stuckCount = deals.filter(isStuck).length;
+    const totalValue = leads.reduce((s: number, l: any) => s + Number(l.budget ?? 0), 0);
+    const openValue = leads.filter((l: any) => !["won", "lost"].includes(l.status)).reduce((s: number, l: any) => s + Number(l.budget ?? 0), 0);
+    const wonValue = leads.filter((l: any) => l.status === "won").reduce((s: number, l: any) => s + Number(l.budget ?? 0), 0);
 
-  const handleDragStart = (e: React.DragEvent, id: number) => {
-    setDraggingId(id);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(id));
-  };
-  const handleDragOver = (e: React.DragEvent, stage: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (dragOverStage !== stage) setDragOverStage(stage);
-  };
-  const handleDragLeave = (stage: string) => {
-    if (dragOverStage === stage) setDragOverStage(null);
-  };
-  const handleDrop = (e: React.DragEvent, stage: string) => {
-    e.preventDefault();
-    setDragOverStage(null);
-    setDraggingId(null);
-    const id = parseInt(e.dataTransfer.getData("text/plain"), 10);
-    if (!Number.isFinite(id)) return;
-    const deal = deals.find(d => d.id === id);
-    if (!deal || deal.stage === stage) return;
-    // The PUT /deals/:id endpoint expects a CreateDealBody-shaped payload,
-    // not a full Deal (which has read-only fields like id, dealNumber,
-    // createdAt, updatedAt that the server will reject). Build a clean
-    // payload with only the writable fields.
-    const payload = {
-      title: deal.title,
-      clientName: (deal as any).clientName ?? undefined,
-      value: deal.value !== undefined && deal.value !== null ? Number(deal.value) : undefined,
-      stage,
-      probability: deal.probability !== undefined && deal.probability !== null ? Number(deal.probability) : undefined,
-      expectedCloseDate: (deal as any).expectedCloseDate ?? undefined,
-      assignedToId: (deal as any).assignedToId ?? undefined,
-      companyId: (deal as any).companyId ?? undefined,
-      leadId: (deal as any).leadId ?? undefined,
-      notes: (deal as any).notes ?? undefined,
+    const STUCK_DAYS = 7;
+    const isStuck = (l: any): boolean => {
+      if (["won", "lost"].includes(l.status)) return false;
+      const last = new Date(l.updatedAt ?? l.createdAt ?? Date.now()).getTime();
+      return (Date.now() - last) / 86_400_000 >= STUCK_DAYS;
     };
-    update.mutate(
-      { id, data: payload as any },
-      { onSuccess: () => toast({ title: "Deal moved", description: `${deal.title} → ${STAGES.find(s => s.key === stage)?.label}` }) },
-    );
-  };
+    const stuckCount = leads.filter(isStuck).length;
 
-  return (
-    <div className="space-y-4">
-      <ExecutiveHeader icon={Briefcase} title="Sales Pipeline" subtitle="Drag deals between stages to update them in real time">
-        <PipelineStat icon={Briefcase}  label="All deals"  value={deals.length} />
-        <PipelineStat icon={TrendingUp} label="Open value" value={`AED ${openValue.toLocaleString()}`} tone="blue" />
-        <PipelineStat icon={DollarSign} label="Won value"  value={`AED ${wonValue.toLocaleString()}`} tone="green" />
-        {stuckCount > 0 && <PipelineStat icon={AlertTriangle} label="Stuck" value={stuckCount} tone="amber" />}
-      </ExecutiveHeader>
+    const handleDragStart = (e: React.DragEvent, id: number) => {
+      setDraggingId(id);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(id));
+    };
+    const handleDragOver = (e: React.DragEvent, stage: string) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (dragOverStage !== stage) setDragOverStage(stage);
+    };
+    const handleDragLeave = (stage: string) => {
+      if (dragOverStage === stage) setDragOverStage(null);
+    };
+    const handleDrop = (e: React.DragEvent, stage: string) => {
+      e.preventDefault();
+      setDragOverStage(null);
+      setDraggingId(null);
+      const id = parseInt(e.dataTransfer.getData("text/plain"), 10);
+      if (!Number.isFinite(id)) return;
+      const lead = (leads as any[]).find(l => l.id === id);
+      if (!lead || lead.status === stage) return;
+      update.mutate(
+        { id, data: { ...lead, status: stage } as any },
+        { onSuccess: () => toast({ title: "Lead moved", description: `${lead.leadName} → ${STAGES.find(s => s.key === stage)?.label}` }) },
+      );
+    };
 
-      {stuckCount > 0 && (
-        <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/30 rounded-lg p-2.5 text-sm flex items-center gap-2 text-orange-800 dark:text-orange-300" data-testid="banner-stuck-deals">
-          <AlertTriangle className="w-4 h-4" />
-          <span><strong>{stuckCount}</strong> deal{stuckCount === 1 ? " has" : "s have"} been stuck for {STUCK_DAYS}+ days — review and act.</span>
+    return (
+      <div className="space-y-4">
+        <ExecutiveHeader icon={Briefcase} title="Sales Pipeline" subtitle="Drag leads between stages to update them in real time">
+          <PipelineStat icon={Briefcase}  label="All leads" value={leads.length} />
+          <PipelineStat icon={TrendingUp} label="Open value" value={`AED ${openValue.toLocaleString()}`} tone="blue" />
+          <PipelineStat icon={DollarSign} label="Won value"  value={`AED ${wonValue.toLocaleString()}`} tone="green" />
+          {stuckCount > 0 && <PipelineStat icon={AlertTriangle} label="Stuck" value={stuckCount} tone="amber" />}
+        </ExecutiveHeader>
+
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search leads…" className="pl-8" value={search} onChange={e => setSearch(e.target.value)} data-testid="input-pipeline-search" />
+          </div>
+          <span className="text-xs text-muted-foreground">Total budget across pipeline: <strong>AED {totalValue.toLocaleString()}</strong></span>
         </div>
-      )}
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search deals…" className="pl-8" value={search} onChange={e => setSearch(e.target.value)} data-testid="input-pipeline-search" />
-        </div>
-        <span className="text-xs text-muted-foreground">Total value across pipeline: <strong>AED {totalValue.toLocaleString()}</strong></span>
-      </div>
-
-      <div className="overflow-x-auto pb-4">
-        <div className="flex gap-3 min-w-max">
-          {STAGES.map(stage => {
-            const stageDeals = dealsByStage[stage.key] ?? [];
-            const stageValue = stageDeals.reduce((s, d) => s + Number(d.value ?? 0), 0);
-            const isOver = dragOverStage === stage.key;
-            return (
-              <div
-                key={stage.key}
-                onDragOver={e => handleDragOver(e, stage.key)}
-                onDragLeave={() => handleDragLeave(stage.key)}
-                onDrop={e => handleDrop(e, stage.key)}
-                className={`w-72 shrink-0 bg-muted/30 rounded-xl border-2 border-t-4 ${stage.accent} ${isOver ? "ring-2 ring-[#1e6ab0] bg-[#1e6ab0]/5" : "border-transparent"} transition-all`}
-                data-testid={`pipeline-column-${stage.key}`}
-              >
-                <div className="p-3 border-b border-border/50">
-                  <div className="flex items-center justify-between">
-                    <div className="font-semibold text-sm">{stage.label}</div>
-                    <Badge variant="secondary" className={`${stage.badge} text-[10px]`}>{stageDeals.length}</Badge>
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-3 min-w-max">
+            {STAGES.map(stage => {
+              const stageLeads = leadsByStage[stage.key] ?? [];
+              const stageValue = stageLeads.reduce((s: number, l: any) => s + Number(l.budget ?? 0), 0);
+              const isOver = dragOverStage === stage.key;
+              return (
+                <div
+                  key={stage.key}
+                  onDragOver={e => handleDragOver(e, stage.key)}
+                  onDragLeave={() => handleDragLeave(stage.key)}
+                  onDrop={e => handleDrop(e, stage.key)}
+                  className={`w-72 shrink-0 bg-muted/30 rounded-xl border-2 border-t-4 ${stage.accent} ${isOver ? "ring-2 ring-[#1e6ab0] bg-[#1e6ab0]/5" : "border-transparent"} transition-all`}
+                  data-testid={`pipeline-column-${stage.key}`}
+                >
+                  <div className="p-3 border-b border-border/50">
+                    <div className="flex items-center justify-between">
+                      <div className="font-semibold text-sm">{stage.label}</div>
+                      <Badge variant="secondary" className={`${stage.badge} text-[10px]`}>{stageLeads.length}</Badge>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">{stage.description}</div>
+                    <div className="text-[11px] font-medium text-foreground/80 mt-1">AED {stageValue.toLocaleString()}</div>
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">{stage.description}</div>
-                  <div className="text-[11px] font-medium text-foreground/80 mt-1">AED {stageValue.toLocaleString()}</div>
-                </div>
-                <div className="p-2 space-y-2 min-h-[300px] max-h-[calc(100vh-340px)] overflow-y-auto">
-                  {isLoading ? (
-                    <div className="text-xs text-muted-foreground text-center py-6">Loading…</div>
-                  ) : stageDeals.length === 0 ? (
-                    <div className="text-xs text-muted-foreground/60 text-center py-8 italic">Drop deals here</div>
-                  ) : stageDeals.map(d => {
-                    const stuck = isStuck(d);
-                    return (
-                      <div
-                        key={d.id}
-                        draggable
-                        onDragStart={e => handleDragStart(e, d.id)}
-                        onDragEnd={() => setDraggingId(null)}
-                        className={`bg-card border rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${draggingId === d.id ? "opacity-40" : ""} ${stuck ? "ring-1 ring-orange-300 dark:ring-orange-700" : ""}`}
-                        data-testid={`pipeline-card-${d.id}`}
-                      >
-                        <div className="flex items-start gap-1.5">
-                          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/40 mt-0.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <Link href={`/crm/deals`} className="block">
-                              <div className="flex items-center justify-between gap-1 mb-1">
-                                <span className="text-[11px] font-mono text-primary truncate">{d.dealNumber}</span>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  {stuck && <span title="Stuck — no movement in 7+ days"><AlertTriangle className="w-3 h-3 text-orange-500" /></span>}
-                                  {(d as any).assignedToName && <Avatar name={(d as any).assignedToName} size={20} />}
-                                </div>
-                              </div>
-                              <div className="text-sm font-semibold leading-tight truncate">{d.title}</div>
-                              {d.clientName && <div className="text-[11px] text-muted-foreground truncate">{d.clientName}</div>}
-                            </Link>
-                            {(() => {
-                              const prob = Number(d.probability ?? 0);
-                              const probTone = prob >= 70 ? "bg-emerald-500" : prob >= 40 ? "bg-orange-500" : "bg-slate-400";
-                              return (
-                                <div className="flex items-center justify-between mt-2 gap-2">
-                                  <span className="text-xs font-bold text-emerald-600 truncate">AED {Number(d.value ?? 0).toLocaleString()}</span>
+                  <div className="p-2 space-y-2 min-h-[300px] max-h-[calc(100vh-340px)] overflow-y-auto">
+                    {isLoading ? (
+                      <div className="text-xs text-muted-foreground text-center py-6">Loading…</div>
+                    ) : stageLeads.length === 0 ? (
+                      <div className="text-xs text-muted-foreground/60 text-center py-8 italic">Drop leads here</div>
+                    ) : stageLeads.map((l: any) => {
+                      const stuck = isStuck(l);
+                      const pi = piByLead.get(l.id);
+                      const ti = tiByLead.get(l.id);
+                      const dn = dnByLead.get(l.id);
+                      return (
+                        <div
+                          key={l.id}
+                          draggable
+                          onDragStart={e => handleDragStart(e, l.id)}
+                          onDragEnd={() => setDraggingId(null)}
+                          className={`bg-card border rounded-xl p-2.5 cursor-grab active:cursor-grabbing hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${draggingId === l.id ? "opacity-40" : ""} ${stuck ? "ring-1 ring-orange-300 dark:ring-orange-700" : ""}`}
+                          data-testid={`pipeline-card-${l.id}`}
+                        >
+                          <div className="flex items-start gap-1.5">
+                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/40 mt-0.5 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <Link href={`/crm/leads/${l.id}`} className="block">
+                                <div className="flex items-center justify-between gap-1 mb-1">
+                                  <span className="text-[11px] font-mono text-primary truncate">{l.leadNumber}</span>
                                   <div className="flex items-center gap-1 shrink-0">
-                                    <div className="w-12 h-1 rounded-full bg-muted overflow-hidden">
-                                      <div className={`h-full ${probTone}`} style={{ width: `${Math.min(100, prob)}%` }} />
-                                    </div>
-                                    <span className="text-[10px] text-muted-foreground tabular-nums">{prob}%</span>
+                                    {stuck && <span title="Stuck — no movement in 7+ days"><AlertTriangle className="w-3 h-3 text-orange-500" /></span>}
+                                    {l.assignedToName && <Avatar name={l.assignedToName} size={20} />}
                                   </div>
                                 </div>
-                              );
-                            })()}
-                            {d.expectedCloseDate && (
-                              <div className="text-[10px] text-muted-foreground mt-0.5">Close: {d.expectedCloseDate}</div>
-                            )}
-                            {(() => {
-                              const pi = piByDeal.get(d.id);
-                              const ti = tiByDeal.get(d.id);
-                              const dn = dnByDeal.get(d.id);
-                              if (!pi && !ti && !dn) return null;
-                              return (
+                                <div className="text-sm font-semibold leading-tight truncate">{l.leadName}</div>
+                                {l.companyName && <div className="text-[11px] text-muted-foreground truncate">{l.companyName}</div>}
+                              </Link>
+                              <div className="flex items-center justify-between mt-2 gap-2">
+                                <span className="text-xs font-bold text-emerald-600 truncate">AED {Number(l.budget ?? 0).toLocaleString()}</span>
+                              </div>
+                              {l.nextFollowUp && (
+                                <div className="text-[10px] text-muted-foreground mt-0.5">Follow-up: {l.nextFollowUp}</div>
+                              )}
+                              {(pi || ti || dn) && (
                                 <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                                   {pi && (
-                                    <Link href={`/sales/proforma-invoices/${pi.id}`} onClick={e => e.stopPropagation()} title={`Proforma ${(pi as any).piNumber ?? pi.id}`}>
+                                    <Link href={`/sales/proforma-invoices/${pi.id}`} onClick={e => e.stopPropagation()} title="Proforma">
                                       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] hover:bg-blue-100"><FileText className="w-2.5 h-2.5" />PI</span>
                                     </Link>
                                   )}
                                   {ti && (
-                                    <Link href={`/accounts/invoices/${ti.id}`} onClick={e => e.stopPropagation()} title={`Tax Invoice ${(ti as any).invoiceNumber ?? ti.id}`}>
+                                    <Link href={`/accounts/invoices/${ti.id}`} onClick={e => e.stopPropagation()} title="Tax Invoice">
                                       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-green-50 text-green-700 text-[10px] hover:bg-green-100"><Receipt className="w-2.5 h-2.5" />INV</span>
                                     </Link>
                                   )}
                                   {dn && (
-                                    <Link href={`/accounts/delivery-notes/${dn.id}`} onClick={e => e.stopPropagation()} title={`Delivery Note ${(dn as any).dnNumber ?? dn.id}`}>
+                                    <Link href={`/accounts/delivery-notes/${dn.id}`} onClick={e => e.stopPropagation()} title="Delivery Note">
                                       <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] hover:bg-purple-100"><Package className="w-2.5 h-2.5" />DN</span>
                                     </Link>
                                   )}
                                 </div>
-                              );
-                            })()}
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-function PipelineStat({ icon: Icon, label, value, tone = "slate" }: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string; value: string | number; tone?: "slate" | "blue" | "green" | "amber";
-}) {
-  const colors = {
-    slate: "bg-slate-100 text-slate-700",
-    blue:  "bg-blue-100 text-blue-700",
-    green: "bg-emerald-100 text-emerald-700",
-    amber: "bg-orange-100 text-orange-700",
-  }[tone];
-  return (
-    <div className="bg-card border rounded-lg px-3 py-2 flex items-center gap-2">
-      <div className={`w-7 h-7 rounded-md flex items-center justify-center ${colors}`}><Icon className="w-3.5 h-3.5" /></div>
-      <div>
-        <div className="text-sm font-bold leading-none">{value}</div>
-        <div className="text-[10px] text-muted-foreground">{label}</div>
+  function indexBy<T extends { id: number }>(rows: T[] | undefined, key: string): Map<number, T> {
+    const m = new Map<number, T>();
+    for (const r of (rows ?? []) as any[]) {
+      const k = r[key];
+      if (typeof k === "number" && !m.has(k)) m.set(k, r);
+    }
+    return m;
+  }
+
+  function PipelineStat({ icon: Icon, label, value, tone = "slate" }: {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string; value: string | number; tone?: "slate" | "blue" | "green" | "amber";
+  }) {
+    const colors = {
+      slate: "bg-slate-100 text-slate-700",
+      blue:  "bg-blue-100 text-blue-700",
+      green: "bg-emerald-100 text-emerald-700",
+      amber: "bg-orange-100 text-orange-700",
+    }[tone];
+    return (
+      <div className="bg-card border rounded-lg px-3 py-2 flex items-center gap-2">
+        <div className={`w-7 h-7 rounded-md flex items-center justify-center ${colors}`}><Icon className="w-3.5 h-3.5" /></div>
+        <div>
+          <div className="text-sm font-bold leading-none">{value}</div>
+          <div className="text-[10px] text-muted-foreground">{label}</div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+  

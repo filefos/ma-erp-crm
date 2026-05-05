@@ -1,10 +1,6 @@
 import { Link } from "wouter";
 import { useMemo } from "react";
-import {
-  useListQuotations, useListTaxInvoices, useListProjects,
-  useListExpenses, useListPurchaseOrders, useListAttendance, useListInventoryItems,
-  useListEmployees,
-} from "@workspace/api-client-react";
+import { useListQuotations, useListTaxInvoices, useListProjects, useListExpenses, useListPurchaseOrders, useListAttendance, useListInventoryItems, useListEmployees } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +8,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar, RadialBarChart, RadialBar, PolarAngleAxis,
 } from "recharts";
-import { useListLeads, useListDeals } from "@workspace/api-client-react";
+import { useListLeads } from "@workspace/api-client-react";
 import {
   BarChart3, FileText, Receipt, Folders, Banknote, ShoppingCart, Clock, Package,
   TrendingUp, ArrowRight, Sparkles, PieChart as PieIcon, Target,
@@ -46,7 +42,7 @@ export function ReportsDashboard() {
   const { data: attendanceRaw } = useListAttendance({});
   const { data: itemsRaw }      = useListInventoryItems({});
   const { data: leadsRaw }      = useListLeads({});
-  const { data: dealsRaw }      = useListDeals();
+  const dealsRaw: any[] = [];
   const { data: employeesRaw }  = useListEmployees({});
   // Note: we intentionally do NOT call useGetDashboardSummary() here —
   // that endpoint is not active-company scoped, so its values would leak

@@ -1,9 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import {
-  useListLeads, useUpdateLead, useListActivities, useUpdateActivity,
-  getListActivitiesQueryKey,
-} from "@workspace/api-client-react";
+import { useListLeads, useUpdateLead } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +35,7 @@ const inDaysISO = (d: number) => {
 
 export function FollowUpCenter() {
   const { data: leadsRaw } = useListLeads({});
-  const { data: activitiesRaw } = useListActivities();
+  const activitiesRaw: any[] = [];
   const { filterByCompany } = useActiveCompany();
   const [search, setSearch] = useState("");
   const [reschedule, setReschedule] = useState<{ leadId: number; current: string } | null>(null);
@@ -47,16 +44,11 @@ export function FollowUpCenter() {
   const { toast } = useToast();
 
   const leads = useMemo(() => filterByCompany(leadsRaw ?? []), [leadsRaw, filterByCompany]);
-  const activities = useMemo(() => filterByCompany(activitiesRaw ?? []), [activitiesRaw, filterByCompany]);
 
   const updateLead = useUpdateLead({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/leads"] }) },
   });
-  const updateActivity = useUpdateActivity({
-    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListActivitiesQueryKey() }) },
-  });
 
-  // Build a unified list of follow-up items from leads + activities
   const items = useMemo(() => {
     const out: FollowUpItem[] = [];
     for (const l of leads) {
@@ -68,24 +60,13 @@ export function FollowUpCenter() {
         });
       }
     }
-    for (const a of activities) {
-      if (a.dueDate && !a.isDone && a.leadId) {
-        const lead = leads.find(x => x.id === a.leadId);
-        if (!lead) continue;
-        out.push({
-          kind: "activity", id: a.id, date: a.dueDate, primary: a.subject,
-          secondary: `${a.type?.replace("_", " ")} · ${lead.leadName}`,
-          refId: a.leadId, raw: a, type: a.type,
-        });
-      }
-    }
     out.sort((a, b) => a.date.localeCompare(b.date));
     if (search) {
       const s = search.toLowerCase();
       return out.filter(i => i.primary.toLowerCase().includes(s) || (i.secondary ?? "").toLowerCase().includes(s));
     }
     return out;
-  }, [leads, activities, search]);
+  }, [leads, search]);
 
   const today = todayISO();
   const week = inDaysISO(7);
@@ -95,15 +76,10 @@ export function FollowUpCenter() {
   const later    = items.filter(i => i.date > week);
 
   const markDone = (item: FollowUpItem) => {
-    if (item.kind === "activity") {
-      updateActivity.mutate({ id: item.id, data: { ...item.raw, isDone: true } as any },
-        { onSuccess: () => toast({ title: "Marked as done", description: item.primary }) });
-    } else {
-      // For lead-attached follow-ups, log a "completed" activity by clearing the next follow-up.
+      if (item.kind === "activity") return;
       updateLead.mutate({ id: item.id, data: { ...item.raw, nextFollowUp: null } as any },
         { onSuccess: () => toast({ title: "Follow-up cleared", description: item.primary }) });
-    }
-  };
+    };
 
   const openReschedule = (item: FollowUpItem) => {
     if (item.kind !== "lead") return;

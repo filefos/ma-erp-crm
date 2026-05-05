@@ -1,9 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
-import {
-  useListQuotations, useListProformaInvoices, useListLpos, useListDeals, useListLeads,
-  useListUsers, useListSalesTargets, useListTaxInvoices, useListPaymentsReceived,
-} from "@workspace/api-client-react";
+import { useListQuotations, useListProformaInvoices, useListLpos, useListLeads, useListUsers, useListSalesTargets, useListTaxInvoices, useListPaymentsReceived } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +33,7 @@ export function SalesDashboard() {
   const { data: quotationsRaw } = useListQuotations();
   const { data: proformaRaw }   = useListProformaInvoices();
   const { data: lposRaw }       = useListLpos();
-  const { data: dealsRaw }      = useListDeals();
+  const dealsRaw: any[] = [];
   const { data: leadsRaw }      = useListLeads({});
   const { data: usersRaw }      = useListUsers();
   const { data: targetsRaw }    = useListSalesTargets({ year });
@@ -293,7 +290,7 @@ export function SalesDashboard() {
         <KPIWidget icon={FileText}   tone="blue"   label="Quotations · MTD"   value={fmtAED(quotationValueMtd)} sub={`${quotations.length} total quotations`} sparkline={quoteSpark} trend={trendPct(quoteSpark)} href="/sales/quotations" testId="kpi-quote-value" />
         <KPIWidget icon={FileCheck}  tone="amber"  label="Proforma Value"     value={fmtAED(piValue)}        sub={`${proformas.length} issued`}                                  sparkline={piSpark}    trend={trendPct(piSpark)}    href="/sales/proforma-invoices" testId="kpi-pi-value" />
         <KPIWidget icon={ClipboardList} tone="purple" label="LPOs Received"   value={fmtAED(lpoValue)}       sub={`${lpos.length} LPOs · ${openLpos} open`}                       sparkline={lpoSpark}   trend={trendPct(lpoSpark)}   href="/sales/lpos" testId="kpi-lpo-value" />
-        <KPIWidget icon={Trophy}     tone="green"  label="Won Deals"          value={fmtAED(wonDealsValue)}  sub={`${deals.filter((d: any) => d.stage === "won").length} closed`} sparkline={wonSpark}   trend={trendPct(wonSpark)}   href="/crm/deals" testId="kpi-won-value" />
+        <KPIWidget icon={Trophy}     tone="green"  label="Won Deals"          value={fmtAED(wonDealsValue)}  sub={`${deals.filter((d: any) => d.stage === "won").length} closed`} sparkline={wonSpark}   trend={trendPct(wonSpark)}   href="/crm/pipeline" testId="kpi-won-value" />
         <KPIWidget icon={FileText}   tone="slate"  label="Drafts"             value={draftQuotations}        sub={`${pendingApprovalQ} pending approval`}                          href="/sales/quotations" testId="kpi-drafts" />
         <KPIWidget icon={Receipt}    tone="indigo" label="Sent Quotations"    value={sentQuotations}         sub="Awaiting client response"                                        href="/sales/quotations" testId="kpi-sent" />
         <KPIWidget icon={Briefcase}  tone="navy"   label="Active Pipeline"    value={fmtAED(deals.filter((d: any) => !["won", "lost"].includes(d.stage)).reduce((s: number, d: any) => s + Number(d.value ?? 0), 0))} sub={`${deals.filter((d: any) => !["won", "lost"].includes(d.stage)).length} open deals`} href="/crm/pipeline" testId="kpi-pipeline" />

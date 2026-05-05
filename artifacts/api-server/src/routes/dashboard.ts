@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, leadsTable, dealsTable, quotationsTable, taxInvoicesTable, inventoryItemsTable, projectsTable, attendanceTable, purchaseRequestsTable, purchaseOrdersTable, expensesTable, chequesTable, proformaInvoicesTable, stockEntriesTable, auditLogsTable, companiesTable, usersTable, departmentsTable } from "@workspace/db";
+import { db, leadsTable, quotationsTable, taxInvoicesTable, inventoryItemsTable, projectsTable, attendanceTable, purchaseRequestsTable, purchaseOrdersTable, expensesTable, chequesTable, proformaInvoicesTable, stockEntriesTable, auditLogsTable, companiesTable, usersTable, departmentsTable } from "@workspace/db";
 import { eq, sql, and, inArray, type SQL } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import type { Request } from "express";
@@ -20,7 +20,6 @@ function scoped(req: Request, col: PgColumn): SQL {
 
 router.get("/dashboard/summary", requirePermission("dashboard", "view"), async (req, res): Promise<void> => {
   const sLeads = scoped(req, leadsTable.companyId);
-  const sDeals = scoped(req, dealsTable.companyId);
   const sQuots = scoped(req, quotationsTable.companyId);
   const sInvs  = scoped(req, taxInvoicesTable.companyId);
   const sItems = scoped(req, inventoryItemsTable.companyId);
@@ -33,8 +32,6 @@ router.get("/dashboard/summary", requirePermission("dashboard", "view"), async (
     .where(and(sLeads, sql`date_trunc('month', ${leadsTable.createdAt}) = date_trunc('month', now())`));
   const [hotLeads] = await db.select({ count: sql<number>`count(*)::int` }).from(leadsTable)
     .where(and(sLeads, eq(leadsTable.leadScore, "hot")));
-  const [dealsCount] = await db.select({ count: sql<number>`count(*)::int` }).from(dealsTable).where(sDeals);
-  const [dealsValue] = await db.select({ sum: sql<number>`coalesce(sum(value), 0)::float` }).from(dealsTable).where(sDeals);
   const [quotCount] = await db.select({ count: sql<number>`count(*)::int` }).from(quotationsTable).where(sQuots);
   const [quotValue] = await db.select({ sum: sql<number>`coalesce(sum(grand_total), 0)::float` }).from(quotationsTable).where(sQuots);
   const [invCount] = await db.select({ count: sql<number>`count(*)::int` }).from(taxInvoicesTable).where(sInvs);
@@ -68,15 +65,12 @@ router.get("/dashboard/summary", requirePermission("dashboard", "view"), async (
     .where(and(sExp, eq(expensesTable.status, "pending")));
   const totalPendingApprovals = (pendingQtns?.count ?? 0) + (pendingPR?.count ?? 0) + (pendingExp?.count ?? 0);
 
-  const [wonDeals] = await db.select({ count: sql<number>`count(*)::int`, sum: sql<number>`coalesce(sum(value),0)::float` })
-    .from(dealsTable).where(and(sDeals, eq(dealsTable.stage, "won"), sql`date_trunc('month', ${dealsTable.createdAt}) = date_trunc('month', now())`));
-
   res.json({
     totalLeads: leadsCount?.count ?? 0,
     newLeadsThisMonth: newLeads?.count ?? 0,
     hotLeads: hotLeads?.count ?? 0,
-    totalDeals: dealsCount?.count ?? 0,
-    dealsValue: dealsValue?.sum ?? 0,
+    totalDeals: 0,
+    dealsValue: 0,
     totalQuotations: quotCount?.count ?? 0,
     quotationsValue: quotValue?.sum ?? 0,
     totalInvoices: invCount?.count ?? 0,
@@ -86,8 +80,8 @@ router.get("/dashboard/summary", requirePermission("dashboard", "view"), async (
     lowStockItems: lowStock?.count ?? 0,
     activeProjects: activeProjects?.count ?? 0,
     todayAttendance: todayAtt?.count ?? 0,
-    wonDealsThisMonth: wonDeals?.count ?? 0,
-    wonDealsValue: wonDeals?.sum ?? 0,
+    wonDealsThisMonth: 0,
+    wonDealsValue: 0,
   });
 });
 
@@ -210,8 +204,6 @@ router.get("/dashboard/admin-summary", requirePermissionLevel("company_admin"), 
   const companyCards = await Promise.all(allCompanies.map(async (c) => {
     const [u] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.companyId, c.id));
     const [l] = await db.select({ count: sql<number>`count(*)::int` }).from(leadsTable).where(eq(leadsTable.companyId, c.id));
-    const [d] = await db.select({ count: sql<number>`count(*)::int`, sum: sql<number>`coalesce(sum(value),0)::float` })
-      .from(dealsTable).where(eq(dealsTable.companyId, c.id));
     const [inv] = await db.select({ sum: sql<number>`coalesce(sum(grand_total),0)::float` })
       .from(taxInvoicesTable).where(eq(taxInvoicesTable.companyId, c.id));
     return {
@@ -224,8 +216,8 @@ router.get("/dashboard/admin-summary", requirePermissionLevel("company_admin"), 
       isActive: c.isActive,
       userCount: u?.count ?? 0,
       leadCount: l?.count ?? 0,
-      dealCount: d?.count ?? 0,
-      dealsValue: d?.sum ?? 0,
+      dealCount: 0,
+      dealsValue: 0,
       invoicesValue: inv?.sum ?? 0,
     };
   }));

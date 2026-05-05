@@ -480,7 +480,7 @@ const ROUTE_LABELS: Record<string, string> = {
   crm: "CRM", sales: "Sales", accounts: "Accounts",
   procurement: "Procurement", inventory: "Inventory", hr: "HR",
   projects: "Projects", assets: "Assets", reports: "Reports", admin: "Admin",
-  leads: "Leads", contacts: "Contacts", deals: "Deals", activities: "Activities", pipeline: "Sales Pipeline", "follow-ups": "Follow-up Center", leaderboard: "Sales Leaderboard",
+  leads: "Leads", contacts: "Contacts", pipeline: "Sales Pipeline", "follow-ups": "Follow-up Center", leaderboard: "Sales Leaderboard",
   quotations: "Quotations", "proforma-invoices": "Proforma Invoices", lpos: "LPOs",
   invoices: "Tax Invoices", "delivery-notes": "Delivery Notes",
   expenses: "Expenses", cheques: "Cheques", "bank-accounts": "Bank Accounts",

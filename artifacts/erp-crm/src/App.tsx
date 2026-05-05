@@ -13,9 +13,6 @@ import { CRMReports } from "@/pages/crm/reports";
 import { LeadsList } from "@/pages/crm/leads";
 import { LeadDetail } from "@/pages/crm/lead-detail";
 import { ContactsList } from "@/pages/crm/contacts";
-import { DealsList } from "@/pages/crm/deals";
-import { ActivitiesList } from "@/pages/crm/activities";
-import { WhatsAppInbox } from "@/pages/crm/whatsapp";
 import { QuotationsList } from "@/pages/sales/quotations";
 import { QuotationDetail } from "@/pages/sales/quotation-detail";
 import { QuotationNew } from "@/pages/sales/quotation-new";
@@ -116,7 +113,7 @@ function Router() {
         <ModuleGuard module="leads"><CRMDashboard /></ModuleGuard>
       </Route>
       <Route path="/crm/pipeline">
-        <ModuleGuard module="deals"><SalesPipeline /></ModuleGuard>
+        <ModuleGuard module="leads"><SalesPipeline /></ModuleGuard>
       </Route>
       <Route path="/crm/follow-ups">
         <ModuleGuard module="leads"><FollowUpCenter /></ModuleGuard>
@@ -137,15 +134,6 @@ function Router() {
       </Route>
       <Route path="/crm/contacts">
         <ModuleGuard module="contacts"><ContactsList /></ModuleGuard>
-      </Route>
-      <Route path="/crm/deals">
-        <ModuleGuard module="deals"><DealsList /></ModuleGuard>
-      </Route>
-      <Route path="/crm/activities">
-        <ModuleGuard module="activities"><ActivitiesList /></ModuleGuard>
-      </Route>
-      <Route path="/crm/whatsapp">
-        <ModuleGuard module="whatsapp"><WhatsAppInbox /></ModuleGuard>
       </Route>
 
       {/* Sales */}

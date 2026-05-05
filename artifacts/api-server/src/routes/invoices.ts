@@ -145,6 +145,8 @@ router.put("/proforma-invoices/:id", requirePermission("proforma_invoices", "edi
 router.get("/tax-invoices", requirePermission("tax_invoices", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(taxInvoicesTable).orderBy(sql`${taxInvoicesTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["createdById"]);
   const { status, companyId, search } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -214,6 +216,8 @@ router.get("/tax-invoices/:id", requirePermission("tax_invoices", "view"), async
   const [inv] = await db.select().from(taxInvoicesTable).where(eq(taxInvoicesTable.id, id));
   if (!inv) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [inv]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, inv.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(inv);
 });
 
@@ -222,6 +226,8 @@ router.put("/tax-invoices/:id", requirePermission("tax_invoices", "edit"), requi
   const [existing] = await db.select().from(taxInvoicesTable).where(eq(taxInvoicesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, existing.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
   const data = req.body;
   if (data.amountPaid !== undefined && data.grandTotal !== undefined) {
     data.balance = data.grandTotal - data.amountPaid;
@@ -235,6 +241,8 @@ router.put("/tax-invoices/:id", requirePermission("tax_invoices", "edit"), requi
 router.get("/delivery-notes", requirePermission("delivery_notes", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(deliveryNotesTable).orderBy(sql`${deliveryNotesTable.createdAt} desc`);
   rows = scopeFilter(req, rows);
+  const ownerScope = await getOwnerScope(req);
+  rows = ownerScopeFilter(ownerScope, rows, ["createdById"]);
   const { status, companyId } = req.query;
   if (status) rows = rows.filter(r => r.status === status);
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
@@ -276,6 +284,8 @@ router.get("/delivery-notes/:id", requirePermission("delivery_notes", "view"), a
   const [dn] = await db.select().from(deliveryNotesTable).where(eq(deliveryNotesTable.id, id));
   if (!dn) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [dn]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, dn.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
   let items = [];
   try { items = JSON.parse(dn.items ?? "[]"); } catch {}
   res.json({ ...dn, items });
@@ -286,6 +296,8 @@ router.put("/delivery-notes/:id", requirePermission("delivery_notes", "edit"), r
   const [existing] = await db.select().from(deliveryNotesTable).where(eq(deliveryNotesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, existing.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
   const data = req.body;
   const [dn] = await db.update(deliveryNotesTable).set({
     ...data, items: data.items ? JSON.stringify(data.items) : undefined, updatedAt: new Date(),

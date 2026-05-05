@@ -7,8 +7,6 @@ import departmentsRouter from "./departments";
 import usersRouter from "./users";
 import leadsRouter from "./leads";
 import contactsRouter from "./contacts";
-import dealsRouter from "./deals";
-import activitiesRouter from "./activities";
 import quotationsRouter from "./quotations";
 import invoicesRouter from "./invoices";
 import projectsRouter from "./projects";
@@ -26,8 +24,6 @@ import dashboardRouter from "./dashboard";
 import rolesRouter from "./roles";
 import emailsRouter from "./emails";
 import emailSettingsRouter from "./email-settings";
-import whatsappRouter from "./whatsapp";
-import whatsappWebhookRouter from "./whatsapp-webhook";
 import aiRouter from "./ai";
 import adminResetRouter from "./admin-reset";
 
@@ -47,8 +43,6 @@ router.use(usersRouter);
 router.use(rolesRouter);
 router.use(leadsRouter);
 router.use(contactsRouter);
-router.use(dealsRouter);
-router.use(activitiesRouter);
 router.use(quotationsRouter);
 router.use(invoicesRouter);
 router.use(projectsRouter);
@@ -64,10 +58,6 @@ router.use(notificationsRouter);
 router.use(dashboardRouter);
 router.use(emailsRouter);
 router.use(emailSettingsRouter);
-// Webhook router does NOT require auth — Meta calls it directly.
-// Mount before the authed whatsapp router so its route wins.
-router.use(whatsappWebhookRouter);
-router.use(whatsappRouter);
 router.use(aiRouter);
 router.use(adminResetRouter);
 

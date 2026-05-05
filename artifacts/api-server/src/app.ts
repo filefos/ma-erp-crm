@@ -111,65 +111,15 @@ async function runMigrations() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     )`);
-    // WhatsApp Business Cloud API integration
-    await db.execute(sql`CREATE TABLE IF NOT EXISTS whatsapp_accounts (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      phone_number_id TEXT NOT NULL UNIQUE,
-      waba_id TEXT,
-      display_phone TEXT,
-      access_token_env TEXT NOT NULL DEFAULT 'WHATSAPP_ACCESS_TOKEN',
-      company_id INTEGER,
-      is_default BOOLEAN NOT NULL DEFAULT FALSE,
-      is_active BOOLEAN NOT NULL DEFAULT TRUE,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )`);
-    await db.execute(sql`CREATE TABLE IF NOT EXISTS whatsapp_threads (
-      id SERIAL PRIMARY KEY,
-      account_id INTEGER NOT NULL,
-      peer_wa_id TEXT NOT NULL,
-      peer_name TEXT,
-      lead_id INTEGER,
-      deal_id INTEGER,
-      contact_id INTEGER,
-      project_id INTEGER,
-      last_message_at TIMESTAMP,
-      last_message_preview TEXT,
-      last_direction TEXT,
-      unread_count INTEGER NOT NULL DEFAULT 0,
-      company_id INTEGER,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )`);
-    await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS whatsapp_threads_account_peer_idx ON whatsapp_threads(account_id, peer_wa_id)`);
-    await db.execute(sql`CREATE TABLE IF NOT EXISTS whatsapp_messages (
-      id SERIAL PRIMARY KEY,
-      thread_id INTEGER NOT NULL,
-      account_id INTEGER NOT NULL,
-      direction TEXT NOT NULL,
-      wa_message_id TEXT,
-      from_wa TEXT,
-      to_wa TEXT,
-      message_type TEXT NOT NULL DEFAULT 'text',
-      body TEXT,
-      media_url TEXT,
-      media_caption TEXT,
-      template_name TEXT,
-      template_language TEXT,
-      template_vars TEXT,
-      status TEXT NOT NULL DEFAULT 'queued',
-      error_code DOUBLE PRECISION,
-      error_text TEXT,
-      sent_at TIMESTAMP,
-      delivered_at TIMESTAMP,
-      read_at TIMESTAMP,
-      received_at TIMESTAMP,
-      sent_by_id INTEGER,
-      created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    )`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS whatsapp_messages_thread_idx ON whatsapp_messages(thread_id, created_at)`);
-    await db.execute(sql`CREATE INDEX IF NOT EXISTS whatsapp_messages_wamid_idx ON whatsapp_messages(wa_message_id)`);
+    // T006: drop legacy Deals / Activities / WhatsApp messaging tables.
+    // (The `whatsapp` text column on contacts/leads/suppliers is kept — it is
+    // just a phone number, not the messaging integration.)
+    await db.execute(sql`DROP TABLE IF EXISTS whatsapp_messages CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS whatsapp_threads CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS whatsapp_accounts CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS activities CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS deals CASCADE`);
+    await db.execute(sql`ALTER TABLE quotations DROP COLUMN IF EXISTS deal_id`);
 
     // Supplier self-registration portal
     await db.execute(sql`CREATE TABLE IF NOT EXISTS supplier_categories (
@@ -473,6 +423,22 @@ async function runMigrations() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     )`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS device_tokens_user_idx ON device_tokens(user_id)`);
+
+    // Backfill created_by_id for legacy rows on per-user-private tables.
+    // Pick the first super_admin (or any admin) as the synthetic owner so legacy
+    // records remain visible to admins after privacy enforcement is active.
+    const adminRow = await db.execute(sql`
+      SELECT id FROM users
+      WHERE permission_level IN ('super_admin','company_admin','department_admin')
+      ORDER BY (permission_level='super_admin') DESC, id ASC
+      LIMIT 1
+    `);
+    const adminId = (adminRow.rows?.[0] as { id?: number } | undefined)?.id;
+    if (adminId) {
+      for (const tbl of ["contacts","leads","quotations","lpos","proforma_invoices","tax_invoices","delivery_notes"]) {
+        await db.execute(sql.raw(`UPDATE ${tbl} SET created_by_id = ${adminId} WHERE created_by_id IS NULL`));
+      }
+    }
 
     logger.info("Schema migrations applied");
   } catch (err) {

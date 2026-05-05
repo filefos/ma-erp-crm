@@ -45,27 +45,17 @@ export async function extractLpoFields(fileBase64: string, contentType: string):
   return jsonOrThrow(r);
 }
 
-export async function suggestWhatsAppReply(threadId: number, opts?: { lastN?: number; tone?: string }): Promise<{ draft: string; model: string }> {
-  const r = await fetch("/api/whatsapp/suggest-reply", {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ threadId, ...opts }),
-  });
-  return jsonOrThrow(r);
-}
-
 export interface FollowUpSuggestion {
-  recommendedDate?: string;
-  channel?: "whatsapp" | "call" | "email" | "meeting";
-  reason?: string;
-  whatsappMessage?: string;
-  emailSubject?: string;
-  emailBody?: string;
-  raw?: string;
-  model?: string;
-}
+    recommendedDate?: string;
+    channel?: "call" | "email" | "meeting";
+    reason?: string;
+    emailSubject?: string;
+    emailBody?: string;
+    raw?: string;
+    model?: string;
+  }
 
-export async function suggestFollowUp(input: { leadId?: number; dealId?: number }): Promise<FollowUpSuggestion> {
+export async function suggestFollowUp(input: { leadId?: number }): Promise<FollowUpSuggestion> {
   const r = await fetch("/api/ai/suggest-followup", {
     method: "POST",
     headers: authHeaders(),

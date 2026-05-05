@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, quotationsTable, quotationItemsTable, companiesTable, usersTable, dealsTable, leadsTable } from "@workspace/db";
+import { db, quotationsTable, quotationItemsTable, companiesTable, usersTable, leadsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
@@ -83,7 +83,7 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
     paymentTerms: data.paymentTerms, deliveryTerms: data.deliveryTerms,
     validity: data.validity, termsConditions: data.termsConditions,
     techSpecs: data.techSpecs, additionalItems: data.additionalItems,
-    preparedById: req.user?.id, leadId: data.leadId, dealId: data.dealId,
+    preparedById: req.user?.id, leadId: data.leadId,
     clientCode, createdById: req.user?.id,
   } as any).returning();
 
@@ -174,105 +174,11 @@ router.post("/quotations/:id/approve", requirePermission("quotations", "approve"
   if (!ownerScopeFilter(ownerScope, [existing], ["preparedById", "approvedById"]).length) {
     res.status(403).json({ error: "Forbidden" }); return;
   }
-  // Map lead score → deal probability so generated/updated deals reflect lead quality.
-  const scoreToProbability = (score: string | undefined): number => {
-    switch ((score ?? "cold").toLowerCase()) {
-      case "hot": return 70;
-      case "warm": return 40;
-      case "cold": return 20;
-      default: return 30;
-    }
-  };
-
-  // Approve + (auto-create or update existing deal) atomically.
-  const result = await db.transaction(async (tx) => {
-    const warnings: string[] = [];
-    const [q] = await tx.update(quotationsTable).set({
-      status: "approved", approvedById: req.user?.id, updatedAt: new Date(),
-    }).where(eq(quotationsTable.id, id)).returning();
-
-    // Read lead (if any) to derive assignment + probability mapping.
-    let leadAssignedToId: number | null = null;
-    let leadScore: string | undefined;
-    if (q.leadId) {
-      const [l] = await tx.select({ assignedToId: leadsTable.assignedToId, leadScore: leadsTable.leadScore })
-        .from(leadsTable).where(eq(leadsTable.id, q.leadId));
-      leadAssignedToId = l?.assignedToId ?? null;
-      leadScore = l?.leadScore;
-    }
-    const targetProbability = scoreToProbability(leadScore);
-
-    let dealId: number | undefined = q.dealId ?? undefined;
-    let createdDeal = false;
-
-    if (!dealId && q.leadId) {
-      // Link to an OPEN deal for this lead (skip closed-won/closed-lost ones).
-      const [linkedDeal] = await tx.select({ id: dealsTable.id })
-        .from(dealsTable)
-        .where(sql`${dealsTable.leadId} = ${q.leadId} AND ${dealsTable.stage} NOT IN ('won', 'lost')`)
-        .orderBy(sql`${dealsTable.createdAt} desc`).limit(1);
-      if (linkedDeal) dealId = linkedDeal.id;
-    }
-
-    if (dealId) {
-      // Advance the existing open deal: bump value to the latest quote, raise
-      // probability to the score-derived target, and ensure stage is at least "proposal".
-      const [d] = await tx.select().from(dealsTable).where(eq(dealsTable.id, dealId));
-      if (d) {
-        const newValue = Math.max(Number(d.value ?? 0), Number(q.grandTotal ?? 0));
-        const newProbability = Math.max(Number(d.probability ?? 0), targetProbability);
-        // Deal stages: new, qualification, proposal, negotiation, won, lost.
-        // Promote anything earlier than "proposal" up to "proposal".
-        const newStage = ["new", "qualification"].includes(d.stage) ? "proposal" : d.stage;
-        await tx.update(dealsTable).set({
-          value: newValue,
-          probability: newProbability,
-          stage: newStage,
-          updatedAt: new Date(),
-          notes: d.notes
-            ? `${d.notes}\nUpdated by approval of quotation ${q.quotationNumber}.`
-            : `Updated by approval of quotation ${q.quotationNumber}.`,
-        }).where(eq(dealsTable.id, dealId));
-      }
-    } else {
-      if (!q.companyId) {
-        warnings.push("Quotation has no company — deal not created.");
-      } else {
-        const count = await tx.select({ count: sql<number>`count(*)::int` }).from(dealsTable);
-        const num = (count[0]?.count ?? 0) + 1;
-        const dealNumber = `DEAL-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
-        const [newDeal] = await tx.insert(dealsTable).values({
-          dealNumber,
-          title: q.projectName ? `${q.clientName} — ${q.projectName}` : q.clientName,
-          clientName: q.clientName,
-          value: q.grandTotal ?? 0,
-          stage: "proposal",
-          probability: targetProbability,
-          assignedToId: leadAssignedToId ?? req.user?.id ?? null,
-          companyId: q.companyId,
-          leadId: q.leadId ?? null,
-          notes: `Auto-created from approved quotation ${q.quotationNumber}.`,
-        }).returning();
-        dealId = newDeal.id;
-        createdDeal = true;
-      }
-    }
-
-    if (dealId && q.dealId !== dealId) {
-      await tx.update(quotationsTable).set({ dealId, updatedAt: new Date() })
-        .where(eq(quotationsTable.id, q.id));
-      q.dealId = dealId;
-    }
-    return { q, dealId, createdDeal, warnings };
-  });
-
-  const enriched = await enrichQuotation(result.q);
-  res.json({
-    ...enriched,
-    dealId: result.dealId,
-    createdDeal: result.createdDeal,
-    warnings: result.warnings,
-  });
+  // Simple approve — Deals were removed from the pipeline.
+  const [q] = await db.update(quotationsTable).set({
+    status: "approved", approvedById: req.user?.id, updatedAt: new Date(),
+  }).where(eq(quotationsTable.id, id)).returning();
+  res.json(await enrichQuotation(q));
 });
 
 export default router;

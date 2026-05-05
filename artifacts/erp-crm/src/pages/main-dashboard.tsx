@@ -1,19 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
-import {
-  useListLeads, useListDeals, useListQuotations, useListProformaInvoices,
-  useListLpos, useListTaxInvoices, useListPaymentsReceived, useListExpenses,
-  useListPurchaseOrders, useListPurchaseRequests, useListSuppliers,
-  useListInventoryItems, useListEmployees, useListAttendance, useListProjects,
-  useListAssets, useListCheques, useListNotifications,
-  getListLeadsQueryKey, getListDealsQueryKey, getListQuotationsQueryKey,
-  getListProformaInvoicesQueryKey, getListLposQueryKey, getListTaxInvoicesQueryKey,
-  getListPaymentsReceivedQueryKey, getListExpensesQueryKey,
-  getListPurchaseOrdersQueryKey, getListPurchaseRequestsQueryKey,
-  getListSuppliersQueryKey, getListInventoryItemsQueryKey,
-  getListEmployeesQueryKey, getListAttendanceQueryKey, getListProjectsQueryKey,
-  getListAssetsQueryKey, getListChequesQueryKey,
-} from "@workspace/api-client-react";
+import { useListLeads, useListQuotations, useListProformaInvoices, useListLpos, useListTaxInvoices, useListPaymentsReceived, useListExpenses, useListPurchaseOrders, useListPurchaseRequests, useListSuppliers, useListInventoryItems, useListEmployees, useListAttendance, useListProjects, useListAssets, useListCheques, useListNotifications, getListLeadsQueryKey, getListQuotationsQueryKey, getListProformaInvoicesQueryKey, getListLposQueryKey, getListTaxInvoicesQueryKey, getListPaymentsReceivedQueryKey, getListExpensesQueryKey, getListPurchaseOrdersQueryKey, getListPurchaseRequestsQueryKey, getListSuppliersQueryKey, getListInventoryItemsQueryKey, getListEmployeesQueryKey, getListAttendanceQueryKey, getListProjectsQueryKey, getListAssetsQueryKey, getListChequesQueryKey } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -107,7 +94,7 @@ export function MainExecutiveDashboard() {
   const canProcurement = canPos || canPrs || canSuppliers;
 
   const { data: leadsRaw }       = useListLeads({},              { query: { queryKey: getListLeadsQueryKey({}),                  enabled: canLeads      } });
-  const { data: dealsRaw }       = useListDeals(undefined,       { query: { queryKey: getListDealsQueryKey(),                    enabled: canDeals      } });
+  const dealsRaw: any[] = [];
   const { data: quotationsRaw }  = useListQuotations(undefined,  { query: { queryKey: getListQuotationsQueryKey(),               enabled: canQuotes     } });
   const { data: proformaRaw }    = useListProformaInvoices(undefined, { query: { queryKey: getListProformaInvoicesQueryKey(),    enabled: canProforma   } });
   const { data: lposRaw }        = useListLpos(undefined,        { query: { queryKey: getListLposQueryKey(),                     enabled: canLpos       } });

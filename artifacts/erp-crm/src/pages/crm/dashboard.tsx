@@ -1,8 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "wouter";
-import {
-  useListLeads, useListContacts, useListDeals, useListActivities, useListQuotations,
-} from "@workspace/api-client-react";
+import { useListLeads, useListContacts, useListQuotations } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,8 +28,8 @@ const SOURCE_COLORS = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f97316", "#
 export function CRMDashboard() {
   const { data: leadsRaw } = useListLeads({});
   const { data: contactsRaw } = useListContacts({});
-  const { data: dealsRaw } = useListDeals();
-  const { data: activitiesRaw } = useListActivities();
+  const dealsRaw: any[] = [];
+  const activitiesRaw: any[] = [];
   const { data: quotationsRaw } = useListQuotations();
   const { filterByCompany } = useActiveCompany();
 
@@ -239,7 +237,7 @@ export function CRMDashboard() {
         <KPIWidget icon={Users}        tone="blue"   label="Total Leads"      value={totalLeads}                   sub={`${newLeadsThisMonth} new this month`}                href="/crm/leads"        sparkline={leadSpark}  trend={trendPct(leadSpark)}  testId="kpi-total-leads" />
         <KPIWidget icon={Flame}        tone="red"    label="Hot Leads"        value={hotLeads}                     sub={`${activeLeads} active`}                              href="/crm/leads"        sparkline={hotSpark}   trend={trendPct(hotSpark)}   testId="kpi-hot-leads" />
         <KPIWidget icon={Briefcase}    tone="amber"  label="Active Deals"     value={activeDeals}                  sub={`AED ${pipelineValue.toLocaleString()} pipeline`}     href="/crm/pipeline"     sparkline={dealSpark}  trend={trendPct(dealSpark)}  testId="kpi-active-deals" />
-        <KPIWidget icon={Trophy}       tone="green"  label="Won Value"        value={`AED ${(wonValue / 1000).toFixed(0)}k`} sub={`${wonDeals} closed deals`}                  href="/crm/deals"        sparkline={wonSpark}   trend={trendPct(wonSpark)}   testId="kpi-won-value" />
+        <KPIWidget icon={Trophy}       tone="green"  label="Won Value"        value={`AED ${(wonValue / 1000).toFixed(0)}k`} sub={`${wonDeals} closed deals`}                  href="/crm/pipeline"        sparkline={wonSpark}   trend={trendPct(wonSpark)}   testId="kpi-won-value" />
         <KPIWidget icon={Calendar}     tone="indigo" label="Follow-ups Today" value={followUpsToday.length}         sub={overdueFollowUps.length ? `${overdueFollowUps.length} overdue` : "All on track"} href="/crm/follow-ups" sparkline={followUpsTodaySpark} testId="kpi-followups-today" />
         <KPIWidget icon={AlertTriangle} tone={overdueFollowUps.length ? "red" : "slate"} label="Overdue" value={overdueFollowUps.length} sub="Need action now" href="/crm/follow-ups" sparkline={overdueSpark} trend={trendPct(overdueSpark)} testId="kpi-overdue" />
         <KPIWidget icon={FileText}     tone="purple" label="Quotation Value"  value={`AED ${(quotationValue / 1000).toFixed(0)}k`} sub={`${quotations.length} quotations`}      href="/sales/quotations" sparkline={quoteSpark} trend={trendPct(quoteSpark)} testId="kpi-quote-value" />
@@ -497,7 +495,7 @@ export function CRMDashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <FooterStat label="Contacts" value={contacts.length} href="/crm/contacts" icon={Users} />
-        <FooterStat label="Lost Deals" value={lostDeals} href="/crm/deals" icon={Target} />
+        <FooterStat label="Lost Deals" value={lostDeals} href="/crm/pipeline" icon={Target} />
         <FooterStat label="Open Quotations" value={quotations.length} href="/sales/quotations" icon={Mail} />
       </div>
     </div>
