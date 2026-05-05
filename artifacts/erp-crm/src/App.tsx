@@ -81,6 +81,7 @@ import { DepartmentsAdmin } from "@/pages/admin/departments";
 import { RolesAdmin } from "@/pages/admin/roles";
 import { AdminEmailPanel } from "@/pages/admin/emails";
 import { AdminResetCenter } from "@/pages/admin/reset";
+import { ActivityMonitor } from "@/pages/admin/activity-monitor";
 import { AdminGuard } from "@/components/AdminGuard";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { NotificationsList } from "@/pages/notifications/index";
@@ -381,6 +382,9 @@ function Router() {
       </Route>
       <Route path="/admin/reset">
         <AdminGuard><AdminResetCenter /></AdminGuard>
+      </Route>
+      <Route path="/admin/activity-monitor">
+        <AdminGuard><ActivityMonitor /></AdminGuard>
       </Route>
 
       <Route path="/accounts/cheques/:id">

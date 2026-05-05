@@ -26,6 +26,7 @@ import emailsRouter from "./emails";
 import emailSettingsRouter from "./email-settings";
 import aiRouter from "./ai";
 import adminResetRouter from "./admin-reset";
+import activityRouter from "./activity";
 
 const router: IRouter = Router();
 
@@ -60,5 +61,6 @@ router.use(emailsRouter);
 router.use(emailSettingsRouter);
 router.use(aiRouter);
 router.use(adminResetRouter);
+router.use(activityRouter);
 
 export default router;

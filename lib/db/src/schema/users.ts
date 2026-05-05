@@ -15,6 +15,7 @@ export const usersTable = pgTable("users", {
   status: text("status").notNull().default("active"),
   lastLoginAt: timestamp("last_login_at"),
   userCode: text("user_code"),
+  uniqueUserId: text("unique_user_id"),
   isActive: boolean("is_active").notNull().default(true),
   automationLevel: text("automation_level").notNull().default("suggest"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -1,0 +1,307 @@
+**TASK: COMPLETE USER ACTIVITY MONITOR SYSTEM (AI-BASED + MODULE + UNIQUE ID + ADMIN CONTROL)**
+
+---
+
+## 🎯 OBJECTIVE
+
+Build a **full user monitoring & tracking system** inside ERP with:
+
+* Login / Logout tracking
+* Panel open duration
+* Real working time (Active vs Idle)
+* Focus tracking (user distraction detection)
+* Screenshot capture
+* Unique User ID (company + module based)
+* Module-wise tracking (CRM, Sales, Accounts, Procurement, Inventory, Projects, HR, Assets)
+* Advanced filters
+* Admin-only access
+
+---
+
+# 🔑 1. UNIQUE USER ID SYSTEM (MANDATORY)
+
+## FORMAT:
+
+👉 **PMAC-2605-0001**
+
+---
+
+## STRUCTURE:
+
+* PM → PRIME MAX PREFAB HOUSES
+
+* EL → ELITE PREFAB
+
+* AC → ACCOUNTS
+
+* SA → SALES
+
+* CR → CRM
+
+* PR → PROCUREMENT
+
+* IN → INVENTORY
+
+* PJ → PROJECTS
+
+* HR → HR
+
+* AS → ASSETS
+
+* 26 → Year
+
+* 05 → Month
+
+* 0001 → Sequence
+
+---
+
+## RULE:
+
+* Auto-generate on user creation
+* Must be used in ALL modules
+* Every saved record must store:
+  👉 user_id
+
+---
+
+# 🔐 2. LOGIN / LOGOUT TRACKING
+
+## STORE:
+
+* Login Date & Time
+* Logout Date & Time
+
+---
+
+## CALCULATE:
+
+* Total Panel Open Time (session duration)
+
+---
+
+# ⏱ 3. REAL WORKING TIME (MOST IMPORTANT)
+
+## TRACK:
+
+* Mouse movement
+* Keyboard input
+* Screen focus
+
+---
+
+## LOGIC:
+
+* No activity (2–5 min) → IDLE
+* Activity detected → ACTIVE
+
+---
+
+## STORE:
+
+* Active Time (actual work time)
+* Idle Time (not working)
+* Total Time
+
+---
+
+# 🎯 4. FOCUS TRACKING
+
+Detect:
+
+* User switching tabs
+* Window minimize
+* Screen inactive
+
+---
+
+## ACTION:
+
+* Mark as "Focus Lost"
+* Trigger screenshot
+
+---
+
+# 📸 5. SCREENSHOT SYSTEM
+
+## CAPTURE WHEN:
+
+* Idle
+* Focus lost
+* Tab change
+
+---
+
+## SAVE STRUCTURE:
+
+```id="folder4"
+/activity_logs/
+   /USER_ID/
+      /YYYY/
+         /MM/
+            /DD/
+               screenshot1.png
+               screenshot2.png
+```
+
+---
+
+# 🧠 6. AI ANALYSIS
+
+## CALCULATE:
+
+* Efficiency = Active Time ÷ Total Time
+
+---
+
+## OUTPUT:
+
+Example:
+👉 "User worked 52 minutes out of 120 minutes (43% efficiency – Low focus)"
+
+---
+
+## FLAG:
+
+* Low productivity
+* High idle time
+
+---
+
+# 🔗 7. MODULE-WISE TRACKING
+
+Track activity in ALL modules:
+
+* CRM
+* Sales
+* Accounts
+* Procurement
+* Inventory
+* Projects
+* HR
+* Assets
+
+---
+
+## STORE:
+
+Each action must include:
+
+* user_id
+* module_name
+* action
+* timestamp
+
+---
+
+# 📊 8. DATABASE TABLE
+
+```sql id="activity-final"
+user_activity_logs
+- id
+- user_id
+- module
+- action
+- login_time
+- logout_time
+- active_minutes
+- idle_minutes
+- total_minutes
+- efficiency
+- created_at
+```
+
+---
+
+# 🧭 9. ADMIN PANEL (STRICT ACCESS)
+
+Menu:
+👉 **User Activity Monitor**
+
+---
+
+## ACCESS RULE:
+
+* ONLY Main Admin
+* No access to:
+
+  * Users
+  * Managers
+  * Other admins
+
+---
+
+# 📋 10. DASHBOARD VIEW
+
+Show:
+
+* User ID (CLICKABLE)
+* Login / Logout Time
+* Total Session Time
+* Active Time
+* Idle Time
+* Efficiency %
+* Screenshots
+
+---
+
+## CLICK USER ID:
+
+👉 Show full details:
+
+* Contacts created
+* Leads created
+* Sales activity
+* Accounts activity
+* All module actions
+
+---
+
+# 🔍 11. FILTER SYSTEM (MANDATORY)
+
+Filters must include:
+
+* User ID
+* Date (single day)
+* Month
+* Year
+* Custom Date Range (From – To)
+
+---
+
+## API EXAMPLE:
+
+```bash id="api-final"
+GET /activity?user_id=PMAC-2605-0001&from=2026-05-01&to=2026-05-31
+```
+
+---
+
+# ⚙️ 12. SYSTEM RULES
+
+* No editing logs
+* No deleting logs
+* No cross-user visibility
+* All records must store user_id
+* Every module must track user activity automatically
+
+---
+
+# 🚀 FINAL RESULT
+
+System must:
+
+* Show login / logout details
+* Show panel open time
+* Show real working time (focus-based)
+* Capture screenshots on distraction
+* Track all modules
+* Generate AI productivity report
+* Allow full filtering
+* Show ONLY to main admin
+
+---
+
+**STRICT IMPLEMENTATION – HIGH CONTROL SYSTEM – NO DATA LEAK**
+
+---

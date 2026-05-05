@@ -16,10 +16,11 @@ import {
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
   BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft, TrendingUp,
-  MessageCircle, Wallet, RotateCcw,
+  MessageCircle, Wallet, RotateCcw, MonitorCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { AskAIButton } from "@/components/ask-ai";
+import { useActivityTracker } from "@/hooks/useActivityTracker";
 
 interface NavItem {
   href: string;
@@ -154,6 +155,7 @@ const NAV: NavGroup[] = [
       { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
       { href: "/admin/emails", label: "All Company Emails", icon: Mail },
       { href: "/admin/reset", label: "Reset Center", icon: RotateCcw },
+      { href: "/admin/activity-monitor", label: "User Activity Monitor", icon: MonitorCheck },
     ],
   },
 ];
@@ -509,6 +511,7 @@ const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
+  useActivityTracker();
 
   const showBreadcrumb =
     location !== "/" &&

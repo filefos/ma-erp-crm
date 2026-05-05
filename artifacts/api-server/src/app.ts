@@ -461,6 +461,56 @@ async function runMigrations() {
       FROM users WHERE user_code IS NOT NULL
     `);
 
+    // ── User Activity Monitor ──────────────────────────────────────────────
+    await db.execute(sql`CREATE SEQUENCE IF NOT EXISTS unique_user_id_seq START 1`);
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS unique_user_id TEXT`);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS user_activity_sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        company_id INTEGER,
+        unique_user_id TEXT,
+        login_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        logout_at TIMESTAMP,
+        last_heartbeat_at TIMESTAMP,
+        active_seconds INTEGER NOT NULL DEFAULT 0,
+        idle_seconds INTEGER NOT NULL DEFAULT 0,
+        focus_lost_count INTEGER NOT NULL DEFAULT 0,
+        session_key TEXT,
+        ip_address TEXT,
+        user_agent TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS user_activity_sessions_session_key_idx
+        ON user_activity_sessions(session_key) WHERE session_key IS NOT NULL
+    `);
+    // Backfill unique_user_id for existing users that don't have one yet
+    // Format: {companyPrefix}{moduleCode}-{YY}{MM}-{SEQ}
+    await db.execute(sql`
+      UPDATE users u
+      SET unique_user_id = (
+        SELECT
+          UPPER(COALESCE(c.prefix,'PM')) ||
+          CASE
+            WHEN lower(u.role) LIKE '%account%' OR lower(u.role) LIKE '%financ%' THEN 'AC'
+            WHEN lower(u.role) LIKE '%sale%'    THEN 'SA'
+            WHEN lower(u.role) LIKE '%crm%'     THEN 'CR'
+            WHEN lower(u.role) LIKE '%procure%' OR lower(u.role) LIKE '%purchas%' THEN 'PR'
+            WHEN lower(u.role) LIKE '%inventor%' OR lower(u.role) LIKE '%warehouse%' THEN 'IN'
+            WHEN lower(u.role) LIKE '%project%' THEN 'PJ'
+            WHEN lower(u.role) LIKE '%hr%' OR lower(u.role) LIKE '%human%' THEN 'HR'
+            WHEN lower(u.role) LIKE '%asset%'   THEN 'AS'
+            ELSE 'AD'
+          END || '-' ||
+          TO_CHAR(NOW(), 'YY') || TO_CHAR(NOW(), 'MM') || '-' ||
+          LPAD(nextval('unique_user_id_seq')::text, 4, '0')
+        FROM companies c WHERE c.id = u.company_id
+      )
+      WHERE u.unique_user_id IS NULL
+    `);
+
     logger.info("Schema migrations applied");
   } catch (err) {
     logger.warn({ err }, "Migration warning (non-fatal)");
