@@ -257,12 +257,14 @@ function NavyBar({ children, amount }: { children: React.ReactNode; amount?: str
   );
 }
 
-function PageFooter({ left, page }: { left: React.ReactNode; page: string }) {
+function PageFooter({ left, page, hideDisclaimer }: { left: React.ReactNode; page: string; hideDisclaimer?: boolean }) {
   return (
     <div className="doc-page-footer">
-      <div className="text-center text-[10px] italic text-[#0f2d5a] mb-1">
-        This is a computer generated document. No signature or stamp required.
-      </div>
+      {!hideDisclaimer && (
+        <div className="text-center text-[10px] italic text-[#0f2d5a] mb-1">
+          This is a computer generated document. No signature or stamp required.
+        </div>
+      )}
       <div className="flex items-center justify-between text-[10px] text-[#0f2d5a] border-t border-[#0f2d5a] pt-1">
         <span className="font-mono tracking-wide">{left}</span>
         <span className="font-semibold">{page}</span>
@@ -726,6 +728,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
               page="Page 1 of 3"
+              hideDisclaimer
             />
           </>
         )}
