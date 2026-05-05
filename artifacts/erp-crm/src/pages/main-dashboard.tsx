@@ -323,7 +323,7 @@ export function MainExecutiveDashboard() {
       const upd = d.updatedAt ?? d.createdAt;
       return upd && (now.getTime() - new Date(upd).getTime()) > 30 * 86_400_000;
     }).length;
-    if (stuckDeals > 0) list.push({ tone: "amber", icon: TrendingUp, label: `${stuckDeals} stuck deal${stuckDeals === 1 ? "" : "s"} (>30 days)`, href: "/crm/deals", count: stuckDeals });
+    if (stuckDeals > 0) list.push({ tone: "amber", icon: TrendingUp, label: `${stuckDeals} stuck deal${stuckDeals === 1 ? "" : "s"} (>30 days)`, href: "/crm/pipeline", count: stuckDeals });
 
     if (lowStock > 0) list.push({ tone: "amber", icon: Package, label: `${lowStock} item${lowStock === 1 ? "" : "s"} below reorder level`, href: "/inventory/items", count: lowStock });
 

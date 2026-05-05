@@ -61,7 +61,7 @@ export function BusinessDashboard() {
 
   const kpis = [
     { title: "Total Leads", value: summary?.totalLeads ?? 0, sub: `${summary?.hotLeads ?? 0} hot leads`, icon: Users, color: "bg-[#1e6ab0]", href: "/crm/leads" },
-    { title: "Active Deals", value: summary?.totalDeals ?? 0, sub: fmtAED(summary?.dealsValue), icon: Briefcase, color: "bg-[#0f2d5a]", href: "/crm/deals" },
+    { title: "Active Deals", value: summary?.totalDeals ?? 0, sub: fmtAED(summary?.dealsValue), icon: Briefcase, color: "bg-[#0f2d5a]", href: "/crm/pipeline" },
     { title: "Quotations", value: summary?.totalQuotations ?? 0, sub: fmtAED(summary?.quotationsValue), icon: FileText, color: "bg-orange-500", href: "/sales/quotations" },
     { title: "Invoices", value: summary?.totalInvoices ?? 0, sub: fmtAED(summary?.invoicesValue), icon: Receipt, color: "bg-teal-500", href: "/accounts/invoices" },
     { title: "Outstanding", value: fmtAED(summary?.outstandingReceivables), sub: "Receivables", icon: DollarSign, color: "bg-red-500", href: "/accounts/invoices" },

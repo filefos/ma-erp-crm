@@ -311,6 +311,17 @@ router.get("/offer-letters/:id/attachments", requirePermission("offer_letters", 
   res.json(await Promise.all(rows.map(enrichAttachment)));
 });
 
+const ATTACHMENT_MAX_BYTES = 8 * 1024 * 1024; // 8 MB
+const ATTACHMENT_ALLOWED_TYPES = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "image/jpeg", "image/png", "image/gif", "image/webp",
+  "text/plain",
+]);
+
 router.post("/offer-letters/:id/attachments", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const guard = await loadOfferOr403(req, id);
@@ -325,12 +336,22 @@ router.post("/offer-letters/:id/attachments", requirePermission("offer_letters",
   if (typeof objectKey !== "string" || !objectKey.startsWith(expectedPrefix)) {
     res.status(400).json({ error: "objectKey must be uploaded via this offer letter's upload-url endpoint" }); return;
   }
+  // Server-side size cap (8 MB)
+  const size = typeof sizeBytes === "number" ? sizeBytes : null;
+  if (size !== null && size > ATTACHMENT_MAX_BYTES) {
+    res.status(413).json({ error: "File too large", message: "Maximum attachment size is 8 MB" }); return;
+  }
+  // Server-side MIME type allow-list
+  const mime = contentType ? String(contentType).split(";")[0]!.trim().toLowerCase() : null;
+  if (mime && !ATTACHMENT_ALLOWED_TYPES.has(mime)) {
+    res.status(415).json({ error: "Unsupported file type", message: "Allowed: PDF, Word, Excel, images, plain text" }); return;
+  }
   const [row] = await db.insert(offerLetterAttachmentsTable).values({
     offerLetterId: id,
     fileName: String(fileName).slice(0, 255),
     objectKey,
-    contentType: contentType ? String(contentType).slice(0, 120) : null,
-    sizeBytes: typeof sizeBytes === "number" ? sizeBytes : null,
+    contentType: mime ?? null,
+    sizeBytes: size,
     uploadedById: req.user?.id ?? null,
   }).returning();
   res.status(201).json(await enrichAttachment(row));

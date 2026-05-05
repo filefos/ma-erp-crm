@@ -111,16 +111,6 @@ async function runMigrations() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
     )`);
-    // T006: drop legacy Deals / Activities / WhatsApp messaging tables.
-    // (The `whatsapp` text column on contacts/leads/suppliers is kept — it is
-    // just a phone number, not the messaging integration.)
-    await db.execute(sql`DROP TABLE IF EXISTS whatsapp_messages CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS whatsapp_threads CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS whatsapp_accounts CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS activities CASCADE`);
-    await db.execute(sql`DROP TABLE IF EXISTS deals CASCADE`);
-    await db.execute(sql`ALTER TABLE quotations DROP COLUMN IF EXISTS deal_id`);
-
     // Supplier self-registration portal
     await db.execute(sql`CREATE TABLE IF NOT EXISTS supplier_categories (
       id SERIAL PRIMARY KEY,

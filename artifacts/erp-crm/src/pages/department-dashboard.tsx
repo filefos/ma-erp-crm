@@ -12,11 +12,11 @@ import {
 const ROLE_LINKS: Record<string, { label: string; href: string; icon: React.ComponentType<{ className?: string }> }[]> = {
   sales: [
     { label: "My Leads", href: "/crm/leads", icon: Users },
-    { label: "My Deals", href: "/crm/deals", icon: Briefcase },
+    { label: "Pipeline", href: "/crm/pipeline", icon: Briefcase },
     { label: "Quotations", href: "/sales/quotations", icon: FileText },
     { label: "Proforma Invoices", href: "/sales/proforma-invoices", icon: Receipt },
     { label: "LPOs", href: "/sales/lpos", icon: FileText },
-    { label: "Activities", href: "/crm/activities", icon: Activity },
+    { label: "Follow-ups", href: "/crm/follow-ups", icon: Activity },
   ],
   accounts: [
     { label: "Tax Invoices", href: "/accounts/invoices", icon: Receipt },
