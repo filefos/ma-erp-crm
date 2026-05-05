@@ -611,8 +611,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
             {/* ── BANK DETAILS + VAT + GRAND TOTAL ─────────────────────────── */}
             <div className="flex gap-0 border border-gray-400 mb-0 mt-0">
-              {/* Bank Details — shown on all doc types incl. quotations */}
-              {co.bank && (
+              {/* Bank Details — hidden on quotations */}
+              {co.bank && !isQuotation && (
                 <div className="flex-1 border-r border-gray-400" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                   <div
                     className="px-2 py-1.5 text-[11px] font-black uppercase text-white"
