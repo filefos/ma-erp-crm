@@ -1,7 +1,7 @@
 import {
   useGetTaxInvoice, useGetQuotation,
   getGetTaxInvoiceQueryKey, getGetQuotationQueryKey,
-  useCreateDeliveryNote,
+  useCreateDeliveryNote, useListCompanies,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +60,7 @@ export function InvoiceDetail({ id }: Props) {
   const { data: inv, isLoading } = useGetTaxInvoice(invId, {
     query: { queryKey: getGetTaxInvoiceQueryKey(invId), enabled: !!invId },
   });
+  const { data: companies } = useListCompanies();
 
   const qid = (inv as any)?.quotationId as number | undefined;
   const { data: quotation } = useGetQuotation(qid!, {
@@ -115,6 +116,7 @@ export function InvoiceDetail({ id }: Props) {
       total: i.amount ?? i.total,
       vatPercent: i.vatPercent,
     })),
+    companyLogo: (companies?.find((c: any) => c.id === inv.companyId) as any)?.logo ?? undefined,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (inv as any).clientCode ?? undefined,
   };

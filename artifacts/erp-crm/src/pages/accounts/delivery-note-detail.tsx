@@ -1,6 +1,7 @@
 import {
   useGetDeliveryNote, getGetDeliveryNoteQueryKey,
   useGetTaxInvoice, getGetTaxInvoiceQueryKey,
+  useListCompanies,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export function DeliveryNoteDetail({ id }: Props) {
   const { data: dn, isLoading } = useGetDeliveryNote(dnId, {
     query: { queryKey: getGetDeliveryNoteQueryKey(dnId), enabled: !!dnId },
   });
+  const { data: companies } = useListCompanies();
   const tInvId = (dn as any)?.taxInvoiceId as number | undefined;
   const { data: taxInv } = useGetTaxInvoice(tInvId!, {
     query: { queryKey: getGetTaxInvoiceQueryKey(tInvId!), enabled: !!tInvId },
@@ -57,6 +59,7 @@ export function DeliveryNoteDetail({ id }: Props) {
       quantity: i.quantity,
       unit: i.unit,
     })),
+    companyLogo: (companies?.find((c: any) => c.id === dn.companyId) as any)?.logo ?? undefined,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (dn as any).clientCode ?? undefined,
   };

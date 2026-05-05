@@ -133,6 +133,7 @@ export function PurchaseOrderDetail({ id }: Props) {
       quantity: i.quantity,
       total: i.amount,
     })),
+    companyLogo: (companies?.find((c: any) => c.id === ((po as any).companyId ?? 1)) as any)?.logo ?? undefined,
     preparedByName,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (po as any).clientCode ?? undefined,
