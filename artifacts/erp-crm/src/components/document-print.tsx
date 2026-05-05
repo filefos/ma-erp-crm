@@ -868,26 +868,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               })}
             </div>
 
-            {/* Signature */}
-            <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
-              <div>
-                <div className="font-bold mb-1">Prepared by:</div>
-                <div className="text-gray-700 font-semibold">{data.preparedByName ?? `"${coName}"`}</div>
-                {data.preparedBySignatureUrl ? (
-                  <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
-                ) : (
-                  <div className="h-10 mt-2 mb-1" />
-                )}
-                <div className="border-t border-gray-500 pt-1 text-gray-500">Signature: ____________________</div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold mb-1">For &amp; on behalf of</div>
-                <div className="font-bold text-[13px]">{coName}</div>
-                <div className="h-10 mt-2 mb-1" />
-                <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
-              </div>
-            </div>
-
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
               page="Page 3 of 3"
