@@ -257,6 +257,47 @@ router.get("/invoice-lookup", requirePermission("expenses", "view"), async (req,
   res.status(404).json({ error: "Invoice not found" });
 });
 
+// Expense lookup — used by the Record Payable form to auto-fill fields from an expense number
+router.get("/expense-lookup", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
+  const { expenseNumber } = req.query;
+  if (!expenseNumber || typeof expenseNumber !== "string") {
+    res.status(400).json({ error: "expenseNumber query param required" }); return;
+  }
+  const q = expenseNumber.trim();
+  const [exp] = await db.select({
+    id: expensesTable.id,
+    expenseNumber: expensesTable.expenseNumber,
+    category: expensesTable.category,
+    supplierId: expensesTable.supplierId,
+    invoiceNumber: expensesTable.invoiceNumber,
+    projectId: expensesTable.projectId,
+    projectRef: expensesTable.projectRef,
+    amount: expensesTable.amount,
+    vatAmount: expensesTable.vatAmount,
+    total: expensesTable.total,
+    paymentMethod: expensesTable.paymentMethod,
+    companyId: expensesTable.companyId,
+    description: expensesTable.description,
+    status: expensesTable.status,
+  }).from(expensesTable)
+    .where(sql`lower(${expensesTable.expenseNumber}) = lower(${q})`);
+
+  if (!exp) { res.status(404).json({ error: "Expense not found" }); return; }
+  if (!scopeFilter(req, [{ companyId: exp.companyId }] as any).length) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+
+  let supplierName: string | undefined;
+  let supplierCode: string | undefined;
+  if (exp.supplierId) {
+    const [s] = await db.select({ name: suppliersTable.name, code: suppliersTable.code }).from(suppliersTable).where(eq(suppliersTable.id, exp.supplierId));
+    supplierName = s?.name;
+    supplierCode = s?.code ?? undefined;
+  }
+
+  res.json({ ...exp, supplierName, supplierCode });
+});
+
 // Payments Received
 router.get("/payments-received", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(paymentsReceivedTable).orderBy(sql`${paymentsReceivedTable.createdAt} desc`);
