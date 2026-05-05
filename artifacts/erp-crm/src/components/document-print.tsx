@@ -291,6 +291,50 @@ function LabelTd({ children }: { children: React.ReactNode }) {
   );
 }
 
+function LabelTdHalf({ children }: { children: React.ReactNode }) {
+  return (
+    <td className="border border-gray-400 px-2 py-1.5 text-[11px] font-semibold text-white whitespace-nowrap"
+      style={{ width: "38%", backgroundColor: "#1e3a6e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+      {children}
+    </td>
+  );
+}
+
+function NavyBar({ children, amount }: { children: React.ReactNode; amount?: string }) {
+  return (
+    <tr style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+      <td
+        className="border border-gray-400 px-2 py-1.5 text-[11px] font-black uppercase text-white"
+        style={{ backgroundColor: "#0f2d5a" } as React.CSSProperties}
+      >
+        {children}
+      </td>
+      {amount !== undefined && (
+        <td
+          className="border border-gray-400 px-2 py-1.5 text-[11px] font-black text-right text-white whitespace-nowrap"
+          style={{ width: 130, backgroundColor: "#1e5a9e" } as React.CSSProperties}
+        >
+          {amount}
+        </td>
+      )}
+    </tr>
+  );
+}
+
+function WordsRow({ words, colSpan }: { words: string; colSpan?: number }) {
+  return (
+    <tr>
+      <td
+        colSpan={colSpan ?? 2}
+        className="border border-gray-400 px-2 py-1 text-[11px] bg-gray-50 italic"
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+      >
+        <span className="not-italic font-semibold">In Words: </span>{words}
+      </td>
+    </tr>
+  );
+}
+
 export function DocumentPrint({ data }: { data: DocumentData }) {
   const co = COMPANIES[data.companyId] ?? COMPANIES[1];
   const coName = data.companyRef ?? co.name;
@@ -404,33 +448,50 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </table>
           </>
         ) : (
-          <table className="w-full border-collapse border border-gray-400 mb-3">
-            <thead>
-              <tr>
-                <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Company Detail</th>
-                <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Client &amp; Project Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><LabelTd>Company</LabelTd><Td>{coName}</Td><LabelTd>Company</LabelTd><Td>{data.clientName}</Td></tr>
-              <tr><LabelTd>Contact Person</LabelTd><Td>{co.contact}</Td><LabelTd>Contact Person</LabelTd><Td>{clientContact !== "—" ? clientContact : ""}</Td></tr>
-              <tr><LabelTd>Contact #</LabelTd><Td>{co.phone}</Td><LabelTd>Contact #</LabelTd><Td>{data.clientPhone ?? ""}</Td></tr>
-              <tr><LabelTd>Email</LabelTd><Td>{co.email}</Td><LabelTd>Email</LabelTd><Td>{data.clientEmail ?? ""}</Td></tr>
-              <tr>
-                <LabelTd>Project Ref</LabelTd><Td>{data.projectRef ?? data.projectName ?? ""}</Td>
-                <LabelTd>{REF_LABELS[data.type]}</LabelTd><Td><span className="font-bold font-mono">{data.docNumber}</span></Td>
-              </tr>
-              <tr>
-                <LabelTd>Project / Site</LabelTd><Td>{data.projectLocation ?? data.deliveryLocation ?? ""}</Td>
-                {isTax ? (
-                  <><LabelTd>Invoice Date</LabelTd><Td>{docDate}{data.supplyDate ? ` | Supply: ${data.supplyDate}` : ""}</Td></>
-                ) : (
-                  <><LabelTd>Date</LabelTd><Td>{docDate}{data.validity ? ` | Valid: ${data.validity}` : ""}</Td></>
-                )}
-              </tr>
-              <tr><LabelTd>Our TRN</LabelTd><Td>{data.companyTrn ?? co.trn}</Td><LabelTd>Customer TRN</LabelTd><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
-            </tbody>
-          </table>
+          <div className="flex gap-2 mb-3">
+            {/* ── Company Detail (left) ── */}
+            <table className="flex-1 border-collapse border border-gray-400">
+              <thead>
+                <tr>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Company Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><LabelTdHalf>Company</LabelTdHalf><Td>{coName}</Td></tr>
+                <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{co.contact}</Td></tr>
+                <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{co.phone}</Td></tr>
+                <tr><LabelTdHalf>Email</LabelTdHalf><Td>{co.email}</Td></tr>
+                <tr><LabelTdHalf>Sales Person ID</LabelTdHalf><Td>{data.printedByUniqueId ?? "—"}</Td></tr>
+                <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{data.preparedByName ?? co.contact}</Td></tr>
+                <tr><LabelTdHalf>{REF_LABELS[data.type]}</LabelTdHalf><Td><span className="font-bold font-mono">{data.docNumber}</span></Td></tr>
+                <tr>
+                  <LabelTdHalf>{isTax ? "Invoice Date" : "Date"}</LabelTdHalf>
+                  <Td>{docDate}{data.validity ? ` | Valid: ${data.validity}` : ""}{data.supplyDate ? ` | Supply: ${data.supplyDate}` : ""}</Td>
+                </tr>
+                <tr><LabelTdHalf>Company TRN</LabelTdHalf><Td>{data.companyTrn ?? co.trn}</Td></tr>
+              </tbody>
+            </table>
+
+            {/* ── Client DETAIL (right) ── */}
+            <table className="flex-1 border-collapse border border-gray-400">
+              <thead>
+                <tr>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Client DETAIL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><LabelTdHalf>Company</LabelTdHalf><Td>{data.clientName}</Td></tr>
+                <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{clientContact !== "—" ? clientContact : ""}</Td></tr>
+                <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{data.clientPhone ?? ""}</Td></tr>
+                <tr><LabelTdHalf>Email</LabelTdHalf><Td>{data.clientEmail ?? ""}</Td></tr>
+                <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{""}</Td></tr>
+                <tr><LabelTdHalf>CLIENT ID</LabelTdHalf><Td>{data.clientCode ?? "—"}</Td></tr>
+                <tr><LabelTdHalf>Project Ref</LabelTdHalf><Td>{data.projectRef ?? data.projectName ?? ""}</Td></tr>
+                <tr><LabelTdHalf>Project / Site</LabelTdHalf><Td>{data.projectLocation ?? data.deliveryLocation ?? ""}</Td></tr>
+                <tr><LabelTdHalf>Customer TRN</LabelTdHalf><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* ── DELIVERY NOTE DETAILS ───────────────────────────────────── */}
@@ -452,14 +513,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {/* ── LINE ITEMS TABLE ─────────────────────────────────────────── */}
         <table className="w-full border-collapse border border-gray-400 mb-0">
           <thead>
-            <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-              <Th center>S#</Th>
-              <Th>Description</Th>
-              <Th center>Size / Status</Th>
-              {!isDelivery && <Th right>Price (AED)</Th>}
-              <Th right>Qty.</Th>
-              {isTax && <Th center>VAT %</Th>}
-              {!isDelivery && <Th right>Total (AED)</Th>}
+            <tr style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-center w-8">S#</th>
+              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-left">Description</th>
+              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-center">Size / Status</th>
+              {!isDelivery && <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-right">Price (AED)</th>}
+              <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-right">Qty.</th>
+              {isTax && <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-center">VAT %</th>}
+              {!isDelivery && <th className="border border-gray-400 px-2 py-1.5 text-xs font-bold text-white text-right">Total (AED)</th>}
             </tr>
           </thead>
           <tbody>
@@ -471,7 +532,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </tr>
             )}
             {data.items.map((item, i) => (
-              <tr key={i}>
+              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#dce6f1", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <Td center bold>{String(i + 1).padStart(2, "0")}</Td>
                 <Td style={{ whiteSpace: "pre-line" }}>{item.description}</Td>
                 <Td center>{item.sizeStatus ?? item.unit ?? "—"}</Td>
@@ -501,143 +562,121 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {!isDelivery && !isPO && (
           <>
-            {/* Project Items Subtotal row */}
+            {/* ── BAR 1: TOTAL AMOUNT IN WORDS = EXCLUDING VAT (PROJECT ITEMS) ── */}
             <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
               <tbody>
-                <tr className="bg-gray-50">
-                  <Td bold colSpan={4}>TOTAL AMOUNT IN WORDS = EXCLUDING VAT (PROJECT ITEMS)</Td>
-                  <Td right bold>{formatAED(subtotal)}</Td>
-                </tr>
-                <tr>
-                  <Td colSpan={5}>
-                    <span className="font-semibold">In Words: </span>
-                    <span className="italic">{numberToWords(subtotal)}</span>
-                  </Td>
-                </tr>
+                <NavyBar amount={formatAED(subtotal)}>
+                  Total Amount in Words = Excluding VAT (Project Items)
+                </NavyBar>
+                <WordsRow words={numberToWords(subtotal)} />
               </tbody>
             </table>
 
-            {/* Additional Commercial Items (quotation + proforma) */}
+            {/* ── ADDITIONAL COMMERCIAL ITEMS ─────────────────────────────── */}
             {(isQuotation || data.type === "proforma") && (
               <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
-                <thead>
-                  <tr className="bg-gray-100" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                    <Th>Item</Th>
-                    <Th right>Price (AED)</Th>
-                    <Th right>Qty</Th>
-                    <Th center>Status</Th>
-                    <Th right>Total (AED)</Th>
-                  </tr>
-                </thead>
                 <tbody>
-                  {additionalItems.map((row, idx) => {
-                    const rowTotal = (row.price ?? 0) * (row.quantity ?? 1);
-                    return (
-                      <tr key={idx}>
-                        <Td>{row.description}</Td>
-                        <Td right>
-                          {row.status === "Included" && (row.price ?? 0) > 0
-                            ? formatAED(row.price!)
-                            : "—"}
-                        </Td>
-                        <Td right>
-                          {row.status === "Included" ? (row.quantity ?? 1) : "—"}
-                        </Td>
-                        <Td center>
-                          <span className={row.status === "Included" ? "text-green-700 font-bold" : "text-red-600 font-bold"}>
-                            {row.status}
-                          </span>
-                        </Td>
-                        <Td right>
-                          {row.status === "Included"
-                            ? (rowTotal > 0 ? formatAED(rowTotal) : "Included")
-                            : "—"}
-                        </Td>
-                      </tr>
-                    );
-                  })}
+                  {additionalItems.map((row, idx) => (
+                    <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#eaf0f8" : "#ffffff", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <td className="border border-gray-400 px-2 py-1.5 text-xs">{row.description}</td>
+                      <td
+                        className="border border-gray-400 px-2 py-1.5 text-xs text-center font-semibold whitespace-nowrap"
+                        style={{ width: 90 }}
+                      >
+                        <span className={row.status === "Included" ? "text-green-700" : "text-red-600"}>
+                          {row.status}
+                        </span>
+                      </td>
+                      <td className="border border-gray-400 px-2 py-1.5 text-xs text-right whitespace-nowrap" style={{ width: 100 }}>
+                        {row.status === "Included" && (row.price ?? 0) > 0 ? formatAED(row.price!) : ""}
+                      </td>
+                      <td className="border border-gray-400 px-2 py-1.5 text-xs text-right whitespace-nowrap" style={{ width: 80 }}>
+                        {row.status === "Included" ? (row.quantity ?? 1) : ""}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             )}
 
-            {/* Grand Total block */}
-            <table className="w-full border-collapse border border-gray-400 mt-0" style={{ marginBottom: 0 }}>
+            {/* ── BAR 2: TOTAL AMOUNT IN WORDS = EXCLUDING VAT ─────────────── */}
+            <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
               <tbody>
-                <tr className="bg-gray-50" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                  <Td bold colSpan={4}>TOTAL AMOUNT IN WORDS = EXCLUDING VAT</Td>
-                  <Td right bold>{formatAED(subtotal)}</Td>
-                </tr>
-                <tr>
-                  <Td colSpan={5}>
-                    <span className="font-semibold">In Words: </span>
-                    <span className="italic">{numberToWords(subtotal)}</span>
-                  </Td>
-                </tr>
+                <NavyBar amount={formatAED(subtotal)}>
+                  Total Amount in Words = Excluding VAT
+                </NavyBar>
+                <WordsRow words={numberToWords(subtotal)} />
               </tbody>
             </table>
 
-            {/* Bank Details (left, invoices only) + Totals (right) side-by-side.
-                Bank details are intentionally hidden on quotations and shown only
-                on proforma / tax invoices. */}
-            <div className="flex border-l border-r border-b border-gray-400 mb-0">
-              {/* Bank Details — hidden on quotations */}
-              {!isQuotation && (
-                <div className="flex-1 border-r border-gray-400 p-2 bg-gray-50" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                  {co.bank ? (
-                    <>
-                      <div className="font-black text-[11px] uppercase mb-1 text-[#0f2d5a]">Bank Details</div>
-                      <div className="text-[10px] font-semibold mb-1 text-[#0f2d5a]">
-                        All cheques shall be prepared in favor of "{co.name}".
-                      </div>
-                      <table className="text-[10px] w-full">
-                        <tbody>
-                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Bank Name</td><td className="font-semibold">{co.bank.bankName}</td></tr>
-                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Title</td><td className="font-semibold">{co.bank.accountTitle}</td></tr>
-                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Account Number</td><td className="font-semibold">{co.bank.accountNumber}</td></tr>
-                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">IBAN</td><td className="font-semibold">{co.bank.iban}</td></tr>
-                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Swift Code</td><td className="font-semibold">{co.bank.swift}</td></tr>
-                          <tr><td className="pr-2 text-gray-500 whitespace-nowrap py-0.5">Currency</td><td className="font-semibold">{co.bank.currency}</td></tr>
-                        </tbody>
-                      </table>
-                    </>
-                  ) : (
-                    <div className="text-[10px] text-gray-400 italic">No bank details configured</div>
-                  )}
+            {/* ── BANK DETAILS + VAT + GRAND TOTAL ─────────────────────────── */}
+            <div className="flex gap-0 border border-gray-400 mb-0 mt-0">
+              {/* Bank Details — shown on all doc types incl. quotations */}
+              {co.bank && (
+                <div className="flex-1 border-r border-gray-400" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                  <div
+                    className="px-2 py-1.5 text-[11px] font-black uppercase text-white"
+                    style={{ backgroundColor: "#0f2d5a" } as React.CSSProperties}
+                  >
+                    Account Detail
+                  </div>
+                  <table className="text-[10px] w-full border-collapse">
+                    <tbody>
+                      <tr>
+                        <td className="px-2 py-1 font-bold text-[#0f2d5a] whitespace-nowrap border-b border-gray-200">{co.bank.bankName}</td>
+                        <td className="px-2 py-1 border-b border-gray-200">
+                          <span className="font-semibold">Account Title: </span>{co.bank.accountTitle}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-2 py-1 text-gray-500 border-b border-gray-200">Swift Code: <span className="font-semibold text-black">{co.bank.swift}</span></td>
+                        <td className="px-2 py-1 border-b border-gray-200">
+                          <span className="font-semibold">IBAN: </span>{co.bank.iban}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="px-2 py-1 text-gray-500">Currency: <span className="font-semibold text-black">{co.bank.currency}</span></td>
+                        <td className="px-2 py-1">
+                          <span className="font-semibold">Account Number: </span>{co.bank.accountNumber}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               )}
 
-              {/* Totals — full width on quotations, right column otherwise */}
-              <div className={isQuotation ? "ml-auto w-72 flex-shrink-0" : "w-72 flex-shrink-0"}>
-                <table className="w-full border-collapse text-[12px]">
+              {/* VAT + Grand Total */}
+              <div className="flex-shrink-0" style={{ width: co.bank ? 200 : "100%" }}>
+                <table className="w-full border-collapse h-full">
                   <tbody>
                     {(data.discount ?? 0) > 0 && (
                       <tr>
-                        <td className="border-b border-gray-300 px-2 py-1">Discount ({data.discount}%)</td>
-                        <td className="border-b border-gray-300 px-2 py-1 text-right">— {formatAED((subtotal * (data.discount ?? 0)) / 100)}</td>
+                        <td className="border border-gray-300 px-2 py-1.5 text-xs">Discount ({data.discount}%)</td>
+                        <td className="border border-gray-300 px-2 py-1.5 text-xs text-right font-semibold">
+                          – {formatAED((subtotal * (data.discount ?? 0)) / 100)}
+                        </td>
                       </tr>
                     )}
-                    <tr>
-                      <td className="border-b border-gray-300 px-2 py-1">VAT {vat}%</td>
-                      <td className="border-b border-gray-300 px-2 py-1 text-right">{formatAED(vatAmt)}</td>
+                    <tr style={{ backgroundColor: "#bdd7ee", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <td className="border border-gray-300 px-2 py-1.5 text-xs font-semibold">VAT {vat}%</td>
+                      <td className="border border-gray-300 px-2 py-1.5 text-xs font-semibold text-right">{formatAED(vatAmt)}</td>
                     </tr>
-                    <tr className="bg-[#0f2d5a] text-white" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                      <td className="px-2 py-2 font-black">GRAND TOTAL (AED)</td>
-                      <td className="px-2 py-2 font-black text-right">{formatAED(grand)}</td>
+                    <tr style={{ backgroundColor: "#70ad47", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <td className="border border-gray-300 px-2 py-2 text-xs font-black text-white">Grand Total (AED)</td>
+                      <td className="border border-gray-300 px-2 py-2 text-xs font-black text-white text-right">{formatAED(grand)}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* Grand Total in Words */}
+            {/* ── BAR 3: GRAND TOTAL AMOUNT IN WORDS ───────────────────────── */}
             <table className="w-full border-collapse border border-gray-400 mb-3 mt-0">
               <tbody>
-                <tr>
-                  <Td colSpan={5}>
-                    <span className="font-semibold">Grand Total in Words: </span>
-                    <span className="italic">{numberToWords(grand)}</span>
-                  </Td>
-                </tr>
+                <NavyBar amount={formatAED(grand)}>
+                  Grand Total Amount in Words
+                </NavyBar>
+                <WordsRow words={numberToWords(grand)} />
               </tbody>
             </table>
           </>
