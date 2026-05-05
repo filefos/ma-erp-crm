@@ -195,6 +195,34 @@ router.delete("/chart-of-accounts/:id", requirePermission("expenses", "delete"),
   res.json({ success: true });
 });
 
+// Invoice lookup — used by the Record Receivable form to auto-fill fields from a tax invoice number
+router.get("/invoice-lookup", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
+  const { invoiceNumber } = req.query;
+  if (!invoiceNumber || typeof invoiceNumber !== "string") {
+    res.status(400).json({ error: "invoiceNumber query param required" }); return;
+  }
+  const [inv] = await db.select({
+    id: taxInvoicesTable.id,
+    invoiceNumber: taxInvoicesTable.invoiceNumber,
+    clientName: taxInvoicesTable.clientName,
+    companyId: taxInvoicesTable.companyId,
+    grandTotal: taxInvoicesTable.grandTotal,
+    balance: taxInvoicesTable.balance,
+    projectRef: taxInvoicesTable.projectRef,
+    projectId: taxInvoicesTable.projectId,
+    paymentStatus: taxInvoicesTable.paymentStatus,
+  }).from(taxInvoicesTable)
+    .where(sql`lower(${taxInvoicesTable.invoiceNumber}) = lower(${invoiceNumber.trim()})`);
+  if (!inv) { res.status(404).json({ error: "Invoice not found" }); return; }
+  if (!scopeFilter(req, [{ companyId: inv.companyId }] as any).length) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  const [co] = inv.companyId
+    ? await db.select({ name: companiesTable.name, shortName: companiesTable.shortName }).from(companiesTable).where(eq(companiesTable.id, inv.companyId))
+    : [undefined];
+  res.json({ ...inv, companyName: co?.shortName ?? co?.name });
+});
+
 // Payments Received
 router.get("/payments-received", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(paymentsReceivedTable).orderBy(sql`${paymentsReceivedTable.createdAt} desc`);

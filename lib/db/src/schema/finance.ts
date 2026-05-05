@@ -90,6 +90,7 @@ export const paymentsReceivedTable = pgTable("payments_received", {
   bankAccountId: integer("bank_account_id"),
   referenceNumber: text("reference_number"),
   notes: text("notes"),
+  attachments: text("attachments").default("[]"),
   status: text("status").notNull().default("completed"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
