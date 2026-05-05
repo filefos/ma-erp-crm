@@ -30,6 +30,7 @@ interface FormState {
   amountPaid: number;
   paymentStatus: string;
   status: string;
+  paymentTerms: string;
 }
 
 export function InvoiceEdit({ id }: Props) {
@@ -47,6 +48,7 @@ export function InvoiceEdit({ id }: Props) {
     invoiceDate: "", supplyDate: "",
     subtotal: 0, vatPercent: 5, vatAmount: 0, grandTotal: 0,
     amountPaid: 0, paymentStatus: "unpaid", status: "active",
+    paymentTerms: "",
   });
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export function InvoiceEdit({ id }: Props) {
       amountPaid: (inv as any).amountPaid ?? 0,
       paymentStatus: inv.paymentStatus ?? "unpaid",
       status: (inv as any).status ?? "active",
+      paymentTerms: (inv as any).paymentTerms ?? "",
     });
   }, [inv]);
 
@@ -116,6 +119,7 @@ export function InvoiceEdit({ id }: Props) {
           companyTrn: form.companyTrn || null,
           amountPaid: form.amountPaid,
           status: form.status,
+          paymentTerms: form.paymentTerms || null,
         } as Record<string, unknown>),
       } as any,
     });
@@ -153,6 +157,15 @@ export function InvoiceEdit({ id }: Props) {
           <div className="space-y-1">
             <Label>Supply Date</Label>
             <Input type="date" value={form.supplyDate} onChange={e => setForm(p => ({ ...p, supplyDate: e.target.value }))} />
+          </div>
+          <div className="space-y-1 md:col-span-2">
+            <Label>Payment Terms</Label>
+            <Input
+              value={form.paymentTerms}
+              onChange={e => setForm(p => ({ ...p, paymentTerms: e.target.value }))}
+              placeholder="e.g. 50% advance, 50% on delivery"
+              data-testid="input-payment-terms"
+            />
           </div>
         </CardContent>
       </Card>

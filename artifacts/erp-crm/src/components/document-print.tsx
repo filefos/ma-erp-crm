@@ -703,10 +703,15 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         )}
         {!isQuotation && (
-          <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-            <span>PRIME ERP SYSTEMS</span>
-            <span className="font-semibold text-gray-500">Page 1 of 1</span>
-          </div>
+          <>
+            <div className="mt-3 text-center text-[10px] italic text-gray-500">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-semibold text-gray-500">Page 1 of 1</span>
+            </div>
+          </>
         )}
 
         {/* ══════════════════════════════════════════════════════════════

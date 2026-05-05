@@ -1,0 +1,210 @@
+**FEATURE: AI-DRIVEN ACCOUNTS SYSTEM (UAE STANDARD) – PRIME ERP**
+
+---
+
+## 🎯 OBJECTIVE
+
+Build a **simple, powerful, AI-assisted accounting system** fully integrated with PRIME ERP.
+
+System must:
+
+* Follow UAE VAT standards
+* Be easy to use (non-accountant friendly)
+* Fully connected with Sales, Procurement, Inventory
+
+---
+
+# 🧾 CORE ACCOUNTING MODULES
+
+### PANELS:
+
+* Accounts Dashboard
+* Proforma Invoices
+* Tax Invoices
+* Delivery Notes
+* Expenses
+* Payments Received
+* Payments Made
+* Cheques
+* Bank Accounts
+* Chart of Accounts
+* Journal Entries
+* VAT Report
+
+---
+
+# 🤖 AI ROLE (IMPORTANT)
+
+AI must act as:
+👉 **Accounting Assistant (not controller)**
+
+AI will:
+
+* Auto-suggest entries
+* Auto-fill data from ERP
+* Validate VAT compliance
+* Reduce manual work
+
+---
+
+# 🔗 ERP INTEGRATION (VERY IMPORTANT)
+
+System must auto-fetch data from:
+
+* Quotation → Invoice
+* LPO → Accounts
+* Inventory → Cost tracking
+* Project → Expense allocation
+
+👉 No duplicate data entry allowed
+
+---
+
+# 🧾 INVOICE SYSTEM (UAE VAT STANDARD)
+
+## TAX INVOICE MUST INCLUDE:
+
+* Invoice Number (Auto)
+* Client Name
+* TRN Number
+* Company TRN
+* Item Details
+* Quantity
+* Unit Price
+* VAT % (5%)
+* VAT Amount
+* Total Amount
+
+---
+
+## 🔹 PAYMENT TERMS
+
+* Must be manual editable textbox
+* Must appear on:
+
+  * Proforma Invoice
+  * Tax Invoice
+
+---
+
+# 📊 AI AUTOMATION RULES
+
+### 1. INVOICE CREATION
+
+* Auto-fetch from Quotation
+* AI suggests totals
+* User confirms
+
+---
+
+### 2. EXPENSE ENTRY
+
+* AI suggests account category
+* Example:
+
+  * Fuel → Transport Expense
+  * Material → Cost of Goods
+
+---
+
+### 3. PAYMENTS
+
+#### Payments Received:
+
+* Link with Invoice
+* Update status automatically
+
+#### Payments Made:
+
+* Link with Supplier / Expense
+
+---
+
+### 4. CHEQUE MANAGEMENT
+
+* Track:
+
+  * Issued
+  * Received
+  * Cleared
+  * Bounced
+
+---
+
+### 5. VAT REPORT (UAE)
+
+System must generate:
+
+* Output VAT (Sales)
+* Input VAT (Purchases)
+* Net VAT Payable
+
+---
+
+# 📊 CHART OF ACCOUNTS (SIMPLE STRUCTURE)
+
+Categories:
+
+* Assets
+* Liabilities
+* Equity
+* Revenue
+* Expenses
+
+---
+
+# 📘 JOURNAL ENTRIES
+
+AI must assist:
+
+* Auto-create entries from:
+
+  * Invoice
+  * Payment
+  * Expense
+
+---
+
+# 📦 COST TRACKING (VERY IMPORTANT)
+
+System must track:
+
+* Purchase Cost → Inventory
+* Inventory → Project
+* Project → Invoice Profit
+
+---
+
+# 🔐 CONTROL RULES
+
+* No auto-posting without user confirmation
+* All AI suggestions must be editable
+* Full audit log required
+
+---
+
+# 🖨 PDF RULE (MANDATORY)
+
+Every printed document must include at bottom:
+
+👉 "This is a computer generated document. No signature or stamp required."
+
+---
+
+# 🎨 UI RULE
+
+* Simple dashboard
+* Minimal fields
+* Fast entry system
+* No accounting complexity for user
+
+---
+
+# 🚀 FINAL OBJECTIVE
+
+* Easy for non-accountants
+* UAE compliant
+* Fully automated with ERP
+* Clear financial visibility
+
+---

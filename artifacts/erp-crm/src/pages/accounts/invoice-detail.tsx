@@ -67,6 +67,7 @@ export function InvoiceDetail({ id }: Props) {
     vatPercent: inv.vatPercent ?? 5,
     vatAmount: inv.vatAmount,
     grandTotal: inv.grandTotal,
+    paymentTerms: (inv as any).paymentTerms ?? undefined,
     items: qItems.map(i => ({
       description: i.description,
       sizeStatus: i.unit,
