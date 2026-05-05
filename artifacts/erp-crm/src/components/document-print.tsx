@@ -257,6 +257,20 @@ function NavyBar({ children, amount }: { children: React.ReactNode; amount?: str
   );
 }
 
+function PageFooter({ left, page }: { left: React.ReactNode; page: string }) {
+  return (
+    <div className="doc-page-footer">
+      <div className="text-center text-[10px] italic text-[#0f2d5a] mb-1">
+        This is a computer generated document. No signature or stamp required.
+      </div>
+      <div className="flex items-center justify-between text-[10px] text-[#0f2d5a] border-t border-[#0f2d5a] pt-1">
+        <span className="font-mono tracking-wide">{left}</span>
+        <span className="font-semibold">{page}</span>
+      </div>
+    </div>
+  );
+}
+
 function WordsRow({ words, colSpan }: { words: string; colSpan?: number }) {
   return (
     <tr>
@@ -335,6 +349,15 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           .print-page-break .gap-8 { gap: 16pt !important; }
           .print-page-break .h-12 { height: 28pt !important; }
           .print-page-break .h-10 { height: 20pt !important; }
+          /* Fixed footer pinned to bottom of every printed page */
+          .doc-page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 10mm;
+            right: 10mm;
+            background: white;
+            padding-top: 4pt;
+          }
         }
       `}</style>
 
@@ -678,30 +701,16 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         )}
 
         {isQuotation && (
-          <>
-            <div className="mt-3 text-center text-[10px] italic text-gray-500">
-              This is a computer generated document. No signature or stamp required.
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
-              <span className="font-semibold text-gray-500">Page 1 of 3</span>
-            </div>
-          </>
+          <PageFooter
+            left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
+            page="Page 1 of 3"
+          />
         )}
         {!isQuotation && (
-          <>
-            <div className="mt-3 text-center text-[10px] italic text-gray-500">
-              This is a computer generated document. No signature or stamp required.
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span className="font-mono tracking-wide">
-                {"PRIME ERP SYSTEM"}
-                {data.projectRef ? `\u00a0\u00a0|\u00a0\u00a0PROJECT ID: ${data.projectRef}` : ""}
-                {`\u00a0\u00a0|\u00a0\u00a0DATE: ${printDate}\u00a0\u00a0|\u00a0\u00a0TIME: ${printTime}\u00a0\u00a0|\u00a0\u00a0DOCUMENT #: ${data.docNumber}`}
-              </span>
-              <span className="font-semibold text-gray-500">Page 1 of 1</span>
-            </div>
-          </>
+          <PageFooter
+            left={<>{"PRIME ERP SYSTEM"}{data.projectRef ? `\u00a0\u00a0|\u00a0\u00a0PROJECT ID: ${data.projectRef}` : ""}{`\u00a0\u00a0|\u00a0\u00a0DATE: ${printDate}\u00a0\u00a0|\u00a0\u00a0TIME: ${printTime}\u00a0\u00a0|\u00a0\u00a0DOCUMENT #: ${data.docNumber}`}</>}
+            page="Page 1 of 1"
+          />
         )}
 
         {/* ══════════════════════════════════════════════════════════════
@@ -792,13 +801,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               );
             })()}
 
-            <div className="mt-3 text-center text-[10px] italic text-gray-500">
-              This is a computer generated document. No signature or stamp required.
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
-              <span className="font-semibold text-gray-500">Page 2 of 3</span>
-            </div>
+            <PageFooter
+              left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
+              page="Page 2 of 3"
+            />
           </div>
         )}
 
@@ -859,13 +865,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <div className="mt-3 text-center text-[10px] italic text-gray-500">
-              This is a computer generated document. No signature or stamp required.
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-              <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
-              <span className="font-semibold text-gray-500">Page 3 of 3</span>
-            </div>
+            <PageFooter
+              left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
+              page="Page 3 of 3"
+            />
           </div>
         )}
       </div>
@@ -895,13 +898,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             {sec.content || <span className="text-gray-400 italic">No content provided.</span>}
           </div>
 
-          <div className="mt-3 text-center text-[10px] italic text-gray-500">
-            This is a computer generated document. No signature or stamp required.
-          </div>
-          <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-            <span className="font-mono tracking-wide">PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</span>
-            <span className="font-semibold text-gray-500">Additional Page {si + 1}</span>
-          </div>
+          <PageFooter
+            left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
+            page={`Additional Page ${si + 1}`}
+          />
         </div>
       ))}
     </>
