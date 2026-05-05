@@ -19,6 +19,7 @@ import {
   MessageCircle, Wallet, RotateCcw,
 } from "lucide-react";
 import { useState } from "react";
+import { AskAIButton } from "@/components/ask-ai";
 
 interface NavItem {
   href: string;
@@ -603,6 +604,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1" />
 
+          <AskAIButton />
           <CompanySwitcher />
           <NotificationBell />
         </header>

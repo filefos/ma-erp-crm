@@ -195,4 +195,84 @@ router.post("/ai/accounts/vat-check", async (req, res): Promise<void> => {
   await runAccountsAI(req, res, system, user, "ai_accounts_vat_check");
 });
 
+// ===== Global Ask-AI assistant (used by every module) =====
+// Body: { module: string, question: string, context?: object|string, history?: ChatMessage[] }
+// Response: { result: string, model: string }
+const MODULE_GUIDANCE: Record<string, string> = {
+  crm:         "You assist with Contacts and Leads. Suggest company info from names, spot duplicates, recommend lead priority and follow-up dates.",
+  sales:       "You assist with Sales — quotations, proforma, LPOs. Suggest items, pricing from past data, flag low-profit deals, recommend next follow-up.",
+  procurement: "You assist with Procurement. Suggest suppliers, recommend best price, compare quotations, alert on high-cost purchases.",
+  inventory:   "You assist with Inventory. Predict low stock, suggest reorder quantities, detect dead stock, highlight fast movers.",
+  projects:    "You assist with Projects. Track progress, suggest resource allocation, alert on delays, compare estimated vs actual cost.",
+  accounts:    "You assist with Accounts under UAE VAT. Suggest journal entries, validate VAT calculations, track pending payments, recommend AR follow-ups.",
+  assets:      "You assist with Assets. Track usage, suggest maintenance, monitor depreciation, alert on asset issues.",
+  hr:          "You assist with HR — employees, attendance, leaves, payroll. Be careful with sensitive personal data.",
+  reports:     "You assist with reports and dashboards. Summarise trends, highlight outliers, suggest follow-up questions.",
+  general:     "You are a general ERP assistant for Prime Max & Elite Prefab.",
+};
+
+router.post("/ai/ask", async (req, res): Promise<void> => {
+  const moduleId = String(req.body?.module ?? "general").toLowerCase();
+  const question = String(req.body?.question ?? "").trim();
+  const ctx = req.body?.context;
+  const history = Array.isArray(req.body?.history) ? req.body.history.slice(-6) : [];
+
+  if (!question) {
+    res.status(400).json({ error: "Bad request", message: "question is required" }); return;
+  }
+  if (!aiAvailable()) {
+    res.status(503).json({ error: "Service unavailable", message: "AI is not configured" }); return;
+  }
+  if ((await callerAutomationLevel(req)) === "off") {
+    res.status(403).json({ error: "AI disabled", message: "Your AI automation level is set to Off." }); return;
+  }
+
+  const guidance = MODULE_GUIDANCE[moduleId] ?? MODULE_GUIDANCE.general;
+  const system = [
+    "You are PRIME ERP's AI assistant for Prime Max & Elite Prefab (UAE).",
+    guidance,
+    "Hard rules:",
+    "- Never invent data. If something isn't in the supplied context, say you don't know.",
+    "- Never claim to have changed data. You only suggest — the user must approve in the UI.",
+    "- Be concise. Use short bullets and AED for currency.",
+  ].join("\n");
+
+  const ctxStr = ctx == null ? "" : (typeof ctx === "string" ? ctx : JSON.stringify(ctx)).slice(0, 4000);
+  const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
+    { role: "system", content: system },
+  ];
+  for (const m of history) {
+    if (m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string") {
+      messages.push({ role: m.role, content: String(m.content).slice(0, 2000) });
+    }
+  }
+  messages.push({
+    role: "user",
+    content: ctxStr ? `Context:\n${ctxStr}\n\nQuestion: ${question}` : question,
+  });
+
+  let raw: string;
+  try {
+    raw = await chat(messages, { maxCompletionTokens: 900 });
+  } catch (err) {
+    res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" });
+    return;
+  }
+
+  await audit(req, {
+    action: "ai_ask",
+    entity: "ai_assistant",
+    entityId: 0,
+    details: JSON.stringify({
+      module: moduleId,
+      model: aiModelName(),
+      question: trimForAudit(question, 1000),
+      contextChars: ctxStr.length,
+      response: trimForAudit(raw),
+    }),
+  });
+
+  res.json({ result: raw, model: aiModelName() });
+});
+
 export default router;
