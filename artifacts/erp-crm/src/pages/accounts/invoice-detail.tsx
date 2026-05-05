@@ -12,6 +12,7 @@ import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { authHeaders } from "@/lib/ai-client";
 
 interface Props { id: string }
 
@@ -34,7 +35,7 @@ export function InvoiceDetail({ id }: Props) {
     try {
       const res = await fetch(`${import.meta.env.BASE_URL}api/journal-entries/auto-from-source`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         credentials: "include",
         body: JSON.stringify({ sourceType: "tax_invoice", sourceId: invId }),
       });

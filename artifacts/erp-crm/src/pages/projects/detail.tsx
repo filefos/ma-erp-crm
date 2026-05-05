@@ -10,6 +10,7 @@ import { ArrowLeft, CheckCircle2, Clock, Circle, Pencil, Save, X, Calendar, MapP
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetProjectQueryKey } from "@workspace/api-client-react";
+import { authHeaders } from "@/lib/ai-client";
 
 interface Props { id: string }
 
@@ -196,7 +197,7 @@ function ProjectProfitability({ projectId }: { projectId: number }) {
 
   useEffect(() => {
     let on = true;
-    fetch(`${import.meta.env.BASE_URL}api/projects/${projectId}/cost-summary`, { credentials: "include" })
+    fetch(`${import.meta.env.BASE_URL}api/projects/${projectId}/cost-summary`, { headers: authHeaders(), credentials: "include" })
       .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
       .then(j => on && setData(j))
       .catch(e => on && setErr(String(e)));

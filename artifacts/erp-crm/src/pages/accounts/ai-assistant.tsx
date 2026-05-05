@@ -105,9 +105,10 @@ export function AiAssistant() {
 
   const callAccountsAI = async (path: string, body: Record<string, unknown>): Promise<string | null> => {
     try {
+      const { authHeaders } = await import("@/lib/ai-client");
       const res = await fetch(`${import.meta.env.BASE_URL}api${path}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         credentials: "include",
         body: JSON.stringify(body),
       });

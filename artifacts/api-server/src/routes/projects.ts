@@ -5,7 +5,7 @@ import {
   purchaseOrdersTable, purchaseRequestsTable,
 } from "@workspace/db";
 import { eq, sql, and, inArray } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, hasPermission } from "../middlewares/auth";
 
 const router = Router();
 router.use(requireAuth);
@@ -75,26 +75,39 @@ router.get("/projects/:id/cost-summary", requirePermission("projects", "view"), 
   if (!project) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [project]).length) { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const invoices = await db.select({
-    id: taxInvoicesTable.id, invoiceNumber: taxInvoicesTable.invoiceNumber,
-    grandTotal: taxInvoicesTable.grandTotal, amountPaid: taxInvoicesTable.amountPaid,
-    paymentStatus: taxInvoicesTable.paymentStatus,
-  }).from(taxInvoicesTable).where(eq(taxInvoicesTable.projectId, id));
+  const canViewInvoices = await hasPermission(req.user, "tax_invoices", "view");
+  const canViewProcurement = await hasPermission(req.user, "purchase_orders", "view");
+  const canViewExpenses = await hasPermission(req.user, "expenses", "view");
 
-  const prRows = await db.select({ id: purchaseRequestsTable.id })
-    .from(purchaseRequestsTable).where(eq(purchaseRequestsTable.projectId, id));
-  const prIds = prRows.map(r => r.id);
-  const purchaseOrders = prIds.length
-    ? await db.select({
-        id: purchaseOrdersTable.id, poNumber: purchaseOrdersTable.poNumber,
-        total: purchaseOrdersTable.total, status: purchaseOrdersTable.status,
-      }).from(purchaseOrdersTable).where(inArray(purchaseOrdersTable.purchaseRequestId, prIds))
+  const invoices = canViewInvoices
+    ? scopeFilter(req, await db.select({
+        id: taxInvoicesTable.id, invoiceNumber: taxInvoicesTable.invoiceNumber,
+        grandTotal: taxInvoicesTable.grandTotal, amountPaid: taxInvoicesTable.amountPaid,
+        paymentStatus: taxInvoicesTable.paymentStatus, companyId: taxInvoicesTable.companyId,
+      }).from(taxInvoicesTable).where(eq(taxInvoicesTable.projectId, id)))
     : [];
 
-  const exps = await db.select({
-    id: expensesTable.id, expenseNumber: expensesTable.expenseNumber,
-    total: expensesTable.total, category: expensesTable.category, status: expensesTable.status,
-  }).from(expensesTable).where(and(eq(expensesTable.companyId, project.companyId), sql`${expensesTable.invoiceNumber} = ${project.projectNumber}`));
+  let purchaseOrders: Array<{ id: number; poNumber: string; total: number | null; status: string; companyId: number }> = [];
+  if (canViewProcurement) {
+    const prRows = scopeFilter(req, await db.select({ id: purchaseRequestsTable.id, companyId: purchaseRequestsTable.companyId })
+      .from(purchaseRequestsTable).where(eq(purchaseRequestsTable.projectId, id)));
+    const prIds = prRows.map(r => r.id);
+    if (prIds.length) {
+      purchaseOrders = scopeFilter(req, await db.select({
+        id: purchaseOrdersTable.id, poNumber: purchaseOrdersTable.poNumber,
+        total: purchaseOrdersTable.total, status: purchaseOrdersTable.status,
+        companyId: purchaseOrdersTable.companyId,
+      }).from(purchaseOrdersTable).where(inArray(purchaseOrdersTable.purchaseRequestId, prIds)));
+    }
+  }
+
+  const exps = canViewExpenses
+    ? scopeFilter(req, await db.select({
+        id: expensesTable.id, expenseNumber: expensesTable.expenseNumber,
+        total: expensesTable.total, category: expensesTable.category, status: expensesTable.status,
+        companyId: expensesTable.companyId,
+      }).from(expensesTable).where(and(eq(expensesTable.companyId, project.companyId), sql`${expensesTable.invoiceNumber} = ${project.projectNumber}`)))
+    : [];
 
   const revenue = invoices.reduce((s, r) => s + Number(r.grandTotal ?? 0), 0);
   const collected = invoices.reduce((s, r) => s + Number(r.amountPaid ?? 0), 0);
@@ -119,6 +132,11 @@ router.get("/projects/:id/cost-summary", requirePermission("projects", "view"), 
     invoices,
     purchaseOrders,
     expenses: exps,
+    visibility: {
+      invoices: canViewInvoices,
+      procurement: canViewProcurement,
+      expenses: canViewExpenses,
+    },
   });
 });
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable, taxInvoicesTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, hasPermission } from "../middlewares/auth";
 import { notifyUsers } from "../lib/push";
 import { audit } from "../lib/audit";
@@ -450,6 +450,21 @@ router.post("/journal-entries/auto-from-source", requirePermission("expenses", "
 
   const totalDebit = lines.reduce((s, l) => s + (l.debit ?? 0), 0);
   const totalCredit = lines.reduce((s, l) => s + (l.credit ?? 0), 0);
+  if (Math.abs(totalDebit - totalCredit) > 0.01) {
+    res.status(422).json({
+      error: "Unbalanced",
+      message: `Source totals do not balance (Dr ${totalDebit.toFixed(2)} vs Cr ${totalCredit.toFixed(2)}). Fix the source document and retry.`,
+    });
+    return;
+  }
+
+  const [dup] = await db.select().from(journalEntriesTable)
+    .where(and(eq(journalEntriesTable.reference, reference), eq(journalEntriesTable.companyId, companyId)));
+  if (dup) {
+    res.status(200).json(await enrichJournal(dup));
+    return;
+  }
+
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(journalEntriesTable);
   const num = (count[0]?.count ?? 0) + 1;
   const journalNumber = `JV-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;

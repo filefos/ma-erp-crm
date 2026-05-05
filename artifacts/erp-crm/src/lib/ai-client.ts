@@ -1,6 +1,6 @@
 // Tiny fetch wrapper for the AI endpoints that aren't in the OpenAPI spec
 // (kept out of codegen to avoid coupling streaming/dynamic responses to Orval).
-function authHeaders(): Record<string, string> {
+export function authHeaders(): Record<string, string> {
   const t = localStorage.getItem("erp_token");
   return {
     "Content-Type": "application/json",
