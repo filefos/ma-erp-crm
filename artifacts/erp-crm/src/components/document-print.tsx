@@ -51,11 +51,6 @@ export interface DocumentData {
   techSpecs?: string;
   additionalItems?: AdditionalCommercialItem[];
   items: DocumentItem[];
-  salesPersonId?: string;
-  salesPersonName?: string;
-  salesPersonDesignation?: string;
-  clientDesignation?: string;
-  clientId?: string;
   preparedByName?: string;
   preparedBySignatureUrl?: string;
   approvedByName?: string;
@@ -95,13 +90,13 @@ const COMPANIES: Record<number, CompanyInfo> = {
     name: "PRIME MAX PREFAB HOUSES IND. LLC.",
     address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
     trn: "105383255400003",
-    phone: "050-2940131",
+    phone: "056 616 3555",
     email: "sales@primemaxprefab.com",
     contact: "ASIF LATIF",
     website: "www.primemaxprefab.com",
     bank: {
-      bankName: "ABU DHABI COMMERCIAL BANK",
-      accountTitle: "PRIME MAX PREFAB HOUSES IND LLC SP",
+      bankName: "Abu Dhabi Commercial Bank (ADCB)",
+      accountTitle: "PRIME MAX PREFAB HOUSES IND LLC",
       accountNumber: "14498851920002",
       iban: "AE300030014498851920002",
       swift: "ADCBAEAA",
@@ -200,8 +195,6 @@ const STANDARD_TC = `1. COMMERCIAL BASIS
 
 3. Commercial basis: Ex-factory.
 
-4. All cheques shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
-
 
 2. EXCLUSIONS
 
@@ -224,9 +217,7 @@ const STANDARD_TC = `1. COMMERCIAL BASIS
 
 2. 25% balance payment before delivery.
 
-3. Cheque shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
-
-4. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
+3. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
 
 
 4. TECHNICAL & GENERAL NOTES
@@ -295,64 +286,6 @@ function LabelTd({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Reference-style letterhead used at the top of every page. */
-function Letterhead({
-  coName, coLogo, date, refNo, sectionTitle,
-}: { coName: string; coLogo?: string; date: string; refNo: string; sectionTitle?: string }) {
-  return (
-    <div className="mb-3">
-      <div className="flex items-start justify-between gap-4 pb-1.5 border-b-2 border-[#0f2d5a]">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {coLogo && (
-            <img src={coLogo} alt="Logo" className="object-contain flex-shrink-0"
-              style={{ maxHeight: 52, maxWidth: 110, height: "auto" }} />
-          )}
-          <div className="min-w-0">
-            <div className="text-[15px] font-black tracking-wide uppercase text-[#0f2d5a] leading-tight">{coName}</div>
-            <div className="text-[10px] italic text-gray-700 mt-0.5">
-              build in prefab | Built Smart. Built Fast. Built Prime.
-            </div>
-          </div>
-        </div>
-        <div className="text-right text-[11px] font-semibold text-gray-800 whitespace-nowrap pt-1">
-          <div>Date: {date}</div>
-          <div className="mt-1">Ref: {refNo}</div>
-        </div>
-      </div>
-      {sectionTitle && (
-        <div className="text-center mt-2 mb-1">
-          <span className="text-[14px] font-black tracking-widest uppercase text-[#0f2d5a] underline underline-offset-4">
-            {sectionTitle}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Reference-style footer (contact + address) shown on every page. */
-function DocFooter({
-  co, page, total, computerGenerated,
-}: { co: CompanyInfo; page: number; total: number; computerGenerated?: boolean }) {
-  return (
-    <div className="mt-4 pt-2 border-t border-[#0f2d5a]">
-      {computerGenerated && (
-        <div className="text-center text-[9.5px] italic text-gray-500 mb-1">
-          This is a computer generated document. No signature or stamp required.
-        </div>
-      )}
-      <div className="text-center text-[10px] text-gray-800 font-semibold">
-        Mobile: {co.phone}, Email: {co.email}{co.website ? `, web: ${co.website}` : ""}
-      </div>
-      <div className="text-center text-[10px] text-gray-700">{co.address}</div>
-      <div className="mt-1 flex items-center justify-between text-[9px] text-gray-400">
-        <span>PRIME ERP SYSTEMS</span>
-        <span className="font-semibold text-gray-500">Page {page} of {total}</span>
-      </div>
-    </div>
-  );
-}
-
 export function DocumentPrint({ data }: { data: DocumentData }) {
   const co = COMPANIES[data.companyId] ?? COMPANIES[1];
   const coName = data.companyRef ?? co.name;
@@ -371,8 +304,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
   const customerTrn = data.customerTrn ?? data.clientTrn ?? "—";
 
   const additionalItems = data.additionalItems ?? DEFAULT_ADDITIONAL_ITEMS;
-  const refNo = data.docNumber || "—";
-  const totalPages = isQuotation ? 3 : 1;
 
   return (
     <>
@@ -421,8 +352,27 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
       <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto p-6 shadow-lg rounded-lg">
 
-        {/* ── LETTERHEAD (reference style) ───────────────────────────── */}
-        <Letterhead coName={coName} coLogo={companyLogo} date={docDate} refNo={refNo} sectionTitle={DOC_TITLES[data.type]} />
+        {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
+        <div className="border-2 border-gray-700 mb-3">
+          <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            {companyLogo && (
+              <img
+                src={companyLogo}
+                alt="Company Logo"
+                className="object-contain rounded bg-white p-1 flex-shrink-0"
+                style={{ maxHeight: 64, maxWidth: 140, height: "auto" }}
+              />
+            )}
+            <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
+              <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
+              <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+              <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+            </div>
+          </div>
+          <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <span className="text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
+          </div>
+        </div>
 
         {/* ── COMPANY / CLIENT + REFERENCE (4-column) ─────────────────── */}
         {isPO ? (
@@ -458,18 +408,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <tr><LabelTd>Contact Person</LabelTd><Td>{co.contact}</Td><LabelTd>Contact Person</LabelTd><Td>{clientContact !== "—" ? clientContact : ""}</Td></tr>
               <tr><LabelTd>Contact #</LabelTd><Td>{co.phone}</Td><LabelTd>Contact #</LabelTd><Td>{data.clientPhone ?? ""}</Td></tr>
               <tr><LabelTd>Email</LabelTd><Td>{co.email}</Td><LabelTd>Email</LabelTd><Td>{data.clientEmail ?? ""}</Td></tr>
-              {isQuotation && (
-                <>
-                  <tr>
-                    <LabelTd>Sales Person ID</LabelTd><Td>{data.salesPersonId ?? data.salesPersonName ?? ""}</Td>
-                    <LabelTd>Designation</LabelTd><Td>{data.clientDesignation ?? ""}</Td>
-                  </tr>
-                  <tr>
-                    <LabelTd>Designation</LabelTd><Td>{data.salesPersonDesignation ?? ""}</Td>
-                    <LabelTd>Client ID</LabelTd><Td>{data.clientId ?? ""}</Td>
-                  </tr>
-                </>
-              )}
               <tr>
                 <LabelTd>Project Ref</LabelTd><Td>{data.projectRef ?? data.projectName ?? ""}</Td>
                 <LabelTd>{REF_LABELS[data.type]}</LabelTd><Td><span className="font-bold font-mono">{data.docNumber}</span></Td>
@@ -482,12 +420,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <><LabelTd>Date</LabelTd><Td>{docDate}{data.validity ? ` | Valid: ${data.validity}` : ""}</Td></>
                 )}
               </tr>
-              <tr>
-                <LabelTd>Company TRN</LabelTd>
-                <Td>{isDelivery ? <span className="text-[10px] italic text-gray-500">Not required for delivery notes</span> : co.trn}</Td>
-                <LabelTd>Customer TRN</LabelTd>
-                <Td>{customerTrn !== "—" ? customerTrn : <span className="text-[10px] italic text-gray-500">Auto-fetched from Leads</span>}</Td>
-              </tr>
+              <tr><LabelTd>Customer TRN</LabelTd><Td>{co.trn}</Td><LabelTd>Customer TRN</LabelTd><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
             </tbody>
           </table>
         )}
@@ -637,14 +570,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 Bank details are intentionally hidden on quotations and shown only
                 on proforma / tax invoices. */}
             <div className="flex border-l border-r border-b border-gray-400 mb-0">
-              {/* Bank Details — shown on quotations, proforma and tax invoices */}
-              {!isDelivery && (
+              {/* Bank Details — hidden on quotations */}
+              {!isQuotation && (
                 <div className="flex-1 border-r border-gray-400 p-2 bg-gray-50" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                   {co.bank ? (
                     <>
-                      <div className="font-black text-[11px] uppercase mb-1 text-[#0f2d5a]">Account Detail</div>
+                      <div className="font-black text-[11px] uppercase mb-1 text-[#0f2d5a]">Bank Details</div>
                       <div className="text-[10px] font-semibold mb-1 text-[#0f2d5a]">
-                        All cheques must be prepared in favor of "{co.bank.accountTitle}".
+                        All cheques shall be prepared in favor of "{co.name}".
                       </div>
                       <table className="text-[10px] w-full">
                         <tbody>
@@ -663,8 +596,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 </div>
               )}
 
-              {/* Totals — right column */}
-              <div className="w-72 flex-shrink-0">
+              {/* Totals — full width on quotations, right column otherwise */}
+              <div className={isQuotation ? "ml-auto w-72 flex-shrink-0" : "w-72 flex-shrink-0"}>
                 <table className="w-full border-collapse text-[12px]">
                   <tbody>
                     {(data.discount ?? 0) > 0 && (
@@ -735,9 +668,9 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         )}
 
         {/* ── CHEQUE FAVOR NOTE (quotation page 1, subtle, left-aligned) */}
-        {isQuotation && co.bank && (
+        {isQuotation && (
           <div className="mb-3 text-[10px] text-[#0f2d5a] font-semibold text-left">
-            All cheques must be prepared with the Name "{co.bank.accountTitle}".
+            All cheques shall be prepared in favor of "{co.name}".
           </div>
         )}
 
@@ -763,14 +696,45 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         )}
 
-        <DocFooter co={co} page={1} total={totalPages} computerGenerated={!isQuotation} />
+        {isQuotation && (
+          <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+            <span>PRIME ERP SYSTEMS</span>
+            <span className="font-semibold text-gray-500">Page 1 of 3</span>
+          </div>
+        )}
+        {!isQuotation && (
+          <>
+            <div className="mt-3 text-center text-[10px] italic text-gray-500">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-semibold text-gray-500">Page 1 of 1</span>
+            </div>
+          </>
+        )}
 
         {/* ══════════════════════════════════════════════════════════════
             PAGE 2 — TECHNICAL SPECIFICATIONS (Quotation only)
         ══════════════════════════════════════════════════════════════ */}
         {isQuotation && (
           <div className="print-page-break mt-8">
-            <Letterhead coName={coName} coLogo={companyLogo} date={docDate} refNo={refNo} sectionTitle="TECHNICAL SPECIFICATION" />
+            {/* Page 2 Letterhead */}
+            <div className="border-2 border-gray-700 mb-3">
+              <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                {companyLogo && (
+                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
+                )}
+                <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
+                  <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
+                  <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+                </div>
+              </div>
+              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
+              </div>
+            </div>
 
             <table className="print-spec-table w-full border-collapse border border-gray-400 mb-3">
               <thead>
@@ -805,7 +769,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </tbody>
             </table>
 
-            <DocFooter co={co} page={2} total={3} />
+            <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-semibold text-gray-500">Page 2 of 3</span>
+            </div>
           </div>
         )}
 
@@ -814,7 +781,22 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         ══════════════════════════════════════════════════════════════ */}
         {isQuotation && (
           <div className="print-page-break mt-8">
-            <Letterhead coName={coName} coLogo={companyLogo} date={docDate} refNo={refNo} sectionTitle="TERMS & CONDITIONS" />
+            {/* Page 3 Letterhead */}
+            <div className="border-2 border-gray-700 mb-3">
+              <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                {companyLogo && (
+                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
+                )}
+                <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
+                  <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
+                  <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+                </div>
+              </div>
+              <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
+              </div>
+            </div>
 
             <div className="print-tc-text border border-gray-400 p-4 text-[11px] bg-gray-50 mb-4" style={{ lineHeight: "1.7" }}>
               {(data.termsConditions ?? STANDARD_TC).split("\n").map((line, i) => {
@@ -851,7 +833,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <DocFooter co={co} page={3} total={3} />
+            <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-semibold text-gray-500">Page 3 of 3</span>
+            </div>
           </div>
         )}
       </div>
