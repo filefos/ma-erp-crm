@@ -150,34 +150,34 @@ export function ChartOfAccountsList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Chart of Accounts</h1>
-          <p className="text-muted-foreground">Manage your company's account structure.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ExportMenu
-            data={filtered}
-            columns={[
-              { header: "Code", key: "accountCode" },
-              { header: "Account Name", key: "accountName" },
-              { header: "Type", key: "accountType" },
-              { header: "Opening Balance", key: "openingBalance", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Currency", key: "currency" },
-              { header: "Active", key: "isActive", format: v => v ? "Yes" : "No" },
-            ]}
-            filename="chart-of-accounts"
-            title="Chart of Accounts"
-            size="sm"
-          />
-          <Button variant="outline" onClick={openSeed} title={`Bulk-load ${CONSTRUCTION_COA_COUNT} construction industry accounts`}>
-            <Library className="w-4 h-4 mr-2" />Load Industry Template
-          </Button>
-          <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />Add Account
-          </Button>
-        </div>
-      </div>
+      <AccountsPageHeader
+        title="Chart of Accounts"
+        subtitle="Manage your company's account structure."
+        right={
+          <>
+            <ExportMenu
+              data={filtered}
+              columns={[
+                { header: "Code", key: "accountCode" },
+                { header: "Account Name", key: "accountName" },
+                { header: "Type", key: "accountType" },
+                { header: "Opening Balance", key: "openingBalance", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Currency", key: "currency" },
+                { header: "Active", key: "isActive", format: v => v ? "Yes" : "No" },
+              ]}
+              filename="chart-of-accounts"
+              title="Chart of Accounts"
+              size="sm"
+            />
+            <Button variant="outline" onClick={openSeed} title={`Bulk-load ${CONSTRUCTION_COA_COUNT} construction industry accounts`}>
+              <Library className="w-4 h-4 mr-2" />Load Industry Template
+            </Button>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />Add Account
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex items-center gap-3">
         <div className="relative max-w-xs flex-1">

@@ -10,6 +10,7 @@ import { Link } from "wouter";
 import { Search } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
+import { AccountsPageHeader } from "@/components/accounts-page-header";
 
 const paymentStatusColors: Record<string, string> = {
   paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -28,33 +29,34 @@ export function TaxInvoicesList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Tax Invoices</h1>
-          <p className="text-muted-foreground">UAE VAT-compliant tax invoices.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <ExportMenu
-            data={filtered ?? []}
-            columns={[
-              { header: "Invoice No.", key: "invoiceNumber" },
-              { header: "Client", key: "clientName" },
-              { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Paid (AED)", key: "amountPaid", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Balance (AED)", key: "balance", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Status", key: "paymentStatus" },
-              { header: "Due Date", key: "dueDate" },
-            ]}
-            filename="tax-invoices"
-            title="Tax Invoices"
-          />
-          <div className="text-right">
-            <div className="text-xs text-muted-foreground">Total Outstanding</div>
-            <div className="text-xl font-bold text-red-600">AED {totalOutstanding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-          </div>
-        </div>
-      </div>
+      <AccountsPageHeader
+        title="Tax Invoices"
+        subtitle="UAE VAT-compliant tax invoices."
+        right={
+          <>
+            <ExportMenu
+              data={filtered ?? []}
+              columns={[
+                { header: "Invoice No.", key: "invoiceNumber" },
+                { header: "Client", key: "clientName" },
+                { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Paid (AED)", key: "amountPaid", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Balance (AED)", key: "balance", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Status", key: "paymentStatus" },
+                { header: "Due Date", key: "dueDate" },
+              ]}
+              filename="tax-invoices"
+              title="Tax Invoices"
+              size="sm"
+            />
+            <div className="text-right border-l pl-3 ml-1">
+              <div className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">Total Outstanding</div>
+              <div className="text-base font-bold text-red-700">AED {totalOutstanding.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+            </div>
+          </>
+        }
+      />
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

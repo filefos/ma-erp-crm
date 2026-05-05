@@ -13,6 +13,7 @@ import { Search, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { AccountsPageHeader, AccountsStat } from "@/components/accounts-page-header";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -59,12 +60,11 @@ export function ChequesList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Cheque Management</h1>
-          <p className="text-muted-foreground">Track and manage company cheques.</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AccountsPageHeader
+        title="Cheque Management"
+        subtitle="Track and manage company cheques."
+        right={
+          <>
           <ExportMenu
             data={(filtered ?? [])}
             columns={[
@@ -112,18 +112,13 @@ export function ChequesList() {
               </Button>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-card border rounded-lg p-4">
-          <div className="text-xs text-muted-foreground">Total Issued</div>
-          <div className="text-xl font-bold text-orange-600">AED {totalIssued.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <div className="text-xs text-muted-foreground">Total Cleared</div>
-          <div className="text-xl font-bold text-green-600">AED {totalCleared.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-        </div>
+        <AccountsStat label="Total Issued" tone="warn" value={`AED ${totalIssued.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
+        <AccountsStat label="Total Cleared" tone="good" value={`AED ${totalCleared.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
       </div>
 
       <div className="flex items-center gap-3">

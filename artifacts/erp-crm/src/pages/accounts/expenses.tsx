@@ -13,6 +13,7 @@ import { Plus, Search } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListExpensesQueryKey } from "@workspace/api-client-react";
+import { AccountsPageHeader } from "@/components/accounts-page-header";
 
 const CATEGORIES = ["office","transport","utilities","material","labour","equipment","maintenance","travel","meals","other"];
 const statusColors: Record<string, string> = {
@@ -34,29 +35,29 @@ export function ExpensesList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Expenses</h1>
-          <p className="text-muted-foreground">Track and manage all company expenses.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ExportMenu
-            data={(expenses ?? [])}
-            columns={[
-              { header: "Category", key: "category" },
-              { header: "Description", key: "description" },
-              { header: "Amount (AED)", key: "amount", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Payment Method", key: "paymentMethod" },
-              { header: "Payment Date", key: "paymentDate" },
-              { header: "Status", key: "status" },
-            ]}
-            filename="expenses"
-            title="Expenses"
-          />
-          <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Expense</Button></DialogTrigger>
+      <AccountsPageHeader
+        title="Expenses"
+        subtitle="Track and manage all company expenses."
+        right={
+          <>
+            <ExportMenu
+              data={(expenses ?? [])}
+              columns={[
+                { header: "Category", key: "category" },
+                { header: "Description", key: "description" },
+                { header: "Amount (AED)", key: "amount", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Payment Method", key: "paymentMethod" },
+                { header: "Payment Date", key: "paymentDate" },
+                { header: "Status", key: "status" },
+              ]}
+              filename="expenses"
+              title="Expenses"
+              size="sm"
+            />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Expense</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Expense</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">
@@ -91,9 +92,10 @@ export function ExpensesList() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
-        </div>
-      </div>
+            </Dialog>
+          </>
+        }
+      />
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search expenses..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />

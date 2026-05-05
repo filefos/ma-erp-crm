@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, ArrowDownCircle } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
+import { AccountsPageHeader, AccountsStat } from "@/components/accounts-page-header";
 
 const PAYMENT_METHODS = ["cash", "bank_transfer", "cheque", "card", "online"];
 
@@ -72,42 +73,36 @@ export function PaymentsReceivedList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Payments Received</h1>
-          <p className="text-muted-foreground">Record payments collected from customers.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ExportMenu
-            data={filtered}
-            columns={[
-              { header: "Payment No.", key: "paymentNumber" },
-              { header: "Customer", key: "customerName" },
-              { header: "Invoice Ref", key: "invoiceRef" },
-              { header: "Date", key: "paymentDate" },
-              { header: "Amount (AED)", key: "amount", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Method", key: "paymentMethod" },
-              { header: "Reference", key: "referenceNumber" },
-            ]}
-            filename="payments-received"
-            title="Payments Received"
-            size="sm"
-          />
-          <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />Record Payment
-          </Button>
-        </div>
-      </div>
+      <AccountsPageHeader
+        title="Payments Received"
+        subtitle="Record payments collected from customers."
+        right={
+          <>
+            <ExportMenu
+              data={filtered}
+              columns={[
+                { header: "Payment No.", key: "paymentNumber" },
+                { header: "Customer", key: "customerName" },
+                { header: "Invoice Ref", key: "invoiceRef" },
+                { header: "Date", key: "paymentDate" },
+                { header: "Amount (AED)", key: "amount", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Method", key: "paymentMethod" },
+                { header: "Reference", key: "referenceNumber" },
+              ]}
+              filename="payments-received"
+              title="Payments Received"
+              size="sm"
+            />
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />Record Payment
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-          <div className="text-xs text-green-700 font-medium uppercase tracking-wide">Total Received (Filtered)</div>
-          <div className="text-2xl font-bold text-green-800 mt-1">AED {totalReceived.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-        </div>
-        <div className="bg-card border rounded-xl p-4">
-          <div className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Records</div>
-          <div className="text-2xl font-bold mt-1">{filtered.length}</div>
-        </div>
+        <AccountsStat label="Total Received (Filtered)" tone="good" value={`AED ${totalReceived.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
+        <AccountsStat label="Records" value={filtered.length} />
       </div>
 
       <div className="relative max-w-sm">

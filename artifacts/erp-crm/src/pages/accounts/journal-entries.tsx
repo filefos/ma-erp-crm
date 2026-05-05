@@ -94,32 +94,32 @@ export function JournalEntriesList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Journal Entries</h1>
-          <p className="text-muted-foreground">Manual accounting journal vouchers with double-entry bookkeeping.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ExportMenu
-            data={filtered}
-            columns={[
-              { header: "Journal No.", key: "journalNumber" },
-              { header: "Date", key: "entryDate" },
-              { header: "Description", key: "description" },
-              { header: "Reference", key: "reference" },
-              { header: "Total Debit", key: "totalDebit", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Total Credit", key: "totalCredit", format: v => Number(v ?? 0).toFixed(2) },
-              { header: "Status", key: "status" },
-            ]}
-            filename="journal-entries"
-            title="Journal Entries"
-            size="sm"
-          />
-          <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-2" />New Journal Entry
-          </Button>
-        </div>
-      </div>
+      <AccountsPageHeader
+        title="Journal Entries"
+        subtitle="Manual accounting journal vouchers with double-entry bookkeeping."
+        right={
+          <>
+            <ExportMenu
+              data={filtered}
+              columns={[
+                { header: "Journal No.", key: "journalNumber" },
+                { header: "Date", key: "entryDate" },
+                { header: "Description", key: "description" },
+                { header: "Reference", key: "reference" },
+                { header: "Total Debit", key: "totalDebit", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Total Credit", key: "totalCredit", format: v => Number(v ?? 0).toFixed(2) },
+                { header: "Status", key: "status" },
+              ]}
+              filename="journal-entries"
+              title="Journal Entries"
+              size="sm"
+            />
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />New Journal Entry
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex items-center gap-3">
         <div className="relative max-w-sm flex-1">
