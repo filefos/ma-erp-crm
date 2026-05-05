@@ -103,17 +103,47 @@ export function AiAssistant() {
     journalEntries: filterByCompany(journalEntries),
   };
 
-  const sendMessage = (prompt: string) => {
+  const callAccountsAI = async (path: string, body: Record<string, unknown>): Promise<string | null> => {
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}api${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) return null;
+      const j = await res.json();
+      return typeof j?.result === "string" ? j.result : null;
+    } catch { return null; }
+  };
+
+  const sendMessage = async (prompt: string) => {
     if (!prompt.trim()) return;
     const userMsg: Message = { role: "user", content: prompt, ts: Date.now() };
     setMessages(p => [...p, userMsg]);
     setInput("");
     setIsThinking(true);
-    setTimeout(() => {
-      const response = generateResponse(prompt, data);
-      setMessages(p => [...p, { role: "assistant", content: response, ts: Date.now() }]);
-      setIsThinking(false);
-    }, 800 + Math.random() * 600);
+
+    const lower = prompt.toLowerCase();
+    let aiText: string | null = null;
+    if (lower.includes("categor")) {
+      aiText = await callAccountsAI("/ai/accounts/categorize-expenses", { expenses: data.expenses.slice(0, 30) });
+    } else if (lower.includes("vat") || lower.includes("tax")) {
+      const totalVat = data.expenses.reduce((s, e: any) => s + (e.vatAmount ?? 0), 0);
+      const totalReceived = data.paymentsReceived.reduce((s, p: any) => s + (p.amount ?? 0), 0);
+      aiText = await callAccountsAI("/ai/accounts/vat-check", {
+        summary: { inputVat: totalVat, estimatedOutputVat: totalReceived * 0.05, expenseCount: data.expenses.length },
+      });
+    } else if (lower.includes("journal")) {
+      const last = data.expenses[0];
+      aiText = await callAccountsAI("/ai/accounts/suggest-journal", { docType: "expense", doc: last ?? {} });
+    } else if (lower.includes("invoice") && (lower.includes("validate") || lower.includes("check"))) {
+      aiText = await callAccountsAI("/ai/accounts/validate-invoice", { invoice: {} });
+    }
+
+    const response = aiText ?? generateResponse(prompt, data);
+    setMessages(p => [...p, { role: "assistant", content: response, ts: Date.now() }]);
+    setIsThinking(false);
   };
 
   const formatContent = (text: string) => {

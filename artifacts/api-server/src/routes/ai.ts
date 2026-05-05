@@ -120,4 +120,79 @@ router.put("/ai/automation-level", async (req, res): Promise<void> => {
   res.json({ automationLevel: level });
 });
 
+// ===== Accounts AI helpers (UAE VAT) =====
+async function runAccountsAI(req: Request, res: any, system: string, user: string, action: string): Promise<void> {
+  if (!aiAvailable()) {
+    res.status(503).json({ error: "Service unavailable", message: "AI is not configured" });
+    return;
+  }
+  if ((await callerAutomationLevel(req)) === "off") {
+    res.status(403).json({ error: "AI disabled", message: "Your AI automation level is set to Off." });
+    return;
+  }
+  let raw: string;
+  try {
+    raw = await chat([
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ], { maxCompletionTokens: 1200 });
+  } catch (err) {
+    res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" });
+    return;
+  }
+  await audit(req, {
+    action,
+    entity: "accounts_ai",
+    entityId: 0,
+    details: JSON.stringify({
+      model: aiModelName(),
+      systemPrompt: trimForAudit(system, 1000),
+      userPrompt: trimForAudit(user),
+      response: trimForAudit(raw),
+    }),
+  });
+  res.json({ result: raw, model: aiModelName() });
+}
+
+router.post("/ai/accounts/categorize-expenses", async (req, res): Promise<void> => {
+  if (!(await hasPermission(req.user, "expenses", "view"))) {
+    res.status(403).json({ error: "Forbidden", message: "Missing expenses:view permission" }); return;
+  }
+  const expenses = Array.isArray(req.body?.expenses) ? req.body.expenses.slice(0, 50) : [];
+  const system = "You are a senior UAE accountant. Suggest the best chart-of-accounts category for each expense. Reply in concise markdown bullet points: '- <expenseNumber> → <suggested category> (reason)'. Use UAE VAT context.";
+  const user = `Expenses:\n${expenses.map((e: any, i: number) => `${i+1}. ${e.expenseNumber ?? "?"} | ${e.category ?? "uncategorised"} | AED ${e.total ?? e.amount ?? 0} | ${e.description ?? ""}`).join("\n") || "(none)"}`;
+  await runAccountsAI(req, res, system, user, "ai_accounts_categorize");
+});
+
+router.post("/ai/accounts/validate-invoice", async (req, res): Promise<void> => {
+  if (!(await hasPermission(req.user, "tax_invoices", "view"))) {
+    res.status(403).json({ error: "Forbidden", message: "Missing tax_invoices:view permission" }); return;
+  }
+  const inv = req.body?.invoice ?? {};
+  const system = "You are a UAE VAT compliance reviewer. Check the tax invoice for arithmetic correctness (subtotal × VAT% = VAT amount; subtotal + VAT = grand total) and FTA requirements (TRN present, invoice number, supply date, payment terms). Reply in markdown with **PASS** / **WARN** / **FAIL** lines per check.";
+  const user = `Tax Invoice:\nNumber: ${inv.invoiceNumber}\nClient: ${inv.clientName} (TRN ${inv.clientTrn ?? "—"})\nCompany TRN: ${inv.companyTrn ?? "—"}\nInvoice Date: ${inv.invoiceDate ?? "—"}\nSupply Date: ${inv.supplyDate ?? "—"}\nPayment Terms: ${inv.paymentTerms ?? "—"}\nSubtotal: ${inv.subtotal}\nVAT %: ${inv.vatPercent}\nVAT Amount: ${inv.vatAmount}\nGrand Total: ${inv.grandTotal}`;
+  await runAccountsAI(req, res, system, user, "ai_accounts_validate_invoice");
+});
+
+router.post("/ai/accounts/suggest-journal", async (req, res): Promise<void> => {
+  if (!(await hasPermission(req.user, "expenses", "view"))) {
+    res.status(403).json({ error: "Forbidden", message: "Missing expenses:view permission" }); return;
+  }
+  const doc = req.body?.doc ?? {};
+  const docType = String(req.body?.docType ?? "expense");
+  const system = "You are a UAE accountant. Propose a balanced double-entry journal for the supplied document. Reply as a markdown table with columns Account | Debit (AED) | Credit (AED), then a one-line note. Debits must equal credits. Use VAT Input for purchases and VAT Output for sales.";
+  const user = `Document type: ${docType}\nPayload: ${JSON.stringify(doc).slice(0, 1500)}`;
+  await runAccountsAI(req, res, system, user, "ai_accounts_suggest_journal");
+});
+
+router.post("/ai/accounts/vat-check", async (req, res): Promise<void> => {
+  if (!(await hasPermission(req.user, "expenses", "view"))) {
+    res.status(403).json({ error: "Forbidden", message: "Missing expenses:view permission" }); return;
+  }
+  const summary = req.body?.summary ?? {};
+  const system = "You are a UAE FTA VAT compliance assistant. Review the input/output VAT summary and flag any compliance risks (missing TRN, unusual zero-rated entries, mismatched periods, recoverable VAT issues). Reply in concise markdown with PASS/WARN/FAIL bullets and an action list at the end.";
+  const user = `Period summary:\n${JSON.stringify(summary).slice(0, 1500)}`;
+  await runAccountsAI(req, res, system, user, "ai_accounts_vat_check");
+});
+
 export default router;
