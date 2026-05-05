@@ -229,7 +229,7 @@ router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAc
     quantity: data.quantity,
     budget: data.budget,
     status: data.status ?? "new",
-    assignedToId: data.assignedToId,
+    assignedToId: data.assignedToId ?? req.user?.id,
     notes: data.notes,
     nextFollowUp: data.nextFollowUp,
     leadScore: data.leadScore ?? "cold",
