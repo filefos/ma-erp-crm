@@ -610,7 +610,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </table>
 
             {/* ── BANK DETAILS + VAT + GRAND TOTAL ─────────────────────────── */}
-            <div className="flex gap-0 border border-gray-400 mb-0 mt-0">
+            <div className={`flex gap-0 border border-gray-400 mb-0 mt-0${isQuotation ? " justify-end" : ""}`}>
               {/* Bank Details — hidden on quotations */}
               {co.bank && !isQuotation && (
                 <div className="flex-1 border-r border-gray-400" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
