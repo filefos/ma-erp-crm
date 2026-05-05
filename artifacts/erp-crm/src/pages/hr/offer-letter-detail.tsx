@@ -517,7 +517,7 @@ export function OfferLetterDetail({ id }: Props) {
           <CardTitle className="flex items-center gap-2">
             <Paperclip className="w-4 h-4" /> Academic &amp; Supporting Documents
           </CardTitle>
-          {(canEdit && can("hr", "canEdit")) && (
+          {(canEdit && can("offer_letters", "edit")) && (
             <div>
               <input
                 ref={fileInputRef}
@@ -565,7 +565,7 @@ export function OfferLetterDetail({ id }: Props) {
                       </a>
                     </Button>
                   )}
-                  {(canEdit && can("hr", "canDelete")) && (
+                  {(canEdit && can("offer_letters", "delete")) && (
                     <Button
                       size="sm"
                       variant="ghost"

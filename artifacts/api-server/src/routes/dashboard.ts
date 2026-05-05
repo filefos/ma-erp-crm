@@ -56,6 +56,17 @@ router.get("/dashboard/summary", requirePermission("dashboard", "view"), async (
           ));
   const [todayAtt] = await todayAttQuery;
 
+  // Pipeline leads (active = not won/lost) — used as "deals" metrics
+  const [pipelineLeads] = await db.select({
+    count: sql<number>`count(*)::int`,
+    value: sql<number>`coalesce(sum(budget), 0)::float`,
+  }).from(leadsTable).where(and(sLeads, sql`status not in ('won', 'lost')`));
+  const [wonLeadsMonth] = await db.select({
+    count: sql<number>`count(*)::int`,
+    value: sql<number>`coalesce(sum(budget), 0)::float`,
+  }).from(leadsTable)
+    .where(and(sLeads, eq(leadsTable.status, "won"), sql`date_trunc('month', ${leadsTable.updatedAt}) = date_trunc('month', now())`));
+
   // Pending approvals (scoped per source table)
   const [pendingQtns] = await db.select({ count: sql<number>`count(*)::int` }).from(quotationsTable)
     .where(and(sQuots, eq(quotationsTable.status, "sent")));
@@ -69,8 +80,8 @@ router.get("/dashboard/summary", requirePermission("dashboard", "view"), async (
     totalLeads: leadsCount?.count ?? 0,
     newLeadsThisMonth: newLeads?.count ?? 0,
     hotLeads: hotLeads?.count ?? 0,
-    totalDeals: 0,
-    dealsValue: 0,
+    totalDeals: pipelineLeads?.count ?? 0,
+    dealsValue: pipelineLeads?.value ?? 0,
     totalQuotations: quotCount?.count ?? 0,
     quotationsValue: quotValue?.sum ?? 0,
     totalInvoices: invCount?.count ?? 0,
@@ -80,8 +91,8 @@ router.get("/dashboard/summary", requirePermission("dashboard", "view"), async (
     lowStockItems: lowStock?.count ?? 0,
     activeProjects: activeProjects?.count ?? 0,
     todayAttendance: todayAtt?.count ?? 0,
-    wonDealsThisMonth: 0,
-    wonDealsValue: 0,
+    wonDealsThisMonth: wonLeadsMonth?.count ?? 0,
+    wonDealsValue: wonLeadsMonth?.value ?? 0,
   });
 });
 
@@ -204,6 +215,10 @@ router.get("/dashboard/admin-summary", requirePermissionLevel("company_admin"), 
   const companyCards = await Promise.all(allCompanies.map(async (c) => {
     const [u] = await db.select({ count: sql<number>`count(*)::int` }).from(usersTable).where(eq(usersTable.companyId, c.id));
     const [l] = await db.select({ count: sql<number>`count(*)::int` }).from(leadsTable).where(eq(leadsTable.companyId, c.id));
+    const [pipeline] = await db.select({
+      count: sql<number>`count(*)::int`,
+      value: sql<number>`coalesce(sum(budget), 0)::float`,
+    }).from(leadsTable).where(and(eq(leadsTable.companyId, c.id), sql`status not in ('won', 'lost')`));
     const [inv] = await db.select({ sum: sql<number>`coalesce(sum(grand_total),0)::float` })
       .from(taxInvoicesTable).where(eq(taxInvoicesTable.companyId, c.id));
     return {
@@ -216,8 +231,8 @@ router.get("/dashboard/admin-summary", requirePermissionLevel("company_admin"), 
       isActive: c.isActive,
       userCount: u?.count ?? 0,
       leadCount: l?.count ?? 0,
-      dealCount: 0,
-      dealsValue: 0,
+      dealCount: pipeline?.count ?? 0,
+      dealsValue: pipeline?.value ?? 0,
       invoicesValue: inv?.sum ?? 0,
     };
   }));
