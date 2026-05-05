@@ -400,6 +400,20 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE offer_letter_attachments DROP COLUMN IF EXISTS content_base64`);
     await db.execute(sql`ALTER TABLE offer_letter_attachments ALTER COLUMN object_key SET NOT NULL`);
     await db.execute(sql`CREATE INDEX IF NOT EXISTS offer_letter_attachments_offer_idx ON offer_letter_attachments(offer_letter_id)`);
+    // Add FK constraint if not already present (idempotent via DO block)
+    await db.execute(sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE constraint_name = 'offer_letter_attachments_offer_letter_id_fk'
+            AND table_name = 'offer_letter_attachments'
+        ) THEN
+          ALTER TABLE offer_letter_attachments
+            ADD CONSTRAINT offer_letter_attachments_offer_letter_id_fk
+            FOREIGN KEY (offer_letter_id) REFERENCES offer_letters(id) ON DELETE CASCADE;
+        END IF;
+      END $$
+    `);
 
     // Push notification device tokens (one row per Expo push token, per user/device).
     await db.execute(sql`CREATE TABLE IF NOT EXISTS device_tokens (

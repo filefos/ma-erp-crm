@@ -4676,6 +4676,30 @@ export const DeleteEmployeeAttachmentResponse = zod.object({
 });
 
 /**
+ * Returns a short-lived presigned PUT URL (uploadURL) and the resulting object storage path (objectPath). The client PUTs the file directly to uploadURL, then registers the completed upload via POST /offer-letters/{id}/attachments with the returned objectPath as the objectKey.
+
+ * @summary Request a presigned upload URL for an offer letter attachment
+ */
+export const RequestOfferLetterAttachmentUploadUrlParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const RequestOfferLetterAttachmentUploadUrlBody = zod.object({
+  name: zod
+    .string()
+    .describe("Original file name (used to set the object key suffix)"),
+});
+
+export const RequestOfferLetterAttachmentUploadUrlResponse = zod.object({
+  uploadURL: zod
+    .string()
+    .describe("Presigned PUT URL — client uploads file bytes directly here"),
+  objectPath: zod
+    .string()
+    .describe("Object storage key to pass back as objectKey when registering"),
+});
+
+/**
  * @summary List attachments for an offer letter
  */
 export const ListOfferLetterAttachmentsParams = zod.object({

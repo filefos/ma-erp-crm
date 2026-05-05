@@ -2620,6 +2620,48 @@ paths:
                 $ref: "#/components/schemas/SuccessResponse"
 
   # OFFER LETTER ATTACHMENTS
+  /offer-letters/{id}/attachments/upload-url:
+    post:
+      operationId: requestOfferLetterAttachmentUploadUrl
+      tags: [offer-letter-attachments]
+      summary: Request a presigned upload URL for an offer letter attachment
+      description: >
+        Returns a short-lived presigned PUT URL (uploadURL) and the resulting
+        object storage path (objectPath). The client PUTs the file directly to
+        uploadURL, then registers the completed upload via
+        POST /offer-letters/{id}/attachments with the returned objectPath as
+        the objectKey.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Original file name (used to set the object key suffix)
+              required: [name]
+      responses:
+        "200":
+          description: Presigned upload URL and object path
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferLetterAttachmentUploadUrlResponse"
+        "400":
+          description: name is required
+        "403":
+          description: Forbidden
+        "404":
+          description: Offer letter not found
+
   /offer-letters/{id}/attachments:
     get:
       operationId: listOfferLetterAttachments
@@ -6007,6 +6049,17 @@ components:
         uploadedAt:
           type: string
       required: [id, offerLetterId, fileName, objectKey, uploadedAt]
+
+    OfferLetterAttachmentUploadUrlResponse:
+      type: object
+      properties:
+        uploadURL:
+          type: string
+          description: Presigned PUT URL — client uploads file bytes directly here
+        objectPath:
+          type: string
+          description: Object storage key to pass back as objectKey when registering
+      required: [uploadURL, objectPath]
 
     CreateOfferLetterAttachmentBody:
       type: object

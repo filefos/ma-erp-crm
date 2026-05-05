@@ -1312,6 +1312,13 @@ export interface OfferLetterAttachment {
   uploadedAt: string;
 }
 
+export interface OfferLetterAttachmentUploadUrlResponse {
+  /** Presigned PUT URL — client uploads file bytes directly here */
+  uploadURL: string;
+  /** Object storage key to pass back as objectKey when registering */
+  objectPath: string;
+}
+
 export interface CreateOfferLetterAttachmentBody {
   fileName: string;
   objectKey: string;
@@ -2011,6 +2018,11 @@ export type ListAttendanceParams = {
   date?: string;
   month?: string;
   companyId?: number;
+};
+
+export type RequestOfferLetterAttachmentUploadUrlBody = {
+  /** Original file name (used to set the object key suffix) */
+  name: string;
 };
 
 export type ListOfferLettersParams = {

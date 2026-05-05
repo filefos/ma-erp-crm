@@ -128,6 +128,7 @@ import type {
   Notification,
   OfferLetter,
   OfferLetterAttachment,
+  OfferLetterAttachmentUploadUrlResponse,
   PaymentMade,
   PaymentReceived,
   PayrollSummary,
@@ -141,6 +142,7 @@ import type {
   QuotationApproveResponse,
   RejectPurchaseOrderBody,
   RejectPurchaseRequestBody,
+  RequestOfferLetterAttachmentUploadUrlBody,
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
   Rfq,
@@ -10978,6 +10980,102 @@ export const useDeleteEmployeeAttachment = <
   TContext
 > => {
   return useMutation(getDeleteEmployeeAttachmentMutationOptions(options));
+};
+
+/**
+ * Returns a short-lived presigned PUT URL (uploadURL) and the resulting object storage path (objectPath). The client PUTs the file directly to uploadURL, then registers the completed upload via POST /offer-letters/{id}/attachments with the returned objectPath as the objectKey.
+
+ * @summary Request a presigned upload URL for an offer letter attachment
+ */
+export const getRequestOfferLetterAttachmentUploadUrlUrl = (id: number) => {
+  return `/api/offer-letters/${id}/attachments/upload-url`;
+};
+
+export const requestOfferLetterAttachmentUploadUrl = async (
+  id: number,
+  requestOfferLetterAttachmentUploadUrlBody: RequestOfferLetterAttachmentUploadUrlBody,
+  options?: RequestInit,
+): Promise<OfferLetterAttachmentUploadUrlResponse> => {
+  return customFetch<OfferLetterAttachmentUploadUrlResponse>(
+    getRequestOfferLetterAttachmentUploadUrlUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(requestOfferLetterAttachmentUploadUrlBody),
+    },
+  );
+};
+
+export const getRequestOfferLetterAttachmentUploadUrlMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
+    TError,
+    { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
+  TError,
+  { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
+  TContext
+> => {
+  const mutationKey = ["requestOfferLetterAttachmentUploadUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
+    { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return requestOfferLetterAttachmentUploadUrl(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestOfferLetterAttachmentUploadUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>
+>;
+export type RequestOfferLetterAttachmentUploadUrlMutationBody =
+  BodyType<RequestOfferLetterAttachmentUploadUrlBody>;
+export type RequestOfferLetterAttachmentUploadUrlMutationError =
+  ErrorType<void>;
+
+/**
+ * @summary Request a presigned upload URL for an offer letter attachment
+ */
+export const useRequestOfferLetterAttachmentUploadUrl = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
+    TError,
+    { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestOfferLetterAttachmentUploadUrl>>,
+  TError,
+  { id: number; data: BodyType<RequestOfferLetterAttachmentUploadUrlBody> },
+  TContext
+> => {
+  return useMutation(
+    getRequestOfferLetterAttachmentUploadUrlMutationOptions(options),
+  );
 };
 
 /**
