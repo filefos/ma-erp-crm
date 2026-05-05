@@ -10,6 +10,8 @@ export const proformaInvoicesTable = pgTable("proforma_invoices", {
   clientName: text("client_name").notNull(),
   clientEmail: text("client_email"),
   clientPhone: text("client_phone"),
+  clientTrn: text("client_trn"),
+  companyTrn: text("company_trn"),
   projectName: text("project_name"),
   projectLocation: text("project_location"),
   quotationId: integer("quotation_id"),

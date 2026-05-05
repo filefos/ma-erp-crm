@@ -1,0 +1,183 @@
+**TASK: DOCUMENT STANDARDIZATION + CRM LEAD TRACKING + SALES PROJECT ID SYSTEM**
+
+---
+
+## 🎯 OBJECTIVE
+
+Implement:
+
+1. Standard Header & Footer for ALL documents
+2. CRM Lead Panel tracking (User ID + Client ID)
+3. Sales Module Project ID auto-generation (linked across documents)
+
+---
+
+# 🔹 1. DOCUMENT HEADER (TOP OF PAGE)
+
+## REMOVE COMPLETELY:
+
+* Date
+* Time
+* Quotation Reference / Document Number
+
+---
+
+## REPLACE WITH ONLY:
+
+```text
+POWERED BY PRIME ERP SYSTEM
+```
+
+---
+
+# 🔹 2. DOCUMENT FOOTER (MANDATORY FORMAT)
+
+Footer must be exactly:
+
+```text
+PRIME ERP SYSTEM    UNIQUE ID: {{user_id}}    CLIENT CODE: {{client_code}}    DATE: {{date}}    TIME: {{time}}    DOC NO: {{doc_no}}    PAGE: {{page_no}}
+```
+
+---
+
+## APPLY TO:
+
+* Quotation
+* Proforma Invoice
+* Tax Invoice
+* Delivery Note
+* LPO
+* Any PDF / Print
+
+---
+
+## RULE:
+
+* Must appear on EVERY page
+* Auto-fetch all values
+* No document export without footer
+
+---
+
+# 🔹 3. CRM MODULE – LEADS PANEL
+
+## REQUIREMENT:
+
+In Leads Panel, display:
+
+* User Unique ID
+* Client Code
+
+---
+
+## SEARCH FUNCTION (VERY IMPORTANT)
+
+Allow search by:
+
+* Client Code
+* User Unique ID
+
+👉 User can track any lead using either value
+
+---
+
+## DISPLAY:
+
+Each lead record must show:
+
+* Lead Name
+* Client Code
+* User ID
+* Date
+
+---
+
+# 🔹 4. SALES MODULE – PROJECT ID SYSTEM (CRITICAL)
+
+## TRIGGER:
+
+When Sales User:
+
+* Creates LPO manually
+  OR
+* Imports LPO document
+
+---
+
+## SYSTEM MUST:
+
+👉 Automatically generate **PROJECT ID**
+
+---
+
+## PROJECT ID FORMAT:
+
+Example:
+
+```text
+PMPR-2605-0001
+```
+
+---
+
+## STRUCTURE:
+
+* PM → Company
+* PR → Project
+* 26 → Year
+* 05 → Month
+* 0001 → Running number
+
+---
+
+# 🔗 5. PROJECT ID LINKING (VERY IMPORTANT)
+
+Generated Project ID must be automatically linked to:
+
+* Proforma Invoice
+* Tax Invoice
+* Delivery Note
+
+---
+
+## RULE:
+
+* Same Project ID must follow entire workflow
+* No manual entry required
+* Auto-fetch from LPO
+
+---
+
+# 🔹 6. SYSTEM LOGIC SUMMARY
+
+* Header = Only system branding
+* Footer = Full tracking (User + Client + Time + Doc + Page)
+* CRM = Trackable leads via User ID / Client Code
+* Sales = Auto Project ID generation on LPO
+* Project ID = Linked to all financial documents
+
+---
+
+# 🚫 RESTRICTIONS
+
+* Do NOT change document design
+* Do NOT break existing workflow
+* Only implement required logic
+
+---
+
+# 🚀 FINAL RESULT
+
+System must:
+
+* Standardize all documents
+* Make every document traceable
+* Allow easy tracking in CRM
+* Automatically create and link Project ID
+* Maintain full control and audit system
+
+---
+
+**STRICT IMPLEMENTATION – NO PARTIAL WORK**
+
+---

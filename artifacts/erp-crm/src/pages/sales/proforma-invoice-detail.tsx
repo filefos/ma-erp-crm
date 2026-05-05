@@ -77,6 +77,8 @@ export function ProformaInvoiceDetail({ id }: Props) {
     clientName: pi.clientName,
     clientEmail: (pi as any).clientEmail,
     clientPhone: (pi as any).clientPhone,
+    clientTrn: (pi as any).clientTrn ?? undefined,
+    companyTrn: (pi as any).companyTrn ?? undefined,
     projectName: pi.projectName,
     projectLocation: (pi as any).projectLocation,
     date: pi.createdAt ? new Date(pi.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
@@ -118,7 +120,8 @@ export function ProformaInvoiceDetail({ id }: Props) {
       ...({
         paymentTerms: pi.paymentTerms,
         clientCode: (pi as any).clientCode,
-        clientTrn: (pi as any).customerTrn,
+        clientTrn: (pi as any).clientTrn ?? (pi as any).customerTrn,
+        companyTrn: (pi as any).companyTrn,
         clientEmail: (pi as any).clientEmail,
         clientPhone: (pi as any).clientPhone,
         projectLocation: (pi as any).projectLocation,

@@ -23,6 +23,8 @@ interface FormState {
   clientName: string;
   clientEmail: string;
   clientPhone: string;
+  clientTrn: string;
+  companyTrn: string;
   projectName: string;
   projectLocation: string;
   subtotal: number;
@@ -47,6 +49,7 @@ export function ProformaInvoiceEdit({ id }: Props) {
 
   const [form, setForm] = useState<FormState>({
     clientName: "", clientEmail: "", clientPhone: "",
+    clientTrn: "", companyTrn: "",
     projectName: "", projectLocation: "",
     subtotal: 0, vatPercent: 5, vatAmount: 0, total: 0,
     paymentTerms: "", validityDate: "", status: "draft", notes: "",
@@ -58,6 +61,8 @@ export function ProformaInvoiceEdit({ id }: Props) {
       clientName: pi.clientName ?? "",
       clientEmail: (pi as any).clientEmail ?? "",
       clientPhone: (pi as any).clientPhone ?? "",
+      clientTrn: (pi as any).clientTrn ?? "",
+      companyTrn: (pi as any).companyTrn ?? "",
       projectName: pi.projectName ?? "",
       projectLocation: (pi as any).projectLocation ?? "",
       subtotal: (pi as any).subtotal ?? 0,
@@ -113,6 +118,8 @@ export function ProformaInvoiceEdit({ id }: Props) {
           vatPercent: form.vatPercent,
           clientEmail: form.clientEmail || null,
           clientPhone: form.clientPhone || null,
+          clientTrn: form.clientTrn || null,
+          companyTrn: form.companyTrn || null,
           projectLocation: form.projectLocation || null,
           notes: form.notes || null,
         } as Record<string, unknown>),
@@ -148,6 +155,14 @@ export function ProformaInvoiceEdit({ id }: Props) {
           <div className="space-y-1">
             <Label>Client Phone</Label>
             <Input value={form.clientPhone} onChange={e => setForm(p => ({ ...p, clientPhone: e.target.value }))} />
+          </div>
+          <div className="space-y-1">
+            <Label>Client TRN</Label>
+            <Input value={form.clientTrn} onChange={e => setForm(p => ({ ...p, clientTrn: e.target.value }))} placeholder="e.g. 100123456700003" data-testid="input-client-trn" />
+          </div>
+          <div className="space-y-1">
+            <Label>Company TRN</Label>
+            <Input value={form.companyTrn} onChange={e => setForm(p => ({ ...p, companyTrn: e.target.value }))} placeholder="e.g. 105383255400003" data-testid="input-company-trn" />
           </div>
           <div className="space-y-1">
             <Label>Status</Label>
