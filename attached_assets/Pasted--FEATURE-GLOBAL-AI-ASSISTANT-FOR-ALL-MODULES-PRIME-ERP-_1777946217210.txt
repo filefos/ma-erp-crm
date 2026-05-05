@@ -1,0 +1,176 @@
+**FEATURE: GLOBAL AI ASSISTANT FOR ALL MODULES – PRIME ERP**
+
+---
+
+## 🎯 OBJECTIVE
+
+Implement a **powerful AI Assistant in every module** of PRIME ERP to help users perform tasks faster, easier, and with fewer errors.
+
+AI must be:
+
+* Simple to use
+* Fast
+* Controlled (no independent actions)
+* Supportive (assist, not replace user decisions)
+
+---
+
+# 🔒 CORE RULE
+
+* AI must work ONLY inside ERP
+* No automatic execution without user confirmation
+* All AI suggestions must be editable
+* All actions must be logged
+
+---
+
+# 🧠 AI ASSISTANT BEHAVIOR (COMMON FOR ALL MODULES)
+
+In every module:
+
+* Show AI Assistant button
+  👉 “Ask AI”
+
+* AI can:
+
+  * Suggest data
+  * Auto-fill fields
+  * Explain actions
+  * Validate entries
+
+---
+
+# 📁 MODULE-WISE AI FUNCTIONS
+
+---
+
+## 📁 CRM (Contacts / Leads)
+
+AI should:
+
+* Suggest company details from name
+* Clean duplicate contacts
+* Recommend lead priority
+* Suggest follow-up dates
+
+---
+
+## 📊 SALES
+
+AI should:
+
+* Suggest quotation items
+* Recommend pricing (based on past data)
+* Highlight low profit deals
+* Suggest next follow-up
+
+---
+
+## 📦 PROCUREMENT
+
+AI should:
+
+* Suggest suppliers
+* Recommend best price
+* Compare quotations
+* Alert high-cost purchases
+
+---
+
+## 📊 INVENTORY
+
+AI should:
+
+* Predict low stock
+* Suggest reorder
+* Detect dead stock
+* Track fast-moving items
+
+---
+
+## 🏗 PROJECTS
+
+AI should:
+
+* Track project progress
+* Suggest resource allocation
+* Alert delays
+* Estimate cost vs actual
+
+---
+
+## 💰 ACCOUNTS
+
+AI should:
+
+* Suggest account entries
+* Validate VAT calculations (UAE standard)
+* Track pending payments
+* Recommend follow-ups
+
+---
+
+## 🏢 ASSETS
+
+AI should:
+
+* Track asset usage
+* Suggest maintenance
+* Monitor depreciation
+* Alert asset issues
+
+---
+
+# 🔗 DATA INTEGRATION
+
+AI must use data from:
+
+* Clients
+* Sales
+* Inventory
+* Procurement
+* Accounts
+
+👉 No isolated AI logic
+
+---
+
+# ⚙️ UI REQUIREMENTS
+
+Every module must have:
+
+* AI Button: “Ask AI”
+* AI Panel (side popup)
+* Quick Suggestions list
+
+---
+
+# 📊 LOGGING SYSTEM
+
+Track:
+
+* User
+* Module
+* Action
+* Date & Time
+
+---
+
+# 🚫 RESTRICTIONS
+
+* AI must NOT delete data
+* AI must NOT auto-submit forms
+* AI must NOT modify records without approval
+
+---
+
+# 🚀 FINAL OBJECTIVE
+
+Create a **smart assistant across ERP** that:
+
+* Saves time
+* Reduces errors
+* Improves decisions
+* Keeps system simple
+
+---
