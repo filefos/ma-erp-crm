@@ -145,6 +145,7 @@ export function QuotationNew() {
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
   const [customSpecSection, setCustomSpecSection] = useState("");
+  const [customSections, setCustomSections] = useState<{ title: string; content: string }[]>([]);
 
   // Prefill form once the lead is loaded. Field names mirror leads schema.
   useEffect(() => {
@@ -218,6 +219,7 @@ export function QuotationNew() {
         companyId: parseInt(form.companyId, 10),
         items,
         additionalItems: JSON.stringify(additionalItems),
+        customSections: JSON.stringify(customSections),
         ...(leadIdParam ? { leadId: leadIdParam } : {}),
         ...(lead?.clientCode ? { clientCode: lead.clientCode } : {}),
       } as any,
@@ -641,6 +643,57 @@ export function QuotationNew() {
               rows={16}
               className="font-mono text-xs"
             />
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Custom Sections */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between py-3">
+          <div>
+            <CardTitle className="text-base">Custom Sections</CardTitle>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Each section prints on its own page after T&amp;C.</p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setCustomSections(s => [...s, { title: "", content: "" }])}
+          >
+            <Plus className="w-4 h-4 mr-1" /> Add Section
+          </Button>
+        </CardHeader>
+        {customSections.length > 0 && (
+          <CardContent className="space-y-4">
+            {customSections.map((sec, i) => (
+              <div key={i} className="border rounded-lg p-3 space-y-2 bg-muted/20">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-mono w-6 flex-shrink-0">{i + 1}.</span>
+                  <Input
+                    className="flex-1 h-8 text-sm font-semibold"
+                    placeholder="Section Title (e.g. Warranty, Scope of Work…)"
+                    value={sec.title}
+                    onChange={e => setCustomSections(prev => prev.map((s, idx) => idx === i ? { ...s, title: e.target.value } : s))}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-red-600 flex-shrink-0"
+                    onClick={() => setCustomSections(prev => prev.filter((_, idx) => idx !== i))}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Textarea
+                  rows={5}
+                  placeholder="Section content (multi-line text, printed as-is in the PDF)"
+                  value={sec.content}
+                  onChange={e => setCustomSections(prev => prev.map((s, idx) => idx === i ? { ...s, content: e.target.value } : s))}
+                  className="text-sm font-mono"
+                />
+              </div>
+            ))}
           </CardContent>
         )}
       </Card>

@@ -82,7 +82,7 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
     status: data.status ?? "draft", subtotal, discount, vatPercent, vatAmount, grandTotal,
     paymentTerms: data.paymentTerms, deliveryTerms: data.deliveryTerms,
     validity: data.validity, termsConditions: data.termsConditions,
-    techSpecs: data.techSpecs, additionalItems: data.additionalItems,
+    techSpecs: data.techSpecs, additionalItems: data.additionalItems, customSections: data.customSections,
     preparedById: req.user?.id, leadId: data.leadId,
     clientCode, createdById: req.user?.id,
   } as any).returning();

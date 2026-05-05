@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Pencil, Trash2, ArrowUpCircle } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ArrowUpCircle, BookOpen } from "lucide-react";
+import { authHeaders } from "@/lib/ai-client";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { AccountsPageHeader, AccountsStat, AccountsStatStrip } from "@/components/accounts-page-header";
@@ -38,6 +39,30 @@ export function PaymentsMadeList() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState<FormData>(EMPTY);
+  const [pendingJournalId, setPendingJournalId] = useState<number | null>(null);
+
+  const handleJournal = async (paymentId: number) => {
+    if (pendingJournalId) return;
+    setPendingJournalId(paymentId);
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}api/journal-entries/auto-from-source`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sourceType: "payment_made", sourceId: paymentId }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast({ title: "Draft journal created", description: `${(j as any).journalNumber} — review in Journal Entries.` });
+      } else {
+        toast({ title: (j as any).message ?? "Failed to create journal", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Network error", variant: "destructive" });
+    } finally {
+      setPendingJournalId(null);
+    }
+  };
 
   const { data: payments = [], isLoading } = useListPaymentsMade();
   const { data: companies = [] } = useListCompanies();
@@ -148,6 +173,7 @@ export function PaymentsMadeList() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 justify-end">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-[#0f2d5a] hover:text-[#1e6ab0]" title="Suggest Journal Entry" disabled={pendingJournalId === p.id} onClick={() => handleJournal(p.id)}><BookOpen className="w-3.5 h-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => { if (confirm("Delete?")) deleteMutation.mutate({ id: p.id }); }}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>

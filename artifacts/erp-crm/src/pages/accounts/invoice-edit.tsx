@@ -148,7 +148,11 @@ export function InvoiceEdit({ id }: Props) {
           </div>
           <div className="space-y-1">
             <Label>Client TRN</Label>
-            <Input value={form.clientTrn} onChange={e => setForm(p => ({ ...p, clientTrn: e.target.value }))} />
+            <Input value={form.clientTrn} onChange={e => setForm(p => ({ ...p, clientTrn: e.target.value }))} placeholder="e.g. 100123456700003" />
+          </div>
+          <div className="space-y-1">
+            <Label>Company TRN</Label>
+            <Input value={form.companyTrn} onChange={e => setForm(p => ({ ...p, companyTrn: e.target.value }))} placeholder="e.g. 100987654300001" />
           </div>
           <div className="space-y-1">
             <Label>Invoice Date</Label>

@@ -140,6 +140,12 @@ export function QuotationDetail({ id }: Props) {
     if (raw) additionalItems = JSON.parse(raw);
   } catch { /* use default */ }
 
+  let customSections: { title: string; content: string }[] | undefined;
+  try {
+    const raw = (q as any).customSections;
+    if (raw) customSections = JSON.parse(raw);
+  } catch { /* skip */ }
+
   const docData: DocumentData = {
     type: "quotation",
     docNumber: q.quotationNumber,
@@ -164,6 +170,7 @@ export function QuotationDetail({ id }: Props) {
     termsConditions: q.termsConditions,
     techSpecs: (q as any).techSpecs,
     additionalItems,
+    customSections,
     items: items.map(i => ({
       description: i.description,
       sizeStatus: i.unit,
@@ -183,12 +190,17 @@ export function QuotationDetail({ id }: Props) {
       projectName: q.projectName,
       deliveryDate: new Date().toISOString().split("T")[0],
       quotationId: q.id,
+      deliveryLocation: q.projectLocation ?? undefined,
       items: items.map(i => ({
         description: i.description,
         quantity: i.quantity,
         unit: i.unit ?? "nos",
       })),
-      ...({ clientCode: (q as any).clientCode } as Record<string, unknown>),
+      ...({
+        clientCode: (q as any).clientCode,
+        clientPhone: q.clientPhone,
+        clientEmail: q.clientEmail,
+      } as Record<string, unknown>),
     } as any });
   };
 
@@ -227,7 +239,15 @@ export function QuotationDetail({ id }: Props) {
             total: ci.total,
             paymentTerms: termsText,
             validityDate: q.validity,
-            ...({ vatPercent, clientEmail: q.clientEmail, clientPhone: q.clientPhone, clientCode: (q as any).clientCode } as Record<string, unknown>),
+            ...({
+              vatPercent,
+              clientEmail: q.clientEmail,
+              clientPhone: q.clientPhone,
+              clientCode: (q as any).clientCode,
+              clientContactPerson: (q as any).clientContactPerson,
+              customerTrn: (q as any).customerTrn,
+              projectLocation: q.projectLocation,
+            } as Record<string, unknown>),
           } });
           created.push({ name: res.piNumber, id: res.id });
         } else {
@@ -242,7 +262,15 @@ export function QuotationDetail({ id }: Props) {
             vatAmount: ci.vatAmount,
             grandTotal: ci.total,
             paymentStatus: "unpaid",
-            ...({ clientCode: (q as any).clientCode } as Record<string, unknown>),
+            ...({
+              clientCode: (q as any).clientCode,
+              clientTrn: (q as any).customerTrn,
+              paymentTerms: termsText,
+              clientEmail: q.clientEmail,
+              clientPhone: q.clientPhone,
+              projectName: q.projectName,
+              projectLocation: q.projectLocation,
+            } as Record<string, unknown>),
           } });
           created.push({ name: res.invoiceNumber, id: res.id });
         }

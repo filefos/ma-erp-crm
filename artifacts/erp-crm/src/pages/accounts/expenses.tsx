@@ -9,11 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CompanyField } from "@/components/CompanyField";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, BookOpen } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListExpensesQueryKey } from "@workspace/api-client-react";
 import { AccountsPageHeader } from "@/components/accounts-page-header";
+import { useToast } from "@/hooks/use-toast";
+import { authHeaders } from "@/lib/ai-client";
 
 const CATEGORIES = ["office","transport","utilities","material","labour","equipment","maintenance","travel","meals","other"];
 const statusColors: Record<string, string> = {
@@ -26,9 +28,34 @@ export function ExpensesList() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ category: "office", description: "", amount: "", vatAmount: "0", paymentMethod: "cash", paymentDate: "", companyId: "" });
+  const [pendingJournalId, setPendingJournalId] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: expenses, isLoading } = useListExpenses();
   const create = useCreateExpense({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() }); setOpen(false); } } });
+
+  const handleJournal = async (expenseId: number) => {
+    if (pendingJournalId) return;
+    setPendingJournalId(expenseId);
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}api/journal-entries/auto-from-source`, {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sourceType: "expense", sourceId: expenseId }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast({ title: "Draft journal created", description: `${(j as any).journalNumber} — review in Journal Entries.` });
+      } else {
+        toast({ title: (j as any).message ?? "Failed to create journal", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Network error", variant: "destructive" });
+    } finally {
+      setPendingJournalId(null);
+    }
+  };
 
   const { filterByCompany } = useActiveCompany();
   const filtered = filterByCompany(expenses ?? []).filter(e => !search || e.category.toLowerCase().includes(search.toLowerCase()) || e.description?.toLowerCase().includes(search.toLowerCase()));
@@ -111,11 +138,12 @@ export function ExpensesList() {
               <TableHead className="text-right">Total</TableHead>
               <TableHead>Payment</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No expenses found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No expenses found.</TableCell></TableRow> :
             filtered?.map(e => (
               <TableRow key={e.id}>
                 <TableCell className="font-medium text-primary">{e.expenseNumber}</TableCell>
@@ -125,6 +153,17 @@ export function ExpensesList() {
                 <TableCell className="text-right font-medium">AED {e.total?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                 <TableCell className="capitalize">{e.paymentMethod?.replace("_"," ")}</TableCell>
                 <TableCell><Badge variant="secondary" className={statusColors[e.status] ?? ""}>{e.status}</Badge></TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost" size="icon"
+                    className="h-7 w-7 text-[#0f2d5a] hover:text-[#1e6ab0]"
+                    title="Suggest Journal Entry"
+                    disabled={pendingJournalId === e.id}
+                    onClick={() => handleJournal(e.id)}
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

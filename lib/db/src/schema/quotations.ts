@@ -26,6 +26,7 @@ export const quotationsTable = pgTable("quotations", {
   termsConditions: text("terms_conditions"),
   techSpecs: text("tech_specs"),
   additionalItems: text("additional_items"),
+  customSections: text("custom_sections"),
   preparedById: integer("prepared_by_id"),
   approvedById: integer("approved_by_id"),
   leadId: integer("lead_id"),

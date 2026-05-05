@@ -111,6 +111,14 @@ export function ProformaInvoiceDetail({ id }: Props) {
       vatAmount,
       grandTotal: pi.total,
       paymentStatus: "unpaid",
+      ...({
+        paymentTerms: pi.paymentTerms,
+        clientCode: (pi as any).clientCode,
+        clientTrn: (pi as any).customerTrn,
+        clientEmail: (pi as any).clientEmail,
+        clientPhone: (pi as any).clientPhone,
+        projectLocation: (pi as any).projectLocation,
+      } as Record<string, unknown>),
     } });
   };
 

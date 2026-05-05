@@ -50,6 +50,7 @@ export interface DocumentData {
   termsConditions?: string;
   techSpecs?: string;
   additionalItems?: AdditionalCommercialItem[];
+  customSections?: { title: string; content: string }[];
   items: DocumentItem[];
   preparedByName?: string;
   preparedBySignatureUrl?: string;
@@ -420,7 +421,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <><LabelTd>Date</LabelTd><Td>{docDate}{data.validity ? ` | Valid: ${data.validity}` : ""}</Td></>
                 )}
               </tr>
-              <tr><LabelTd>Customer TRN</LabelTd><Td>{co.trn}</Td><LabelTd>Customer TRN</LabelTd><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
+              <tr><LabelTd>Our TRN</LabelTd><Td>{co.trn}</Td><LabelTd>Customer TRN</LabelTd><Td>{customerTrn !== "—" ? customerTrn : ""}</Td></tr>
             </tbody>
           </table>
         )}
@@ -697,10 +698,15 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         )}
 
         {isQuotation && (
-          <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
-            <span>PRIME ERP SYSTEMS</span>
-            <span className="font-semibold text-gray-500">Page 1 of 3</span>
-          </div>
+          <>
+            <div className="mt-3 text-center text-[10px] italic text-gray-500">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+              <span>PRIME ERP SYSTEMS</span>
+              <span className="font-semibold text-gray-500">Page 1 of 3</span>
+            </div>
+          </>
         )}
         {!isQuotation && (
           <>
@@ -769,7 +775,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </tbody>
             </table>
 
-            <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+            <div className="mt-3 text-center text-[10px] italic text-gray-500">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
               <span>PRIME ERP SYSTEMS</span>
               <span className="font-semibold text-gray-500">Page 2 of 3</span>
             </div>
@@ -833,13 +842,51 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+            <div className="mt-3 text-center text-[10px] italic text-gray-500">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
               <span>PRIME ERP SYSTEMS</span>
               <span className="font-semibold text-gray-500">Page 3 of 3</span>
             </div>
           </div>
         )}
       </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          CUSTOM SECTIONS — one page-break section per entry (Quotation only)
+      ══════════════════════════════════════════════════════════════ */}
+      {isQuotation && (data.customSections ?? []).map((sec, si) => (
+        <div key={si} className="print-page-break mt-8">
+          <div className="border-2 border-gray-700 mb-3">
+            <div className="bg-[#0f2d5a] text-white py-3 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              {companyLogo && (
+                <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 64, maxWidth: 140, height: "auto" }} />
+              )}
+              <div className={companyLogo ? "flex-1" : "flex-1 text-center"}>
+                <div className="text-[22px] font-black tracking-wider uppercase">{coName}</div>
+                <div className="text-[11px] mt-0.5 opacity-90">{co.address} | TRN: {co.trn}</div>
+                <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+              </div>
+            </div>
+            <div className="bg-[#1e6ab0] text-white text-center py-2" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <span className="text-[15px] font-black tracking-widest uppercase">{sec.title || "ADDITIONAL SECTION"}</span>
+            </div>
+          </div>
+
+          <div className="border border-gray-400 p-4 text-[11px] bg-gray-50 mb-4" style={{ lineHeight: "1.7", whiteSpace: "pre-line", minHeight: 160 }}>
+            {sec.content || <span className="text-gray-400 italic">No content provided.</span>}
+          </div>
+
+          <div className="mt-3 text-center text-[10px] italic text-gray-500">
+            This is a computer generated document. No signature or stamp required.
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[10px] text-gray-400 border-t pt-2">
+            <span>PRIME ERP SYSTEMS</span>
+            <span className="font-semibold text-gray-500">Additional Page {si + 1}</span>
+          </div>
+        </div>
+      ))}
     </>
   );
 }
