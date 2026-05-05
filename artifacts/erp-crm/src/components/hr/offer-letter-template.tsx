@@ -121,16 +121,27 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
       <div style={{ height: 6, background: NAVY }} />
       <div style={{ height: 2, background: SKY }} />
 
-      {/* Header — legal company name (left) + Ref/Date (right) */}
+      {/* Header — logo (left) + legal name + Ref/Date (right) */}
       <div style={{ padding: "16px 44px 8px", borderBottom: `2px solid ${NAVY}` }}>
         <div style={{ display: "table", width: "100%" }}>
           <div style={{ display: "table-row" }}>
             <div style={{ display: "table-cell", verticalAlign: "middle" }}>
-              <div style={{ color: NAVY, fontSize: 17, fontWeight: 800, lineHeight: 1.2, letterSpacing: 0.5 }}>
-                {legalName}
-              </div>
-              <div style={{ color: SKY, fontSize: FS_SMALL, fontStyle: "italic", marginTop: 2, letterSpacing: 0.2 }}>
-                Excellence in Prefabricated Construction
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {doc.companyLogoUrl && (
+                  <img
+                    src={doc.companyLogoUrl}
+                    alt={legalName}
+                    style={{ height: 42, width: "auto", objectFit: "contain", flexShrink: 0 }}
+                  />
+                )}
+                <div>
+                  <div style={{ color: NAVY, fontSize: 17, fontWeight: 800, lineHeight: 1.2, letterSpacing: 0.5 }}>
+                    {legalName}
+                  </div>
+                  <div style={{ color: SKY, fontSize: FS_SMALL, fontStyle: "italic", marginTop: 2, letterSpacing: 0.2 }}>
+                    Excellence in Prefabricated Construction
+                  </div>
+                </div>
               </div>
             </div>
             <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL, width: 220, color: NAVY }}>

@@ -316,6 +316,19 @@ router.post("/offer-letters/:id/attachments", requirePermission("offer_letters",
   res.status(201).json(await enrichAttachment(row));
 });
 
+router.get("/offer-letters/:id/attachments/:attId/download", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+  const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);
+  const guard = await loadOfferOr403(req, id);
+  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+  const [att] = await db.select().from(offerLetterAttachmentsTable)
+    .where(and(eq(offerLetterAttachmentsTable.id, attId), eq(offerLetterAttachmentsTable.offerLetterId, id)));
+  if (!att || !att.objectKey) { res.status(404).json({ error: "Attachment not found" }); return; }
+  const url = await signObjectKey(att.objectKey);
+  if (!url) { res.status(502).json({ error: "Could not generate download URL" }); return; }
+  res.redirect(302, url);
+});
+
 router.delete("/offer-letters/:id/attachments/:attId", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const attId = parseInt(String(Array.isArray(req.params.attId) ? req.params.attId[0] : req.params.attId), 10);

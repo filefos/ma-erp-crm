@@ -17,11 +17,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft, Pencil, Save, X, Send, FileDown, Printer, RefreshCcw, UserPlus, CheckCircle2, XCircle,
+  Paperclip, Upload, Trash2, Download,
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 import { uploadFile } from "@/lib/upload";
-import { Paperclip, Upload, Trash2, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const COMMISSION_DEFAULTS = {
   commissionTargetAmount: 200000,
@@ -48,6 +50,8 @@ export function OfferLetterDetail({ id }: Props) {
   const oid = parseInt(id, 10);
   const qc = useQueryClient();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { can } = usePermissions();
   const { data: offer, isLoading } = useGetOfferLetter(oid, { query: { queryKey: getGetOfferLetterQueryKey(oid), enabled: !!oid } });
   const { data: companies } = useListCompanies();
   // Prefer the snapshot stored on the offer record (locked-in at issue time so
@@ -140,10 +144,13 @@ export function OfferLetterDetail({ id }: Props) {
     if (!files || files.length === 0) return;
     setUploading(true);
     setAttError(null);
+    let successCount = 0;
     try {
       for (const f of Array.from(files)) {
         if (f.size > 8 * 1024 * 1024) {
-          setAttError(`"${f.name}" exceeds 8 MB limit`);
+          const msg = `"${f.name}" exceeds 8 MB limit`;
+          setAttError(msg);
+          toast({ title: "File too large", description: msg, variant: "destructive" });
           continue;
         }
         const r = await uploadFile(f);
@@ -151,9 +158,15 @@ export function OfferLetterDetail({ id }: Props) {
           id: oid,
           data: { fileName: r.fileName, objectKey: r.objectKey, contentType: r.contentType, sizeBytes: r.sizeBytes },
         });
+        successCount++;
+      }
+      if (successCount > 0) {
+        toast({ title: successCount === 1 ? "File uploaded" : `${successCount} files uploaded`, description: "Documents saved successfully." });
       }
     } catch (e: any) {
-      setAttError(e?.message ?? "Upload failed");
+      const msg = e?.message ?? "Upload failed";
+      setAttError(msg);
+      toast({ title: "Upload failed", description: msg, variant: "destructive" });
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -539,14 +552,20 @@ export function OfferLetterDetail({ id }: Props) {
                       </a>
                     </Button>
                   )}
-                  {canEdit && (
+                  {(canEdit && can("hr", "canDelete")) && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={async () => {
                         if (!confirm(`Delete "${a.fileName}"?`)) return;
-                        try { await deleteAttachment.mutateAsync({ id: oid, attId: a.id }); }
-                        catch (e: any) { setAttError(e?.message ?? "Delete failed"); }
+                        try {
+                          await deleteAttachment.mutateAsync({ id: oid, attId: a.id });
+                          toast({ title: "File deleted", description: `"${a.fileName}" removed.` });
+                        } catch (e: any) {
+                          const msg = e?.message ?? "Delete failed";
+                          setAttError(msg);
+                          toast({ title: "Delete failed", description: msg, variant: "destructive" });
+                        }
                       }}
                       data-testid={`button-delete-attachment-${a.id}`}
                     >
