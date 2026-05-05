@@ -263,10 +263,11 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
         </div>
       </div>
 
-      {/* Footer — official address and contact details. */}
+      {/* Footer — official address, contact details, and computer-generated disclaimer. */}
       <div style={{ borderTop: `2px solid ${NAVY}`, paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: NAVY, textAlign: "center", lineHeight: 1.4, background: `${SKY}10` }}>
         <div>Plot # 2040, Sajja Industrial Area, Sharjah, UAE</div>
         <div>Tel: 0566163555 &nbsp;·&nbsp; Email: hr@primemaxprefab.com &nbsp;·&nbsp; Web: www.primemaxprefab.com</div>
+        <div style={{ marginTop: 3, fontSize: FS_SMALL - 0.5, color: "#555", fontStyle: "italic" }}>This is a computer generated document. No signature or stamp required.</div>
       </div>
       <div style={{ height: 2, background: SKY }} />
       <div style={{ height: 6, background: NAVY }} />

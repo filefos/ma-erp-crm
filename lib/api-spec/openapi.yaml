@@ -2688,6 +2688,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  /offer-letters/{id}/attachments/{attId}/download:
+    get:
+      operationId: downloadOfferLetterAttachment
+      tags: [offer-letter-attachments]
+      summary: Download an offer letter attachment (redirects to signed object-storage URL)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: attId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "302":
+          description: Redirect to signed download URL
+        "404":
+          description: Attachment not found
+        "502":
+          description: Could not generate download URL
+
   # OFFER LETTERS
   /offer-letters:
     get:

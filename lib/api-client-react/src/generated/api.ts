@@ -11255,6 +11255,109 @@ export const useDeleteOfferLetterAttachment = <
 };
 
 /**
+ * @summary Download an offer letter attachment (redirects to signed object-storage URL)
+ */
+export const getDownloadOfferLetterAttachmentUrl = (
+  id: number,
+  attId: number,
+) => {
+  return `/api/offer-letters/${id}/attachments/${attId}/download`;
+};
+
+export const downloadOfferLetterAttachment = async (
+  id: number,
+  attId: number,
+  options?: RequestInit,
+): Promise<unknown> => {
+  return customFetch<unknown>(getDownloadOfferLetterAttachmentUrl(id, attId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDownloadOfferLetterAttachmentQueryKey = (
+  id: number,
+  attId: number,
+) => {
+  return [`/api/offer-letters/${id}/attachments/${attId}/download`] as const;
+};
+
+export const getDownloadOfferLetterAttachmentQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadOfferLetterAttachment>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  attId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadOfferLetterAttachment>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getDownloadOfferLetterAttachmentQueryKey(id, attId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof downloadOfferLetterAttachment>>
+  > = ({ signal }) =>
+    downloadOfferLetterAttachment(id, attId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(id && attId),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadOfferLetterAttachment>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type DownloadOfferLetterAttachmentQueryResult = NonNullable<
+  Awaited<ReturnType<typeof downloadOfferLetterAttachment>>
+>;
+export type DownloadOfferLetterAttachmentQueryError = ErrorType<void>;
+
+/**
+ * @summary Download an offer letter attachment (redirects to signed object-storage URL)
+ */
+
+export function useDownloadOfferLetterAttachment<
+  TData = Awaited<ReturnType<typeof downloadOfferLetterAttachment>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  attId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadOfferLetterAttachment>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDownloadOfferLetterAttachmentQueryOptions(
+    id,
+    attId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary List offer letters
  */
 export const getListOfferLettersUrl = (params?: ListOfferLettersParams) => {

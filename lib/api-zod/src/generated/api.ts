@@ -4652,6 +4652,14 @@ export const DeleteOfferLetterAttachmentResponse = zod.object({
 });
 
 /**
+ * @summary Download an offer letter attachment (redirects to signed object-storage URL)
+ */
+export const DownloadOfferLetterAttachmentParams = zod.object({
+  id: zod.coerce.number(),
+  attId: zod.coerce.number(),
+});
+
+/**
  * @summary List offer letters
  */
 export const ListOfferLettersQueryParams = zod.object({
