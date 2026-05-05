@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { db, quotationsTable, quotationItemsTable, companiesTable, usersTable, leadsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
+import { genClientCode } from "../lib/client-code";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 
 const router = Router();
@@ -67,11 +68,14 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
   const vatAmount = discountedSubtotal * vatPercent / 100;
   const grandTotal = discountedSubtotal + vatAmount;
 
-  // Inherit Client Code from lead (single pipeline rule).
+  // Inherit Client Code: from body → from linked lead → auto-generate per company.
   let clientCode: string | undefined = data.clientCode;
   if (!clientCode && data.leadId) {
     const [lead] = await db.select({ clientCode: leadsTable.clientCode }).from(leadsTable).where(eq(leadsTable.id, data.leadId));
     if (lead?.clientCode) clientCode = lead.clientCode;
+  }
+  if (!clientCode && data.companyId) {
+    clientCode = await genClientCode(data.companyId);
   }
 
   const [quotation] = await db.insert(quotationsTable).values({

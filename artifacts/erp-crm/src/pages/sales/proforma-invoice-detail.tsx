@@ -133,6 +133,11 @@ export function ProformaInvoiceDetail({ id }: Props) {
           <Link href="/sales/proforma-invoices"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[pi.status] ?? "bg-gray-100"}`}>{pi.status}</Badge>
+        {(pi as any)?.clientCode && (
+          <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
+            {(pi as any).clientCode}
+          </Badge>
+        )}
         {qid ? (
           <Button size="sm" variant="outline" asChild>
             <Link href={`/sales/quotations/${qid}`}>

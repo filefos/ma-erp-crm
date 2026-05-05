@@ -67,6 +67,11 @@ export function DeliveryNoteDetail({ id }: Props) {
           <Link href="/accounts/delivery-notes"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[dn.status] ?? "bg-gray-100"}`}>{dn.status}</Badge>
+        {(dn as any)?.clientCode && (
+          <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
+            {(dn as any).clientCode}
+          </Badge>
+        )}
         {tInvId ? (
           <Button size="sm" variant="outline" asChild>
             <Link href={`/accounts/invoices/${tInvId}`}>

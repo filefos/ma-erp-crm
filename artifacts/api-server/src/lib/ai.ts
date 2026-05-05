@@ -4,7 +4,7 @@ import { logger } from "./logger";
 
 const BASE_URL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
 const API_KEY = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
-const DEFAULT_MODEL = process.env.AI_INTEGRATIONS_OPENAI_MODEL ?? "gpt-5.4";
+const DEFAULT_MODEL = process.env.AI_INTEGRATIONS_OPENAI_MODEL ?? "gpt-4o-mini";
 
 export function aiAvailable(): boolean {
   return Boolean(BASE_URL && API_KEY);

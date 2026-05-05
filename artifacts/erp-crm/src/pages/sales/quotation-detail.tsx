@@ -346,6 +346,11 @@ export function QuotationDetail({ id }: Props) {
           <Link href="/sales/quotations"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[q.status] ?? "bg-gray-100"}`}>{q.status}</Badge>
+        {(q as any)?.clientCode && (
+          <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
+            {(q as any).clientCode}
+          </Badge>
+        )}
         {(q as any)?.leadId ? (
           <Button size="sm" variant="outline" asChild>
             <Link href={`/crm/leads/${(q as any).leadId}`}>

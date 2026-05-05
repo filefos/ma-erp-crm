@@ -4,6 +4,24 @@ import { eq } from "drizzle-orm";
 import { requireAuth, hasPermission, inScope } from "../middlewares/auth";
 import { audit } from "../lib/audit";
 import { chat, aiAvailable, aiModelName } from "../lib/ai";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
+
+const ANTHROPIC_MODEL = "claude-sonnet-4-6";
+
+async function chatAnthropic(
+  systemPrompt: string,
+  userContent: string,
+  maxTokens = 8192,
+): Promise<string> {
+  const response = await anthropic.messages.create({
+    model: ANTHROPIC_MODEL,
+    max_tokens: maxTokens,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userContent }],
+  });
+  const block = response.content[0];
+  return block.type === "text" ? block.text.trim() : "";
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -120,23 +138,17 @@ router.put("/ai/automation-level", async (req, res): Promise<void> => {
   res.json({ automationLevel: level });
 });
 
-// ===== Accounts AI helpers (UAE VAT) =====
+// ===== Accounts AI helpers (UAE VAT) — Anthropic-backed =====
 async function runAccountsAI(req: Request, res: any, system: string, user: string, action: string): Promise<void> {
-  if (!aiAvailable()) {
-    res.status(503).json({ error: "Service unavailable", message: "AI is not configured" });
-    return;
-  }
   if ((await callerAutomationLevel(req)) === "off") {
     res.status(403).json({ error: "AI disabled", message: "Your AI automation level is set to Off." });
     return;
   }
   let raw: string;
   try {
-    raw = await chat([
-      { role: "system", content: system },
-      { role: "user", content: user },
-    ], { maxCompletionTokens: 1200 });
+    raw = await chatAnthropic(system, user, 8192);
   } catch (err) {
+    req.log?.warn({ err }, "Anthropic accounts AI error");
     res.status(502).json({ error: "AI error", message: err instanceof Error ? err.message : "Unknown" });
     return;
   }
@@ -145,13 +157,13 @@ async function runAccountsAI(req: Request, res: any, system: string, user: strin
     entity: "accounts_ai",
     entityId: 0,
     details: JSON.stringify({
-      model: aiModelName(),
+      model: ANTHROPIC_MODEL,
       systemPrompt: trimForAudit(system, 1000),
       userPrompt: trimForAudit(user),
       response: trimForAudit(raw),
     }),
   });
-  res.json({ result: raw, model: aiModelName() });
+  res.json({ result: raw, model: ANTHROPIC_MODEL });
 }
 
 router.post("/ai/accounts/categorize-expenses", async (req, res): Promise<void> => {

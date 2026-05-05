@@ -121,6 +121,8 @@ export function AiAssistant() {
     } catch { return null; }
   };
 
+  const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
+
   const sendMessage = async (prompt: string) => {
     if (!prompt.trim()) return;
     const userMsg: Message = { role: "user", content: prompt, ts: Date.now() };
@@ -130,6 +132,7 @@ export function AiAssistant() {
 
     const lower = prompt.toLowerCase();
     let aiText: string | null = null;
+
     if (lower.includes("categor")) {
       aiText = await callAccountsAI("/ai/accounts/categorize-expenses", { expenses: data.expenses.slice(0, 30) });
     } else if (lower.includes("vat") || lower.includes("tax")) {
@@ -156,6 +159,20 @@ export function AiAssistant() {
           items: lastInv.items,
         },
       });
+    } else {
+      // General open-ended query — route to the Anthropic-backed /ai/ask endpoint
+      // with accounts module context so the AI knows the financial data snapshot.
+      const ctx = {
+        expenses: data.expenses.length,
+        totalExpenses: data.expenses.reduce((s, e: any) => s + (e.total ?? 0), 0),
+        paymentsReceived: data.paymentsReceived.length,
+        totalReceived: data.paymentsReceived.reduce((s, p: any) => s + (p.amount ?? 0), 0),
+        paymentsMade: data.paymentsMade.length,
+        totalPaid: data.paymentsMade.reduce((s, p: any) => s + (p.amount ?? 0), 0),
+        journalEntries: data.journalEntries.length,
+        taxInvoices: data.taxInvoices.length,
+      };
+      aiText = await callAccountsAI("/ai/ask", { module: "accounts", question: prompt, context: ctx, history });
     }
 
     const response = aiText ?? generateResponse(prompt, data);

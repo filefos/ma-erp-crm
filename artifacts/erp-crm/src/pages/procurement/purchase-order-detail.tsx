@@ -249,6 +249,11 @@ export function PurchaseOrderDetail({ id }: Props) {
           <Link href="/procurement/purchase-orders"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <Badge className={`capitalize ${STATUS_COLORS[(po as any).status] ?? "bg-gray-100"}`}>{(po as any).status}</Badge>
+        {(po as any)?.clientCode && (
+          <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
+            {(po as any).clientCode}
+          </Badge>
+        )}
         <div className="ml-auto flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
             <Pencil className="w-3.5 h-3.5 mr-1" />Edit

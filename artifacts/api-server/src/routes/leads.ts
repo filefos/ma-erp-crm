@@ -52,6 +52,13 @@ async function autoCreateQuotationForLead(
     const grandTotal = subtotal + vatAmount;
 
     const clientName = lead.companyName || lead.leadName || "Unknown Client";
+    // Ensure a client code exists on the lead before copying it to the quotation.
+    // If the lead was created before auto-generation was active it may be null.
+    let leadClientCode = lead.clientCode;
+    if (!leadClientCode && lead.companyId) {
+      leadClientCode = await genClientCode(lead.companyId, tx);
+      await tx.update(leadsTable).set({ clientCode: leadClientCode }).where(eq(leadsTable.id, lead.id));
+    }
     const [q] = await tx.insert(quotationsTable).values({
       quotationNumber,
       companyId: lead.companyId!,
@@ -63,6 +70,7 @@ async function autoCreateQuotationForLead(
       projectName: lead.requirementType ?? undefined,
       status: "draft",
       leadId: lead.id,
+      clientCode: leadClientCode ?? undefined,
       preparedById: preparedById ?? undefined,
       subtotal, vatPercent, vatAmount, grandTotal,
     }).returning();
@@ -278,7 +286,10 @@ router.put("/leads/:id", requirePermission("leads", "edit"), requireBodyCompanyA
   // savepoint rolls back and the surrounding tx still commits the status
   // flip with a warning surfaced to the UI (no 500).
   const { lead, auto } = await db.transaction(async (tx) => {
-    const [lead] = await tx.update(leadsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
+    // Strip server-managed and read-only fields so timestamp strings from the
+    // client never reach PgTimestamp.mapToDriverValue (which requires Date objects).
+    const { id: _id, createdAt: _ca, leadNumber: _ln, clientCode: _cc, updatedAt: _ua, ...safeBody } = req.body as any;
+    const [lead] = await tx.update(leadsTable).set({ ...safeBody, updatedAt: new Date() }).where(eq(leadsTable.id, id)).returning();
     let auto: { quotationId?: number; createdQuotation: boolean; warnings: string[] } =
       { createdQuotation: false, warnings: [] };
     if (existing.status !== "won" && lead.status === "won") {
