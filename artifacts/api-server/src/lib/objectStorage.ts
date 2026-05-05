@@ -128,6 +128,29 @@ export class ObjectStorageService {
     });
   }
 
+  /**
+   * Generate a presigned PUT URL whose GCS path includes a custom subpath,
+   * e.g. `offer-letters/42` → objectPath `/objects/offer-letters/42/<uuid>`.
+   * Use this when you need per-resource storage prefixes so that objectKey
+   * ownership can be verified during registration.
+   */
+  async getObjectEntityUploadURLForPrefix(
+    subpath: string,
+  ): Promise<{ uploadURL: string; objectPath: string }> {
+    const privateObjectDir = this.getPrivateObjectDir();
+    const objectId = randomUUID();
+    const fullPath = `${privateObjectDir}/${subpath}/${objectId}`;
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+    const uploadURL = await signObjectURL({
+      bucketName,
+      objectName,
+      method: "PUT",
+      ttlSec: 900,
+    });
+    const objectPath = this.normalizeObjectEntityPath(uploadURL);
+    return { uploadURL, objectPath };
+  }
+
   async getObjectEntityFile(objectPath: string): Promise<File> {
     if (!objectPath.startsWith("/objects/")) {
       throw new ObjectNotFoundError();

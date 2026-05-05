@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
-import { uploadFile } from "@/lib/upload";
+import { authHeaders } from "@/lib/ai-client";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -145,6 +145,7 @@ export function OfferLetterDetail({ id }: Props) {
     setUploading(true);
     setAttError(null);
     let successCount = 0;
+    const BASE_URL = import.meta.env.BASE_URL;
     try {
       for (const f of Array.from(files)) {
         if (f.size > 8 * 1024 * 1024) {
@@ -153,10 +154,22 @@ export function OfferLetterDetail({ id }: Props) {
           toast({ title: "File too large", description: msg, variant: "destructive" });
           continue;
         }
-        const r = await uploadFile(f);
+        const presignRes = await fetch(`${BASE_URL}api/offer-letters/${oid}/attachments/upload-url`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders() },
+          body: JSON.stringify({ name: f.name, size: f.size, contentType: f.type || "application/octet-stream" }),
+        });
+        if (!presignRes.ok) throw new Error("Failed to get upload URL");
+        const { uploadURL, objectPath } = await presignRes.json();
+        const putRes = await fetch(uploadURL, {
+          method: "PUT",
+          body: f,
+          headers: { "Content-Type": f.type || "application/octet-stream" },
+        });
+        if (!putRes.ok) throw new Error(`Upload failed: ${putRes.status}`);
         await createAttachment.mutateAsync({
           id: oid,
-          data: { fileName: r.fileName, objectKey: r.objectKey, contentType: r.contentType, sizeBytes: r.sizeBytes },
+          data: { fileName: f.name, objectKey: objectPath, contentType: f.type || "application/octet-stream", sizeBytes: f.size },
         });
         successCount++;
       }

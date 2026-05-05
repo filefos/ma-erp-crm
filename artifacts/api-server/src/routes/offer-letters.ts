@@ -284,6 +284,23 @@ async function enrichAttachment(a: typeof offerLetterAttachmentsTable.$inferSele
   return { ...a, signedUrl, uploadedByName };
 }
 
+// Per-letter presigned upload URL — files land under offer-letters/{id}/ prefix
+// so the registration step can verify ownership without extra DB lookups.
+router.post("/offer-letters/:id/attachments/upload-url", requirePermission("offer_letters", "edit"), async (req, res): Promise<void> => {
+  const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
+  const guard = await loadOfferOr403(req, id);
+  if (!guard.ok) { res.status(guard.status).json({ error: guard.status === 404 ? "Not found" : "Forbidden" }); return; }
+  const { name } = req.body ?? {};
+  if (!name) { res.status(400).json({ error: "name is required" }); return; }
+  try {
+    const { uploadURL, objectPath } = await storageService.getObjectEntityUploadURLForPrefix(`offer-letters/${id}`);
+    res.json({ uploadURL, objectPath });
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to generate offer-letter attachment upload URL");
+    res.status(500).json({ error: "Could not generate upload URL" });
+  }
+});
+
 router.get("/offer-letters/:id/attachments", requirePermission("offer_letters", "view"), async (req, res): Promise<void> => {
   const id = parseInt(String(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id), 10);
   const guard = await loadOfferOr403(req, id);
@@ -302,8 +319,11 @@ router.post("/offer-letters/:id/attachments", requirePermission("offer_letters",
   if (!fileName || !objectKey) {
     res.status(400).json({ error: "fileName and objectKey are required" }); return;
   }
-  if (typeof objectKey !== "string" || !objectKey.startsWith("/objects/")) {
-    res.status(400).json({ error: "objectKey must reference an uploaded object" }); return;
+  // Enforce per-letter prefix so only files uploaded via this letter's
+  // upload-url endpoint can be linked — prevents cross-letter key injection.
+  const expectedPrefix = `/objects/offer-letters/${id}/`;
+  if (typeof objectKey !== "string" || !objectKey.startsWith(expectedPrefix)) {
+    res.status(400).json({ error: "objectKey must be uploaded via this offer letter's upload-url endpoint" }); return;
   }
   const [row] = await db.insert(offerLetterAttachmentsTable).values({
     offerLetterId: id,
