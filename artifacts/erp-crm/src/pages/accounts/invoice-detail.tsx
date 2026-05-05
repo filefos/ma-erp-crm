@@ -6,7 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Package, Pencil, FileText } from "lucide-react";
+import { ArrowLeft, Package, Pencil, FileText, BookOpen } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -26,6 +26,32 @@ export function InvoiceDetail({ id }: Props) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [converting, setConverting] = useState(false);
+  const [creatingJournal, setCreatingJournal] = useState(false);
+
+  const handleAutoJournal = async () => {
+    if (creatingJournal) return;
+    setCreatingJournal(true);
+    try {
+      const res = await fetch(`${import.meta.env.BASE_URL}api/journal-entries/auto-from-source`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sourceType: "tax_invoice", sourceId: invId }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        toast({ title: "Could not create draft", description: j?.message ?? `HTTP ${res.status}`, variant: "destructive" });
+        return;
+      }
+      const j = await res.json();
+      toast({ title: "Draft journal created", description: `${j.journalNumber} — review and approve in Journal Entries.` });
+      navigate(`/accounts/journal-entries`);
+    } catch (e) {
+      toast({ title: "Network error", variant: "destructive" });
+    } finally {
+      setCreatingJournal(false);
+    }
+  };
 
   const { data: inv, isLoading } = useGetTaxInvoice(invId, {
     query: { queryKey: getGetTaxInvoiceQueryKey(invId), enabled: !!invId },
@@ -118,6 +144,13 @@ export function InvoiceDetail({ id }: Props) {
             <Link href={`/accounts/invoices/${invId}/edit`}>
               <Pencil className="w-4 h-4 mr-1" />Edit
             </Link>
+          </Button>
+          <Button
+            size="sm" variant="outline"
+            onClick={handleAutoJournal} disabled={creatingJournal}
+            data-testid="button-auto-journal"
+          >
+            <BookOpen className="w-4 h-4 mr-1" />{creatingJournal ? "Creating…" : "Suggest Journal Entry"}
           </Button>
           <Button
             size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"

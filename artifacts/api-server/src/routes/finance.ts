@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable } from "@workspace/db";
+import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable, taxInvoicesTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
+import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, hasPermission } from "../middlewares/auth";
 import { notifyUsers } from "../lib/push";
+import { audit } from "../lib/audit";
 
 const router = Router();
 router.use(requireAuth);
@@ -362,7 +363,114 @@ router.post("/journal-entries/:id/approve", requirePermission("expenses", "appro
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [journal] = await db.update(journalEntriesTable).set({ status: "approved", approvedById: req.user?.id, updatedAt: new Date() }).where(eq(journalEntriesTable.id, id)).returning();
+  await audit(req, {
+    action: "approve_journal_entry",
+    entity: "journal_entry",
+    entityId: id,
+    details: JSON.stringify({ journalNumber: existing.journalNumber, totalDebit: existing.totalDebit, totalCredit: existing.totalCredit }),
+  });
   res.json(await enrichJournal(journal));
+});
+
+// ===== Auto-suggest a DRAFT journal entry from a source document =====
+// Body: { sourceType: "tax_invoice" | "expense" | "payment_received" | "payment_made", sourceId: number }
+// Result: created draft journal + lines. User must explicitly approve via /journal-entries/:id/approve.
+router.post("/journal-entries/auto-from-source", requirePermission("expenses", "create"), async (req, res): Promise<void> => {
+  const sourceType = String(req.body?.sourceType ?? "");
+  const sourceId = Number(req.body?.sourceId);
+  if (!sourceType || !sourceId) {
+    res.status(400).json({ error: "Bad request", message: "sourceType and sourceId are required" }); return;
+  }
+
+  type Line = { accountName: string; description?: string; debit?: number; credit?: number };
+  let companyId: number | null = null;
+  let entryDate = new Date().toISOString().split("T")[0]!;
+  let description = "";
+  let reference = "";
+  const lines: Line[] = [];
+
+  if (sourceType === "tax_invoice") {
+    if (!(await hasPermission(req.user, "tax_invoices", "view"))) { res.status(403).json({ error: "Forbidden" }); return; }
+    const [inv] = await db.select().from(taxInvoicesTable).where(eq(taxInvoicesTable.id, sourceId));
+    if (!inv) { res.status(404).json({ error: "Tax invoice not found" }); return; }
+    if (!scopeFilter(req, [inv]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+    companyId = inv.companyId;
+    entryDate = inv.invoiceDate ?? entryDate;
+    description = `Sales — ${inv.invoiceNumber} — ${inv.clientName}`;
+    reference = inv.invoiceNumber;
+    lines.push({ accountName: `Accounts Receivable — ${inv.clientName}`, description, debit: inv.grandTotal ?? 0, credit: 0 });
+    lines.push({ accountName: "Sales Revenue", description, debit: 0, credit: inv.subtotal ?? 0 });
+    if ((inv.vatAmount ?? 0) > 0) {
+      lines.push({ accountName: "VAT Output Payable (5%)", description, debit: 0, credit: inv.vatAmount ?? 0 });
+    }
+  } else if (sourceType === "expense") {
+    if (!(await hasPermission(req.user, "expenses", "view"))) { res.status(403).json({ error: "Forbidden" }); return; }
+    const [ex] = await db.select().from(expensesTable).where(eq(expensesTable.id, sourceId));
+    if (!ex) { res.status(404).json({ error: "Expense not found" }); return; }
+    if (!scopeFilter(req, [ex]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+    companyId = ex.companyId;
+    entryDate = ex.paymentDate ?? entryDate;
+    description = `Expense — ${ex.expenseNumber} — ${ex.category}`;
+    reference = ex.expenseNumber;
+    lines.push({ accountName: `${ex.category} Expense`, description, debit: ex.amount ?? 0, credit: 0 });
+    if ((ex.vatAmount ?? 0) > 0) {
+      lines.push({ accountName: "VAT Input Recoverable (5%)", description, debit: ex.vatAmount ?? 0, credit: 0 });
+    }
+    const credAcct = ex.paymentMethod === "cash" ? "Cash on Hand" : "Bank Account";
+    lines.push({ accountName: credAcct, description, debit: 0, credit: ex.total ?? 0 });
+  } else if (sourceType === "payment_received") {
+    if (!(await hasPermission(req.user, "expenses", "view"))) { res.status(403).json({ error: "Forbidden" }); return; }
+    const [p] = await db.select().from(paymentsReceivedTable).where(eq(paymentsReceivedTable.id, sourceId));
+    if (!p) { res.status(404).json({ error: "Payment not found" }); return; }
+    if (!scopeFilter(req, [p]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+    companyId = p.companyId;
+    entryDate = p.paymentDate;
+    description = `Payment Received — ${p.paymentNumber} — ${p.customerName}`;
+    reference = p.paymentNumber;
+    const debAcct = p.paymentMethod === "cash" ? "Cash on Hand" : "Bank Account";
+    lines.push({ accountName: debAcct, description, debit: p.amount ?? 0, credit: 0 });
+    lines.push({ accountName: `Accounts Receivable — ${p.customerName}`, description, debit: 0, credit: p.amount ?? 0 });
+  } else if (sourceType === "payment_made") {
+    if (!(await hasPermission(req.user, "expenses", "view"))) { res.status(403).json({ error: "Forbidden" }); return; }
+    const [p] = await db.select().from(paymentsMadeTable).where(eq(paymentsMadeTable.id, sourceId));
+    if (!p) { res.status(404).json({ error: "Payment not found" }); return; }
+    if (!scopeFilter(req, [p]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+    companyId = p.companyId;
+    entryDate = p.paymentDate;
+    description = `Payment Made — ${p.paymentNumber} — ${p.payeeName}`;
+    reference = p.paymentNumber;
+    lines.push({ accountName: `Accounts Payable — ${p.payeeName}`, description, debit: p.amount ?? 0, credit: 0 });
+    const credAcct = p.paymentMethod === "cash" ? "Cash on Hand" : "Bank Account";
+    lines.push({ accountName: credAcct, description, debit: 0, credit: p.amount ?? 0 });
+  } else {
+    res.status(400).json({ error: "Bad request", message: "Unknown sourceType" }); return;
+  }
+
+  if (companyId == null) { res.status(400).json({ error: "Bad request", message: "Source has no companyId" }); return; }
+
+  const totalDebit = lines.reduce((s, l) => s + (l.debit ?? 0), 0);
+  const totalCredit = lines.reduce((s, l) => s + (l.credit ?? 0), 0);
+  const count = await db.select({ count: sql<number>`count(*)::int` }).from(journalEntriesTable);
+  const num = (count[0]?.count ?? 0) + 1;
+  const journalNumber = `JV-${new Date().getFullYear()}-${String(num).padStart(5, "0")}`;
+
+  const [journal] = await db.insert(journalEntriesTable).values({
+    companyId, journalNumber, entryDate, description, reference,
+    status: "draft", totalDebit, totalCredit, preparedById: req.user?.id,
+  }).returning();
+  await db.insert(journalEntryLinesTable).values(lines.map((l, i) => ({
+    journalId: journal.id, accountName: l.accountName, description: l.description ?? null,
+    debit: l.debit ?? 0, credit: l.credit ?? 0, sortOrder: i,
+  })));
+
+  await audit(req, {
+    action: "auto_create_draft_journal",
+    entity: "journal_entry",
+    entityId: journal.id,
+    details: JSON.stringify({ sourceType, sourceId, journalNumber, totalDebit, totalCredit, lineCount: lines.length }),
+  });
+
+  res.status(201).json(await enrichJournal(journal));
 });
 
 function numberToWords(num: number): string {
