@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable, taxInvoicesTable, projectsTable } from "@workspace/db";
+import { db, bankAccountsTable, chequesTable, expensesTable, companiesTable, suppliersTable, chartOfAccountsTable, paymentsReceivedTable, paymentsMadeTable, journalEntriesTable, journalEntryLinesTable, usersTable, taxInvoicesTable, proformaInvoicesTable, projectsTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, hasPermission } from "../middlewares/auth";
 import { notifyUsers } from "../lib/push";
@@ -195,13 +195,17 @@ router.delete("/chart-of-accounts/:id", requirePermission("expenses", "delete"),
   res.json({ success: true });
 });
 
-// Invoice lookup — used by the Record Receivable form to auto-fill fields from a tax invoice number
+// Invoice lookup — used by the Record Receivable form to auto-fill fields
+// Searches Tax Invoices (INV) first, then Proforma Invoices (PI), then Quotations by number
 router.get("/invoice-lookup", requirePermission("expenses", "view"), async (req, res): Promise<void> => {
   const { invoiceNumber } = req.query;
   if (!invoiceNumber || typeof invoiceNumber !== "string") {
     res.status(400).json({ error: "invoiceNumber query param required" }); return;
   }
-  const [inv] = await db.select({
+  const q = invoiceNumber.trim();
+
+  // 1. Try Tax Invoice
+  const [ti] = await db.select({
     id: taxInvoicesTable.id,
     invoiceNumber: taxInvoicesTable.invoiceNumber,
     clientName: taxInvoicesTable.clientName,
@@ -212,15 +216,45 @@ router.get("/invoice-lookup", requirePermission("expenses", "view"), async (req,
     projectId: taxInvoicesTable.projectId,
     paymentStatus: taxInvoicesTable.paymentStatus,
   }).from(taxInvoicesTable)
-    .where(sql`lower(${taxInvoicesTable.invoiceNumber}) = lower(${invoiceNumber.trim()})`);
-  if (!inv) { res.status(404).json({ error: "Invoice not found" }); return; }
-  if (!scopeFilter(req, [{ companyId: inv.companyId }] as any).length) {
-    res.status(403).json({ error: "Forbidden" }); return;
+    .where(sql`lower(${taxInvoicesTable.invoiceNumber}) = lower(${q})`);
+
+  if (ti) {
+    if (!scopeFilter(req, [{ companyId: ti.companyId }] as any).length) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+    const [co] = ti.companyId
+      ? await db.select({ name: companiesTable.name, shortName: companiesTable.shortName }).from(companiesTable).where(eq(companiesTable.id, ti.companyId))
+      : [undefined];
+    res.json({ ...ti, sourceType: "tax_invoice", companyName: co?.shortName ?? co?.name });
+    return;
   }
-  const [co] = inv.companyId
-    ? await db.select({ name: companiesTable.name, shortName: companiesTable.shortName }).from(companiesTable).where(eq(companiesTable.id, inv.companyId))
-    : [undefined];
-  res.json({ ...inv, companyName: co?.shortName ?? co?.name });
+
+  // 2. Try Proforma Invoice (PI)
+  const [pi] = await db.select({
+    id: proformaInvoicesTable.id,
+    invoiceNumber: proformaInvoicesTable.piNumber,
+    clientName: proformaInvoicesTable.clientName,
+    companyId: proformaInvoicesTable.companyId,
+    grandTotal: proformaInvoicesTable.total,
+    balance: proformaInvoicesTable.total,
+    projectRef: proformaInvoicesTable.projectRef,
+    projectId: proformaInvoicesTable.projectId,
+    paymentStatus: proformaInvoicesTable.status,
+  }).from(proformaInvoicesTable)
+    .where(sql`lower(${proformaInvoicesTable.piNumber}) = lower(${q})`);
+
+  if (pi) {
+    if (!scopeFilter(req, [{ companyId: pi.companyId }] as any).length) {
+      res.status(403).json({ error: "Forbidden" }); return;
+    }
+    const [co] = pi.companyId
+      ? await db.select({ name: companiesTable.name, shortName: companiesTable.shortName }).from(companiesTable).where(eq(companiesTable.id, pi.companyId))
+      : [undefined];
+    res.json({ ...pi, sourceType: "proforma_invoice", companyName: co?.shortName ?? co?.name });
+    return;
+  }
+
+  res.status(404).json({ error: "Invoice not found" });
 });
 
 // Payments Received
