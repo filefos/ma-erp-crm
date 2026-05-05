@@ -554,12 +554,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               {/* Bank Details — hidden on quotations */}
               {co.bank && !isQuotation && (
                 <div className="flex-1 border-r border-gray-400" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                  <div
-                    className="px-2 py-[2px] text-[11px] font-black uppercase text-white"
-                    style={{ backgroundColor: "#0f2d5a" } as React.CSSProperties}
-                  >
-                    Account Detail
-                  </div>
                   <table className="text-[10px] w-full border-collapse">
                     <tbody>
                       <tr>
