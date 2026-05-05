@@ -188,7 +188,7 @@ const REF_LABELS: Record<DocumentType, string> = {
 function Th({ children, right, center }: { children: React.ReactNode; right?: boolean; center?: boolean }) {
   return (
     <th
-      className={`border border-gray-400 px-2 py-1.5 text-xs font-bold bg-gray-100 ${right ? "text-right" : center ? "text-center" : "text-left"}`}
+      className={`border border-gray-400 px-2 py-1 text-xs font-bold bg-gray-100 ${right ? "text-right" : center ? "text-center" : "text-left"}`}
     >
       {children}
     </th>
@@ -211,7 +211,7 @@ function Td({
     <td
       colSpan={colSpan}
       style={style}
-      className={`border border-gray-400 px-2 py-1.5 text-xs ${right ? "text-right" : center ? "text-center" : "text-left"} ${bold ? "font-bold" : ""} ${green ? "text-green-700 font-bold" : ""} ${red ? "text-red-600 font-bold" : ""}`}
+      className={`border border-gray-400 px-2 py-1 text-xs ${right ? "text-right" : center ? "text-center" : "text-left"} ${bold ? "font-bold" : ""} ${green ? "text-green-700 font-bold" : ""} ${red ? "text-red-600 font-bold" : ""}`}
     >
       {children}
     </td>
@@ -220,7 +220,7 @@ function Td({
 
 function LabelTd({ children }: { children: React.ReactNode }) {
   return (
-    <td className="border border-gray-400 px-2 py-1.5 text-[11px] font-semibold text-white whitespace-nowrap w-[18%]"
+    <td className="border border-gray-400 px-2 py-1 text-[11px] font-semibold text-white whitespace-nowrap w-[18%]"
       style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
       {children}
     </td>
@@ -229,7 +229,7 @@ function LabelTd({ children }: { children: React.ReactNode }) {
 
 function LabelTdHalf({ children }: { children: React.ReactNode }) {
   return (
-    <td className="border border-gray-400 px-2 py-1.5 text-[11px] font-semibold text-white whitespace-nowrap"
+    <td className="border border-gray-400 px-2 py-1 text-[11px] font-semibold text-white whitespace-nowrap"
       style={{ width: "38%", backgroundColor: "#1e3a6e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
       {children}
     </td>
@@ -240,14 +240,14 @@ function NavyBar({ children, amount }: { children: React.ReactNode; amount?: str
   return (
     <tr style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
       <td
-        className="border border-gray-400 px-2 py-1.5 text-[11px] font-black uppercase text-white"
+        className="border border-gray-400 px-2 py-1 text-[11px] font-black uppercase text-white"
         style={{ backgroundColor: "#0f2d5a" } as React.CSSProperties}
       >
         {children}
       </td>
       {amount !== undefined && (
         <td
-          className="border border-gray-400 px-2 py-1.5 text-[11px] font-black text-right text-white whitespace-nowrap"
+          className="border border-gray-400 px-2 py-1 text-[11px] font-black text-right text-white whitespace-nowrap"
           style={{ width: 130, backgroundColor: "#1e5a9e" } as React.CSSProperties}
         >
           {amount}
@@ -262,7 +262,7 @@ function WordsRow({ words, colSpan }: { words: string; colSpan?: number }) {
     <tr>
       <td
         colSpan={colSpan ?? 2}
-        className="border border-gray-400 px-2 py-1 text-[11px] bg-gray-50 italic"
+        className="border border-gray-400 px-2 py-0.5 text-[11px] bg-gray-50 italic"
         style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
       >
         <span className="not-italic font-semibold">In Words: </span>{words}
@@ -338,7 +338,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         }
       `}</style>
 
-      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto p-6 shadow-lg rounded-lg">
+      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto p-4 shadow-lg rounded-lg">
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="border-2 border-gray-700 mb-3">
@@ -368,8 +368,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <table className="w-full border-collapse border border-gray-400 mb-3">
               <thead>
                 <tr>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Buyer (Our Company)</th>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Supplier Detail</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Buyer (Our Company)</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Supplier Detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -384,12 +384,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </table>
           </>
         ) : (
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-2 mb-2">
             {/* ── Company Detail (left) ── */}
             <table className="flex-1 border-collapse border border-gray-400">
               <thead>
                 <tr>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Company Detail</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Company Detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -414,7 +414,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <table className="flex-1 border-collapse border border-gray-400">
               <thead>
                 <tr>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-1.5 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Client DETAIL</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-1 text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Client DETAIL</th>
                 </tr>
               </thead>
               <tbody>
@@ -518,19 +518,19 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <tbody>
                   {additionalItems.map((row, idx) => (
                     <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#eaf0f8" : "#ffffff", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                      <td className="border border-gray-400 px-2 py-1.5 text-xs">{row.description}</td>
+                      <td className="border border-gray-400 px-2 py-1 text-xs">{row.description}</td>
                       <td
-                        className="border border-gray-400 px-2 py-1.5 text-xs text-center font-semibold whitespace-nowrap"
+                        className="border border-gray-400 px-2 py-1 text-xs text-center font-semibold whitespace-nowrap"
                         style={{ width: 90 }}
                       >
                         <span className={row.status === "Included" ? "text-green-700" : "text-red-600"}>
                           {row.status}
                         </span>
                       </td>
-                      <td className="border border-gray-400 px-2 py-1.5 text-xs text-right whitespace-nowrap" style={{ width: 100 }}>
+                      <td className="border border-gray-400 px-2 py-1 text-xs text-right whitespace-nowrap" style={{ width: 100 }}>
                         {row.status === "Included" && (row.price ?? 0) > 0 ? formatAED(row.price!) : ""}
                       </td>
-                      <td className="border border-gray-400 px-2 py-1.5 text-xs text-right whitespace-nowrap" style={{ width: 80 }}>
+                      <td className="border border-gray-400 px-2 py-1 text-xs text-right whitespace-nowrap" style={{ width: 80 }}>
                         {row.status === "Included" ? (row.quantity ?? 1) : ""}
                       </td>
                     </tr>
@@ -555,7 +555,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               {co.bank && !isQuotation && (
                 <div className="flex-1 border-r border-gray-400" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                   <div
-                    className="px-2 py-1.5 text-[11px] font-black uppercase text-white"
+                    className="px-2 py-1 text-[11px] font-black uppercase text-white"
                     style={{ backgroundColor: "#0f2d5a" } as React.CSSProperties}
                   >
                     Account Detail
@@ -591,19 +591,19 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <tbody>
                     {(data.discount ?? 0) > 0 && (
                       <tr>
-                        <td className="border border-gray-300 px-2 py-1.5 text-xs">Discount ({data.discount}%)</td>
-                        <td className="border border-gray-300 px-2 py-1.5 text-xs text-right font-semibold">
+                        <td className="border border-gray-300 px-2 py-1 text-xs">Discount ({data.discount}%)</td>
+                        <td className="border border-gray-300 px-2 py-1 text-xs text-right font-semibold">
                           – {formatAED((subtotal * (data.discount ?? 0)) / 100)}
                         </td>
                       </tr>
                     )}
                     <tr style={{ backgroundColor: "#bdd7ee", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                      <td className="border border-gray-300 px-2 py-1.5 text-xs font-semibold">VAT {vat}%</td>
-                      <td className="border border-gray-300 px-2 py-1.5 text-xs font-semibold text-right">{formatAED(vatAmt)}</td>
+                      <td className="border border-gray-300 px-2 py-1 text-xs font-semibold">VAT {vat}%</td>
+                      <td className="border border-gray-300 px-2 py-1 text-xs font-semibold text-right">{formatAED(vatAmt)}</td>
                     </tr>
                     <tr style={{ backgroundColor: "#70ad47", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                      <td className="border border-gray-300 px-2 py-2 text-xs font-black text-white">Grand Total (AED)</td>
-                      <td className="border border-gray-300 px-2 py-2 text-xs font-black text-white text-right">{formatAED(grand)}</td>
+                      <td className="border border-gray-300 px-2 py-1.5 text-xs font-black text-white">Grand Total (AED)</td>
+                      <td className="border border-gray-300 px-2 py-1.5 text-xs font-black text-white text-right">{formatAED(grand)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -611,7 +611,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </div>
 
             {/* ── BAR 3: GRAND TOTAL AMOUNT IN WORDS ───────────────────────── */}
-            <table className="w-full border-collapse border border-gray-400 mb-3 mt-0">
+            <table className="w-full border-collapse border border-gray-400 mb-2 mt-0">
               <tbody>
                 <NavyBar amount={formatAED(grand)}>
                   Grand Total Amount in Words
@@ -624,14 +624,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── PAYMENT TERMS ───────────────────────────────────────────── */}
         {data.paymentTerms && !isDelivery && (
-          <div className="border border-gray-400 p-2 mb-3 bg-gray-50">
+          <div className="border border-gray-400 p-1.5 mb-2 bg-gray-50">
             <span className="font-bold">Payment Terms: </span>{data.paymentTerms}
           </div>
         )}
 
         {/* ── NOTES ───────────────────────────────────────────────────── */}
         {data.notes && (
-          <div className="border border-gray-400 p-2 mb-3 bg-gray-50">
+          <div className="border border-gray-400 p-1.5 mb-2 bg-gray-50">
             <span className="font-bold">Notes: </span>{data.notes}
           </div>
         )}
