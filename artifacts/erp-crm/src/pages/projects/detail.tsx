@@ -178,12 +178,90 @@ export function ProjectDetail({ id }: Props) {
         </CardContent>
       </Card>
 
+      <ProjectProfitability projectId={pid} />
+
       {project.scope && (
         <Card>
           <CardHeader><CardTitle className="text-base">Scope of Work</CardTitle></CardHeader>
           <CardContent><p className="text-sm text-muted-foreground whitespace-pre-line">{project.scope}</p></CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function ProjectProfitability({ projectId }: { projectId: number }) {
+  const [data, setData] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let on = true;
+    fetch(`${import.meta.env.BASE_URL}api/projects/${projectId}/cost-summary`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
+      .then(j => on && setData(j))
+      .catch(e => on && setErr(String(e)));
+    return () => { on = false; };
+  }, [projectId]);
+
+  if (err) return null;
+  if (!data) return (
+    <Card><CardHeader><CardTitle className="text-base">Project Profitability</CardTitle></CardHeader>
+      <CardContent className="text-sm text-muted-foreground">Loading…</CardContent>
+    </Card>
+  );
+
+  const fmt = (n: number) => `AED ${Number(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  const profitColor = data.profit >= 0 ? "text-green-700" : "text-red-700";
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Project Profitability</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Tile label="Quoted Value" value={fmt(data.projectValue)} />
+          <Tile label="Invoiced (Revenue)" value={fmt(data.revenue)} sub={`${fmt(data.collected)} collected`} />
+          <Tile label="Procurement Cost" value={fmt(data.procurementCost)} sub={`${data.purchaseOrders.length} PO(s)`} />
+          <Tile label="Other Expenses" value={fmt(data.expensesCost)} sub={`${data.expenses.length} item(s)`} />
+          <Tile label="Profit" value={<span className={profitColor}>{fmt(data.profit)}</span>} sub={`${data.margin.toFixed(1)}% margin`} />
+        </div>
+        {data.invoices.length > 0 && (
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Linked Tax Invoices</div>
+            <div className="flex flex-wrap gap-2">
+              {data.invoices.map((i: any) => (
+                <Link key={i.id} href={`/accounts/invoices/${i.id}`}>
+                  <Badge variant="outline" className="cursor-pointer hover:bg-slate-100">
+                    {i.invoiceNumber} · {fmt(i.grandTotal)} · {i.paymentStatus}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+        {data.purchaseOrders.length > 0 && (
+          <div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Linked Purchase Orders</div>
+            <div className="flex flex-wrap gap-2">
+              {data.purchaseOrders.map((p: any) => (
+                <Badge key={p.id} variant="outline">{p.poNumber} · {fmt(p.total)} · {p.status}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Costs are linked via Purchase Requests on this project. Expenses match by project number in the invoice-number field. Numbers are read-only and update as documents change.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Tile({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) {
+  return (
+    <div className="rounded-md border p-3 bg-slate-50">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-base font-bold mt-1">{value}</div>
+      {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
     </div>
   );
 }

@@ -1,6 +1,10 @@
 import { Router } from "express";
-import { db, projectsTable, companiesTable, usersTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import {
+  db, projectsTable, companiesTable, usersTable,
+  taxInvoicesTable, expensesTable,
+  purchaseOrdersTable, purchaseRequestsTable,
+} from "@workspace/db";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess } from "../middlewares/auth";
 
 const router = Router();
@@ -63,6 +67,59 @@ router.put("/projects/:id", requirePermission("projects", "edit"), requireBodyCo
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
   const [project] = await db.update(projectsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(projectsTable.id, id)).returning();
   res.json(await enrichProject(project));
+});
+
+router.get("/projects/:id/cost-summary", requirePermission("projects", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, id));
+  if (!project) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [project]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const invoices = await db.select({
+    id: taxInvoicesTable.id, invoiceNumber: taxInvoicesTable.invoiceNumber,
+    grandTotal: taxInvoicesTable.grandTotal, amountPaid: taxInvoicesTable.amountPaid,
+    paymentStatus: taxInvoicesTable.paymentStatus,
+  }).from(taxInvoicesTable).where(eq(taxInvoicesTable.projectId, id));
+
+  const prRows = await db.select({ id: purchaseRequestsTable.id })
+    .from(purchaseRequestsTable).where(eq(purchaseRequestsTable.projectId, id));
+  const prIds = prRows.map(r => r.id);
+  const purchaseOrders = prIds.length
+    ? await db.select({
+        id: purchaseOrdersTable.id, poNumber: purchaseOrdersTable.poNumber,
+        total: purchaseOrdersTable.total, status: purchaseOrdersTable.status,
+      }).from(purchaseOrdersTable).where(inArray(purchaseOrdersTable.purchaseRequestId, prIds))
+    : [];
+
+  const exps = await db.select({
+    id: expensesTable.id, expenseNumber: expensesTable.expenseNumber,
+    total: expensesTable.total, category: expensesTable.category, status: expensesTable.status,
+  }).from(expensesTable).where(and(eq(expensesTable.companyId, project.companyId), sql`${expensesTable.invoiceNumber} = ${project.projectNumber}`));
+
+  const revenue = invoices.reduce((s, r) => s + Number(r.grandTotal ?? 0), 0);
+  const collected = invoices.reduce((s, r) => s + Number(r.amountPaid ?? 0), 0);
+  const procurementCost = purchaseOrders.reduce((s, r) => s + Number(r.total ?? 0), 0);
+  const expensesCost = exps.reduce((s, r) => s + Number(r.total ?? 0), 0);
+  const totalCost = procurementCost + expensesCost;
+  const profit = revenue - totalCost;
+  const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+  const projectValue = Number(project.projectValue ?? 0);
+
+  res.json({
+    projectId: id,
+    projectNumber: project.projectNumber,
+    projectValue,
+    revenue,
+    collected,
+    procurementCost,
+    expensesCost,
+    totalCost,
+    profit,
+    margin,
+    invoices,
+    purchaseOrders,
+    expenses: exps,
+  });
 });
 
 export default router;
