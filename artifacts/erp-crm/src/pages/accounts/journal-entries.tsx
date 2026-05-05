@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, CheckCircle, BookOpen, X } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
+import { AccountsPageHeader } from "@/components/accounts-page-header";
 
 const statusColors: Record<string, string> = {
   draft: "bg-orange-100 text-orange-800",

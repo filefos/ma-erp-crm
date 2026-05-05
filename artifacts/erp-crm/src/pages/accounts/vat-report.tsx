@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useListExpenses, useListCompanies } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ExportMenu } from "@/components/ExportMenu";
-import { Receipt, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { AccountsPageHeader, AccountsStat, AccountsStatStrip } from "@/components/accounts-page-header";
 
 export function VatReport() {
   const today = new Date().toISOString().split("T")[0];
@@ -53,26 +52,27 @@ export function VatReport() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">VAT Report</h1>
-          <p className="text-muted-foreground">UAE VAT 5% — Input and Output Tax Summary</p>
-        </div>
-        <ExportMenu
-          data={vatRows}
-          columns={[
-            { header: "Date", key: "date" },
-            { header: "Description", key: "description" },
-            { header: "Category", key: "category" },
-            { header: "Amount (AED)", key: "amount", format: v => Number(v ?? 0).toFixed(2) },
-            { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
-            { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
-          ]}
-          filename="vat-report"
-          title="VAT Report"
-          size="sm"
-        />
-      </div>
+      <AccountsPageHeader
+        title="VAT Report"
+        breadcrumb="Accounts"
+        subtitle="UAE VAT 5% — Input and Output Tax Summary"
+        right={
+          <ExportMenu
+            data={vatRows}
+            columns={[
+              { header: "Date", key: "date" },
+              { header: "Description", key: "description" },
+              { header: "Category", key: "category" },
+              { header: "Amount (AED)", key: "amount", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "VAT (AED)", key: "vatAmount", format: v => Number(v ?? 0).toFixed(2) },
+              { header: "Total (AED)", key: "total", format: v => Number(v ?? 0).toFixed(2) },
+            ]}
+            filename="vat-report"
+            title="VAT Report"
+            size="sm"
+          />
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-4 p-4 bg-muted/30 border rounded-xl">
@@ -102,58 +102,12 @@ export function VatReport() {
         </Button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader className="flex flex-row items-center gap-3 pb-2 pt-4 px-4">
-            <div className="p-2 bg-green-100 rounded-lg"><TrendingUp className="w-4 h-4 text-green-700" /></div>
-            <CardTitle className="text-sm font-medium text-green-700">Output VAT (5%)</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-xl font-bold text-green-800">AED {outputVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-            <div className="text-xs text-green-600 mt-0.5">On sales & revenue</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader className="flex flex-row items-center gap-3 pb-2 pt-4 px-4">
-            <div className="p-2 bg-red-100 rounded-lg"><TrendingDown className="w-4 h-4 text-red-700" /></div>
-            <CardTitle className="text-sm font-medium text-red-700">Input VAT (Paid)</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-xl font-bold text-red-800">AED {inputVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-            <div className="text-xs text-red-600 mt-0.5">On purchases & expenses</div>
-          </CardContent>
-        </Card>
-
-        <Card className={netVat >= 0 ? "border-orange-200 bg-orange-50" : "border-blue-200 bg-blue-50"}>
-          <CardHeader className="flex flex-row items-center gap-3 pb-2 pt-4 px-4">
-            <div className={`p-2 rounded-lg ${netVat >= 0 ? "bg-orange-100" : "bg-blue-100"}`}>
-              <DollarSign className={`w-4 h-4 ${netVat >= 0 ? "text-orange-700" : "text-blue-700"}`} />
-            </div>
-            <CardTitle className={`text-sm font-medium ${netVat >= 0 ? "text-orange-700" : "text-blue-700"}`}>
-              {netVat >= 0 ? "VAT Payable" : "VAT Refundable"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className={`text-xl font-bold ${netVat >= 0 ? "text-orange-800" : "text-blue-800"}`}>
-              AED {Math.abs(netVat).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </div>
-            <div className={`text-xs mt-0.5 ${netVat >= 0 ? "text-orange-600" : "text-blue-600"}`}>Net VAT position</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-3 pb-2 pt-4 px-4">
-            <div className="p-2 bg-primary/10 rounded-lg"><Receipt className="w-4 h-4 text-primary" /></div>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Transactions</CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-xl font-bold">{vatRows.length}</div>
-            <div className="text-xs text-muted-foreground mt-0.5">In selected period</div>
-          </CardContent>
-        </Card>
-      </div>
+      <AccountsStatStrip>
+        <AccountsStat label="Output VAT (5%)" tone="good" value={`AED ${outputVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
+        <AccountsStat label="Input VAT (Paid)" tone="bad" value={`AED ${inputVat.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
+        <AccountsStat label={netVat >= 0 ? "VAT Payable" : "VAT Refundable"} tone={netVat >= 0 ? "warn" : "default"} value={`AED ${Math.abs(netVat).toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
+        <AccountsStat label="Transactions" value={vatRows.length} />
+      </AccountsStatStrip>
 
       {/* VAT Summary Box */}
       <div className="bg-[#0f2d5a]/5 border border-[#0f2d5a]/20 rounded-xl p-5">

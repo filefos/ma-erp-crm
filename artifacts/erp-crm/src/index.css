@@ -2,6 +2,26 @@
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
 
+/* Premium Accounts UI — refined table aesthetic */
+.acc-premium table { border-collapse: separate; border-spacing: 0; }
+.acc-premium thead th {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 600;
+  background: #ffffff;
+  border-bottom: 1px solid #0f2d5a;
+  padding: 10px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.acc-premium tbody tr { border-bottom: 1px solid #f1f5f9; transition: background-color .15s; }
+.acc-premium tbody tr:hover { background: #fafbfd; }
+.acc-premium tbody td { padding: 10px 12px; font-size: 13px; color: #1f2937; }
+.acc-premium .num { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; text-align: right; }
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -9,6 +9,7 @@ import {
   Bot, Sparkles, TrendingUp, TrendingDown, AlertTriangle, FileText, Tag, Bell,
   CheckCircle, Search, BarChart3, Lightbulb, DollarSign, Send,
 } from "lucide-react";
+import { AccountsPageHeader } from "@/components/accounts-page-header";
 
 type Message = { role: "user" | "assistant"; content: string; ts: number };
 
@@ -174,18 +175,16 @@ export function AiAssistant() {
 
   return (
     <div className="space-y-4 h-full">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Bot className="w-6 h-6 text-[#1e6ab0]" />
-            AI Accounting Assistant
-          </h1>
-          <p className="text-muted-foreground">Intelligent financial analysis powered by your real accounting data.</p>
-        </div>
-        <Badge variant="secondary" className="bg-[#0f2d5a]/10 text-[#0f2d5a] px-3 py-1">
-          <Sparkles className="w-3.5 h-3.5 mr-1.5" />AI Powered
-        </Badge>
-      </div>
+      <AccountsPageHeader
+        title="AI Accounting Assistant"
+        breadcrumb="Accounts"
+        subtitle="Intelligent financial analysis powered by your real accounting data."
+        right={
+          <Badge variant="secondary" className="bg-[#0f2d5a]/10 text-[#0f2d5a] px-3 py-1">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" />AI Powered
+          </Badge>
+        }
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {QUICK_ACTIONS.map(a => (

@@ -13,6 +13,7 @@ import { Search, Plus, Truck } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { AccountsPageHeader } from "@/components/accounts-page-header";
 
 const statusColors: Record<string, string> = {
   pending: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
@@ -51,12 +52,12 @@ export function DeliveryNotesList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Delivery Notes</h1>
-          <p className="text-muted-foreground">Track deliveries to client sites.</p>
-        </div>
-        <div className="flex items-center gap-3">
+      <AccountsPageHeader
+        title="Delivery Notes"
+        breadcrumb="Accounts"
+        subtitle="Track deliveries to client sites."
+        right={
+          <>
           <ExportMenu
             data={(notes ?? [])}
             columns={[
@@ -102,8 +103,9 @@ export function DeliveryNotesList() {
               </Button>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
+          </>
+        }
+      />
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Search delivery notes..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />

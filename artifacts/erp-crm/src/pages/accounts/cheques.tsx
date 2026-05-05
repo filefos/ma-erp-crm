@@ -13,7 +13,7 @@ import { Search, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { AccountsPageHeader, AccountsStat } from "@/components/accounts-page-header";
+import { AccountsPageHeader, AccountsStat, AccountsStatStrip } from "@/components/accounts-page-header";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -116,10 +116,10 @@ export function ChequesList() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3">
+      <AccountsStatStrip>
         <AccountsStat label="Total Issued" tone="warn" value={`AED ${totalIssued.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
         <AccountsStat label="Total Cleared" tone="good" value={`AED ${totalCleared.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
-      </div>
+      </AccountsStatStrip>
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">

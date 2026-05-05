@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, ArrowDownCircle } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
-import { AccountsPageHeader, AccountsStat } from "@/components/accounts-page-header";
+import { AccountsPageHeader, AccountsStat, AccountsStatStrip } from "@/components/accounts-page-header";
 
 const PAYMENT_METHODS = ["cash", "bank_transfer", "cheque", "card", "online"];
 
@@ -100,10 +100,10 @@ export function PaymentsReceivedList() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3">
+      <AccountsStatStrip>
         <AccountsStat label="Total Received (Filtered)" tone="good" value={`AED ${totalReceived.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} />
         <AccountsStat label="Records" value={filtered.length} />
-      </div>
+      </AccountsStatStrip>
 
       <div className="relative max-w-sm">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Search, Pencil, Trash2, BookOpen, Library, Loader2 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
+import { AccountsPageHeader } from "@/components/accounts-page-header";
 import { useQueryClient } from "@tanstack/react-query";
 import { CONSTRUCTION_COA_TEMPLATE, CONSTRUCTION_COA_COUNT } from "@/lib/construction-coa";
 

@@ -12,6 +12,7 @@ import { CompanyField } from "@/components/CompanyField";
 import { Landmark, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
+import { AccountsPageHeader } from "@/components/accounts-page-header";
 
 const CURRENCIES = ["AED","USD","EUR","GBP","SAR","INR"];
 
@@ -56,12 +57,12 @@ export function BankAccountsList() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Bank Accounts</h1>
-          <p className="text-muted-foreground">Company bank account details for both entities.</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AccountsPageHeader
+        title="Bank Accounts"
+        breadcrumb="Accounts"
+        subtitle="Company bank account details for both entities."
+        right={
+          <>
           <ExportMenu
             data={filtered}
             columns={[
@@ -108,8 +109,9 @@ export function BankAccountsList() {
             </Button>
           </DialogContent>
         </Dialog>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {isLoading ? <div className="text-muted-foreground">Loading...</div> :
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
