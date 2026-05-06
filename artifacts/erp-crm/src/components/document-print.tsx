@@ -325,7 +325,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         }
       `}</style>
 
-      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto py-4 px-0 shadow-lg rounded-lg">
+      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto py-4 px-0 shadow-lg rounded-lg flex flex-col min-h-[1123px]">
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="overflow-hidden mb-[2px]">
@@ -644,7 +644,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── SIGNATURE BLOCK (non-quotation, or quotation page 1 footer) */}
         {!isQuotation && (
-          <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
+          <div className="mt-auto grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4 pb-2">
             <div>
               <div className="font-bold mb-1">Prepared by:</div>
               <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
