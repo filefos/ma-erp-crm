@@ -858,7 +858,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 return (
                   <div
                     key={i}
-                    className={isCheque ? "bg-orange-100 px-1 font-semibold text-[#0f2d5a] inline-block" : ""}
+                    className={isCheque ? "bg-orange-100 px-1 font-bold text-[#0f2d5a] inline-block text-[13px]" : ""}
                     style={isCheque ? ({ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties) : undefined}
                   >
                     {line || "\u00A0"}
