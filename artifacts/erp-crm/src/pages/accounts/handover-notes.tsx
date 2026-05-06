@@ -42,6 +42,7 @@ export function HandoverNotesList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [projectSearch, setProjectSearch] = useState("");
   const [detailId, setDetailId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState<EditForm>({
@@ -65,12 +66,18 @@ export function HandoverNotesList() {
     },
   });
 
-  const filtered = filterByCompany(notes).filter(n =>
-    !search ||
-    n.honNumber.toLowerCase().includes(search.toLowerCase()) ||
-    n.clientName.toLowerCase().includes(search.toLowerCase()) ||
-    ((n as any).projectRef ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = filterByCompany(notes).filter(n => {
+    const q = search.toLowerCase();
+    const pq = projectSearch.toLowerCase();
+    const ref = ((n as any).projectRef ?? "").toLowerCase();
+    const matchesSearch = !q ||
+      n.honNumber.toLowerCase().includes(q) ||
+      n.clientName.toLowerCase().includes(q) ||
+      ref.includes(q) ||
+      ((n as any).lpoNumber ?? "").toLowerCase().includes(q);
+    const matchesProject = !pq || ref.includes(pq);
+    return matchesSearch && matchesProject;
+  });
 
   const selectedNote = notes.find(n => n.id === detailId);
 
@@ -145,14 +152,36 @@ export function HandoverNotesList() {
         }
       />
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by HON no., client, project..."
-          className="pl-8"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by HON no., client, LPO..."
+            className="pl-8 w-64"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="relative">
+          <span className="absolute left-2.5 top-2 text-[11px] font-bold text-[#0f2d5a] select-none pointer-events-none">PRJ</span>
+          <Input
+            placeholder="Filter by Project ID…"
+            className="pl-10 w-52 border-[#0f2d5a]/40 focus-visible:ring-[#0f2d5a]/30 font-mono text-sm"
+            value={projectSearch}
+            onChange={e => setProjectSearch(e.target.value)}
+          />
+          {projectSearch && (
+            <button
+              className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground text-xs"
+              onClick={() => setProjectSearch("")}
+            >✕</button>
+          )}
+        </div>
+        {(search || projectSearch) && (
+          <span className="text-xs text-muted-foreground">
+            {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+          </span>
+        )}
       </div>
 
       <div className="border rounded-lg bg-card">
