@@ -28,7 +28,9 @@ import { InvoiceEdit } from "@/pages/accounts/invoice-edit";
 import { DeliveryNotesList } from "@/pages/accounts/delivery-notes";
 import { DeliveryNoteDetail } from "@/pages/accounts/delivery-note-detail";
 import { UndertakingLettersList } from "@/pages/accounts/undertaking-letters";
+import { UndertakingLetterDetail } from "@/pages/accounts/undertaking-letter-detail";
 import { HandoverNotesList } from "@/pages/accounts/handover-notes";
+import { HandoverNoteDetail } from "@/pages/accounts/handover-note-detail";
 import { ExpensesList } from "@/pages/accounts/expenses";
 import { ChequesList } from "@/pages/accounts/cheques";
 import { BankAccountsList } from "@/pages/accounts/bank-accounts";
@@ -207,8 +209,18 @@ function Router() {
       <Route path="/accounts/delivery-notes">
         <ModuleGuard module="delivery_notes"><DeliveryNotesList /></ModuleGuard>
       </Route>
+      <Route path="/accounts/undertaking-letters/:id">
+        {(params) => (
+          <ModuleGuard module="lpos"><UndertakingLetterDetail id={params.id} /></ModuleGuard>
+        )}
+      </Route>
       <Route path="/accounts/undertaking-letters">
         <ModuleGuard module="lpos"><UndertakingLettersList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/handover-notes/:id">
+        {(params) => (
+          <ModuleGuard module="lpos"><HandoverNoteDetail id={params.id} /></ModuleGuard>
+        )}
       </Route>
       <Route path="/accounts/handover-notes">
         <ModuleGuard module="lpos"><HandoverNotesList /></ModuleGuard>
