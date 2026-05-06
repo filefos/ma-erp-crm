@@ -68,7 +68,27 @@ const LABOUR_DUTY = "Duty Timing: 07:00 AM – 07:00 PM (Labour) — total 9 wor
 const PRIME_LEGAL = "PRIME MAX PREFAB HOUSES IND. LLC. SP.";
 const ELITE_LEGAL = "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC";
 
+const OL_COMPANIES: Record<number, { name: string; address: string; phone: string; email: string; website: string }> = {
+  1: {
+    name: "PRIME MAX PREFAB HOUSES IND. LLC. SP.",
+    address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
+    phone: "056 616 3555",
+    email: "sales@primemaxprefab.com",
+    website: "www.primemaxprefab.com",
+  },
+  2: {
+    name: "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC",
+    address: "Sajja Industrial Area, Sharjah, UAE",
+    phone: "+971 55 100 2000",
+    email: "info@eliteprefab.ae",
+    website: "www.eliteprefab.ae",
+  },
+};
+
 export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetterDoc }>(({ doc }, ref) => {
+  const co = OL_COMPANIES[doc.companyId] ?? OL_COMPANIES[1];
+  const logoSrc = doc.companyId !== 2 ? "/prime-max-logo.png" : null;
+
   // Prefer the caller-provided explicit letterhead choice. Fall back to a
   // name-based check only when the caller did not resolve one.
   const lower = (doc.companyName ?? "").toLowerCase();
@@ -83,7 +103,6 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
   // — compensation, commission, company rules, UAE-law clauses and the
   // signature block — onto a single A4 page.
   const FS_BODY = 11.5;
-  const FS_SMALL = 10.5;
   const FS_H2 = 13;
   const LH = 1.4;
   const NAVY = "#0f2d5a";
@@ -103,63 +122,70 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
   return (
     <div
       ref={ref}
-      className="bg-white text-black mx-auto"
-      style={{
-        width: "794px",
-        height: "1123px",
-        padding: "0",
-        fontFamily: "Georgia, 'Times New Roman', serif",
-        display: "flex",
-        flexDirection: "column",
-        boxSizing: "border-box",
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: "inset 0 0 0 1px #e8eef7",
-      }}
+      className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
+      style={{ minHeight: 1123 }}
     >
-      {/* Premium accent — twin navy / sky-blue ribbons at the very top */}
-      <div style={{ height: 6, background: NAVY }} />
-      <div style={{ height: 2, background: SKY }} />
+      <style>{`
+        @media print {
+          @page { size: A4 portrait; margin: 0; }
+          html, body { background: white !important; height: 297mm !important; overflow: hidden !important; }
+          body * { visibility: hidden; }
+          .print-doc, .print-doc * { visibility: visible; }
+          .print-doc {
+            position: absolute; left: 0; top: 0;
+            width: 210mm !important; max-width: 210mm !important;
+            height: 297mm !important; max-height: 297mm !important;
+            box-shadow: none !important; border: none !important;
+            padding: 0 !important; margin: 0 !important; border-radius: 0 !important;
+            overflow: hidden !important;
+            display: flex !important; flex-direction: column !important;
+          }
+          .print-doc .py-2 { padding-top: 4pt !important; padding-bottom: 4pt !important; }
+          .print-doc .text-\\[22px\\] { font-size: 15pt !important; }
+          .print-doc .text-\\[15px\\] { font-size: 10pt !important; }
+          .print-doc .text-\\[11px\\] { font-size: 7.5pt !important; }
+          .print-doc .text-\\[10px\\] { font-size: 7pt !important; }
+          .print-doc .text-xs        { font-size: 7.5pt !important; }
+          .print-doc td, .print-doc th { padding: 1pt 4pt !important; font-size: 7.5pt !important; }
+          .print-doc .mb-1 { margin-bottom: 2pt !important; }
+          .print-doc .mb-2 { margin-bottom: 3pt !important; }
+          .print-doc .mb-4 { margin-bottom: 5pt !important; }
+          .print-doc .mt-6 { margin-top: 8pt !important; }
+          .print-doc .px-4 { padding-left: 8pt !important; padding-right: 8pt !important; }
+          .print-doc .p-3  { padding: 4pt !important; }
+        }
+      `}</style>
 
-      {/* Header — logo (left) + legal name + Ref/Date (right) */}
-      <div style={{ padding: "16px 44px 8px", borderBottom: `2px solid ${NAVY}` }}>
-        <div style={{ display: "table", width: "100%" }}>
-          <div style={{ display: "table-row" }}>
-            <div style={{ display: "table-cell", verticalAlign: "middle" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {(() => {
-                  const logoSrc = doc.companyLogoUrl
-                    || (doc.letterhead === "prime" || (!doc.letterhead && isPrime)
-                      ? "/erp-crm/prime-max-logo.png"
-                      : null);
-                  return logoSrc ? (
-                    <img
-                      src={logoSrc}
-                      alt={legalName}
-                      style={{ height: 42, width: "auto", objectFit: "contain", flexShrink: 0 }}
-                    />
-                  ) : null;
-                })()}
-                <div>
-                  <div style={{ color: NAVY, fontSize: 17, fontWeight: 800, lineHeight: 1.2, letterSpacing: 0.5 }}>
-                    {legalName}
-                  </div>
-                  <div style={{ color: SKY, fontSize: FS_SMALL, fontStyle: "italic", marginTop: 2, letterSpacing: 0.2 }}>
-                    Excellence in Prefabricated Construction
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style={{ display: "table-cell", verticalAlign: "middle", textAlign: "right", whiteSpace: "nowrap", fontSize: FS_SMALL, width: 220, color: NAVY }}>
-              <div><strong>Ref:</strong> {doc.letterNumber}</div>
-              <div><strong>Date:</strong> {(doc.issuedAt ? new Date(doc.issuedAt) : new Date()).toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" })}</div>
-            </div>
+      {/* ── LETTERHEAD — identical to Undertaking Letter / Delivery Note ── */}
+      <div className="overflow-hidden mb-[2px]">
+        <div
+          className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4"
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+        >
+          {logoSrc && (
+            <img
+              src={logoSrc}
+              alt="Company Logo"
+              className="object-contain rounded bg-white p-1 flex-shrink-0"
+              style={{ maxHeight: 60, maxWidth: 130, height: "auto" }}
+            />
+          )}
+          <div className={`leading-tight ${logoSrc ? "flex-1" : "flex-1 text-center"}`}>
+            <div className="text-[22px] font-black tracking-wider uppercase leading-none">{co.name}</div>
+            <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
+            <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email} | Web: {co.website}</div>
           </div>
+        </div>
+        <div
+          className="bg-[#1e6ab0] text-white text-center py-1"
+          style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+        >
+          <span className="text-[15px] font-black tracking-widest uppercase">Offer Letter</span>
         </div>
       </div>
 
-      {/* Body wrapper — flex-1 pushes the signature + footer to the bottom of the A4 page. */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "10px 44px 0" }}>
+      {/* Body wrapper */}
+      <div className="flex-1 flex flex-col px-4 pt-3" style={{ paddingBottom: 12 }}>
         {/* Subject */}
         <h1 style={{ textAlign: "center", color: NAVY, fontWeight: 700, fontSize: 16, margin: "4px 0 8px", letterSpacing: 1.2, textTransform: "uppercase" }}>
           Offer of Employment
@@ -269,13 +295,13 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
         </div>
       </div>
 
-      {/* Footer — official address and contact details. */}
-      <div style={{ borderTop: `2px solid ${NAVY}`, paddingTop: 6, paddingBottom: 8, fontSize: FS_SMALL, color: NAVY, textAlign: "center", lineHeight: 1.4, background: `${SKY}10` }}>
-        <div>Plot # 2040, Sajja Industrial Area, Sharjah, UAE</div>
-        <div>Tel: 0566163555 &nbsp;·&nbsp; Email: hr@primemaxprefab.com &nbsp;·&nbsp; Web: www.primemaxprefab.com</div>
+      {/* ── FOOTER — identical to Undertaking Letter / Delivery Note ── */}
+      <div
+        className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
+        style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+      >
+        <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
       </div>
-      <div style={{ height: 2, background: SKY }} />
-      <div style={{ height: 6, background: NAVY }} />
     </div>
   );
 });
