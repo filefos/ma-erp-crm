@@ -270,7 +270,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           </div>
 
           {/* ── PREPARED BY / FOR & ON BEHALF ── */}
-          <div className="flex justify-between items-end mb-2">
+          <div className="flex justify-between items-end">
             <div>
               <div className="text-[10px] font-semibold">Prepared by:</div>
               <div className="text-[11px]">{co.contact}</div>
@@ -280,14 +280,11 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
               <div className="text-[11px] font-black uppercase">{co.name}</div>
             </div>
           </div>
+        </div>
 
-          <div className="flex justify-between items-start border-t border-gray-300 pt-1">
-            <div className="text-[10px] text-gray-500">Signature</div>
-            <div className="text-[10px] text-gray-500 text-center italic">
-              This is a computer generated document. No signature or stamp required.
-            </div>
-            <div className="text-[10px] text-gray-500">Authorised Signatory</div>
-          </div>
+        {/* ── DISCLAIMER ── */}
+        <div className="px-4 pt-1 pb-1 text-center text-[8px] text-gray-400 italic">
+          This is a computer generated document. No signature or stamp required.
         </div>
 
         {/* ── FOOTER ── */}

@@ -648,18 +648,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <div>
               <div className="font-bold mb-1">Prepared by:</div>
               <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
-              {data.preparedBySignatureUrl ? (
-                <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
-              ) : (
-                <div className="h-10 mt-2 mb-1" />
-              )}
-              <div className="border-t border-gray-500 pt-1 text-gray-500">Signature</div>
             </div>
             <div className="text-right">
               <div className="font-bold mb-1">For &amp; on behalf of</div>
               <div className="font-bold text-[13px]">{coName}</div>
-              <div className="h-10 mt-2 mb-1" />
-              <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
             </div>
           </div>
         )}
@@ -670,18 +662,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <div>
                 <div className="font-bold mb-1">Prepared by:</div>
                 <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
-                {data.preparedBySignatureUrl ? (
-                  <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
-                ) : (
-                  <div className="h-10 mt-2 mb-1" />
-                )}
-                <div className="border-t border-gray-500 pt-1 text-gray-500">Signature: ____________________</div>
               </div>
               <div>
                 <div className="font-bold mb-1">For &amp; on behalf of</div>
                 <div className="font-bold text-[13px]">{coName}</div>
-                <div className="h-10 mt-2 mb-1" />
-                <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
               </div>
             </div>
             <PageFooter
