@@ -255,7 +255,7 @@ export function OfferLetterDetail({ id }: Props) {
     if (!previewRef.current) return;
     setDownloading(true);
     try {
-      const { base64, filename } = await captureElementToPdfBase64(previewRef.current, `${offer.letterNumber}-${offer.candidateName.replace(/\s+/g, "_")}`);
+      const { base64, filename } = await captureElementToPdfBase64(previewRef.current, `${offer.letterNumber}-${offer.candidateName.replace(/\s+/g, "_")}`, { forceSinglePage: true });
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;
       link.download = filename;
@@ -283,6 +283,7 @@ export function OfferLetterDetail({ id }: Props) {
             docNumber={offer.letterNumber}
             docTypeLabel="Offer Letter"
             companyId={offer.companyId ?? undefined}
+            forceSinglePage
           />
           {canEdit && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="button-edit-offer"><Pencil className="w-4 h-4 mr-1" />Edit</Button>}
           {canEdit && editing && (

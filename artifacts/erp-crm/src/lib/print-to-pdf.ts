@@ -61,7 +61,12 @@ function findLastContentY(canvas: HTMLCanvasElement): number {
   return canvas.height;
 }
 
-export async function captureElementToPdfBase64(el: HTMLElement, filename: string): Promise<{ base64: string; filename: string }> {
+interface CaptureOptions {
+  /** Force the entire content into exactly one A4 page by scaling it down to fit. */
+  forceSinglePage?: boolean;
+}
+
+export async function captureElementToPdfBase64(el: HTMLElement, filename: string, options: CaptureOptions = {}): Promise<{ base64: string; filename: string }> {
   const rawCanvas = await html2canvas(el, {
     scale: 2,
     useCORS: true,
@@ -69,6 +74,32 @@ export async function captureElementToPdfBase64(el: HTMLElement, filename: strin
     windowWidth: el.scrollWidth,
     windowHeight: el.scrollHeight,
   });
+
+  const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  // When forceSinglePage is set, scale the entire canvas to fit within one A4
+  // page — maintain aspect ratio and constrain by whichever dimension is the
+  // limiting one (width or height).
+  if (options.forceSinglePage) {
+    const aspectRatio = rawCanvas.width / rawCanvas.height;
+    let drawWidth: number;
+    let drawHeight: number;
+    // Try fitting by width first
+    drawWidth = pageWidth;
+    drawHeight = pageWidth / aspectRatio;
+    if (drawHeight > pageHeight) {
+      // Height is the limiting dimension — fit by height instead
+      drawHeight = pageHeight;
+      drawWidth = pageHeight * aspectRatio;
+    }
+    const dataUrl = rawCanvas.toDataURL("image/jpeg", 0.92);
+    pdf.addImage(dataUrl, "JPEG", 0, 0, drawWidth, drawHeight, undefined, "FAST");
+    const dataUri = pdf.output("datauristring");
+    const base64 = dataUri.split(",")[1] ?? "";
+    return { base64, filename: filename.endsWith(".pdf") ? filename : `${filename}.pdf` };
+  }
 
   // Trim trailing whitespace from the rendered canvas. Without this an A4
   // element with bottom padding can render a near-blank second page.
@@ -86,10 +117,6 @@ export async function captureElementToPdfBase64(el: HTMLElement, filename: strin
       canvas = trimmed;
     }
   }
-
-  const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
-  const pageWidth = pdf.internal.pageSize.getWidth();
-  const pageHeight = pdf.internal.pageSize.getHeight();
 
   const imgWidth = pageWidth;
   const ratio = canvas.width / imgWidth;

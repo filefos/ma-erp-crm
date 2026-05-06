@@ -37,6 +37,8 @@ interface ExportButtonsProps {
   recipientEmail?: string;
   docTypeLabel?: string;
   companyId?: number;
+  /** Scale the entire document to fit exactly one A4 page in the PDF (e.g. offer letters). */
+  forceSinglePage?: boolean;
 }
 
 function normalizePhone(raw: string): string {
@@ -87,7 +89,7 @@ function extractTableRows(table: HTMLTableElement): (string | number)[][] {
   return rows;
 }
 
-export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId }: ExportButtonsProps) {
+export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId, forceSinglePage }: ExportButtonsProps) {
   const { toast } = useToast();
   const label = docTypeLabel ?? "document";
 
@@ -172,7 +174,7 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     }
 
     try {
-      return await captureElementToPdfBase64(el, `${docNumber}.pdf`);
+      return await captureElementToPdfBase64(el, `${docNumber}.pdf`, { forceSinglePage });
     } finally {
       for (const r of restored) {
         r.el.style.transform = r.transform;
