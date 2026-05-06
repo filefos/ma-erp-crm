@@ -103,6 +103,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
   // — compensation, commission, company rules, UAE-law clauses and the
   // signature block — onto a single A4 page.
   const FS_BODY = 11.5;
+  const FS_SMALL = 10.5;
   const FS_H2 = 13;
   const LH = 1.4;
   const NAVY = "#0f2d5a";
