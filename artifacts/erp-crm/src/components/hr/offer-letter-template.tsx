@@ -304,29 +304,8 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
           );
         })()}
 
-        {/* ── SECTION: Statutory Terms ── */}
-        <div style={sectionHead}>{doc.commissionEnabled ? "5" : "4"}. Statutory Terms — UAE Federal Decree-Law No. 33 of 2021</div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <tbody>
-            {[
-              ["Sick Leave", "90 days per year (15 days full pay, 30 days half pay, 45 days unpaid) — Art. 31."],
-              ["Maternity Leave", "60 calendar days (45 days full pay, 15 days half pay) — Art. 30."],
-              ["Public Holidays", "Granted per UAE Official Gazette each year — Art. 28."],
-              ["End-of-Service Gratuity", "21 days' basic salary per year for the first 5 years; 30 days thereafter — Art. 51."],
-              ["Overtime", "Compensated at basic hourly rate + 25% (50% for night/Friday work) — Art. 19."],
-              ["Non-Discrimination", "Employment is based solely on merit; no discrimination on any protected ground — Art. 4."],
-              ["Governing Law", "UAE Federal Decree-Law No. 33 of 2021 and its Executive Regulations; disputes before competent UAE Labour Courts."],
-            ].map(([label, text], i) => (
-              <tr key={i}>
-                <td style={{ ...tdLabel, width: "28%" }}>{label}</td>
-                <td style={{ ...tdValue, ...smallClause }}>{text}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
         {/* ── SECTION: Company Rules ── */}
-        <div style={sectionHead}>{doc.commissionEnabled ? "6" : "5"}. Code of Conduct &amp; Company Policies</div>
+        <div style={sectionHead}>{doc.commissionEnabled ? "5" : "4"}. Code of Conduct &amp; Company Policies</div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <tbody>
             {[
