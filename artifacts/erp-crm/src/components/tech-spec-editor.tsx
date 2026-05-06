@@ -50,7 +50,7 @@ export function TechSpecEditor({ sections, onChange }: Props) {
               Pt.
             </th>
             <th className="border border-gray-500 px-2 py-2 text-white text-[11px] font-bold text-left">
-              Technical Specification Detail
+              Description
             </th>
             <th className="border border-gray-500 px-1 py-2 text-white text-[11px] font-bold text-center" style={{ width: 72 }}>
               Actions

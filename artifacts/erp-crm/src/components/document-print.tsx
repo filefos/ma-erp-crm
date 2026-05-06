@@ -732,7 +732,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                         Pt.
                       </th>
                       <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "left", fontSize: "8.5pt", fontWeight: 700, padding: "5px 8px" }}>
-                        TECHNICAL SPECIFICATION DETAIL
+                        DESCRIPTION
                       </th>
                     </tr>
                   </thead>
