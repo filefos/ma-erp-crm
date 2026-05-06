@@ -118,7 +118,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             )}
             <div className={`leading-tight ${logoSrc ? "flex-1" : "flex-1 text-center"}`}>
               <div className="text-[22px] font-black tracking-wider uppercase leading-none">{co.name}</div>
-              <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
+              <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email} | Web: {co.website}</div>
             </div>
           </div>
@@ -295,7 +295,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
           style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
-          <div>{co.address} | Tel: {co.phone} | Email: {co.email} | TRN: {co.trn} | {co.website}</div>
+          <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
         </div>
       </div>
     );
