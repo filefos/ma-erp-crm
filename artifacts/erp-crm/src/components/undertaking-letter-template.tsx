@@ -281,12 +281,10 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
             </div>
           </div>
 
-          <div className="flex justify-between items-start border-t border-gray-300 pt-1">
-            <div className="text-[10px] text-gray-500">Signature</div>
+          <div className="flex justify-center items-start border-t border-gray-300 pt-1">
             <div className="text-[10px] text-gray-500 text-center italic">
               This is a computer generated document. No signature or stamp required.
             </div>
-            <div className="text-[10px] text-gray-500">Authorised Signatory</div>
           </div>
         </div>
 
