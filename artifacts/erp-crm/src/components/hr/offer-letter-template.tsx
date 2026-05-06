@@ -181,7 +181,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
           className="bg-[#1e6ab0] text-white text-center py-1"
           style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
-          <span className="text-[15px] font-black tracking-widest uppercase">Offer Letter</span>
+          <span className="text-[15px] font-black tracking-widest uppercase">Offer of Employment</span>
         </div>
       </div>
 
