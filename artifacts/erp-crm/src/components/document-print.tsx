@@ -615,26 +615,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         )}
 
-        {/* ── DELIVERY RECEIVER BLOCK ─────────────────────────────────── */}
-        {isDelivery && (
-          <div className="mt-6 grid grid-cols-3 gap-4 text-xs">
-            <div className="border border-gray-400 p-3">
-              <div className="font-bold mb-6">Prepared / Dispatched By:</div>
-              <div className="border-t border-gray-500 pt-1">Name &amp; Signature</div>
-            </div>
-            <div className="border border-gray-400 p-3">
-              <div className="font-bold mb-1">Received By:</div>
-              <div className="text-gray-600 mb-4">{data.receiverName ?? "________________________"}</div>
-              <div className="border-t border-gray-500 pt-1">Name, Signature &amp; Stamp</div>
-            </div>
-            <div className="border border-gray-400 p-3">
-              <div className="font-bold mb-1">Delivery Date &amp; Time:</div>
-              <div className="text-gray-600 mb-4">{data.deliveryDate ?? "________________________"}</div>
-              <div className="border-t border-gray-500 pt-1">Date / Time</div>
-            </div>
-          </div>
-        )}
-
         {/* ── CHEQUE FAVOR NOTE (quotation page 1, subtle, left-aligned) */}
         {isQuotation && (
           <div className="mb-3 text-[10px] text-[#0f2d5a] font-semibold text-left">

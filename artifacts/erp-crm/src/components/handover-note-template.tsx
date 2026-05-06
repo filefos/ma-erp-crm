@@ -270,35 +270,6 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             <p className="mb-2 text-gray-600 italic"><strong>Note:</strong> {doc.notes}</p>
           )}
 
-          {/* ── SIGNATURE BLOCK ── */}
-          <div className="flex gap-0 w-full mb-4 border border-gray-300">
-            <div className="flex-1 p-3 border-r border-gray-300">
-              <div className="text-[10px] text-gray-500">Handed over by:</div>
-              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[11px] font-semibold text-[#0f2d5a]">Name &amp; Signature</div>
-                <div className="text-[10px] text-gray-500 mt-1">
-                  For &amp; on behalf of <strong>{co.name}</strong>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 p-3 border-r border-gray-300">
-              <div className="text-[10px] text-gray-500">Received &amp; Accepted by:</div>
-              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[11px] font-semibold text-[#0f2d5a]">
-                  {doc.receivedByName || "Name, Signature &amp; Stamp"}
-                </div>
-                <div className="text-[10px] text-gray-500 mt-1 uppercase">{doc.clientName}</div>
-              </div>
-            </div>
-            <div className="flex-1 p-3">
-              <div className="text-[10px] text-gray-500">Handover Date &amp; Time:</div>
-              <div className="mt-2 text-[11px] text-[#0f2d5a]">{dateFmt}</div>
-              <div className="mt-4 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[10px] text-gray-500">Date / Time</div>
-              </div>
-            </div>
-          </div>
-
           {/* ── PREPARED BY / AUTHORISED SIGNATORY ── */}
           <div className="flex gap-8" style={{ marginTop: "auto" }}>
             <div className="flex-1">
