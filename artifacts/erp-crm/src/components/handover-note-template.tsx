@@ -299,26 +299,25 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             </div>
           </div>
 
-        </div>
+          {/* ── PREPARED BY / FOR & ON BEHALF ── */}
+          <div className="flex justify-between items-end mb-1">
+            <div>
+              <div className="text-[10px] font-semibold">Prepared by:</div>
+              <div className="text-[11px]">{co.contact}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px]">For &amp; on behalf of</div>
+              <div className="text-[11px] font-black uppercase">{co.name}</div>
+            </div>
+          </div>
 
-        {/* ── PREPARED BY / FOR & ON BEHALF (pinned above footer) ── */}
-        <div className="flex justify-between items-end px-4 mb-1">
-          <div>
-            <div className="text-[10px] font-semibold">Prepared by:</div>
-            <div className="text-[11px]">{co.contact}</div>
+          <div className="flex justify-between items-start border-t border-gray-300 pt-1">
+            <div className="text-[10px] text-gray-500">Signature</div>
+            <div className="text-[10px] text-gray-500 text-center italic">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="text-[10px] text-gray-500">Authorised Signatory</div>
           </div>
-          <div className="text-right">
-            <div className="text-[10px]">For &amp; on behalf of</div>
-            <div className="text-[11px] font-black uppercase">{co.name}</div>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-start border-t border-gray-300 px-4 pt-1 mb-0">
-          <div className="text-[10px] text-gray-500">Signature</div>
-          <div className="text-[10px] text-gray-500 text-center italic">
-            This is a computer generated document. No signature or stamp required.
-          </div>
-          <div className="text-[10px] text-gray-500">Authorised Signatory</div>
         </div>
 
         {/* ── FOOTER ── */}
