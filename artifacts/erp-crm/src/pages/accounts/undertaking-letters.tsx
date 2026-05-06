@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import {
-  useListUndertakingLetters, useUpdateUndertakingLetter,
+  useListUndertakingLetters, useUpdateUndertakingLetter, useCreateUndertakingLetter,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CompanyField } from "@/components/CompanyField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Search, FileText, Pencil, CheckCircle, FileDown, Printer } from "lucide-react";
+import { Search, FileText, Pencil, CheckCircle, FileDown, Printer, Plus } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { AccountsPageHeader } from "@/components/accounts-page-header";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,10 @@ interface EditForm {
   signedByName: string; signedDate: string; status: string; notes: string;
 }
 
+const EMPTY_NEW_UL = () => ({
+  clientName: "", companyId: "", lpoNumber: "", projectRef: "", scope: "", letterDate: "",
+});
+
 export function UndertakingLettersList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -38,9 +43,23 @@ export function UndertakingLettersList() {
   const [detailId, setDetailId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
+  const [newForm, setNewForm] = useState(EMPTY_NEW_UL());
   const [form, setForm] = useState<EditForm>({
     letterDate: "", scope: "", commitmentText: "",
     signedByName: "", signedDate: "", status: "draft", notes: "",
+  });
+
+  const createMutation = useCreateUndertakingLetter({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/undertaking-letters"] });
+        setNewOpen(false);
+        setNewForm(EMPTY_NEW_UL());
+        toast({ title: "Undertaking Letter created." });
+      },
+      onError: (e: any) => toast({ title: e?.message ?? "Failed to create", variant: "destructive" }),
+    },
   });
 
   const printRef = useRef<HTMLDivElement>(null);
@@ -160,7 +179,7 @@ export function UndertakingLettersList() {
       <AccountsPageHeader
         title="Undertaking Letters"
         breadcrumb="Accounts"
-        subtitle="Formal undertaking documents issued per LPO — auto-created on LPO registration."
+        subtitle="Formal undertaking documents issued per LPO."
         right={
           <>
             {draft > 0 && (
@@ -182,6 +201,49 @@ export function UndertakingLettersList() {
               title="Undertaking Letters"
               size="sm"
             />
+            <Dialog open={newOpen} onOpenChange={setNewOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+                  <Plus className="w-4 h-4 mr-2" />New Undertaking Letter
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader><DialogTitle>Create Undertaking Letter</DialogTitle></DialogHeader>
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="space-y-1 col-span-2">
+                    <Label>Client Name *</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.clientName} onChange={e => setNewForm(p => ({ ...p, clientName: e.target.value }))} placeholder="Client / company name" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label>Company *</Label>
+                    <CompanyField value={newForm.companyId} onChange={v => setNewForm(p => ({ ...p, companyId: v }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>LPO Reference</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.lpoNumber} onChange={e => setNewForm(p => ({ ...p, lpoNumber: e.target.value }))} placeholder="e.g. LPO-2025-001" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Project Reference</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.projectRef} onChange={e => setNewForm(p => ({ ...p, projectRef: e.target.value }))} placeholder="e.g. PM-PRJ-2025-0001" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label>Project / Scope Description</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.scope} onChange={e => setNewForm(p => ({ ...p, scope: e.target.value }))} placeholder="Brief description of the project scope" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label>Letter Date</Label>
+                    <input type="date" className="w-full border rounded px-3 py-2 text-sm" value={newForm.letterDate} onChange={e => setNewForm(p => ({ ...p, letterDate: e.target.value }))} />
+                  </div>
+                </div>
+                <Button
+                  className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0] w-full"
+                  onClick={() => createMutation.mutate({ data: { ...newForm, companyId: parseInt(newForm.companyId, 10) } as any })}
+                  disabled={!newForm.clientName || !newForm.companyId || createMutation.isPending}
+                >
+                  {createMutation.isPending ? "Creating..." : "Create Undertaking Letter"}
+                </Button>
+              </DialogContent>
+            </Dialog>
           </>
         }
       />

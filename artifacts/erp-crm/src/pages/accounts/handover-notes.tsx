@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  useListHandoverNotes, useUpdateHandoverNote, useListCompanies,
+  useListHandoverNotes, useUpdateHandoverNote, useCreateHandoverNote, useListCompanies,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { CompanyField } from "@/components/CompanyField";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Search, PackageCheck, Pencil, CheckCircle, Plus, Trash2 } from "lucide-react";
@@ -38,6 +39,10 @@ interface EditForm {
 
 const EMPTY_ITEM = (): HandoverItem => ({ description: "", quantity: 1, unit: "nos" });
 
+const EMPTY_NEW_HON = () => ({
+  clientName: "", companyId: "", lpoNumber: "", projectRef: "", projectDescription: "", handoverDate: "",
+});
+
 export function HandoverNotesList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -45,10 +50,24 @@ export function HandoverNotesList() {
   const [projectSearch, setProjectSearch] = useState("");
   const [detailId, setDetailId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
+  const [newForm, setNewForm] = useState(EMPTY_NEW_HON());
   const [form, setForm] = useState<EditForm>({
     handoverDate: "", projectDescription: "", receivedByName: "",
     receivedByDesignation: "", clientRepresentative: "",
     status: "draft", notes: "", items: [EMPTY_ITEM()],
+  });
+
+  const createMutation = useCreateHandoverNote({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/handover-notes"] });
+        setNewOpen(false);
+        setNewForm(EMPTY_NEW_HON());
+        toast({ title: "Handover Note created." });
+      },
+      onError: (e: any) => toast({ title: e?.message ?? "Failed to create", variant: "destructive" }),
+    },
   });
 
   const { data: notes = [], isLoading } = useListHandoverNotes();
@@ -125,7 +144,7 @@ export function HandoverNotesList() {
       <AccountsPageHeader
         title="Handover Notes"
         breadcrumb="Accounts"
-        subtitle="Project handover documents issued at project completion — auto-created on LPO registration."
+        subtitle="Project handover documents issued at project completion."
         right={
           <>
             {draft > 0 && (
@@ -148,6 +167,49 @@ export function HandoverNotesList() {
               title="Handover Notes"
               size="sm"
             />
+            <Dialog open={newOpen} onOpenChange={setNewOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+                  <Plus className="w-4 h-4 mr-2" />New Handover Note
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader><DialogTitle>Create Handover Note</DialogTitle></DialogHeader>
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="space-y-1 col-span-2">
+                    <Label>Client Name *</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.clientName} onChange={e => setNewForm(p => ({ ...p, clientName: e.target.value }))} placeholder="Client / company name" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label>Company *</Label>
+                    <CompanyField value={newForm.companyId} onChange={v => setNewForm(p => ({ ...p, companyId: v }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>LPO Reference</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.lpoNumber} onChange={e => setNewForm(p => ({ ...p, lpoNumber: e.target.value }))} placeholder="e.g. LPO-2025-001" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Project Reference</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.projectRef} onChange={e => setNewForm(p => ({ ...p, projectRef: e.target.value }))} placeholder="e.g. PM-PRJ-2025-0001" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label>Project Description</Label>
+                    <input className="w-full border rounded px-3 py-2 text-sm" value={newForm.projectDescription} onChange={e => setNewForm(p => ({ ...p, projectDescription: e.target.value }))} placeholder="Brief description of the project" />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label>Handover Date</Label>
+                    <input type="date" className="w-full border rounded px-3 py-2 text-sm" value={newForm.handoverDate} onChange={e => setNewForm(p => ({ ...p, handoverDate: e.target.value }))} />
+                  </div>
+                </div>
+                <Button
+                  className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0] w-full"
+                  onClick={() => createMutation.mutate({ data: { ...newForm, companyId: parseInt(newForm.companyId, 10) } as any })}
+                  disabled={!newForm.clientName || !newForm.companyId || createMutation.isPending}
+                >
+                  {createMutation.isPending ? "Creating..." : "Create Handover Note"}
+                </Button>
+              </DialogContent>
+            </Dialog>
           </>
         }
       />
