@@ -252,11 +252,11 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
             </div>
           </div>
 
-          <div className="flex justify-center items-start border-t border-gray-300 pt-1">
-            <div className="text-[10px] text-gray-500 text-center italic">
-              This is a computer generated document. No signature or stamp required.
-            </div>
-          </div>
+        </div>
+
+        {/* ── DISCLAIMER (just above footer) ── */}
+        <div className="text-center text-[8px] text-gray-400 italic pb-2">
+          This is a computer generated document. No signature or stamp required.
         </div>
 
         {/* ── FOOTER ── */}
