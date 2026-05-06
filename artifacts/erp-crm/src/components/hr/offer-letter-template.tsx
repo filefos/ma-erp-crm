@@ -324,16 +324,12 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
             <div style={{ fontWeight: 700, color: NAVY, marginBottom: 1 }}>For &amp; on behalf of Employer</div>
             <div style={{ color: "#374151", marginBottom: 18 }}>{legalName}</div>
             <div style={{ borderTop: `1px solid #9ca3af`, paddingTop: 3 }}>
-              <div style={{ color: "#6b7280" }}>Name: __________________________</div>
-              <div style={{ color: "#6b7280", marginTop: 2 }}>Date: ___________________________</div>
             </div>
           </div>
           <div style={{ flex: 1, border: `1px solid #d1d9e6`, padding: "6px 10px", background: "#f8fafc" }}>
             <div style={{ fontWeight: 700, color: NAVY, marginBottom: 1 }}>Accepted by Employee</div>
             <div style={{ color: "#374151", marginBottom: 18 }}>{doc.candidateName}{doc.candidateNationality ? ` (${doc.candidateNationality})` : ""}</div>
             <div style={{ borderTop: `1px solid #9ca3af`, paddingTop: 3 }}>
-              <div style={{ color: "#6b7280" }}>Name: __________________________</div>
-              <div style={{ color: "#6b7280", marginTop: 2 }}>Date: ___________________________</div>
             </div>
           </div>
         </div>
