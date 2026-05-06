@@ -253,18 +253,18 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
         <div style={{ flex: 1, minHeight: 8 }} />
 
         {/* Signature block — sits directly above the footer per spec */}
-        <div style={{ display: "table", width: "100%", marginTop: 8, marginBottom: 10, fontSize: FS_BODY }}>
-          <div style={{ display: "table-row" }}>
-            <div style={{ display: "table-cell", width: "50%", paddingRight: 24, verticalAlign: "top" }}>
-              <div style={{ color: "#444" }}>For and on behalf of</div>
-              <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3 }}>{legalName}</div>
-              <div style={{ borderTop: `1px solid ${NAVY}`, paddingTop: 4, marginTop: 38, color: NAVY, fontWeight: 600 }}>Authorised Signatory</div>
+        <div style={{ display: "flex", gap: 32, width: "100%", marginTop: 8, marginBottom: 10, fontSize: FS_BODY }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, color: "#111" }}>For &amp; on behalf of</div>
+            <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3, textTransform: "uppercase" }}>{legalName}</div>
+            <div style={{ borderTop: `1px solid #6b7280`, paddingTop: 4, marginTop: 38, color: "#6b7280" }}>
+              Signature: <span style={{ color: "#9ca3af" }}>_______________</span>
             </div>
-            <div style={{ display: "table-cell", width: "50%", paddingLeft: 24, verticalAlign: "top" }}>
-              <div style={{ color: "#444" }}>Accepted by</div>
-              <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3 }}>{doc.candidateName}</div>
-              <div style={{ borderTop: `1px solid ${NAVY}`, paddingTop: 4, marginTop: 38, color: NAVY, fontWeight: 600 }}>Signature &amp; Date</div>
-            </div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, color: "#111" }}>For &amp; on behalf of</div>
+            <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3, textTransform: "uppercase" }}>{doc.candidateName}</div>
+            <div style={{ borderTop: `1px solid #6b7280`, paddingTop: 4, marginTop: 38, color: "#6b7280" }}>Authorised Signatory</div>
           </div>
         </div>
       </div>
