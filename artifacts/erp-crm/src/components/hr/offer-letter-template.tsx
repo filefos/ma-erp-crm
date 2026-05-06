@@ -250,7 +250,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
             </tr>
             <tr>
               <td style={tdLabel}>Annual Leave</td>
-              <td style={tdValue}>30 calendar days/year after 1 year of service (Art. 29)</td>
+              <td style={tdValue}>30 calendar days/year after 2 years of service (Art. 29)</td>
               <td style={tdLabel}>Air Ticket</td>
               <td style={tdValue}>One economy-class ticket to home country after 2 continuous years</td>
             </tr>
