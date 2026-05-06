@@ -67,12 +67,19 @@ interface CaptureOptions {
 }
 
 export async function captureElementToPdfBase64(el: HTMLElement, filename: string, options: CaptureOptions = {}): Promise<{ base64: string; filename: string }> {
+  // Use scrollWidth/scrollHeight (layout dimensions) rather than
+  // getBoundingClientRect (visual dimensions) so that a parent
+  // transform:scale doesn't shrink the captured canvas.
   const rawCanvas = await html2canvas(el, {
     scale: 2,
     useCORS: true,
     backgroundColor: "#ffffff",
+    width: el.scrollWidth,
+    height: el.scrollHeight,
     windowWidth: el.scrollWidth,
     windowHeight: el.scrollHeight,
+    x: 0,
+    y: 0,
   });
 
   const pdf = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });

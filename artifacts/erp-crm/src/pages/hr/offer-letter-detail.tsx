@@ -284,6 +284,7 @@ export function OfferLetterDetail({ id }: Props) {
             docTypeLabel="Offer Letter"
             companyId={offer.companyId ?? undefined}
             forceSinglePage
+            elementRef={previewRef}
           />
           {canEdit && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="button-edit-offer"><Pencil className="w-4 h-4 mr-1" />Edit</Button>}
           {canEdit && editing && (

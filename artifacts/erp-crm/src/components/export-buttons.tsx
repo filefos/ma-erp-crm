@@ -39,6 +39,8 @@ interface ExportButtonsProps {
   companyId?: number;
   /** Scale the entire document to fit exactly one A4 page in the PDF (e.g. offer letters). */
   forceSinglePage?: boolean;
+  /** Directly supply the element to capture. When provided, skips the .print-doc DOM query entirely. */
+  elementRef?: React.RefObject<HTMLElement | null>;
 }
 
 function normalizePhone(raw: string): string {
@@ -89,7 +91,7 @@ function extractTableRows(table: HTMLTableElement): (string | number)[][] {
   return rows;
 }
 
-export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId, forceSinglePage }: ExportButtonsProps) {
+export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId, forceSinglePage, elementRef }: ExportButtonsProps) {
   const { toast } = useToast();
   const label = docTypeLabel ?? "document";
 
@@ -154,33 +156,10 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
   };
 
   const generatePdf = async () => {
-    const el = getPrintEl();
+    // Prefer a directly-supplied ref (avoids DOM querying through scaled containers).
+    const el = (elementRef?.current as HTMLElement | null) ?? getPrintEl();
     if (!el) throw new Error("Could not find the printable document on this page.");
-
-    // html2canvas uses the element's getBoundingClientRect dimensions, which
-    // are shrunk when a parent has transform:scale applied (e.g. the 0.6×
-    // preview wrapper on offer-letter-detail). Temporarily reset transforms on
-    // all ancestor elements so we capture the document at its true A4 size.
-    const restored: { el: HTMLElement; transform: string; width: string }[] = [];
-    let ancestor = el.parentElement;
-    while (ancestor && ancestor !== document.body) {
-      const s = window.getComputedStyle(ancestor);
-      if (s.transform && s.transform !== "none") {
-        restored.push({ el: ancestor, transform: ancestor.style.transform, width: ancestor.style.width });
-        ancestor.style.transform = "none";
-        ancestor.style.width = "auto";
-      }
-      ancestor = ancestor.parentElement;
-    }
-
-    try {
-      return await captureElementToPdfBase64(el, `${docNumber}.pdf`, { forceSinglePage });
-    } finally {
-      for (const r of restored) {
-        r.el.style.transform = r.transform;
-        r.el.style.width = r.width;
-      }
-    }
+    return captureElementToPdfBase64(el, `${docNumber}.pdf`, { forceSinglePage });
   };
 
   const handleDownloadPdf = async () => {
