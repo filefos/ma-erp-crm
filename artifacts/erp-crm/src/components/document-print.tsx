@@ -644,21 +644,23 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── SIGNATURE BLOCK (non-quotation, or quotation page 1 footer) */}
         {!isQuotation && (
-          <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
+          <div className="mt-6 grid grid-cols-2 gap-8 text-xs">
             <div>
               <div className="font-bold mb-1">Prepared by:</div>
               <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
               {data.preparedBySignatureUrl ? (
-                <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
+                <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-6 mb-1 object-contain" style={{ maxWidth: 160 }} />
               ) : (
-                <div className="h-10 mt-2 mb-1" />
+                <div className="mt-6" />
               )}
-              <div className="border-t border-gray-500 pt-1 text-gray-500">Signature</div>
+              <div className="border-t border-gray-500 pt-1 text-gray-500">
+                Signature: <span className="text-gray-400">_______________</span>
+              </div>
             </div>
             <div className="text-right">
               <div className="font-bold mb-1">For &amp; on behalf of</div>
               <div className="font-bold text-[13px]">{coName}</div>
-              <div className="h-10 mt-2 mb-1" />
+              <div className="mt-6" />
               <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
             </div>
           </div>
