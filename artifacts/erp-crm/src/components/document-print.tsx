@@ -642,17 +642,23 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         )}
 
-        {/* ── SIGNATURE BLOCK (non-quotation, or quotation page 1 footer) */}
+        {/* ── SIGNATURE BLOCK (non-quotation) + FOOTER — pinned together at bottom */}
         {!isQuotation && (
-          <div className="mt-auto grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4 pb-2">
-            <div>
-              <div className="font-bold mb-1">Prepared by:</div>
-              <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+          <div className="mt-auto">
+            <div className="grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-3 pb-3 px-4">
+              <div>
+                <div className="font-bold mb-0.5">Prepared by:</div>
+                <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                <div className="font-bold text-[13px]">{coName}</div>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="font-bold mb-1">For &amp; on behalf of</div>
-              <div className="font-bold text-[13px]">{coName}</div>
-            </div>
+            <PageFooter
+              left={<>{"PRIME ERP SYSTEM"}{data.projectRef ? `\u00a0\u00a0|\u00a0\u00a0PROJECT ID: ${data.projectRef}` : ""}{`\u00a0\u00a0|\u00a0\u00a0DATE: ${printDate}\u00a0\u00a0|\u00a0\u00a0TIME: ${printTime}\u00a0\u00a0|\u00a0\u00a0DOCUMENT #: ${data.docNumber}`}</>}
+              page="Page 1 of 1"
+            />
           </div>
         )}
 
@@ -674,13 +680,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             />
           </>
         )}
-        {!isQuotation && (
-          <PageFooter
-            left={<>{"PRIME ERP SYSTEM"}{data.projectRef ? `\u00a0\u00a0|\u00a0\u00a0PROJECT ID: ${data.projectRef}` : ""}{`\u00a0\u00a0|\u00a0\u00a0DATE: ${printDate}\u00a0\u00a0|\u00a0\u00a0TIME: ${printTime}\u00a0\u00a0|\u00a0\u00a0DOCUMENT #: ${data.docNumber}`}</>}
-            page="Page 1 of 1"
-          />
-        )}
-
         {/* ══════════════════════════════════════════════════════════════
             PAGE 2 — TECHNICAL SPECIFICATIONS (Quotation only)
         ══════════════════════════════════════════════════════════════ */}
