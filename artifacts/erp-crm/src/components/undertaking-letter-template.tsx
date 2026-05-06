@@ -196,7 +196,7 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
         </div>
 
         {/* ── BODY ── */}
-        <div className="flex-1 px-4 pt-3 pb-2 text-xs leading-relaxed text-black">
+        <div className="flex-1 px-4 pt-3 pb-10 text-xs leading-relaxed text-black">
           <p className="mb-2">
             To,<br />
             <strong className="uppercase">{doc.clientName}</strong>
