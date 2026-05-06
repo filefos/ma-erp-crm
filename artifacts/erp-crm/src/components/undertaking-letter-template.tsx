@@ -15,22 +15,17 @@ export interface UndertakingLetterDoc {
 }
 
 const COMPANIES: Record<number, {
-  name: string;
-  address: string;
-  trn: string;
-  phone: string;
-  email: string;
-  website: string;
-  contact: string;
+  name: string; address: string; trn: string; phone: string;
+  email: string; website: string; contact: string;
 }> = {
   1: {
     name: "PRIME MAX PREFAB HOUSES IND. LLC. SP.",
     address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
     trn: "105383255400003",
-    phone: "+971 56 616 3555",
+    phone: "056 616 3555",
     email: "sales@primemaxprefab.com",
     website: "www.primemaxprefab.com",
-    contact: "General Manager",
+    contact: "ASIF LATIF",
   },
   2: {
     name: "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC",
@@ -43,10 +38,6 @@ const COMPANIES: Record<number, {
   },
 };
 
-const NAVY = "#0f2d5a";
-const SKY  = "#1e6ab0";
-const LABEL_BG = "#1e3a6e";
-
 const DEFAULT_MATERIALS = [
   "MS Steel: Fire-rated mild steel for structural components.",
   "GI Framing: Fire-rated galvanized iron framing for support structures.",
@@ -55,42 +46,29 @@ const DEFAULT_MATERIALS = [
 ];
 
 function fmtDate(d?: string | null) {
-  if (!d) return new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+  if (!d) return new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   const p = new Date(d);
-  return isNaN(p.getTime()) ? d : p.toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+  return isNaN(p.getTime()) ? d : p.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-const labelCell: React.CSSProperties = {
-  backgroundColor: LABEL_BG,
-  color: "white",
-  fontWeight: 700,
-  fontSize: 10,
-  padding: "3px 8px",
-  border: "1px solid #c8d8ec",
-  whiteSpace: "nowrap",
-  width: "38%",
-  WebkitPrintColorAdjust: "exact",
-  printColorAdjust: "exact",
-} as React.CSSProperties;
+function LabelTdHalf({ children }: { children: React.ReactNode }) {
+  return (
+    <td
+      className="border border-gray-400 px-2 py-[2px] text-[11px] font-semibold text-white whitespace-nowrap"
+      style={{ width: "38%", backgroundColor: "#1e3a6e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+    >
+      {children}
+    </td>
+  );
+}
 
-const valueCell: React.CSSProperties = {
-  fontSize: 10,
-  padding: "3px 8px",
-  border: "1px solid #c8d8ec",
-  color: "#1a1a1a",
-};
-
-const tableHeadCell = (bg: string): React.CSSProperties => ({
-  backgroundColor: bg,
-  color: "white",
-  fontWeight: 700,
-  fontSize: 11,
-  padding: "4px 8px",
-  border: "1px solid #c8d8ec",
-  textAlign: "left",
-  WebkitPrintColorAdjust: "exact",
-  printColorAdjust: "exact",
-});
+function Td({ children, bold }: { children: React.ReactNode; bold?: boolean }) {
+  return (
+    <td className={`border border-gray-400 px-2 py-[2px] text-xs text-left ${bold ? "font-bold font-mono" : ""}`}>
+      {children}
+    </td>
+  );
+}
 
 function MaterialLines({ text }: { text?: string | null }) {
   const lines = text?.trim()
@@ -99,7 +77,7 @@ function MaterialLines({ text }: { text?: string | null }) {
   return (
     <>
       {lines.map((l, i) => (
-        <p key={i} style={{ fontSize: 11, lineHeight: 1.55, margin: "0 0 5px", color: "#1a1a1a" }}>{l}</p>
+        <p key={i} className="text-xs leading-snug mb-1">{l}</p>
       ))}
     </>
   );
@@ -107,214 +85,216 @@ function MaterialLines({ text }: { text?: string | null }) {
 
 export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: UndertakingLetterDoc }>(
   ({ doc }, ref) => {
-    const co      = COMPANIES[doc.companyId] ?? COMPANIES[1];
-    const isElite = doc.companyId === 2;
-    const logoSrc = isElite ? null : "/erp-crm/prime-max-logo.png";
+    const co = COMPANIES[doc.companyId] ?? COMPANIES[1];
+    const logoSrc = doc.companyId !== 2 ? "/erp-crm/prime-max-logo.png" : null;
     const dateFmt = fmtDate(doc.letterDate);
     const projectDesc = doc.scope?.trim() || "Prefabricated Construction Works";
 
     return (
       <div
         ref={ref}
-        className="bg-white text-black mx-auto"
-        style={{
-          width: 794,
-          minHeight: 1123,
-          fontFamily: "'Arial', 'Helvetica Neue', sans-serif",
-          display: "flex",
-          flexDirection: "column",
-          boxSizing: "border-box",
-        }}
+        className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto shadow-lg rounded-lg overflow-hidden"
       >
-        {/* ── NAVY HEADER BAR (matches delivery note) ── */}
-        <div
-          style={{
-            backgroundColor: NAVY,
-            color: "white",
-            padding: "10px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            WebkitPrintColorAdjust: "exact",
-            printColorAdjust: "exact",
-          } as React.CSSProperties}
-        >
-          {logoSrc && (
-            <img
-              src={logoSrc}
-              alt={co.name}
-              style={{ maxHeight: 60, maxWidth: 130, objectFit: "contain", background: "white", padding: 4, borderRadius: 2, flexShrink: 0 }}
-            />
-          )}
-          <div style={{ flex: 1, lineHeight: 1.3 }}>
-            <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase" }}>{co.name}</div>
-            <div style={{ fontSize: 10, marginTop: 2, opacity: 0.9 }}>{co.address} | TRN: {co.trn}</div>
-            <div style={{ fontSize: 10, opacity: 0.9 }}>Tel: {co.phone} | Email: {co.email} | Web: {co.website}</div>
+        <style>{`
+          @media print {
+            @page { size: A4 portrait; margin: 4px 3px; }
+            html, body { background: white !important; }
+            body * { visibility: hidden; }
+            .print-doc, .print-doc * { visibility: visible; }
+            .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
+              box-shadow: none !important; border: none !important; padding: 0 !important;
+              margin: 0 !important; border-radius: 0 !important; }
+          }
+        `}</style>
+
+        {/* ── LETTERHEAD (identical to DocumentPrint) ── */}
+        <div className="overflow-hidden mb-[2px]">
+          <div
+            className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4"
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+          >
+            {logoSrc && (
+              <img
+                src={logoSrc}
+                alt="Company Logo"
+                className="object-contain rounded bg-white p-1 flex-shrink-0"
+                style={{ maxHeight: 60, maxWidth: 130, height: "auto" }}
+              />
+            )}
+            <div className={`leading-tight ${logoSrc ? "flex-1" : "flex-1 text-center"}`}>
+              <div className="text-[22px] font-black tracking-wider uppercase leading-none">{co.name}</div>
+              <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
+              <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email} | Web: {co.website}</div>
+            </div>
+          </div>
+          <div
+            className="bg-[#1e6ab0] text-white text-center py-1"
+            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+          >
+            <span className="text-[15px] font-black tracking-widest uppercase">Undertaking Letter</span>
           </div>
         </div>
 
-        {/* ── SKY BLUE TITLE BAR (matches delivery note) ── */}
+        {/* ── COMPANY DETAIL | CLIENT DETAIL (same as DocumentPrint) ── */}
+        <div className="flex gap-2 mb-[2px]">
+          <table className="flex-1 border-collapse border border-gray-400">
+            <thead>
+              <tr>
+                <th
+                  colSpan={2}
+                  className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left"
+                  style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                >
+                  Company Detail
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><LabelTdHalf>Company</LabelTdHalf><Td>{co.name}</Td></tr>
+              <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{co.contact}</Td></tr>
+              <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{co.phone}</Td></tr>
+              <tr><LabelTdHalf>Email</LabelTdHalf><Td>{co.email}</Td></tr>
+              <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{co.contact}</Td></tr>
+              <tr><LabelTdHalf>UL Ref. No.</LabelTdHalf><Td bold>{doc.ulNumber}</Td></tr>
+              <tr><LabelTdHalf>Date</LabelTdHalf><Td>{dateFmt}</Td></tr>
+            </tbody>
+          </table>
+
+          <table className="flex-1 border-collapse border border-gray-400">
+            <thead>
+              <tr>
+                <th
+                  colSpan={2}
+                  className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left"
+                  style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                >
+                  Client DETAIL
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><LabelTdHalf>Company</LabelTdHalf><Td>{doc.clientName}</Td></tr>
+              <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf>Email</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf>LPO Reference</LabelTdHalf><Td>{doc.lpoNumber || "—"}</Td></tr>
+              <tr><LabelTdHalf>Project Ref</LabelTdHalf><Td>{doc.projectRef || "—"}</Td></tr>
+              <tr><LabelTdHalf>Project / Scope</LabelTdHalf><Td>{projectDesc}</Td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── SUBJECT BAR ── */}
         <div
-          style={{
-            backgroundColor: SKY,
-            color: "white",
-            textAlign: "center",
-            padding: "5px 0",
-            fontSize: 14,
-            fontWeight: 900,
-            letterSpacing: 3,
-            textTransform: "uppercase",
-            WebkitPrintColorAdjust: "exact",
-            printColorAdjust: "exact",
-          } as React.CSSProperties}
+          className="mx-0 mb-[2px] px-3 py-1 border border-gray-300"
+          style={{ backgroundColor: "#edf2f9" }}
         >
-          Undertaking Letter
-        </div>
-
-        {/* ── COMPANY DETAIL | CLIENT DETAIL (two-column table, delivery note style) ── */}
-        <div style={{ display: "flex", gap: 0, margin: "6px 20px 0" }}>
-
-          {/* Company Detail */}
-          <table style={{ flex: 1, borderCollapse: "collapse", border: "1px solid #c8d8ec", marginRight: 6 }}>
-            <thead>
-              <tr>
-                <th colSpan={2} style={tableHeadCell(NAVY)}>Company Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td style={labelCell}>Company</td><td style={valueCell}>{co.name}</td></tr>
-              <tr><td style={labelCell}>Address</td><td style={valueCell}>{co.address}</td></tr>
-              <tr><td style={labelCell}>Contact #</td><td style={valueCell}>{co.phone}</td></tr>
-              <tr><td style={labelCell}>Email</td><td style={valueCell}>{co.email}</td></tr>
-              <tr><td style={labelCell}>TRN</td><td style={valueCell}>{co.trn}</td></tr>
-              <tr><td style={labelCell}>UL Ref. No.</td><td style={{ ...valueCell, fontWeight: 700, fontFamily: "monospace" }}>{doc.ulNumber}</td></tr>
-              <tr><td style={labelCell}>Date</td><td style={valueCell}>{dateFmt}</td></tr>
-            </tbody>
-          </table>
-
-          {/* Client Detail */}
-          <table style={{ flex: 1, borderCollapse: "collapse", border: "1px solid #c8d8ec", marginLeft: 6 }}>
-            <thead>
-              <tr>
-                <th colSpan={2} style={tableHeadCell(NAVY)}>Client Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td style={labelCell}>Client / Company</td><td style={valueCell}>{doc.clientName}</td></tr>
-              <tr><td style={labelCell}>LPO Reference</td><td style={valueCell}>{doc.lpoNumber || "—"}</td></tr>
-              <tr><td style={labelCell}>Project Reference</td><td style={valueCell}>{doc.projectRef || "—"}</td></tr>
-              <tr><td style={labelCell}>Project / Scope</td><td style={valueCell}>{projectDesc}</td></tr>
-              <tr><td style={labelCell}>Contact Person</td><td style={valueCell}>&nbsp;</td></tr>
-              <tr><td style={labelCell}>Contact #</td><td style={valueCell}>&nbsp;</td></tr>
-              <tr><td style={labelCell}>Email</td><td style={valueCell}>&nbsp;</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── SUBJECT HEADING BAR ── */}
-        <div style={{ margin: "10px 20px 0", backgroundColor: "#edf2f9", border: `1px solid #c8d8ec`, padding: "5px 10px" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: NAVY }}>Subject: </span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: "#1a1a1a" }}>
-            Undertaking Letter for Use of Fire-Rated Materials
-          </span>
+          <span className="text-[11px] font-bold text-[#0f2d5a]">Subject: </span>
+          <span className="text-[11px] font-bold text-black">Undertaking Letter for Use of Fire-Rated Materials</span>
         </div>
 
         {/* ── BODY ── */}
-        <div style={{ flex: 1, padding: "10px 20px 0", fontSize: 11, lineHeight: 1.6, color: "#1a1a1a" }}>
-
-          <p style={{ margin: "0 0 7px" }}>
+        <div className="px-4 pt-3 pb-2 text-xs leading-relaxed text-black">
+          <p className="mb-2">
             To,<br />
-            <strong style={{ textTransform: "uppercase" }}>{doc.clientName}</strong>
+            <strong className="uppercase">{doc.clientName}</strong>
           </p>
 
-          <p style={{ margin: "0 0 7px" }}>Dear Team,</p>
+          <p className="mb-2">Dear Team,</p>
 
-          <p style={{ margin: "0 0 7px", textAlign: "justify" }}>
+          <p className="mb-2 text-justify">
             We, <strong>{co.name}</strong>, located at {co.address}, hereby provide this undertaking
             in reference to the use of fire-rated materials for{" "}
             <strong>{projectDesc}</strong>
-            {doc.lpoNumber  ? ` as per LPO No. ${doc.lpoNumber}` : ""}
+            {doc.lpoNumber ? ` as per LPO No. ${doc.lpoNumber}` : ""}
             {doc.projectRef ? `, Project Reference: ${doc.projectRef}` : ""}.
           </p>
 
-          <p style={{ margin: "0 0 7px" }}>We solemnly affirm and undertake that:</p>
+          <p className="mb-2">We solemnly affirm and undertake that:</p>
 
-          <p style={{ margin: "0 0 6px", fontWeight: 700 }}>
-            Commitment to using the following fire-rated materials:
-          </p>
+          <p className="mb-1 font-bold">Commitment to using the following fire-rated materials:</p>
 
-          <div style={{ marginBottom: 9, paddingLeft: 6 }}>
+          <div className="mb-3 pl-2">
             <MaterialLines text={doc.commitmentText} />
           </div>
 
-          <p style={{ margin: "0 0 7px", textAlign: "justify" }}>
+          <p className="mb-2 text-justify">
             <strong>Responsibility:</strong>{" "}
             {co.name} accepts full responsibility for the quality and performance of the fire-rated materials
             specified above. We will ensure that these materials are sourced from reputable suppliers and are
             installed according to manufacturer guidelines and industry best practices.
           </p>
 
-          <p style={{ margin: "0 0 7px", textAlign: "justify" }}>
+          <p className="mb-2 text-justify">
             We trust that this undertaking satisfies the requirements and provides the necessary assurance
             regarding our commitment to fire safety and the use of fire-rated materials. Should there be any
             additional requirements or modifications needed, please do not hesitate to inform us.
           </p>
 
           {doc.notes?.trim() && (
-            <p style={{ margin: "0 0 7px", color: "#444", fontStyle: "italic" }}>
-              {doc.notes}
-            </p>
+            <p className="mb-2 text-gray-600 italic">{doc.notes}</p>
           )}
 
-          <p style={{ margin: "0 0 14px" }}>Thank you for your cooperation and understanding.</p>
+          <p className="mb-4">Thank you for your cooperation and understanding.</p>
 
           {/* ── SIGNATURE BLOCK ── */}
-          <div style={{ display: "flex", gap: 0, width: "100%", marginBottom: 10 }}>
-
-            {/* Sender */}
-            <div style={{ flex: 1, paddingRight: 20 }}>
-              <div style={{ fontSize: 10, color: "#555" }}>For and on behalf of</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: NAVY, marginTop: 1, lineHeight: 1.3 }}>{co.name}</div>
-              <div style={{ marginTop: 36, borderTop: `1.5px solid ${NAVY}`, paddingTop: 4 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: NAVY }}>{doc.signedByName || "Authorised Signatory"}</div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>Designation: ___________________________</div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>
-                  Date: {doc.signedDate ? fmtDate(doc.signedDate) : "___________________________"}
+          <div className="flex gap-0 w-full mb-4 border border-gray-300">
+            <div className="flex-1 p-3 border-r border-gray-300">
+              <div className="text-[10px] text-gray-500">Prepared / Dispatched By:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] font-semibold text-[#0f2d5a]">{doc.signedByName || "Name & Signature"}</div>
+                <div className="text-[10px] text-gray-500 mt-1">
+                  For &amp; on behalf of <strong>{co.name}</strong>
                 </div>
               </div>
             </div>
-
-            {/* Divider */}
-            <div style={{ width: 1, background: "#cdd8e8", margin: "0 20px", alignSelf: "stretch" }} />
-
-            {/* Client */}
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 10, color: "#555" }}>Acknowledged &amp; Accepted by</div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: NAVY, marginTop: 1, textTransform: "uppercase", lineHeight: 1.3 }}>{doc.clientName}</div>
-              <div style={{ marginTop: 36, borderTop: `1.5px solid ${NAVY}`, paddingTop: 4 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: NAVY }}>Authorised Signatory &amp; Company Stamp</div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>Name: ___________________________</div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>Date: ___________________________</div>
+            <div className="flex-1 p-3 border-r border-gray-300">
+              <div className="text-[10px] text-gray-500">Acknowledged &amp; Accepted By:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] font-semibold text-[#0f2d5a]">Name, Signature &amp; Stamp</div>
+                <div className="text-[10px] text-gray-500 mt-1">
+                  <strong className="uppercase">{doc.clientName}</strong>
+                </div>
               </div>
             </div>
+            <div className="flex-1 p-3">
+              <div className="text-[10px] text-gray-500">Date &amp; Authorised Signatory:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] text-[#0f2d5a]">
+                  {doc.signedDate ? fmtDate(doc.signedDate) : "Date / Stamp"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── PREPARED BY / FOR & ON BEHALF ── */}
+          <div className="flex justify-between items-end mb-2">
+            <div>
+              <div className="text-[10px] font-semibold">Prepared by:</div>
+              <div className="text-[11px]">{doc.signedByName || co.contact}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px]">For &amp; on behalf of</div>
+              <div className="text-[11px] font-black uppercase">{co.name}</div>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-start border-t border-gray-300 pt-1">
+            <div className="text-[10px] text-gray-500">Signature</div>
+            <div className="text-[10px] text-gray-500 text-center italic">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="text-[10px] text-gray-500">Authorised Signatory</div>
           </div>
         </div>
 
         {/* ── FOOTER ── */}
         <div
-          style={{
-            borderTop: `2px solid ${NAVY}`,
-            backgroundColor: `${SKY}15`,
-            padding: "5px 20px 6px",
-            fontSize: 9,
-            color: NAVY,
-            textAlign: "center",
-            lineHeight: 1.5,
-            WebkitPrintColorAdjust: "exact",
-            printColorAdjust: "exact",
-          } as React.CSSProperties}
+          className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
+          style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
-          <div style={{ fontWeight: 700 }}>{co.name}</div>
+          <div className="font-bold">{co.name}</div>
           <div>{co.address} | Tel: {co.phone} | Email: {co.email} | TRN: {co.trn} | {co.website}</div>
         </div>
       </div>
