@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useListRfqs, useCreateRfq, useUpdateRfq, useDeleteRfq, useSendRfq, useCloseRfq, useListPurchaseRequests, useListSuppliers, useListCompanies } from "@workspace/api-client-react";
+import { useListRfqs, useCreateRfq, useUpdateRfq, useDeleteRfq, useSendRfq, useCloseRfq, useListPurchaseRequests, useListSuppliers, useListCompanies, getListRfqsQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -54,11 +54,12 @@ export function RfqsList() {
   const suppliers = filterByCompany(rawSuppliers);
   const { data: companies = [] } = useListCompanies();
 
-  const createRfq = useCreateRfq({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: ["/rfqs"] }); setDialogOpen(false); toast.success("RFQ created"); } } });
-  const updateRfq = useUpdateRfq({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: ["/rfqs"] }); setDialogOpen(false); toast.success("RFQ updated"); } } });
-  const deleteRfq = useDeleteRfq({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: ["/rfqs"] }); setDeleteId(null); toast.success("RFQ deleted"); } } });
-  const sendRfq = useSendRfq({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: ["/rfqs"] }); setActionDialog(null); toast.success("RFQ marked as sent"); } } });
-  const closeRfq = useCloseRfq({ mutation: { onSuccess: () => { qc.invalidateQueries({ queryKey: ["/rfqs"] }); setActionDialog(null); toast.success("RFQ closed"); } } });
+  const invalidateRfqs = () => qc.invalidateQueries({ queryKey: getListRfqsQueryKey() });
+  const createRfq = useCreateRfq({ mutation: { onSuccess: (data) => { invalidateRfqs(); setDialogOpen(false); toast.success(`RFQ ${(data as any).rfqNumber} created`); } } });
+  const updateRfq = useUpdateRfq({ mutation: { onSuccess: () => { invalidateRfqs(); setDialogOpen(false); toast.success("RFQ updated"); } } });
+  const deleteRfq = useDeleteRfq({ mutation: { onSuccess: () => { invalidateRfqs(); setDeleteId(null); toast.success("RFQ deleted"); } } });
+  const sendRfq = useSendRfq({ mutation: { onSuccess: () => { invalidateRfqs(); setActionDialog(null); toast.success("RFQ marked as sent"); } } });
+  const closeRfq = useCloseRfq({ mutation: { onSuccess: () => { invalidateRfqs(); setActionDialog(null); toast.success("RFQ closed"); } } });
 
   const filtered = rfqs.filter(r => {
     const ms = !search || r.rfqNumber.toLowerCase().includes(search.toLowerCase()) || (r as any).prNumber?.toLowerCase().includes(search.toLowerCase());
@@ -233,8 +234,14 @@ export function RfqsList() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[#0f2d5a] dark:text-white">{editingId ? "Edit RFQ" : "New RFQ"}</DialogTitle>
+            <DialogTitle className="text-[#0f2d5a] dark:text-white">{editingId ? "Edit RFQ" : "New Request for Quotation"}</DialogTitle>
           </DialogHeader>
+          {!editingId && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-700 dark:text-blue-300">
+              <span className="font-mono font-semibold text-xs bg-blue-100 dark:bg-blue-900 border border-blue-300 dark:border-blue-700 px-2 py-0.5 rounded">RFQ No.</span>
+              Auto-generated on save (e.g. <span className="font-mono font-semibold">PM-RFQ-{new Date().getFullYear()}-0001</span>)
+            </div>
+          )}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
