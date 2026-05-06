@@ -286,24 +286,8 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
           Kindly sign and return a copy of this letter within seven (7) days of receipt to confirm your acceptance.
         </p>
 
-        {/* Spacer pushes signature block + footer to the bottom of the page */}
+        {/* Spacer pushes footer to the bottom of the page */}
         <div style={{ flex: 1, minHeight: 8 }} />
-
-        {/* Signature block — sits directly above the footer per spec */}
-        <div style={{ display: "flex", gap: 32, width: "100%", marginTop: 8, marginBottom: 10, fontSize: FS_BODY }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, color: "#111" }}>For &amp; on behalf of</div>
-            <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3, textTransform: "uppercase" }}>{legalName}</div>
-            <div style={{ borderTop: `1px solid #6b7280`, paddingTop: 4, marginTop: 38, color: "#6b7280" }}>
-              Signature: <span style={{ color: "#9ca3af" }}>_______________</span>
-            </div>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, color: "#111" }}>For &amp; on behalf of</div>
-            <div style={{ fontWeight: 700, color: NAVY, marginTop: 2, letterSpacing: 0.3, textTransform: "uppercase" }}>{doc.candidateName}</div>
-            <div style={{ borderTop: `1px solid #6b7280`, paddingTop: 4, marginTop: 38, color: "#6b7280" }}>Authorised Signatory</div>
-          </div>
-        </div>
       </div>
 
       {/* ── FOOTER (identical to UndertakingLetterTemplate) ── */}
