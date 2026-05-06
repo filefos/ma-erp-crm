@@ -272,7 +272,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     <>
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 0mm 10mm; }
+          @page { size: A4 portrait; margin: 0mm 0mm; }
           html, body { background: white !important; }
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
@@ -315,15 +315,17 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           .doc-page-footer {
             position: fixed;
             bottom: 0;
-            left: 10mm;
-            right: 10mm;
+            left: 0;
+            right: 0;
             background: white;
             padding-top: 4pt;
+            padding-left: 4mm;
+            padding-right: 4mm;
           }
         }
       `}</style>
 
-      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto p-4 shadow-lg rounded-lg">
+      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto py-4 px-0 shadow-lg rounded-lg">
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="overflow-hidden mb-[2px]">
