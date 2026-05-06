@@ -235,6 +235,12 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
               <td style={tdLabel}>Accommodation</td>
               <td style={tdValue}>{isLabour ? "Company-provided accommodation & cooking facility" : "Not provided"}</td>
             </tr>
+            <tr>
+              <td style={tdLabel}>Overtime Rate</td>
+              <td style={tdValue}>Basic hourly rate + 25% (weekdays); +50% (Fridays &amp; public holidays) — Art. 19</td>
+              <td style={tdLabel}>End-of-Service Gratuity</td>
+              <td style={tdValue}>21 days' basic salary/year (first 5 yrs); 30 days thereafter — Art. 51</td>
+            </tr>
           </tbody>
         </table>
 
