@@ -108,6 +108,8 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
   );
   const [mailSending, setMailSending] = useState(false);
 
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+
   const handlePrint = () => {
     const prev = document.title;
     document.title = docNumber;
@@ -119,6 +121,19 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     const el = getPrintEl();
     if (!el) throw new Error("Could not find the printable document on this page.");
     return captureElementToPdfBase64(el, `${docNumber}.pdf`);
+  };
+
+  const handleDownloadPdf = async () => {
+    setPdfDownloading(true);
+    try {
+      const { base64, filename } = await generatePdf();
+      const file = base64ToPdfFile(base64, filename);
+      downloadPdfFile(file);
+    } catch (err) {
+      toast({ title: "PDF failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+    } finally {
+      setPdfDownloading(false);
+    }
   };
 
   const base64ToPdfFile = (base64: string, filename: string): File => {
@@ -285,9 +300,9 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2 text-gray-600" />
-            PDF (Print → Save as PDF)
+          <DropdownMenuItem onClick={() => void handleDownloadPdf()} disabled={pdfDownloading}>
+            <Download className="w-4 h-4 mr-2 text-gray-600" />
+            {pdfDownloading ? "Generating PDF…" : "Download PDF"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleWord}>
             <FileText className="w-4 h-4 mr-2 text-blue-600" />
