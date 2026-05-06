@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
-  useListUndertakingLetters, useUpdateUndertakingLetter, useListCompanies,
+  useListUndertakingLetters, useUpdateUndertakingLetter,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,10 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Search, FileText, Pencil, CheckCircle } from "lucide-react";
+import { Search, FileText, Pencil, CheckCircle, FileDown, Printer } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { AccountsPageHeader } from "@/components/accounts-page-header";
 import { useQueryClient } from "@tanstack/react-query";
+import { UndertakingLetterTemplate } from "@/components/undertaking-letter-template";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700",
@@ -34,12 +36,15 @@ export function UndertakingLettersList() {
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<number | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [form, setForm] = useState<EditForm>({
-    letterDate: "", scope: "", commitmentText: "", signedByName: "", signedDate: "", status: "draft", notes: "",
+    letterDate: "", scope: "", commitmentText: "",
+    signedByName: "", signedDate: "", status: "draft", notes: "",
   });
 
+  const printRef = useRef<HTMLDivElement>(null);
+
   const { data: letters = [], isLoading } = useListUndertakingLetters();
-  const { data: companies = [] } = useListCompanies();
   const { filterByCompany } = useActiveCompany();
 
   const updateMutation = useUpdateUndertakingLetter({
@@ -83,10 +88,68 @@ export function UndertakingLettersList() {
     updateMutation.mutate({ id: detailId, data: form as any });
   };
 
+  const handleDownloadPdf = async () => {
+    if (!printRef.current || !selectedLetter) return;
+    setExporting(true);
+    try {
+      const { base64, filename } = await captureElementToPdfBase64(
+        printRef.current,
+        `${selectedLetter.ulNumber}.pdf`
+      );
+      const link = document.createElement("a");
+      link.href = `data:application/pdf;base64,${base64}`;
+      link.download = filename;
+      link.click();
+    } catch {
+      toast({ title: "PDF export failed.", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePrint = () => {
+    if (!printRef.current) return;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head>
+      <title>${selectedLetter?.ulNumber ?? "Undertaking Letter"}</title>
+      <style>
+        @page { size: A4 portrait; margin: 0; }
+        body { margin: 0; padding: 0; background: white; }
+        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      </style>
+    </head><body>${printRef.current.outerHTML}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 400);
+  };
+
   const draft = letters.filter(l => l.status === "draft").length;
 
   return (
     <div className="space-y-4">
+      {/* Hidden print template — rendered off-screen for PDF capture */}
+      <div style={{ position: "fixed", top: "200%", left: 0, pointerEvents: "none", zIndex: -1 }}>
+        {selectedLetter && (
+          <UndertakingLetterTemplate
+            ref={printRef}
+            doc={{
+              ulNumber: selectedLetter.ulNumber,
+              letterDate: (selectedLetter as any).letterDate ?? null,
+              clientName: selectedLetter.clientName,
+              lpoNumber: (selectedLetter as any).lpoNumber ?? null,
+              projectRef: (selectedLetter as any).projectRef ?? null,
+              scope: (selectedLetter as any).scope ?? null,
+              commitmentText: (selectedLetter as any).commitmentText ?? null,
+              signedByName: (selectedLetter as any).signedByName ?? null,
+              signedDate: (selectedLetter as any).signedDate ?? null,
+              notes: (selectedLetter as any).notes ?? null,
+              companyId: (selectedLetter as any).companyId ?? 1,
+            }}
+          />
+        )}
+      </div>
+
       <AccountsPageHeader
         title="Undertaking Letters"
         breadcrumb="Accounts"
@@ -174,7 +237,7 @@ export function UndertakingLettersList() {
       </div>
 
       <Dialog open={detailId !== null} onOpenChange={v => { if (!v) { setDetailId(null); setEditMode(false); } }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center justify-between pr-6">
               <DialogTitle className="font-mono text-[#0f2d5a]">
@@ -182,9 +245,18 @@ export function UndertakingLettersList() {
               </DialogTitle>
               <div className="flex items-center gap-2">
                 {!editMode && (
-                  <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>
-                    <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
-                  </Button>
+                  <>
+                    <Button size="sm" variant="outline" onClick={handlePrint} disabled={exporting}>
+                      <Printer className="w-3.5 h-3.5 mr-1.5" /> Print
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleDownloadPdf} disabled={exporting}>
+                      <FileDown className="w-3.5 h-3.5 mr-1.5" />
+                      {exporting ? "Exporting…" : "PDF"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>
+                      <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
+                    </Button>
+                  </>
                 )}
                 <Badge variant="secondary" className={STATUS_COLORS[selectedLetter?.status ?? "draft"] ?? ""}>
                   {selectedLetter?.status}
@@ -195,14 +267,16 @@ export function UndertakingLettersList() {
 
           {selectedLetter && !editMode && (
             <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><span className="text-muted-foreground">Client:</span> <span className="font-medium ml-1">{selectedLetter.clientName}</span></div>
-                <div><span className="text-muted-foreground">LPO No.:</span> <span className="font-medium ml-1">{(selectedLetter as any).lpoNumber || "—"}</span></div>
-                <div><span className="text-muted-foreground">Project:</span> <span className="font-medium ml-1">{(selectedLetter as any).projectRef || "—"}</span></div>
-                <div><span className="text-muted-foreground">Letter Date:</span> <span className="font-medium ml-1">{(selectedLetter as any).letterDate || "—"}</span></div>
-                <div><span className="text-muted-foreground">Signed By:</span> <span className="font-medium ml-1">{(selectedLetter as any).signedByName || "—"}</span></div>
-                <div><span className="text-muted-foreground">Signed Date:</span> <span className="font-medium ml-1">{(selectedLetter as any).signedDate || "—"}</span></div>
+              {/* Meta strip */}
+              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm bg-muted/30 border rounded-lg p-3">
+                <div><span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Client</span><div className="font-medium mt-0.5">{selectedLetter.clientName}</div></div>
+                <div><span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">LPO No.</span><div className="font-mono mt-0.5">{(selectedLetter as any).lpoNumber || "—"}</div></div>
+                <div><span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Project</span><div className="font-mono font-semibold text-[#0f2d5a] mt-0.5">{(selectedLetter as any).projectRef || "—"}</div></div>
+                <div><span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Letter Date</span><div className="mt-0.5">{(selectedLetter as any).letterDate || "—"}</div></div>
+                <div><span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Signed By</span><div className="mt-0.5">{(selectedLetter as any).signedByName || "—"}</div></div>
+                <div><span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">Signed Date</span><div className="mt-0.5">{(selectedLetter as any).signedDate || "—"}</div></div>
               </div>
+
               {(selectedLetter as any).scope && (
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Scope of Work</p>
@@ -221,6 +295,12 @@ export function UndertakingLettersList() {
                   <p className="text-sm whitespace-pre-wrap border rounded p-3 bg-muted/30">{(selectedLetter as any).notes}</p>
                 </div>
               )}
+
+              {/* Preview banner */}
+              <div className="rounded-lg border border-[#0f2d5a]/20 bg-[#0f2d5a]/5 px-4 py-2.5 text-sm text-[#0f2d5a] flex items-center gap-2">
+                <FileDown className="w-4 h-4 flex-shrink-0" />
+                Use <strong>PDF</strong> or <strong>Print</strong> above to generate the official letterhead document.
+              </div>
             </div>
           )}
 
@@ -243,8 +323,8 @@ export function UndertakingLettersList() {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label>Signed By</Label>
-                  <Input value={form.signedByName} onChange={e => setForm(p => ({ ...p, signedByName: e.target.value }))} placeholder="Name of signatory" />
+                  <Label>Signed By (Authorised Signatory)</Label>
+                  <Input value={form.signedByName} onChange={e => setForm(p => ({ ...p, signedByName: e.target.value }))} placeholder="Full name of signatory" />
                 </div>
                 <div className="space-y-1">
                   <Label>Signed Date</Label>
@@ -252,15 +332,16 @@ export function UndertakingLettersList() {
                 </div>
                 <div className="space-y-1 col-span-2">
                   <Label>Scope of Work</Label>
-                  <Textarea rows={3} value={form.scope} onChange={e => setForm(p => ({ ...p, scope: e.target.value }))} placeholder="Describe the scope..." />
+                  <Textarea rows={3} value={form.scope} onChange={e => setForm(p => ({ ...p, scope: e.target.value }))} placeholder="Describe the contracted scope of work…" />
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <Label>Undertaking / Commitment Statement</Label>
-                  <Textarea rows={4} value={form.commitmentText} onChange={e => setForm(p => ({ ...p, commitmentText: e.target.value }))} placeholder="We hereby undertake and commit to..." />
+                  <Label>Commitment Statement</Label>
+                  <p className="text-xs text-muted-foreground">List each commitment on a new line — they will appear as bullet points in the letter.</p>
+                  <Textarea rows={5} value={form.commitmentText} onChange={e => setForm(p => ({ ...p, commitmentText: e.target.value }))} placeholder={"MS Steel: Fire-rated mild steel for structural components.\nGI Framing: Galvanized iron framing for support structures.\nGypsum board 12.5mm thick — 01 Hour fire rated."} />
                 </div>
                 <div className="space-y-1 col-span-2">
-                  <Label>Notes</Label>
-                  <Textarea rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Any additional notes..." />
+                  <Label>Additional Notes</Label>
+                  <Textarea rows={2} value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Any additional notes or conditions…" />
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t">
@@ -271,7 +352,7 @@ export function UndertakingLettersList() {
                   disabled={updateMutation.isPending}
                 >
                   <CheckCircle className="w-4 h-4 mr-1.5" />
-                  {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                  {updateMutation.isPending ? "Saving…" : "Save Changes"}
                 </Button>
               </div>
             </div>
