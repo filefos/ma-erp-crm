@@ -106,7 +106,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
           .print-doc {
-            position: absolute; left: 0; top: 0;
+            position: fixed; left: 0; top: 0;
             width: 210mm !important; max-width: 210mm !important;
             height: 297mm !important; max-height: 297mm !important;
             box-shadow: none !important; border: none !important;
