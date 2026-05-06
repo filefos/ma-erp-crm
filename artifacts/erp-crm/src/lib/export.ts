@@ -164,7 +164,7 @@ export function printTable(
   <meta charset="utf-8">
   <title>${escapeHtml(title)}</title>
   <style>
-    @page { margin: 12mm 10mm; size: A4 ${landscape ? "landscape" : "portrait"}; }
+    @page { margin: 4px 3px; size: A4 ${landscape ? "landscape" : "portrait"}; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; font-size: 9.5pt; color: #222; background: #fff; }
 

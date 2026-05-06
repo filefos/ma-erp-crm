@@ -59,7 +59,7 @@ function buildWordHtml(innerHtml: string): string {
   <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>
     <w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->
   <style>
-    @page WordSection1 { size: 210mm 297mm; margin: 15mm 12mm; }
+    @page WordSection1 { size: 210mm 297mm; margin: 4px 3px; }
     div.WordSection1 { page: WordSection1; }
     body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; }
     table { border-collapse: collapse; width: 100%; margin-bottom: 6pt; }
