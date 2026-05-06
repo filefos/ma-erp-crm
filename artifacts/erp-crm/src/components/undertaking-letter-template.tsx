@@ -216,59 +216,8 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
           </table>
         </div>
 
-        {/* ── SUBJECT BAR ── */}
-        <div
-          className="mx-0 mb-[2px] px-3 py-1 border border-gray-300"
-          style={{ backgroundColor: "#edf2f9" }}
-        >
-          <span className="text-[11px] font-bold text-[#0f2d5a]">Subject: </span>
-          <span className="text-[11px] font-bold text-black">Undertaking Letter for Use of Fire-Rated Materials</span>
-        </div>
-
         {/* ── BODY ── */}
         <div className="flex-1 flex flex-col px-4 pt-3 text-xs leading-relaxed text-black" style={{ paddingBottom: 12 }}>
-          <p className="mb-2">
-            To,<br />
-            <strong className="uppercase">{doc.clientName}</strong>
-          </p>
-
-          <p className="mb-2">Dear Team,</p>
-
-          <p className="mb-2 text-justify">
-            We, <strong>{co.name}</strong>, located at {co.address}, hereby provide this undertaking
-            in reference to the use of fire-rated materials for{" "}
-            <strong>{projectDesc}</strong>
-            {doc.lpoNumber ? ` as per LPO No. ${doc.lpoNumber}` : ""}
-            {doc.projectRef ? `, Project Reference: ${doc.projectRef}` : ""}.
-          </p>
-
-          <p className="mb-2">We solemnly affirm and undertake that:</p>
-
-          <p className="mb-1 font-bold">Commitment to using the following fire-rated materials:</p>
-
-          <div className="mb-3 pl-2">
-            <MaterialLines text={doc.commitmentText} />
-          </div>
-
-          <p className="mb-2 text-justify">
-            <strong>Responsibility:</strong>{" "}
-            {co.name} accepts full responsibility for the quality and performance of the fire-rated materials
-            specified above. We will ensure that these materials are sourced from reputable suppliers and are
-            installed according to manufacturer guidelines and industry best practices.
-          </p>
-
-          <p className="mb-2 text-justify">
-            We trust that this undertaking satisfies the requirements and provides the necessary assurance
-            regarding our commitment to fire safety and the use of fire-rated materials. Should there be any
-            additional requirements or modifications needed, please do not hesitate to inform us.
-          </p>
-
-          {doc.notes?.trim() && (
-            <p className="mb-2 text-gray-600 italic">{doc.notes}</p>
-          )}
-
-          <p className="mb-4">Thank you for your cooperation and understanding.</p>
-
           {/* ── PREPARED BY / AUTHORISED SIGNATORY ── */}
           <div className="flex gap-8" style={{ marginTop: "auto" }}>
             <div className="flex-1">
