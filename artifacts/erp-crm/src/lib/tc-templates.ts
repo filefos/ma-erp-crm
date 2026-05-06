@@ -2,7 +2,7 @@ export const STANDARD_TC = `1. COMMERCIAL BASIS
 1. Prices are quoted in accordance with the attached specification and the received project requirements. Any revision, deviation, or additional requirement shall be treated as a variation and priced separately.
 2. Unless specifically included in the quotation, the customer shall provide crane support, foundation, safe offloading access, and all site arrangements required for unloading and installation.
 3. Commercial basis: Ex-factory.
-4. All cheques shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC. SP.".
+4. All cheques shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
 
 2. EXCLUSIONS
 1. Offloading, excavation, foundation works, and any on-site civil works unless specifically included in the quotation.
@@ -15,7 +15,7 @@ export const STANDARD_TC = `1. COMMERCIAL BASIS
 3. PAYMENT TERMS
 1. 75% advance payment upon receipt of the LPO and approved drawings.
 2. 25% balance payment before delivery.
-3. Cheque shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC. SP.".
+3. Cheque shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC."
 4. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
 
 4. TECHNICAL & GENERAL NOTES

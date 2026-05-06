@@ -814,38 +814,49 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             {(() => {
               const printStyle = { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties;
               const tcLines = (data.termsConditions ?? STANDARD_TC).split("\n").map(l => l.trim()).filter(l => l);
-              const sections: { title: string; items: string[] }[] = [];
-              let current: { title: string; items: string[] } | null = null;
+              const sections: { title: string; num: string; items: { num: string; body: string }[] }[] = [];
+              let current: { title: string; num: string; items: { num: string; body: string }[] } | null = null;
               for (const line of tcLines) {
                 const isHeader = /^\d+\.\s+[A-Z][A-Z0-9\s&]+$/.test(line);
                 if (isHeader) {
                   if (current) sections.push(current);
-                  current = { title: line, items: [] };
+                  const hm = line.match(/^(\d+)\.\s+(.*)/);
+                  current = { num: hm ? hm[1] + "." : "", title: hm ? hm[2] : line, items: [] };
                 } else if (current) {
-                  current.items.push(line);
+                  const im = line.match(/^(\d+)\.\s+(.*)/);
+                  current.items.push({ num: im ? im[1] + "." : "", body: im ? im[2] : line });
                 }
               }
               if (current) sections.push(current);
               return (
                 <div className="mb-4">
                   {sections.map((sec, si) => (
-                    <div key={si} className="mb-[3px]">
+                    <div key={si} className="mb-[5px]">
+                      {/* Section header */}
                       <div
-                        className="px-3 py-[4px] text-[11px] font-bold text-white uppercase tracking-wide"
+                        className="flex items-center gap-2 px-3 py-[5px]"
                         style={{ backgroundColor: "#1e3a6e", ...printStyle }}
                       >
-                        {sec.title}
+                        <span className="text-[11px] font-black text-white shrink-0">{sec.num}</span>
+                        <span className="text-[11px] font-black text-white uppercase tracking-widest">{sec.title}</span>
                       </div>
+                      {/* Items */}
                       <table className="w-full border-collapse">
                         <tbody>
                           {sec.items.map((item, ii) => {
-                            const isCheque = /cheque(s)?\s+shall\s+be\s+prepared\s+in\s+fav/i.test(item);
+                            const isCheque = /cheque(s)?\s+shall\s+be\s+prepared\s+in\s+fav/i.test(item.body);
                             return (
-                              <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? "#eaf0f8" : "#ffffff", ...printStyle }}>
+                              <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? "#f0f4f9" : "#ffffff", ...printStyle }}>
                                 <td
-                                  className={`border border-gray-300 px-3 py-[3px] text-[10px] leading-snug ${isCheque ? "font-bold text-[#0f2d5a] text-[11px]" : ""}`}
+                                  className="border border-gray-300 px-2 py-[4px] text-[10.5px] font-semibold text-gray-600 text-center align-top"
+                                  style={{ width: 28 }}
                                 >
-                                  {item}
+                                  {item.num}
+                                </td>
+                                <td
+                                  className={`border border-gray-300 px-3 py-[4px] text-[10.5px] leading-snug align-top ${isCheque ? "font-bold text-[#0f2d5a]" : "text-gray-800"}`}
+                                >
+                                  {item.body}
                                 </td>
                               </tr>
                             );
