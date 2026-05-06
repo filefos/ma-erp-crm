@@ -283,6 +283,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           /* Forced section break only between the three quotation pages */
           .print-page-break {
             page-break-before: always !important; break-before: page !important;
+            margin-top: 0 !important; padding-top: 0 !important;
           }
           /* Keep critical blocks together so they never split awkwardly */
           table { page-break-inside: avoid !important; break-inside: avoid !important; }
