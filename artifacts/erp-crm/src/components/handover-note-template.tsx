@@ -251,7 +251,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
         </table>
 
         {/* ── BODY TEXT ── */}
-        <div className="flex-1 px-4 pt-3 pb-2 text-xs leading-relaxed text-black">
+        <div className="flex-1 flex flex-col px-4 pt-3 text-xs leading-relaxed text-black" style={{ paddingBottom: 12 }}>
           <p className="mb-2 text-justify">
             We, <strong>{co.name}</strong>, hereby certify that the above works, materials, and items have been
             duly completed and formally handed over to <strong className="uppercase">{doc.clientName}</strong>
@@ -299,24 +299,23 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             </div>
           </div>
 
-          {/* ── PREPARED BY / FOR & ON BEHALF ── */}
-          <div className="flex justify-between items-end mb-1">
-            <div>
-              <div className="text-[10px] font-semibold">Prepared by:</div>
-              <div className="text-[11px]">{co.contact}</div>
+          {/* ── PREPARED BY / AUTHORISED SIGNATORY ── */}
+          <div className="flex gap-8" style={{ marginTop: "auto" }}>
+            <div className="flex-1">
+              <div className="text-[10px] font-bold text-black">Prepared by:</div>
+              <div className="text-[11px] text-black">{co.contact}</div>
+              <div className="border-t border-gray-500 mt-6 pt-1">
+                <span className="text-[10px] text-gray-500">Signature: </span>
+                <span className="text-[10px] text-gray-400">_______________</span>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-[10px]">For &amp; on behalf of</div>
-              <div className="text-[11px] font-black uppercase">{co.name}</div>
+            <div className="flex-1 text-right">
+              <div className="text-[10px] text-black">For &amp; on behalf of</div>
+              <div className="text-[11px] font-black uppercase text-black">{co.name}</div>
+              <div className="border-t border-gray-500 mt-6 pt-1">
+                <span className="text-[10px] text-gray-500">Authorised Signatory</span>
+              </div>
             </div>
-          </div>
-
-          <div className="flex justify-between items-start border-t border-gray-300 pt-1">
-            <div className="text-[10px] text-gray-500">Signature</div>
-            <div className="text-[10px] text-gray-500 text-center italic">
-              This is a computer generated document. No signature or stamp required.
-            </div>
-            <div className="text-[10px] text-gray-500">Authorised Signatory</div>
           </div>
         </div>
 
