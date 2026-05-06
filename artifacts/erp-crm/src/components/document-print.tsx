@@ -728,7 +728,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
               page="Page 1 of 3"
-              hideDisclaimer
             />
           </>
         )}
