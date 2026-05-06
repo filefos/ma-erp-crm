@@ -130,18 +130,17 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
       const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      const win = window.open(url, "_blank");
-      if (win) {
-        // Revoke after a generous delay — user may take time to print.
-        setTimeout(() => URL.revokeObjectURL(url), 120000);
-      } else {
-        URL.revokeObjectURL(url);
-        toast({
-          title: "Popup blocked",
-          description: "Allow pop-ups for this site, then try again.",
-          variant: "destructive",
-        });
-      }
+      // Use an anchor click with target="_blank" — not window.open() — so
+      // the browser opens the PDF in a new tab without treating it as a popup.
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // Revoke after a generous delay so the user has time to print.
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
     } catch (err) {
       toast({ title: "Print failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
     } finally {
