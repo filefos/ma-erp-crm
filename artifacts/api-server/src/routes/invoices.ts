@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, usersTable, notificationsTable, departmentsTable, projectsTable } from "@workspace/db";
+import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, usersTable, notificationsTable, departmentsTable, projectsTable, undertakingLettersTable, handoverNotesTable } from "@workspace/db";
 import { and, eq, or, sql, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 import { aiAvailable, chatWithVision } from "../lib/ai";
@@ -597,6 +597,55 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
     req.log?.warn({ err }, "Failed to auto-create draft Tax Invoice from LPO");
   }
 
+  // AUTO-CREATE draft Undertaking Letter + Handover Note from this LPO.
+  let createdUl: any = null;
+  let createdHon: any = null;
+  try {
+    const ulCount = await db.select({ count: sql<number>`count(*)::int` }).from(undertakingLettersTable).where(eq(undertakingLettersTable.companyId, lpo.companyId));
+    const ulNum = (ulCount[0]?.count ?? 0) + 1;
+    const [co2] = lpo.companyId ? await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, lpo.companyId)) : [{ prefix: "PM" }];
+    const ulPrefix = co2?.prefix ?? "PM";
+    const ulNumber = `${ulPrefix}-UL-${new Date().getFullYear()}-${String(ulNum).padStart(4, "0")}`;
+    const [ul] = await db.insert(undertakingLettersTable).values({
+      ulNumber,
+      lpoId: lpo.id,
+      companyId: lpo.companyId,
+      clientName: lpo.clientName,
+      lpoNumber: lpo.lpoNumber,
+      projectRef: resolvedProjectRef ?? lpo.projectRef ?? null,
+      projectId: resolvedProjectId ?? lpo.projectId ?? null,
+      letterDate: today,
+      scope: lpo.scope ?? null,
+      status: "draft",
+      createdById: req.user?.id,
+    } as any).returning();
+    createdUl = ul;
+  } catch (err) {
+    req.log?.warn({ err }, "Failed to auto-create Undertaking Letter from LPO");
+  }
+  try {
+    const honCount = await db.select({ count: sql<number>`count(*)::int` }).from(handoverNotesTable).where(eq(handoverNotesTable.companyId, lpo.companyId));
+    const honNum = (honCount[0]?.count ?? 0) + 1;
+    const [co3] = lpo.companyId ? await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, lpo.companyId)) : [{ prefix: "PM" }];
+    const honPrefix = co3?.prefix ?? "PM";
+    const honNumber = `${honPrefix}-HON-${new Date().getFullYear()}-${String(honNum).padStart(4, "0")}`;
+    const [hon] = await db.insert(handoverNotesTable).values({
+      honNumber,
+      lpoId: lpo.id,
+      companyId: lpo.companyId,
+      clientName: lpo.clientName,
+      lpoNumber: lpo.lpoNumber,
+      projectRef: resolvedProjectRef ?? lpo.projectRef ?? null,
+      projectId: resolvedProjectId ?? lpo.projectId ?? null,
+      projectDescription: lpo.scope ?? null,
+      status: "draft",
+      createdById: req.user?.id,
+    } as any).returning();
+    createdHon = hon;
+  } catch (err) {
+    req.log?.warn({ err }, "Failed to auto-create Handover Note from LPO");
+  }
+
   res.status(201).json({
     ...lpo,
     projectRef: resolvedProjectRef,
@@ -605,6 +654,8 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
       project: autoProject,
       proformaInvoice: createdPi ? { id: createdPi.id, piNumber: createdPi.piNumber } : null,
       taxInvoice: createdTi ? { id: createdTi.id, invoiceNumber: createdTi.invoiceNumber } : null,
+      undertakingLetter: createdUl ? { id: createdUl.id, ulNumber: createdUl.ulNumber } : null,
+      handoverNote: createdHon ? { id: createdHon.id, honNumber: createdHon.honNumber } : null,
     },
   });
 });
@@ -687,6 +738,92 @@ router.delete("/lpos/:id", requirePermission("lpos", "delete"), async (req, res)
   }
   await db.delete(lposTable).where(eq(lposTable.id, id));
   res.json({ success: true });
+});
+
+// ── UNDERTAKING LETTERS ──────────────────────────────────────────────────────
+
+router.get("/undertaking-letters", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
+  let rows = await db.select().from(undertakingLettersTable).orderBy(sql`${undertakingLettersTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
+  const { status, companyId } = req.query;
+  if (status) rows = rows.filter(r => r.status === status);
+  if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
+  const enriched = await Promise.all(rows.map(async (ul) => {
+    const [co] = ul.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, ul.companyId)) : [undefined];
+    return { ...ul, companyRef: co?.name };
+  }));
+  res.json(enriched);
+});
+
+router.post("/undertaking-letters", requirePermission("lpos", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
+  const data = req.body;
+  const count = await db.select({ count: sql<number>`count(*)::int` }).from(undertakingLettersTable).where(eq(undertakingLettersTable.companyId, data.companyId));
+  const num = (count[0]?.count ?? 0) + 1;
+  const [co] = await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, data.companyId));
+  const ulNumber = `${co?.prefix ?? "PM"}-UL-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
+  const [ul] = await db.insert(undertakingLettersTable).values({ ...data, ulNumber, createdById: req.user?.id } as any).returning();
+  res.status(201).json(ul);
+});
+
+router.get("/undertaking-letters/:id", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const [ul] = await db.select().from(undertakingLettersTable).where(eq(undertakingLettersTable.id, id));
+  if (!ul) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [ul]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const [co] = ul.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, ul.companyId)) : [undefined];
+  res.json({ ...ul, companyRef: co?.name });
+});
+
+router.put("/undertaking-letters/:id", requirePermission("lpos", "edit"), async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(undertakingLettersTable).where(eq(undertakingLettersTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const [ul] = await db.update(undertakingLettersTable).set({ ...req.body, updatedAt: new Date() }).where(eq(undertakingLettersTable.id, id)).returning();
+  res.json(ul);
+});
+
+// ── HANDOVER NOTES ────────────────────────────────────────────────────────────
+
+router.get("/handover-notes", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
+  let rows = await db.select().from(handoverNotesTable).orderBy(sql`${handoverNotesTable.createdAt} desc`);
+  rows = scopeFilter(req, rows);
+  const { status, companyId } = req.query;
+  if (status) rows = rows.filter(r => r.status === status);
+  if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
+  const enriched = await Promise.all(rows.map(async (hon) => {
+    const [co] = hon.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, hon.companyId)) : [undefined];
+    return { ...hon, companyRef: co?.name };
+  }));
+  res.json(enriched);
+});
+
+router.post("/handover-notes", requirePermission("lpos", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
+  const data = req.body;
+  const count = await db.select({ count: sql<number>`count(*)::int` }).from(handoverNotesTable).where(eq(handoverNotesTable.companyId, data.companyId));
+  const num = (count[0]?.count ?? 0) + 1;
+  const [co] = await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, data.companyId));
+  const honNumber = `${co?.prefix ?? "PM"}-HON-${new Date().getFullYear()}-${String(num).padStart(4, "0")}`;
+  const [hon] = await db.insert(handoverNotesTable).values({ ...data, honNumber, createdById: req.user?.id } as any).returning();
+  res.status(201).json(hon);
+});
+
+router.get("/handover-notes/:id", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const [hon] = await db.select().from(handoverNotesTable).where(eq(handoverNotesTable.id, id));
+  if (!hon) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [hon]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const [co] = hon.companyId ? await db.select({ name: companiesTable.name }).from(companiesTable).where(eq(companiesTable.id, hon.companyId)) : [undefined];
+  res.json({ ...hon, companyRef: co?.name });
+});
+
+router.put("/handover-notes/:id", requirePermission("lpos", "edit"), async (req, res): Promise<void> => {
+  const id = parseInt(req.params.id, 10);
+  const [existing] = await db.select().from(handoverNotesTable).where(eq(handoverNotesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const [hon] = await db.update(handoverNotesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(handoverNotesTable.id, id)).returning();
+  res.json(hon);
 });
 
 export default router;

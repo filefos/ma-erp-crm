@@ -27,6 +27,8 @@ import { InvoiceDetail } from "@/pages/accounts/invoice-detail";
 import { InvoiceEdit } from "@/pages/accounts/invoice-edit";
 import { DeliveryNotesList } from "@/pages/accounts/delivery-notes";
 import { DeliveryNoteDetail } from "@/pages/accounts/delivery-note-detail";
+import { UndertakingLettersList } from "@/pages/accounts/undertaking-letters";
+import { HandoverNotesList } from "@/pages/accounts/handover-notes";
 import { ExpensesList } from "@/pages/accounts/expenses";
 import { ChequesList } from "@/pages/accounts/cheques";
 import { BankAccountsList } from "@/pages/accounts/bank-accounts";
@@ -204,6 +206,12 @@ function Router() {
       </Route>
       <Route path="/accounts/delivery-notes">
         <ModuleGuard module="delivery_notes"><DeliveryNotesList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/undertaking-letters">
+        <ModuleGuard module="lpos"><UndertakingLettersList /></ModuleGuard>
+      </Route>
+      <Route path="/accounts/handover-notes">
+        <ModuleGuard module="lpos"><HandoverNotesList /></ModuleGuard>
       </Route>
       <Route path="/accounts/expenses">
         <ModuleGuard module="expenses"><ExpensesList /></ModuleGuard>

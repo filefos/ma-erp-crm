@@ -1978,6 +1978,291 @@ export const UpdateLpoResponse = zod.object({
 });
 
 /**
+ * @summary List undertaking letters
+ */
+export const ListUndertakingLettersQueryParams = zod.object({
+  companyId: zod.coerce.number().optional(),
+  status: zod.coerce.string().optional(),
+});
+
+export const ListUndertakingLettersResponseItem = zod.object({
+  id: zod.number(),
+  ulNumber: zod.string(),
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  companyRef: zod.string().optional(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  letterDate: zod.string().optional(),
+  scope: zod.string().optional(),
+  commitmentText: zod.string().optional(),
+  signedByName: zod.string().optional(),
+  signedDate: zod.string().optional(),
+  status: zod.string(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+export const ListUndertakingLettersResponse = zod.array(
+  ListUndertakingLettersResponseItem,
+);
+
+/**
+ * @summary Create undertaking letter
+ */
+export const CreateUndertakingLetterBody = zod.object({
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  letterDate: zod.string().optional(),
+  scope: zod.string().optional(),
+  commitmentText: zod.string().optional(),
+  signedByName: zod.string().optional(),
+  signedDate: zod.string().optional(),
+  status: zod.string().optional(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary Get undertaking letter
+ */
+export const GetUndertakingLetterParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetUndertakingLetterResponse = zod.object({
+  id: zod.number(),
+  ulNumber: zod.string(),
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  companyRef: zod.string().optional(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  letterDate: zod.string().optional(),
+  scope: zod.string().optional(),
+  commitmentText: zod.string().optional(),
+  signedByName: zod.string().optional(),
+  signedDate: zod.string().optional(),
+  status: zod.string(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update undertaking letter
+ */
+export const UpdateUndertakingLetterParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUndertakingLetterBody = zod.object({
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  letterDate: zod.string().optional(),
+  scope: zod.string().optional(),
+  commitmentText: zod.string().optional(),
+  signedByName: zod.string().optional(),
+  signedDate: zod.string().optional(),
+  status: zod.string().optional(),
+  notes: zod.string().optional(),
+});
+
+export const UpdateUndertakingLetterResponse = zod.object({
+  id: zod.number(),
+  ulNumber: zod.string(),
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  companyRef: zod.string().optional(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  letterDate: zod.string().optional(),
+  scope: zod.string().optional(),
+  commitmentText: zod.string().optional(),
+  signedByName: zod.string().optional(),
+  signedDate: zod.string().optional(),
+  status: zod.string(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary List handover notes
+ */
+export const ListHandoverNotesQueryParams = zod.object({
+  companyId: zod.coerce.number().optional(),
+  status: zod.coerce.string().optional(),
+});
+
+export const ListHandoverNotesResponseItem = zod.object({
+  id: zod.number(),
+  honNumber: zod.string(),
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  companyRef: zod.string().optional(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  handoverDate: zod.string().optional(),
+  projectDescription: zod.string().optional(),
+  itemsHandedOver: zod
+    .array(
+      zod.object({
+        description: zod.string().optional(),
+        quantity: zod.number().optional(),
+        unit: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  receivedByName: zod.string().optional(),
+  receivedByDesignation: zod.string().optional(),
+  clientRepresentative: zod.string().optional(),
+  status: zod.string(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+export const ListHandoverNotesResponse = zod.array(
+  ListHandoverNotesResponseItem,
+);
+
+/**
+ * @summary Create handover note
+ */
+export const CreateHandoverNoteBody = zod.object({
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  handoverDate: zod.string().optional(),
+  projectDescription: zod.string().optional(),
+  itemsHandedOver: zod
+    .array(
+      zod.object({
+        description: zod.string().optional(),
+        quantity: zod.number().optional(),
+        unit: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  receivedByName: zod.string().optional(),
+  receivedByDesignation: zod.string().optional(),
+  clientRepresentative: zod.string().optional(),
+  status: zod.string().optional(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary Get handover note
+ */
+export const GetHandoverNoteParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetHandoverNoteResponse = zod.object({
+  id: zod.number(),
+  honNumber: zod.string(),
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  companyRef: zod.string().optional(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  handoverDate: zod.string().optional(),
+  projectDescription: zod.string().optional(),
+  itemsHandedOver: zod
+    .array(
+      zod.object({
+        description: zod.string().optional(),
+        quantity: zod.number().optional(),
+        unit: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  receivedByName: zod.string().optional(),
+  receivedByDesignation: zod.string().optional(),
+  clientRepresentative: zod.string().optional(),
+  status: zod.string(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update handover note
+ */
+export const UpdateHandoverNoteParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateHandoverNoteBody = zod.object({
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  handoverDate: zod.string().optional(),
+  projectDescription: zod.string().optional(),
+  itemsHandedOver: zod
+    .array(
+      zod.object({
+        description: zod.string().optional(),
+        quantity: zod.number().optional(),
+        unit: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  receivedByName: zod.string().optional(),
+  receivedByDesignation: zod.string().optional(),
+  clientRepresentative: zod.string().optional(),
+  status: zod.string().optional(),
+  notes: zod.string().optional(),
+});
+
+export const UpdateHandoverNoteResponse = zod.object({
+  id: zod.number(),
+  honNumber: zod.string(),
+  lpoId: zod.number().optional(),
+  companyId: zod.number(),
+  companyRef: zod.string().optional(),
+  clientName: zod.string(),
+  lpoNumber: zod.string().optional(),
+  projectRef: zod.string().optional(),
+  projectId: zod.number().optional(),
+  handoverDate: zod.string().optional(),
+  projectDescription: zod.string().optional(),
+  itemsHandedOver: zod
+    .array(
+      zod.object({
+        description: zod.string().optional(),
+        quantity: zod.number().optional(),
+        unit: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  receivedByName: zod.string().optional(),
+  receivedByDesignation: zod.string().optional(),
+  clientRepresentative: zod.string().optional(),
+  status: zod.string(),
+  notes: zod.string().optional(),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary List projects
  */
 export const ListProjectsQueryParams = zod.object({

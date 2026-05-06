@@ -16,7 +16,7 @@ import {
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
   BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft, TrendingUp,
-  MessageCircle, Wallet, RotateCcw, MonitorCheck,
+  MessageCircle, Wallet, RotateCcw, MonitorCheck, PackageCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { AskAIButton } from "@/components/ask-ai";
@@ -66,6 +66,8 @@ const NAV: NavGroup[] = [
       { href: "/sales/proforma-invoices", label: "Proforma Invoices", icon: FileCheck },
       { href: "/accounts/invoices", label: "Tax Invoices", icon: Receipt },
       { href: "/accounts/delivery-notes", label: "Delivery Notes", icon: TruckIcon },
+      { href: "/accounts/undertaking-letters", label: "Undertaking Letters", icon: FileCheck },
+      { href: "/accounts/handover-notes", label: "Handover Notes", icon: PackageCheck },
       { href: "/accounts/expenses", label: "Expenses", icon: Banknote },
       { href: "/accounts/payments-received", label: "Receivable", icon: ArrowDownCircle },
       { href: "/accounts/payments-made", label: "Payable", icon: ArrowUpCircle },

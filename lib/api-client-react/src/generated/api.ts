@@ -44,6 +44,7 @@ import type {
   CreateEmployeeAttachmentBody,
   CreateEmployeeBody,
   CreateExpenseBody,
+  CreateHandoverNoteBody,
   CreateInventoryItemBody,
   CreateJournalEntryBody,
   CreateLeadBody,
@@ -62,6 +63,7 @@ import type {
   CreateSupplierBody,
   CreateSupplierQuotationBody,
   CreateTaxInvoiceBody,
+  CreateUndertakingLetterBody,
   CreateUserBody,
   DashboardSummary,
   DeleteChartOfAccount200,
@@ -82,6 +84,7 @@ import type {
   GetLeadsPipelineParams,
   GetRecentActivityParams,
   GetSalesPipelineParams,
+  HandoverNote,
   HealthStatus,
   InventoryItem,
   JournalEntry,
@@ -98,6 +101,7 @@ import type {
   ListDeliveryNotesParams,
   ListEmployeesParams,
   ListExpensesParams,
+  ListHandoverNotesParams,
   ListInventoryItemsParams,
   ListJournalEntriesParams,
   ListLeadsParams,
@@ -120,6 +124,7 @@ import type {
   ListSupplierQuotationsParams,
   ListSuppliersParams,
   ListTaxInvoicesParams,
+  ListUndertakingLettersParams,
   ListUsersParams,
   LoginBody,
   Lpo,
@@ -157,6 +162,7 @@ import type {
   SupplierQuotation,
   SupplierRegistration,
   TaxInvoice,
+  UndertakingLetter,
   UpdateDepartmentBody,
   UpdateRolePermissionsBody,
   UpdateUserBody,
@@ -4464,6 +4470,729 @@ export const useUpdateLpo = <
   TContext
 > => {
   return useMutation(getUpdateLpoMutationOptions(options));
+};
+
+/**
+ * @summary List undertaking letters
+ */
+export const getListUndertakingLettersUrl = (
+  params?: ListUndertakingLettersParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/undertaking-letters?${stringifiedParams}`
+    : `/api/undertaking-letters`;
+};
+
+export const listUndertakingLetters = async (
+  params?: ListUndertakingLettersParams,
+  options?: RequestInit,
+): Promise<UndertakingLetter[]> => {
+  return customFetch<UndertakingLetter[]>(
+    getListUndertakingLettersUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListUndertakingLettersQueryKey = (
+  params?: ListUndertakingLettersParams,
+) => {
+  return [`/api/undertaking-letters`, ...(params ? [params] : [])] as const;
+};
+
+export const getListUndertakingLettersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listUndertakingLetters>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListUndertakingLettersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listUndertakingLetters>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListUndertakingLettersQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listUndertakingLetters>>
+  > = ({ signal }) =>
+    listUndertakingLetters(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listUndertakingLetters>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListUndertakingLettersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listUndertakingLetters>>
+>;
+export type ListUndertakingLettersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List undertaking letters
+ */
+
+export function useListUndertakingLetters<
+  TData = Awaited<ReturnType<typeof listUndertakingLetters>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListUndertakingLettersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listUndertakingLetters>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListUndertakingLettersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create undertaking letter
+ */
+export const getCreateUndertakingLetterUrl = () => {
+  return `/api/undertaking-letters`;
+};
+
+export const createUndertakingLetter = async (
+  createUndertakingLetterBody: CreateUndertakingLetterBody,
+  options?: RequestInit,
+): Promise<UndertakingLetter> => {
+  return customFetch<UndertakingLetter>(getCreateUndertakingLetterUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createUndertakingLetterBody),
+  });
+};
+
+export const getCreateUndertakingLetterMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createUndertakingLetter>>,
+    TError,
+    { data: BodyType<CreateUndertakingLetterBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createUndertakingLetter>>,
+  TError,
+  { data: BodyType<CreateUndertakingLetterBody> },
+  TContext
+> => {
+  const mutationKey = ["createUndertakingLetter"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createUndertakingLetter>>,
+    { data: BodyType<CreateUndertakingLetterBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createUndertakingLetter(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateUndertakingLetterMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createUndertakingLetter>>
+>;
+export type CreateUndertakingLetterMutationBody =
+  BodyType<CreateUndertakingLetterBody>;
+export type CreateUndertakingLetterMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create undertaking letter
+ */
+export const useCreateUndertakingLetter = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createUndertakingLetter>>,
+    TError,
+    { data: BodyType<CreateUndertakingLetterBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createUndertakingLetter>>,
+  TError,
+  { data: BodyType<CreateUndertakingLetterBody> },
+  TContext
+> => {
+  return useMutation(getCreateUndertakingLetterMutationOptions(options));
+};
+
+/**
+ * @summary Get undertaking letter
+ */
+export const getGetUndertakingLetterUrl = (id: number) => {
+  return `/api/undertaking-letters/${id}`;
+};
+
+export const getUndertakingLetter = async (
+  id: number,
+  options?: RequestInit,
+): Promise<UndertakingLetter> => {
+  return customFetch<UndertakingLetter>(getGetUndertakingLetterUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetUndertakingLetterQueryKey = (id: number) => {
+  return [`/api/undertaking-letters/${id}`] as const;
+};
+
+export const getGetUndertakingLetterQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUndertakingLetter>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUndertakingLetter>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetUndertakingLetterQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUndertakingLetter>>
+  > = ({ signal }) => getUndertakingLetter(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUndertakingLetter>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUndertakingLetterQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUndertakingLetter>>
+>;
+export type GetUndertakingLetterQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get undertaking letter
+ */
+
+export function useGetUndertakingLetter<
+  TData = Awaited<ReturnType<typeof getUndertakingLetter>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUndertakingLetter>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUndertakingLetterQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update undertaking letter
+ */
+export const getUpdateUndertakingLetterUrl = (id: number) => {
+  return `/api/undertaking-letters/${id}`;
+};
+
+export const updateUndertakingLetter = async (
+  id: number,
+  createUndertakingLetterBody: CreateUndertakingLetterBody,
+  options?: RequestInit,
+): Promise<UndertakingLetter> => {
+  return customFetch<UndertakingLetter>(getUpdateUndertakingLetterUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createUndertakingLetterBody),
+  });
+};
+
+export const getUpdateUndertakingLetterMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUndertakingLetter>>,
+    TError,
+    { id: number; data: BodyType<CreateUndertakingLetterBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateUndertakingLetter>>,
+  TError,
+  { id: number; data: BodyType<CreateUndertakingLetterBody> },
+  TContext
+> => {
+  const mutationKey = ["updateUndertakingLetter"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateUndertakingLetter>>,
+    { id: number; data: BodyType<CreateUndertakingLetterBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateUndertakingLetter(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUndertakingLetterMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUndertakingLetter>>
+>;
+export type UpdateUndertakingLetterMutationBody =
+  BodyType<CreateUndertakingLetterBody>;
+export type UpdateUndertakingLetterMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update undertaking letter
+ */
+export const useUpdateUndertakingLetter = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUndertakingLetter>>,
+    TError,
+    { id: number; data: BodyType<CreateUndertakingLetterBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateUndertakingLetter>>,
+  TError,
+  { id: number; data: BodyType<CreateUndertakingLetterBody> },
+  TContext
+> => {
+  return useMutation(getUpdateUndertakingLetterMutationOptions(options));
+};
+
+/**
+ * @summary List handover notes
+ */
+export const getListHandoverNotesUrl = (params?: ListHandoverNotesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/handover-notes?${stringifiedParams}`
+    : `/api/handover-notes`;
+};
+
+export const listHandoverNotes = async (
+  params?: ListHandoverNotesParams,
+  options?: RequestInit,
+): Promise<HandoverNote[]> => {
+  return customFetch<HandoverNote[]>(getListHandoverNotesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListHandoverNotesQueryKey = (
+  params?: ListHandoverNotesParams,
+) => {
+  return [`/api/handover-notes`, ...(params ? [params] : [])] as const;
+};
+
+export const getListHandoverNotesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listHandoverNotes>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListHandoverNotesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listHandoverNotes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListHandoverNotesQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listHandoverNotes>>
+  > = ({ signal }) => listHandoverNotes(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listHandoverNotes>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListHandoverNotesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listHandoverNotes>>
+>;
+export type ListHandoverNotesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List handover notes
+ */
+
+export function useListHandoverNotes<
+  TData = Awaited<ReturnType<typeof listHandoverNotes>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListHandoverNotesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listHandoverNotes>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListHandoverNotesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create handover note
+ */
+export const getCreateHandoverNoteUrl = () => {
+  return `/api/handover-notes`;
+};
+
+export const createHandoverNote = async (
+  createHandoverNoteBody: CreateHandoverNoteBody,
+  options?: RequestInit,
+): Promise<HandoverNote> => {
+  return customFetch<HandoverNote>(getCreateHandoverNoteUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createHandoverNoteBody),
+  });
+};
+
+export const getCreateHandoverNoteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createHandoverNote>>,
+    TError,
+    { data: BodyType<CreateHandoverNoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createHandoverNote>>,
+  TError,
+  { data: BodyType<CreateHandoverNoteBody> },
+  TContext
+> => {
+  const mutationKey = ["createHandoverNote"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createHandoverNote>>,
+    { data: BodyType<CreateHandoverNoteBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createHandoverNote(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateHandoverNoteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createHandoverNote>>
+>;
+export type CreateHandoverNoteMutationBody = BodyType<CreateHandoverNoteBody>;
+export type CreateHandoverNoteMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create handover note
+ */
+export const useCreateHandoverNote = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createHandoverNote>>,
+    TError,
+    { data: BodyType<CreateHandoverNoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createHandoverNote>>,
+  TError,
+  { data: BodyType<CreateHandoverNoteBody> },
+  TContext
+> => {
+  return useMutation(getCreateHandoverNoteMutationOptions(options));
+};
+
+/**
+ * @summary Get handover note
+ */
+export const getGetHandoverNoteUrl = (id: number) => {
+  return `/api/handover-notes/${id}`;
+};
+
+export const getHandoverNote = async (
+  id: number,
+  options?: RequestInit,
+): Promise<HandoverNote> => {
+  return customFetch<HandoverNote>(getGetHandoverNoteUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetHandoverNoteQueryKey = (id: number) => {
+  return [`/api/handover-notes/${id}`] as const;
+};
+
+export const getGetHandoverNoteQueryOptions = <
+  TData = Awaited<ReturnType<typeof getHandoverNote>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getHandoverNote>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetHandoverNoteQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getHandoverNote>>> = ({
+    signal,
+  }) => getHandoverNote(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getHandoverNote>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetHandoverNoteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getHandoverNote>>
+>;
+export type GetHandoverNoteQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get handover note
+ */
+
+export function useGetHandoverNote<
+  TData = Awaited<ReturnType<typeof getHandoverNote>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getHandoverNote>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetHandoverNoteQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update handover note
+ */
+export const getUpdateHandoverNoteUrl = (id: number) => {
+  return `/api/handover-notes/${id}`;
+};
+
+export const updateHandoverNote = async (
+  id: number,
+  createHandoverNoteBody: CreateHandoverNoteBody,
+  options?: RequestInit,
+): Promise<HandoverNote> => {
+  return customFetch<HandoverNote>(getUpdateHandoverNoteUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createHandoverNoteBody),
+  });
+};
+
+export const getUpdateHandoverNoteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateHandoverNote>>,
+    TError,
+    { id: number; data: BodyType<CreateHandoverNoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateHandoverNote>>,
+  TError,
+  { id: number; data: BodyType<CreateHandoverNoteBody> },
+  TContext
+> => {
+  const mutationKey = ["updateHandoverNote"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateHandoverNote>>,
+    { id: number; data: BodyType<CreateHandoverNoteBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateHandoverNote(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateHandoverNoteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateHandoverNote>>
+>;
+export type UpdateHandoverNoteMutationBody = BodyType<CreateHandoverNoteBody>;
+export type UpdateHandoverNoteMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update handover note
+ */
+export const useUpdateHandoverNote = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateHandoverNote>>,
+    TError,
+    { id: number; data: BodyType<CreateHandoverNoteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateHandoverNote>>,
+  TError,
+  { id: number; data: BodyType<CreateHandoverNoteBody> },
+  TContext
+> => {
+  return useMutation(getUpdateHandoverNoteMutationOptions(options));
 };
 
 /**

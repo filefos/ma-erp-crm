@@ -20,6 +20,8 @@ tags:
   - name: tax-invoices
   - name: delivery-notes
   - name: lpos
+  - name: undertaking-letters
+  - name: handover-notes
   - name: projects
   - name: suppliers
   - name: purchase-requests
@@ -1067,6 +1069,174 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Lpo"
+
+  # UNDERTAKING LETTERS
+  /undertaking-letters:
+    get:
+      operationId: listUndertakingLetters
+      tags: [undertaking-letters]
+      summary: List undertaking letters
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of undertaking letters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UndertakingLetter"
+    post:
+      operationId: createUndertakingLetter
+      tags: [undertaking-letters]
+      summary: Create undertaking letter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUndertakingLetterBody"
+      responses:
+        "201":
+          description: Undertaking letter created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UndertakingLetter"
+
+  /undertaking-letters/{id}:
+    get:
+      operationId: getUndertakingLetter
+      tags: [undertaking-letters]
+      summary: Get undertaking letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Undertaking letter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UndertakingLetter"
+    put:
+      operationId: updateUndertakingLetter
+      tags: [undertaking-letters]
+      summary: Update undertaking letter
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUndertakingLetterBody"
+      responses:
+        "200":
+          description: Undertaking letter updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UndertakingLetter"
+
+  # HANDOVER NOTES
+  /handover-notes:
+    get:
+      operationId: listHandoverNotes
+      tags: [handover-notes]
+      summary: List handover notes
+      parameters:
+        - name: companyId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of handover notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HandoverNote"
+    post:
+      operationId: createHandoverNote
+      tags: [handover-notes]
+      summary: Create handover note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHandoverNoteBody"
+      responses:
+        "201":
+          description: Handover note created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandoverNote"
+
+  /handover-notes/{id}:
+    get:
+      operationId: getHandoverNote
+      tags: [handover-notes]
+      summary: Get handover note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Handover note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandoverNote"
+    put:
+      operationId: updateHandoverNote
+      tags: [handover-notes]
+      summary: Update handover note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHandoverNoteBody"
+      responses:
+        "200":
+          description: Handover note updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandoverNote"
 
   # PROJECTS
   /projects:
@@ -7022,6 +7192,168 @@ components:
                 type: string
               description: Soft warnings about auto-creation (e.g. missing company / contact info).
 
+
+    UndertakingLetter:
+      type: object
+      properties:
+        id:
+          type: integer
+        ulNumber:
+          type: string
+        lpoId:
+          type: integer
+        companyId:
+          type: integer
+        companyRef:
+          type: string
+        clientName:
+          type: string
+        lpoNumber:
+          type: string
+        projectRef:
+          type: string
+        projectId:
+          type: integer
+        letterDate:
+          type: string
+        scope:
+          type: string
+        commitmentText:
+          type: string
+        signedByName:
+          type: string
+        signedDate:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+      required: [id, ulNumber, companyId, clientName, status, createdAt]
+
+    CreateUndertakingLetterBody:
+      type: object
+      properties:
+        lpoId:
+          type: integer
+        companyId:
+          type: integer
+        clientName:
+          type: string
+        lpoNumber:
+          type: string
+        projectRef:
+          type: string
+        projectId:
+          type: integer
+        letterDate:
+          type: string
+        scope:
+          type: string
+        commitmentText:
+          type: string
+        signedByName:
+          type: string
+        signedDate:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+      required: [companyId, clientName]
+
+    HandoverNote:
+      type: object
+      properties:
+        id:
+          type: integer
+        honNumber:
+          type: string
+        lpoId:
+          type: integer
+        companyId:
+          type: integer
+        companyRef:
+          type: string
+        clientName:
+          type: string
+        lpoNumber:
+          type: string
+        projectRef:
+          type: string
+        projectId:
+          type: integer
+        handoverDate:
+          type: string
+        projectDescription:
+          type: string
+        itemsHandedOver:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              quantity:
+                type: number
+              unit:
+                type: string
+        receivedByName:
+          type: string
+        receivedByDesignation:
+          type: string
+        clientRepresentative:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+      required: [id, honNumber, companyId, clientName, status, createdAt]
+
+    CreateHandoverNoteBody:
+      type: object
+      properties:
+        lpoId:
+          type: integer
+        companyId:
+          type: integer
+        clientName:
+          type: string
+        lpoNumber:
+          type: string
+        projectRef:
+          type: string
+        projectId:
+          type: integer
+        handoverDate:
+          type: string
+        projectDescription:
+          type: string
+        itemsHandedOver:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              quantity:
+                type: number
+              unit:
+                type: string
+        receivedByName:
+          type: string
+        receivedByDesignation:
+          type: string
+        clientRepresentative:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+      required: [companyId, clientName]
 
     QuotationApproveResponse:
       allOf:

@@ -1838,6 +1838,92 @@ export type LeadUpdateResponse = Lead & {
   warnings?: string[];
 };
 
+export interface UndertakingLetter {
+  id: number;
+  ulNumber: string;
+  lpoId?: number;
+  companyId: number;
+  companyRef?: string;
+  clientName: string;
+  lpoNumber?: string;
+  projectRef?: string;
+  projectId?: number;
+  letterDate?: string;
+  scope?: string;
+  commitmentText?: string;
+  signedByName?: string;
+  signedDate?: string;
+  status: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreateUndertakingLetterBody {
+  lpoId?: number;
+  companyId: number;
+  clientName: string;
+  lpoNumber?: string;
+  projectRef?: string;
+  projectId?: number;
+  letterDate?: string;
+  scope?: string;
+  commitmentText?: string;
+  signedByName?: string;
+  signedDate?: string;
+  status?: string;
+  notes?: string;
+}
+
+export type HandoverNoteItemsHandedOverItem = {
+  description?: string;
+  quantity?: number;
+  unit?: string;
+};
+
+export interface HandoverNote {
+  id: number;
+  honNumber: string;
+  lpoId?: number;
+  companyId: number;
+  companyRef?: string;
+  clientName: string;
+  lpoNumber?: string;
+  projectRef?: string;
+  projectId?: number;
+  handoverDate?: string;
+  projectDescription?: string;
+  itemsHandedOver?: HandoverNoteItemsHandedOverItem[];
+  receivedByName?: string;
+  receivedByDesignation?: string;
+  clientRepresentative?: string;
+  status: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export type CreateHandoverNoteBodyItemsHandedOverItem = {
+  description?: string;
+  quantity?: number;
+  unit?: string;
+};
+
+export interface CreateHandoverNoteBody {
+  lpoId?: number;
+  companyId: number;
+  clientName: string;
+  lpoNumber?: string;
+  projectRef?: string;
+  projectId?: number;
+  handoverDate?: string;
+  projectDescription?: string;
+  itemsHandedOver?: CreateHandoverNoteBodyItemsHandedOverItem[];
+  receivedByName?: string;
+  receivedByDesignation?: string;
+  clientRepresentative?: string;
+  status?: string;
+  notes?: string;
+}
+
 export type QuotationApproveResponse = Quotation & {
   warnings?: string[];
 };
@@ -1889,6 +1975,16 @@ export type ListDeliveryNotesParams = {
 };
 
 export type ListLposParams = {
+  companyId?: number;
+  status?: string;
+};
+
+export type ListUndertakingLettersParams = {
+  companyId?: number;
+  status?: string;
+};
+
+export type ListHandoverNotesParams = {
   companyId?: number;
   status?: string;
 };

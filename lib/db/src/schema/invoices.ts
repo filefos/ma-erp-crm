@@ -110,6 +110,49 @@ export const lposTable = pgTable("lpos", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const undertakingLettersTable = pgTable("undertaking_letters", {
+  id: serial("id").primaryKey(),
+  ulNumber: text("ul_number").notNull().unique(),
+  lpoId: integer("lpo_id"),
+  companyId: integer("company_id").notNull(),
+  clientName: text("client_name").notNull(),
+  lpoNumber: text("lpo_number"),
+  projectRef: text("project_ref"),
+  projectId: integer("project_id"),
+  letterDate: text("letter_date"),
+  scope: text("scope"),
+  commitmentText: text("commitment_text"),
+  signedByName: text("signed_by_name"),
+  signedDate: text("signed_date"),
+  status: text("status").notNull().default("draft"),
+  notes: text("notes"),
+  createdById: integer("created_by_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const handoverNotesTable = pgTable("handover_notes", {
+  id: serial("id").primaryKey(),
+  honNumber: text("hon_number").notNull().unique(),
+  lpoId: integer("lpo_id"),
+  companyId: integer("company_id").notNull(),
+  clientName: text("client_name").notNull(),
+  lpoNumber: text("lpo_number"),
+  projectRef: text("project_ref"),
+  projectId: integer("project_id"),
+  handoverDate: text("handover_date"),
+  projectDescription: text("project_description"),
+  itemsHandedOver: text("items_handed_over").default("[]"),
+  receivedByName: text("received_by_name"),
+  receivedByDesignation: text("received_by_designation"),
+  clientRepresentative: text("client_representative"),
+  status: text("status").notNull().default("draft"),
+  notes: text("notes"),
+  createdById: integer("created_by_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Per-company sequence counter for Client Codes
 export const clientCodeSeqsTable = pgTable("client_code_seqs", {
   companyId: integer("company_id").primaryKey(),
@@ -120,8 +163,12 @@ export const insertProformaInvoiceSchema = createInsertSchema(proformaInvoicesTa
 export const insertTaxInvoiceSchema = createInsertSchema(taxInvoicesTable).omit({ id: true, invoiceNumber: true, createdAt: true, updatedAt: true });
 export const insertDeliveryNoteSchema = createInsertSchema(deliveryNotesTable).omit({ id: true, dnNumber: true, createdAt: true, updatedAt: true });
 export const insertLpoSchema = createInsertSchema(lposTable).omit({ id: true, lpoNumber: true, createdAt: true, updatedAt: true });
+export const insertUndertakingLetterSchema = createInsertSchema(undertakingLettersTable).omit({ id: true, ulNumber: true, createdAt: true, updatedAt: true });
+export const insertHandoverNoteSchema = createInsertSchema(handoverNotesTable).omit({ id: true, honNumber: true, createdAt: true, updatedAt: true });
 
 export type ProformaInvoice = typeof proformaInvoicesTable.$inferSelect;
 export type TaxInvoice = typeof taxInvoicesTable.$inferSelect;
 export type DeliveryNote = typeof deliveryNotesTable.$inferSelect;
 export type Lpo = typeof lposTable.$inferSelect;
+export type UndertakingLetter = typeof undertakingLettersTable.$inferSelect;
+export type HandoverNote = typeof handoverNotesTable.$inferSelect;
