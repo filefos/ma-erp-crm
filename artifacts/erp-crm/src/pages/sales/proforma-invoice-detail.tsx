@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Receipt, Pencil, FileText } from "lucide-react";
+import { ArrowLeft, Receipt, Pencil, FileText, Mail } from "lucide-react";
+import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -28,6 +29,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { openCompose } = useEmailCompose();
   const [converting, setConverting] = useState(false);
 
   const { data: pi, isLoading } = useGetProformaInvoice(pid, {
@@ -170,6 +172,20 @@ export function ProformaInvoiceDetail({ id }: Props) {
             onClick={handleConvertToTax} disabled={converting}
           >
             <Receipt className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Convert to Tax Invoice"}
+          </Button>
+          <Button
+            size="sm" variant="outline"
+            onClick={() => openCompose({
+              toAddress: (pi as any).clientEmail ?? "",
+              toName: pi.clientName ?? "",
+              subject: `Proforma Invoice ${pi.piNumber ?? ""} – ${pi.projectName ?? pi.clientName ?? ""}`,
+              body: `Dear ${pi.clientName ?? "Sir/Madam"},\n\nPlease find attached Proforma Invoice ${pi.piNumber ?? ""} for ${pi.projectName ?? "your project"}.\n\nTotal Value: AED ${Number(pi.total ?? 0).toLocaleString()}\n\nKindly review and confirm your acceptance.\n\nBest regards,\nPrime Max Prefab`,
+              clientName: pi.clientName ?? "",
+              sourceRef: pi.piNumber ?? "",
+              companyId: pi.companyId ?? undefined,
+            })}
+          >
+            <Mail className="w-4 h-4 mr-1" />Send Email
           </Button>
           <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} recipientPhone={(pi as any).clientPhone ?? undefined} recipientEmail={(pi as any).clientEmail ?? undefined} companyId={pi.companyId ?? undefined} docTypeLabel="Proforma Invoice" />
         </div>

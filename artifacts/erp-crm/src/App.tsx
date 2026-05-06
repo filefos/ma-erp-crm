@@ -92,6 +92,8 @@ import { NotificationsList } from "@/pages/notifications/index";
 import { MyProfile } from "@/pages/profile/index";
 import { EmailPanel } from "@/pages/email/index";
 import NotFound from "@/pages/not-found";
+import { EmailComposeProvider } from "@/contexts/email-compose-context";
+import { EmailComposeModal } from "@/components/email-compose-modal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -429,14 +431,17 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <AppLayout>
-            <Router />
-          </AppLayout>
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <EmailComposeProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <AppLayout>
+              <Router />
+            </AppLayout>
+          </WouterRouter>
+          <Toaster />
+          <EmailComposeModal />
+        </TooltipProvider>
+      </EmailComposeProvider>
     </QueryClientProvider>
   );
 }

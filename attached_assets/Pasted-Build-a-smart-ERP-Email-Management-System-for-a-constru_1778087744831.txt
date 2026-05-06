@@ -1,0 +1,145 @@
+Build a smart ERP Email Management System for a construction/prefabricated company CRM using React, Tailwind CSS, Node.js, and PostgreSQL/Supabase.
+
+MAIN REQUIREMENT:
+The system must allow users to send emails directly from any ERP module without leaving the current screen.
+
+WORKFLOW EXAMPLE:
+
+1. If the user is inside:
+
+   * Sales Module
+   * Quotation Panel
+
+2. There should be a “Send Email” button.
+
+3. When the user clicks the button:
+
+   * Open a professional Outlook-style email popup modal
+   * Automatically fetch client email data
+   * Automatically attach the related quotation PDF
+   * Allow the user to edit subject and message
+   * Send email directly to the client
+
+EMAIL POPUP DESIGN:
+Create a modern Microsoft Outlook-inspired popup window with:
+
+* To / CC / BCC fields
+* Rich text editor
+* Attachment section
+* Drag-and-drop upload area
+* Attachment preview
+* Send button
+* Save draft option
+* Minimize / maximize popup
+* Responsive modern UI
+* Professional enterprise design
+
+EMAIL MODULE REQUIREMENT:
+If the user opens the Email Module separately, the system should allow access to all customer documents using:
+
+* Customer ID
+* Client Reference Number
+* Project Reference
+
+The user must access the following documents instantly:
+
+* Quotation
+* Proforma Invoice
+* Tax Invoice
+* Delivery Note
+* Undertaking Letter
+* Handover Note
+* Client LPO
+
+DOCUMENT ACCESS SYSTEM:
+Create a “Client Document Explorer” panel inside the email popup.
+
+Features:
+
+* Search using Customer ID or Reference Number
+* Display all related customer files
+* Show documents by category
+* One-click attachment selection
+* Multiple document selection
+* File preview support
+
+VERY IMPORTANT FEATURE:
+The user must be able to drag and drop files directly into the email attachment section from the customer documents panel.
+
+Example:
+
+* Drag quotation PDF into email
+* Drag invoice into attachment area
+* Drag multiple documents together
+
+The attachment process must feel smooth and modern like Outlook or Gmail.
+
+SYSTEM AUTOMATION:
+
+* Auto-fill customer email
+* Auto-fill subject based on document type
+* Auto-generate professional email templates
+* Auto-fetch latest documents
+* Store email history per customer
+
+DATABASE REQUIREMENT:
+Create database tables for:
+
+* Clients
+* Quotations
+* Invoices
+* Delivery Notes
+* LPOs
+* Attachments
+* Emails
+* Email Logs
+
+TECHNICAL REQUIREMENTS:
+Frontend:
+
+* React + TypeScript
+* Tailwind CSS
+* Framer Motion
+* React DnD for drag-and-drop
+
+Backend:
+
+* Node.js + Express
+* PostgreSQL or Supabase
+* Secure file storage
+
+EMAIL INTEGRATION:
+
+* SMTP
+* Gmail API
+* Microsoft Outlook API support
+
+UI/UX REQUIREMENT:
+The entire system should look like a professional ERP + Outlook hybrid with:
+
+* Clean enterprise dashboard
+* Fast workflow
+* Modern animations
+* Responsive design
+* Easy drag-and-drop functionality
+* Smooth user experience
+
+MOST IMPORTANT GOAL:
+Users should never manually search files in folders.
+
+All customer documents must be instantly accessible from:
+
+* Customer ID
+* Reference Number
+* Project ID
+
+Generate:
+
+* Full frontend UI
+* Backend API
+* Database schema
+* Email popup modal
+* Drag-and-drop attachment system
+* Client document explorer
+* Folder structure
+* Production-ready code

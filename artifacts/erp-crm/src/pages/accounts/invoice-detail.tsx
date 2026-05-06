@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2 } from "lucide-react";
+import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2, Mail } from "lucide-react";
+import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -29,6 +30,7 @@ export function InvoiceDetail({ id }: Props) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { openCompose } = useEmailCompose();
   const [converting, setConverting] = useState(false);
   const [creatingJournal, setCreatingJournal] = useState(false);
 
@@ -193,6 +195,20 @@ export function InvoiceDetail({ id }: Props) {
             onClick={handleCreateDN} disabled={converting}
           >
             <Package className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Create Delivery Note"}
+          </Button>
+          <Button
+            size="sm" variant="outline"
+            onClick={() => openCompose({
+              toAddress: (inv as any).clientEmail ?? "",
+              toName: inv.clientName ?? "",
+              subject: `Tax Invoice ${inv.invoiceNumber ?? ""} – ${inv.clientName ?? ""}`,
+              body: `Dear ${inv.clientName ?? "Sir/Madam"},\n\nPlease find attached Tax Invoice ${inv.invoiceNumber ?? ""} amounting to AED ${Number(inv.grandTotal ?? 0).toLocaleString()}.\n\nPayment Status: ${inv.paymentStatus ?? "unpaid"}\n\nKindly process the payment at your earliest convenience.\n\nBest regards,\nPrime Max Prefab`,
+              clientName: inv.clientName ?? "",
+              sourceRef: inv.invoiceNumber ?? "",
+              companyId: inv.companyId ?? undefined,
+            })}
+          >
+            <Mail className="w-4 h-4 mr-1" />Send Email
           </Button>
           <ExportButtons docNumber={inv.invoiceNumber ?? inv.id?.toString() ?? "Invoice"} recipientPhone={(inv as any).clientPhone ?? undefined} recipientEmail={(inv as any).clientEmail ?? undefined} companyId={inv.companyId ?? undefined} docTypeLabel="Tax Invoice" />
         </div>

@@ -13,8 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2, Mail } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
+import { useEmailCompose } from "@/contexts/email-compose-context";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import {
@@ -50,6 +51,7 @@ export function QuotationDetail({ id }: Props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { openCompose } = useEmailCompose();
   const [converting, setConverting] = useState<string | null>(null);
   const [convertOpen, setConvertOpen] = useState<ConvertTarget | null>(null);
   const [installments, setInstallments] = useState<Installment[]>([]);
@@ -396,6 +398,20 @@ export function QuotationDetail({ id }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <Button
+            size="sm" variant="outline"
+            onClick={() => openCompose({
+              toAddress: q.clientEmail ?? "",
+              toName: q.clientName ?? "",
+              subject: `Quotation ${q.quotationNumber ?? ""} – ${q.projectName ?? q.clientName ?? ""}`,
+              body: `Dear ${q.clientName ?? "Sir/Madam"},\n\nPlease find attached our quotation ${q.quotationNumber ?? ""} for ${q.projectName ?? "your project"}.\n\nTotal Value: AED ${Number(q.grandTotal ?? 0).toLocaleString()}\n\nFor any queries, please do not hesitate to contact us.\n\nBest regards,\nPrime Max Prefab`,
+              clientName: q.clientName ?? "",
+              sourceRef: q.quotationNumber ?? "",
+              companyId: q.companyId ?? undefined,
+            })}
+          >
+            <Mail className="w-4 h-4 mr-1" />Send Email
+          </Button>
           <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} recipientPhone={q.clientPhone ?? undefined} recipientEmail={q.clientEmail ?? undefined} companyId={q.companyId ?? undefined} docTypeLabel="Quotation" />
         </div>
       </div>

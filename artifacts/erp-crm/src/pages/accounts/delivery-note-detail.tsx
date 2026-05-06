@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { ArrowLeft, Receipt } from "lucide-react";
+import { ArrowLeft, Receipt, Mail } from "lucide-react";
+import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
@@ -23,6 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
 export function DeliveryNoteDetail({ id }: Props) {
   const dnId = parseInt(id, 10);
   const { user } = useAuth();
+  const { openCompose } = useEmailCompose();
 
   const { data: dn, isLoading } = useGetDeliveryNote(dnId, {
     query: { queryKey: getGetDeliveryNoteQueryKey(dnId), enabled: !!dnId },
@@ -89,6 +91,20 @@ export function DeliveryNoteDetail({ id }: Props) {
           </Button>
         ) : null}
         <div className="ml-auto flex gap-2">
+          <Button
+            size="sm" variant="outline"
+            onClick={() => openCompose({
+              toAddress: (dn as any).clientEmail ?? "",
+              toName: dn.clientName ?? "",
+              subject: `Delivery Note ${dn.dnNumber ?? ""} – ${dn.projectName ?? dn.clientName ?? ""}`,
+              body: `Dear ${dn.clientName ?? "Sir/Madam"},\n\nPlease find attached Delivery Note ${dn.dnNumber ?? ""} for ${dn.projectName ?? "your project"}.\n\nDelivery Status: ${dn.status ?? ""}\n\nKindly acknowledge receipt of the delivered items.\n\nBest regards,\nPrime Max Prefab`,
+              clientName: dn.clientName ?? "",
+              sourceRef: dn.dnNumber ?? "",
+              companyId: dn.companyId ?? undefined,
+            })}
+          >
+            <Mail className="w-4 h-4 mr-1" />Send Email
+          </Button>
           <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} recipientEmail={(dn as any).clientEmail ?? undefined} companyId={dn.companyId ?? undefined} docTypeLabel="Delivery Note" />
         </div>
       </div>

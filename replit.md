@@ -42,6 +42,7 @@ Full-stack ERP + CRM system for UAE prefab construction companies Prime Max Pref
 - **Payment Terms Logic**: `src/lib/payment-terms.ts`
 - **Company Branding**: `src/config/branding.ts` (for brand colors, logos, etc.)
 - **Construction Chart of Accounts Template**: `artifacts/erp-crm/src/lib/construction-coa.ts`
+- **Global Email Compose**: `artifacts/erp-crm/src/contexts/email-compose-context.tsx` (context) + `artifacts/erp-crm/src/components/email-compose-modal.tsx` (modal)
 
 ## Architecture decisions
 
@@ -59,6 +60,7 @@ Full-stack ERP + CRM system for UAE prefab construction companies Prime Max Pref
 - **Advanced CRM**: Features lead management, sales pipeline kanban with drag-and-drop, AI-powered lead scoring and action suggestions, bulk actions, and follow-up management.
 - **Financial Compliance**: Includes UAE FTA tax compliance features (VAT and Corporate Tax estimation), payment-term-driven invoice generation, and VAT-compliant PDF invoicing.
 - **Communication Integration**: Two-way WhatsApp inbox integration with Cloud API, email panel, and push notifications for key events.
+- **Global Email Compose**: Outlook-style floating compose modal (minimize/maximize/normal) accessible from any document. "Send Email" button on Quotation, Proforma, Tax Invoice, Delivery Note, Undertaking Letter, and Handover Note detail pages. Built-in Client Document Explorer searches all 7 document types by client/reference and one-click attaches references. Sends via SMTP using `/api/emails`.
 - **Document Management**: Supports document numbering, signature upload, and PDF generation for various documents (quotations, invoices, POs).
 - **Mobile Access**: Companion Expo mobile app with role-based dashboards and features, reusing web components where possible.
 

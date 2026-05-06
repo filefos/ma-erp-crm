@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { ArrowLeft, Pencil, CheckCircle, Download, Printer } from "lucide-react";
+import { ArrowLeft, Pencil, CheckCircle, Download, Printer, Mail } from "lucide-react";
+import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { UndertakingLetterTemplate } from "@/components/undertaking-letter-template";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,7 @@ export function UndertakingLetterDetail({ id }: Props) {
   const ulId = parseInt(id, 10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openCompose } = useEmailCompose();
   const printRef = useRef<HTMLDivElement>(null);
   const [editMode, setEditMode] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -144,6 +146,20 @@ export function UndertakingLetterDetail({ id }: Props) {
         )}
 
         <div className="ml-auto flex gap-2">
+          <Button
+            size="sm" variant="outline"
+            onClick={() => openCompose({
+              toAddress: "",
+              toName: ul.clientName ?? "",
+              subject: `Undertaking Letter ${ul.ulNumber ?? ""} – ${ul.clientName ?? ""}`,
+              body: `Dear ${ul.clientName ?? "Sir/Madam"},\n\nPlease find attached our Undertaking Letter ${ul.ulNumber ?? ""} as per your request.\n\nKindly review and confirm your receipt.\n\nBest regards,\nPrime Max Prefab`,
+              clientName: ul.clientName ?? "",
+              sourceRef: ul.ulNumber ?? "",
+              companyId: (ul as any).companyId ?? undefined,
+            })}
+          >
+            <Mail className="w-4 h-4 mr-1.5" />Send Email
+          </Button>
           <Button size="sm" variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-1.5" />Print / PDF
           </Button>
