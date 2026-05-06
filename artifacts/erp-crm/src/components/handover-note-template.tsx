@@ -174,7 +174,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
               <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{doc.receivedByDesignation || ""}</Td></tr>
               <tr><LabelTdHalf>LPO Reference</LabelTdHalf><Td>{doc.lpoNumber || "—"}</Td></tr>
               <tr><LabelTdHalf>Project Ref</LabelTdHalf><Td>{doc.projectRef || "—"}</Td></tr>
-              <tr><LabelTdHalf>Project / Site</LabelTdHalf><Td>{projDesc}</Td></tr>
+              <tr><LabelTdHalf>Project / Site</LabelTdHalf><Td>{""}</Td></tr>
             </tbody>
           </table>
         </div>
