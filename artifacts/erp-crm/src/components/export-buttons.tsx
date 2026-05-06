@@ -328,6 +328,10 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
             <Download className="w-4 h-4 mr-2 text-gray-600" />
             {pdfDownloading ? "Generating PDF…" : "Download PDF"}
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2 text-gray-600" />
+            Print to PDF
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleWord}>
             <FileText className="w-4 h-4 mr-2 text-blue-600" />
             Word Document (.doc)
