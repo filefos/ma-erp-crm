@@ -272,7 +272,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     <>
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 0mm 0mm; }
+          @page { size: A4 portrait; margin: 4px 3px; }
           html, body { background: white !important; }
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
@@ -319,8 +319,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             right: 0;
             background: white;
             padding-top: 4pt;
-            padding-left: 4mm;
-            padding-right: 4mm;
+            padding-left: 3px;
+            padding-right: 3px;
           }
         }
       `}</style>
