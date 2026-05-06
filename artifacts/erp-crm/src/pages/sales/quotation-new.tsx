@@ -21,6 +21,8 @@ import {
   type TechSpecSection,
 } from "@/lib/tech-spec-templates";
 import { TechSpecEditor } from "@/components/tech-spec-editor";
+import { TCEditor, parseTCString, serializeTCSections, type TCSection } from "@/components/tc-editor";
+import { STANDARD_TC } from "@/lib/tc-templates";
 import { PAYMENT_TERMS_PRESETS, getPresetByKey } from "@/lib/payment-terms";
 
 const BANK_DETAILS: Record<number, { bankName: string; accountTitle: string; accountNumber: string; iban: string; swift: string; currency: string }> = {
@@ -63,46 +65,6 @@ const DEFAULT_ADDITIONAL_ITEMS: AdditionalItem[] = [
 
 const DEFAULT_TECH_SPECS = getSpecTemplate(DEFAULT_SPEC_TYPE);
 
-const DEFAULT_TC = `1. COMMERCIAL BASIS
-
-1. Prices are quoted in accordance with the attached specification and the received project requirements. Any revision, deviation, or additional requirement shall be treated as a variation and priced separately.
-
-2. Unless specifically included in the quotation, the customer shall provide crane support, foundation, safe offloading access, and all site arrangements required for unloading and installation.
-
-3. Commercial basis: Ex-factory.
-
-
-2. EXCLUSIONS
-
-1. Offloading, excavation, foundation works, and any on-site civil works unless specifically included in the quotation.
-
-2. Expenses related to third-party inspections, testing, statutory approvals, and authority clearances.
-
-3. Window blinds, fire extinguishers, firefighting systems, smoke detectors, fire alarm panel systems, and similar items unless expressly included.
-
-4. Additional third-party certification or testing costs related to welding, painting, lifting eyes, and comparable specialized requirements.
-
-5. Charges for third-party design calculations and certifications, including live load, dead load, wind load, and related engineering assessments.
-
-6. Replaceable items and components subject to normal wear and tear, including ceiling lights, wash basin and shower mixers, shattaf, cistern seat covers, door handles, and locks.
-
-
-3. PAYMENT TERMS
-
-1. 75% advance payment upon receipt of the LPO and approved drawings.
-
-2. 25% balance payment before delivery.
-
-3. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
-
-
-4. TECHNICAL & GENERAL NOTES
-
-1. All drawings and designs remain subject to client approval. The attached technical specification shall be considered the governing reference for manufacturing and installation.
-
-2. As part of our quality-control procedures, we reserve the right to introduce, upgrade, or modify materials with equivalent or better performance where required.
-
-3. For any queries or clarifications, please contact our sales team. We shall be pleased to assist you.`;
 
 export function QuotationNew() {
   const [location, navigate] = useLocation();
@@ -140,7 +102,7 @@ export function QuotationNew() {
     discount: 0,
     paymentTerms: "",
     validity: "30 days",
-    termsConditions: DEFAULT_TC,
+    termsConditions: STANDARD_TC,
     techSpecs: DEFAULT_TECH_SPECS,
   });
   const [items, setItems] = useState<Item[]>([emptyItem()]);
@@ -149,6 +111,7 @@ export function QuotationNew() {
   const [techSpecSections, setTechSpecSections] = useState<TechSpecSection[]>(() =>
     parseTechSpecs(getSpecTemplate(DEFAULT_SPEC_TYPE))
   );
+  const [tcSections, setTcSections] = useState<TCSection[]>(() => parseTCString(STANDARD_TC));
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
   const [customSections, setCustomSections] = useState<{ title: string; content: string }[]>([]);
@@ -211,6 +174,7 @@ export function QuotationNew() {
       data: {
         ...form,
         techSpecs: serializeTechSpecs(techSpecSections),
+        termsConditions: serializeTCSections(tcSections),
         status,
         companyId: parseInt(form.companyId, 10),
         items,
@@ -600,13 +564,12 @@ export function QuotationNew() {
         {showTC && (
           <CardContent>
             <p className="text-xs text-muted-foreground mb-2">
-              This will print as a separate page 3 in the quotation document.
+              Edit T&amp;C sections below — each section prints with a navy header and numbered items. Printed as page 3 of the quotation.
             </p>
-            <Textarea
-              value={form.termsConditions}
-              onChange={e => setForm(p => ({ ...p, termsConditions: e.target.value }))}
-              rows={16}
-              className="font-mono text-xs"
+            <TCEditor
+              sections={tcSections}
+              onChange={setTcSections}
+              onReset={() => setTcSections(parseTCString(STANDARD_TC))}
             />
           </CardContent>
         )}

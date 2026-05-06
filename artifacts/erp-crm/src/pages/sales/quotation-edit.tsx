@@ -25,6 +25,8 @@ import {
   type TechSpecSection,
 } from "@/lib/tech-spec-templates";
 import { TechSpecEditor } from "@/components/tech-spec-editor";
+import { TCEditor, parseTCString, serializeTCSections, type TCSection } from "@/components/tc-editor";
+import { STANDARD_TC } from "@/lib/tc-templates";
 import { PAYMENT_TERMS_PRESETS, getPresetByKey } from "@/lib/payment-terms";
 
 const BANK_DETAILS: Record<number, {
@@ -126,6 +128,7 @@ export function QuotationEdit({ id }: Props) {
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>(DEFAULT_ADDITIONAL_ITEMS);
   const [specType, setSpecType] = useState<SpecTypeKey>(DEFAULT_SPEC_TYPE);
   const [techSpecSections, setTechSpecSections] = useState<TechSpecSection[]>([]);
+  const [tcSections, setTcSections] = useState<TCSection[]>([]);
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
   const [bumpRev, setBumpRev] = useState(false);
@@ -172,6 +175,7 @@ export function QuotationEdit({ id }: Props) {
       preparedByName: raw.preparedByName ?? "",
     });
     setTechSpecSections(parseTechSpecs(raw.techSpecs ?? ""));
+    setTcSections(parseTCString(q.termsConditions ?? ""));
     setItems(loadedItems.length > 0 ? loadedItems : [emptyItem()]);
     setAdditionalItems(loadedAdditional);
     try {
@@ -217,6 +221,7 @@ export function QuotationEdit({ id }: Props) {
       data: {
         ...form,
         techSpecs: serializeTechSpecs(techSpecSections),
+        termsConditions: serializeTCSections(tcSections),
         quotationNumber,
         status,
         companyId: parseInt(form.companyId, 10),
@@ -636,12 +641,13 @@ export function QuotationEdit({ id }: Props) {
         </CardHeader>
         {showTC && (
           <CardContent>
-            <p className="text-xs text-muted-foreground mb-2">Edit the T&C text below. Printed on a separate page 3.</p>
-            <Textarea
-              value={form.termsConditions}
-              onChange={e => setForm(p => ({ ...p, termsConditions: e.target.value }))}
-              rows={16}
-              className="font-mono text-xs"
+            <p className="text-xs text-muted-foreground mb-2">
+              Edit T&amp;C sections below — each section prints with a navy header and numbered items. Changes are saved with the quotation.
+            </p>
+            <TCEditor
+              sections={tcSections}
+              onChange={setTcSections}
+              onReset={() => setTcSections(parseTCString(STANDARD_TC))}
             />
           </CardContent>
         )}
