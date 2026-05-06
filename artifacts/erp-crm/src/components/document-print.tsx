@@ -706,6 +706,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           <>
             <div className="mt-4 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-3">
               <div>
+                <div className="font-bold mb-1">For &amp; on behalf of</div>
+                <div className="font-bold text-[13px]">{coName}</div>
+                <div className="h-10 mt-2 mb-1" />
+                <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
+              </div>
+              <div className="text-right">
                 <div className="font-bold mb-1">Prepared by:</div>
                 <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
                 {data.preparedBySignatureUrl ? (
@@ -714,12 +720,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div className="h-10 mt-2 mb-1" />
                 )}
                 <div className="border-t border-gray-500 pt-1 text-gray-500">Signature: ____________________</div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold mb-1">For &amp; on behalf of</div>
-                <div className="font-bold text-[13px]">{coName}</div>
-                <div className="h-10 mt-2 mb-1" />
-                <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
               </div>
             </div>
             <PageFooter
