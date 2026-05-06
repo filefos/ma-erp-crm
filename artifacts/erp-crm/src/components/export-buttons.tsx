@@ -126,27 +126,21 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
   const handlePrintToPdf = async () => {
     setPrintLoading(true);
     try {
-      const { base64, filename } = await generatePdf();
+      const { base64 } = await generatePdf();
       const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
       const blob = new Blob([bytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const win = window.open(url, "_blank");
       if (win) {
-        win.addEventListener("load", () => {
-          setTimeout(() => {
-            win.focus();
-            win.print();
-            setTimeout(() => URL.revokeObjectURL(url), 60000);
-          }, 800);
-        });
+        // Revoke after a generous delay — user may take time to print.
+        setTimeout(() => URL.revokeObjectURL(url), 120000);
       } else {
-        // popup blocked — download instead
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-        toast({ title: "Popup blocked", description: "PDF saved to Downloads — open it and print from your viewer." });
+        URL.revokeObjectURL(url);
+        toast({
+          title: "Popup blocked",
+          description: "Allow pop-ups for this site, then try again.",
+          variant: "destructive",
+        });
       }
     } catch (err) {
       toast({ title: "Print failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
