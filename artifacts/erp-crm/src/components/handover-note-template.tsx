@@ -79,7 +79,7 @@ function Td({ children, bold, center }: { children: React.ReactNode; bold?: bool
 export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNoteDoc }>(
   ({ doc }, ref) => {
     const co = COMPANIES[doc.companyId] ?? COMPANIES[1];
-    const logoSrc = doc.companyId !== 2 ? "/erp-crm/prime-max-logo.png" : null;
+    const logoSrc = doc.companyId !== 2 ? "/prime-max-logo.png" : null;
     const dateFmt = fmtDate(doc.handoverDate);
     const items = parseItems(doc.itemsHandedOver).filter(i => i.description?.trim());
     const projDesc = doc.projectDescription?.trim() || "Prefabricated Construction Works";
