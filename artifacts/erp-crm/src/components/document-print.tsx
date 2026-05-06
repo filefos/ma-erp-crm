@@ -129,44 +129,28 @@ const DEFAULT_ADDITIONAL_ITEMS: AdditionalCommercialItem[] = [
 
 
 const STANDARD_TC = `1. COMMERCIAL BASIS
-
 1. Prices are quoted in accordance with the attached specification and the received project requirements. Any revision, deviation, or additional requirement shall be treated as a variation and priced separately.
-
 2. Unless specifically included in the quotation, the customer shall provide crane support, foundation, safe offloading access, and all site arrangements required for unloading and installation.
-
 3. Commercial basis: Ex-factory.
-
+4. All cheques shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC. SP.".
 
 2. EXCLUSIONS
-
 1. Offloading, excavation, foundation works, and any on-site civil works unless specifically included in the quotation.
-
 2. Expenses related to third-party inspections, testing, statutory approvals, and authority clearances.
-
 3. Window blinds, fire extinguishers, firefighting systems, smoke detectors, fire alarm panel systems, and similar items unless expressly included.
-
 4. Additional third-party certification or testing costs related to welding, painting, lifting eyes, and comparable specialized requirements.
-
 5. Charges for third-party design calculations and certifications, including live load, dead load, wind load, and related engineering assessments.
-
 6. Replaceable items and components subject to normal wear and tear, including ceiling lights, wash basin and shower mixers, shattaf, cistern seat covers, door handles, and locks.
 
-
 3. PAYMENT TERMS
-
 1. 75% advance payment upon receipt of the LPO and approved drawings.
-
 2. 25% balance payment before delivery.
-
-3. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
-
+3. Cheque shall be prepared in favor of "PRIME MAX PREFAB HOUSES IND. LLC. SP.".
+4. Production and delivery shall proceed in accordance with the approved drawing set, agreed commercial terms, and payment milestone compliance.
 
 4. TECHNICAL & GENERAL NOTES
-
 1. All drawings and designs remain subject to client approval. The attached technical specification shall be considered the governing reference for manufacturing and installation.
-
 2. As part of our quality-control procedures, we reserve the right to introduce, upgrade, or modify materials with equivalent or better performance where required.
-
 3. For any queries or clarifications, please contact our sales team. We shall be pleased to assist you.`;
 
 const DOC_TITLES: Record<DocumentType, string> = {
@@ -852,20 +836,52 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </div>
             </div>
 
-            <div className="print-tc-text border border-gray-400 p-4 text-[11px] bg-gray-50 mb-4" style={{ lineHeight: "1.7" }}>
-              {(data.termsConditions ?? STANDARD_TC).split("\n").map((line, i) => {
-                const isCheque = /cheque(s)?\s+shall\s+be\s+prepared\s+in\s+favor/i.test(line);
-                return (
-                  <div
-                    key={i}
-                    className={isCheque ? "bg-orange-100 px-1 font-bold text-[#0f2d5a] inline-block text-[13px]" : ""}
-                    style={isCheque ? ({ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties) : undefined}
-                  >
-                    {line || "\u00A0"}
-                  </div>
-                );
-              })}
-            </div>
+            {(() => {
+              const printStyle = { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties;
+              const tcLines = (data.termsConditions ?? STANDARD_TC).split("\n").map(l => l.trim()).filter(l => l);
+              const sections: { title: string; items: string[] }[] = [];
+              let current: { title: string; items: string[] } | null = null;
+              for (const line of tcLines) {
+                const isHeader = /^\d+\.\s+[A-Z][A-Z0-9\s&]+$/.test(line);
+                if (isHeader) {
+                  if (current) sections.push(current);
+                  current = { title: line, items: [] };
+                } else if (current) {
+                  current.items.push(line);
+                }
+              }
+              if (current) sections.push(current);
+              return (
+                <div className="mb-4">
+                  {sections.map((sec, si) => (
+                    <div key={si} className="mb-[3px]">
+                      <div
+                        className="px-3 py-[4px] text-[11px] font-bold text-white uppercase tracking-wide"
+                        style={{ backgroundColor: "#1e3a6e", ...printStyle }}
+                      >
+                        {sec.title}
+                      </div>
+                      <table className="w-full border-collapse">
+                        <tbody>
+                          {sec.items.map((item, ii) => {
+                            const isCheque = /cheque(s)?\s+shall\s+be\s+prepared\s+in\s+fav/i.test(item);
+                            return (
+                              <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? "#eaf0f8" : "#ffffff", ...printStyle }}>
+                                <td
+                                  className={`border border-gray-300 px-3 py-[3px] text-[10px] leading-snug ${isCheque ? "font-bold text-[#0f2d5a] text-[11px]" : ""}`}
+                                >
+                                  {item}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
