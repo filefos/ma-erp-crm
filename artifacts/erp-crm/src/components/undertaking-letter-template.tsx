@@ -44,13 +44,12 @@ function fmtDate(d?: string | null) {
 
 function CommitmentBody({ text }: { text: string }) {
   const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  if (lines.length <= 1) {
-    return <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: 0, color: "#1a1a1a", whiteSpace: "pre-wrap" }}>{text}</p>;
-  }
   return (
-    <ul style={{ margin: 0, paddingLeft: 20, fontSize: 11.5, lineHeight: 1.7, color: "#1a1a1a" }}>
-      {lines.map((l, i) => <li key={i} style={{ marginBottom: 3 }}>{l}</li>)}
-    </ul>
+    <div>
+      {lines.map((l, i) => (
+        <p key={i} style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 8px", color: "#1a1a1a" }}>{l}</p>
+      ))}
+    </div>
   );
 }
 
@@ -61,10 +60,8 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
     const logoSrc = isElite ? null : "/erp-crm/prime-max-logo.png";
     const letterDateFmt = fmtDate(doc.letterDate);
 
-    const scopeText = doc.scope?.trim() || "the contracted prefabricated construction scope";
-    const subjectText = doc.scope?.trim()
-      ? `Undertaking Letter — ${doc.scope.split("\n")[0].slice(0, 80)}`
-      : "Undertaking Letter for Contracted Scope of Work";
+    const projectDesc = doc.scope?.trim() || "the contracted prefabricated construction works";
+    const subjectText = "Undertaking Letter for Use of Fire-Rated Materials";
 
     return (
       <div
@@ -156,48 +153,46 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
 
           {/* Opening paragraph */}
           <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 14px", color: "#1a1a1a" }}>
-            We, <strong>{co.name}</strong>, located at {co.address}, hereby provide this formal undertaking
-            in reference to{" "}
-            <strong>{scopeText}</strong>
-            {doc.lpoNumber ? ` as per LPO No. ${doc.lpoNumber}` : ""}
-            {doc.projectRef ? `, Project Reference: ${doc.projectRef}` : ""}.
+            We, <strong>{co.name}</strong>, located at {co.address}, hereby provide this undertaking
+            in reference to the use of fire-rated materials for{" "}
+            <strong>{projectDesc}</strong>
+            {doc.lpoNumber ? ` (LPO No. ${doc.lpoNumber})` : ""}
+            {doc.projectRef ? `, ${doc.projectRef}` : ""}.
           </p>
 
           <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 10px", color: "#1a1a1a" }}>
             We solemnly affirm and undertake that:
           </p>
 
-          {/* Commitment / materials section */}
-          {doc.commitmentText?.trim() ? (
-            <div style={{ marginBottom: 14, paddingLeft: 8, borderLeft: `3px solid ${SKY}`, paddingRight: 8 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: NAVY, marginBottom: 6 }}>
-                Commitment to the Following Scope and Materials:
-              </div>
+          {/* Commitment / fire-rated materials section */}
+          <div style={{ marginBottom: 14 }}>
+            <p style={{ fontSize: 11.5, fontWeight: 700, margin: "0 0 8px", color: "#1a1a1a" }}>
+              Commitment to using the following fire-rated materials:
+            </p>
+            {doc.commitmentText?.trim() ? (
               <CommitmentBody text={doc.commitmentText} />
-            </div>
-          ) : (
-            <div style={{ marginBottom: 14, paddingLeft: 8, borderLeft: `3px solid ${SKY}`, paddingRight: 8 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 700, color: NAVY, marginBottom: 6 }}>
-                Commitment to the Following Scope and Materials:
-              </div>
-              <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: 0, color: "#555", fontStyle: "italic" }}>
-                — Details to be confirmed upon finalisation of scope —
-              </p>
-            </div>
-          )}
+            ) : (
+              <>
+                <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 8px", color: "#1a1a1a" }}>MS Steel: Fire-rated mild steel for structural components.</p>
+                <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 8px", color: "#1a1a1a" }}>GI Framing: Fire-rated galvanized iron framing for support structures.</p>
+                <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 8px", color: "#1a1a1a" }}>Gypsum board 12.5mm thick 01 Hour fire rated.</p>
+                <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 8px", color: "#1a1a1a" }}>Cement Board 06mm Thick 01 Hour Fire Rated.</p>
+              </>
+            )}
+          </div>
 
           {/* Responsibility */}
           <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 12px", color: "#1a1a1a" }}>
-            <strong>Responsibility:</strong> {co.name} accepts full responsibility for the quality and performance
-            of the works and materials specified above. We will ensure that all works are sourced from reputable
-            suppliers, executed by qualified personnel, and carried out in strict accordance with the applicable
-            standards, manufacturer guidelines, and industry best practices.
+            <strong>Responsibility:</strong> {co.name} accepts full responsibility for the quality and
+            performance of the fire-rated materials specified above. We will ensure that these materials
+            are sourced from reputable suppliers and are installed according to manufacturer guidelines
+            and industry best practices.
           </p>
 
           <p style={{ fontSize: 11.5, lineHeight: 1.7, margin: "0 0 12px", color: "#1a1a1a" }}>
-            We trust that this undertaking satisfies the requirements and provides the necessary assurance regarding
-            our commitment to the project. Should there be any additional requirements or modifications needed,
-            please do not hesitate to inform us and we shall respond promptly.
+            We trust that this undertaking satisfies the requirements and provides the necessary assurance
+            regarding our commitment to fire safety and the use of fire-rated materials. Should there be
+            any additional requirements or modifications needed, please do not hesitate to inform us.
           </p>
 
           {doc.notes?.trim() && (

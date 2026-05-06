@@ -365,8 +365,8 @@ export function UndertakingLettersList() {
                 </div>
                 <div className="space-y-1 col-span-2">
                   <Label>Commitment Statement</Label>
-                  <p className="text-xs text-muted-foreground">List each commitment on a new line — they will appear as bullet points in the letter.</p>
-                  <Textarea rows={5} value={form.commitmentText} onChange={e => setForm(p => ({ ...p, commitmentText: e.target.value }))} placeholder={"MS Steel: Fire-rated mild steel for structural components.\nGI Framing: Galvanized iron framing for support structures.\nGypsum board 12.5mm thick — 01 Hour fire rated."} />
+                  <p className="text-xs text-muted-foreground">List each fire-rated material on a new line — each appears as a separate line in the letter.</p>
+                  <Textarea rows={6} value={form.commitmentText} onChange={e => setForm(p => ({ ...p, commitmentText: e.target.value }))} placeholder={"MS Steel: Fire-rated mild steel for structural components.\nGI Framing: Fire-rated galvanized iron framing for support structures.\nGypsum board 12.5mm thick 01 Hour fire rated.\nCement Board 06mm Thick 01 Hour Fire Rated."} />
                 </div>
                 <div className="space-y-1 col-span-2">
                   <Label>Additional Notes</Label>
