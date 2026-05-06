@@ -1,6 +1,6 @@
 import { db } from "@workspace/db";
 import {
-  companiesTable, departmentsTable, usersTable, leadsTable, contactsTable, dealsTable,
+  companiesTable, departmentsTable, usersTable, leadsTable, contactsTable,
   quotationsTable, quotationItemsTable,
   taxInvoicesTable, projectsTable, suppliersTable,
   purchaseRequestsTable, purchaseOrdersTable, inventoryItemsTable, stockEntriesTable,
@@ -50,15 +50,24 @@ async function seed() {
 
   // Wipe everything in dependency order
   await db.execute(sql`TRUNCATE TABLE
-    notifications, audit_logs,
+    notifications, audit_logs, device_tokens,
     user_permissions, user_company_access, permissions, roles,
-    attendance, employees,
+    user_activity_sessions, client_code_seqs,
+    offer_letter_attachments, offer_letters,
+    employee_attachments, attendance, employees,
+    payments_made, payments_received,
+    journal_entry_lines, journal_entries, chart_of_accounts,
     cheques, bank_accounts, expenses,
     stock_entries, inventory_items,
-    purchase_orders, purchase_requests, suppliers,
+    supplier_quotations, supplier_registrations, supplier_categories,
+    rfqs, purchase_orders, purchase_requests, suppliers,
     assets, projects,
+    handover_notes, undertaking_letters,
     quotation_items, quotations, proforma_invoices, tax_invoices, delivery_notes, lpos,
-    activities, deals, contacts, leads,
+    contacts, leads,
+    sales_targets,
+    messages, conversations,
+    emails, email_settings,
     users, departments, companies
     RESTART IDENTITY CASCADE`);
 
@@ -204,13 +213,6 @@ async function seed() {
     { name: "Omar Al-Sayed", email: "omar@albarari.ae", phone: "+971-55-123-4567", whatsapp: "+971-55-123-4567", companyName: "Al Barari Developments", designation: "Procurement Manager", companyId: pm.id },
     { name: "Vijay Menon", email: "vijay@gulfcon.ae", phone: "+971-50-234-5678", companyName: "Gulf Construction LLC", designation: "Director", companyId: pm.id },
     { name: "Sarah Mitchell", email: "sarah@dubaiworldcorp.ae", phone: "+971-55-345-6789", companyName: "Dubai World Corp", designation: "Project Manager", companyId: ep.id },
-  ]);
-
-  const allLeads = await db.select().from(leadsTable);
-  await db.insert(dealsTable).values([
-    { dealNumber: "DEAL-2026-0001", title: "Al Barari 20 Villas Deal", clientName: "Al Barari Developments", value: 1450000, stage: "proposal", probability: 70, expectedCloseDate: "2026-06-30", companyId: pm.id, leadId: allLeads.find(l => l.leadName === "Al Barari Villas Project")?.id, assignedToId: userByEmail("sales@primemax.ae").id },
-    { dealNumber: "DEAL-2026-0002", title: "Sharjah Labour Camp 100 Units", clientName: "Gulf Construction LLC", value: 780000, stage: "negotiation", probability: 85, expectedCloseDate: "2026-05-15", companyId: pm.id, assignedToId: userByEmail("sales@primemax.ae").id },
-    { dealNumber: "DEAL-2026-0003", title: "Fujairah Catering Units", clientName: "Emirates Catering", value: 115000, stage: "won", probability: 100, expectedCloseDate: "2026-04-01", companyId: pm.id },
   ]);
 
   // Quotations
