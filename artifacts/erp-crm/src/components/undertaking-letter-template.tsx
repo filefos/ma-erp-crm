@@ -309,7 +309,7 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
                 <span className="text-[10px] text-gray-400">_______________</span>
               </div>
             </div>
-            <div className="flex-1 text-right">
+            <div className="flex-1">
               <div className="text-[10px] text-black">For &amp; on behalf of</div>
               <div className="text-[11px] font-black uppercase text-black">{co.name}</div>
               <div className="border-t border-gray-500 mt-6 pt-1">

@@ -657,7 +657,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 Signature: <span className="text-gray-400">_______________</span>
               </div>
             </div>
-            <div className="text-right">
+            <div>
               <div className="font-bold mb-1">For &amp; on behalf of</div>
               <div className="font-bold text-[13px]">{coName}</div>
               <div className="mt-6" />
