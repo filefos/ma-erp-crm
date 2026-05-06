@@ -720,9 +720,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <div className="font-bold text-[13px]">{coName}</div>
                 <div className="h-10 mt-2 mb-1" />
                 <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
-                <div className="mt-2 text-[10px] italic text-[#0f2d5a] font-semibold">
-                  All cheques shall be prepared in favour of {coName}
-                </div>
               </div>
             </div>
             <PageFooter
