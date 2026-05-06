@@ -261,7 +261,7 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
 
         {/* ── FOOTER ── */}
         <div
-          className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
+          className="mt-auto border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
           style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
           <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
