@@ -239,35 +239,6 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
 
           <p className="mb-4">Thank you for your cooperation and understanding.</p>
 
-          {/* ── SIGNATURE BLOCK ── */}
-          <div className="flex gap-0 w-full mb-4 border border-gray-300">
-            <div className="flex-1 p-3 border-r border-gray-300">
-              <div className="text-[10px] text-gray-500">Prepared / Dispatched By:</div>
-              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[11px] font-semibold text-[#0f2d5a]">{doc.signedByName || "Name & Signature"}</div>
-                <div className="text-[10px] text-gray-500 mt-1">
-                  For &amp; on behalf of <strong>{co.name}</strong>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 p-3 border-r border-gray-300">
-              <div className="text-[10px] text-gray-500">Acknowledged &amp; Accepted By:</div>
-              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[11px] font-semibold text-[#0f2d5a]">Name, Signature &amp; Stamp</div>
-                <div className="text-[10px] text-gray-500 mt-1">
-                  <strong className="uppercase">{doc.clientName}</strong>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 p-3">
-              <div className="text-[10px] text-gray-500">Date &amp; Authorised Signatory:</div>
-              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[11px] text-[#0f2d5a]">
-                  {doc.signedDate ? fmtDate(doc.signedDate) : "Date / Stamp"}
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* ── PREPARED BY / FOR & ON BEHALF ── */}
           <div className="flex justify-between items-end mb-2">
