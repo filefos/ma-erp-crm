@@ -16,11 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
-  ArrowLeft, Pencil, Save, X, Send, FileDown, RefreshCcw, UserPlus, CheckCircle2, XCircle,
-  Paperclip, Upload, Trash2,
+  ArrowLeft, Pencil, Save, X, Send, FileDown, Printer, RefreshCcw, UserPlus, CheckCircle2, XCircle,
+  Paperclip, Upload, Trash2, Download,
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
-import { ExportButtons } from "@/components/export-buttons";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -255,7 +254,7 @@ export function OfferLetterDetail({ id }: Props) {
     if (!previewRef.current) return;
     setDownloading(true);
     try {
-      const { base64, filename } = await captureElementToPdfBase64(previewRef.current, `${offer.letterNumber}-${offer.candidateName.replace(/\s+/g, "_")}`, { forceSinglePage: true });
+      const { base64, filename } = await captureElementToPdfBase64(previewRef.current, `${offer.letterNumber}-${offer.candidateName.replace(/\s+/g, "_")}`);
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;
       link.download = filename;
@@ -279,13 +278,9 @@ export function OfferLetterDetail({ id }: Props) {
           <Button variant="outline" size="sm" onClick={downloadPdf} disabled={downloading} data-testid="button-download-pdf">
             <FileDown className="w-4 h-4 mr-1" />{downloading ? "Generating…" : "Download PDF"}
           </Button>
-          <ExportButtons
-            docNumber={offer.letterNumber}
-            docTypeLabel="Offer Letter"
-            companyId={offer.companyId ?? undefined}
-            forceSinglePage
-            elementRef={previewRef}
-          />
+          <Button variant="outline" size="sm" onClick={() => window.print()} data-testid="button-print-offer">
+            <Printer className="w-4 h-4 mr-1" />Print
+          </Button>
           {canEdit && !editing && <Button size="sm" variant="outline" onClick={() => setEditing(true)} data-testid="button-edit-offer"><Pencil className="w-4 h-4 mr-1" />Edit</Button>}
           {canEdit && editing && (
             <>

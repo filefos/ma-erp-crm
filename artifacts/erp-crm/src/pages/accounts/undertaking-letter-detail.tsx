@@ -65,27 +65,21 @@ export function UndertakingLetterDetail({ id }: Props) {
     },
   });
 
-  const handlePrint = async () => {
+  const handlePrint = () => {
     if (!printRef.current || !ul) return;
-    setExporting(true);
-    try {
-      const { base64 } = await captureElementToPdfBase64(printRef.current, `${ul.ulNumber}.pdf`);
-      const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 120000);
-    } catch {
-      toast({ title: "Print failed.", variant: "destructive" });
-    } finally {
-      setExporting(false);
-    }
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head>
+      <title>${ul.ulNumber}</title>
+      <style>
+        @page { size: A4 portrait; margin: 0; }
+        body { margin: 0; padding: 0; background: white; }
+        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      </style>
+    </head><body>${printRef.current.outerHTML}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 400);
   };
 
   const handleExportPdf = async () => {
@@ -162,8 +156,6 @@ export function UndertakingLetterDetail({ id }: Props) {
             recipientEmail={undefined}
             companyId={(ul as any).companyId ?? undefined}
             docTypeLabel="Undertaking Letter"
-            elementRef={printRef}
-            forceSinglePage
           />
         </div>
       </div>

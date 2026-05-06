@@ -325,7 +325,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         }
       `}</style>
 
-      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[794px] mx-auto py-4 px-0 shadow-lg rounded-lg">
+      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto py-4 px-0 shadow-lg rounded-lg">
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="overflow-hidden mb-[2px]">
@@ -615,6 +615,26 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         )}
 
+        {/* ── DELIVERY RECEIVER BLOCK ─────────────────────────────────── */}
+        {isDelivery && (
+          <div className="mt-6 grid grid-cols-3 gap-4 text-xs">
+            <div className="border border-gray-400 p-3">
+              <div className="font-bold mb-6">Prepared / Dispatched By:</div>
+              <div className="border-t border-gray-500 pt-1">Name &amp; Signature</div>
+            </div>
+            <div className="border border-gray-400 p-3">
+              <div className="font-bold mb-1">Received By:</div>
+              <div className="text-gray-600 mb-4">{data.receiverName ?? "________________________"}</div>
+              <div className="border-t border-gray-500 pt-1">Name, Signature &amp; Stamp</div>
+            </div>
+            <div className="border border-gray-400 p-3">
+              <div className="font-bold mb-1">Delivery Date &amp; Time:</div>
+              <div className="text-gray-600 mb-4">{data.deliveryDate ?? "________________________"}</div>
+              <div className="border-t border-gray-500 pt-1">Date / Time</div>
+            </div>
+          </div>
+        )}
+
         {/* ── CHEQUE FAVOR NOTE (quotation page 1, subtle, left-aligned) */}
         {isQuotation && (
           <div className="mb-3 text-[10px] text-[#0f2d5a] font-semibold text-left">
@@ -624,23 +644,21 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── SIGNATURE BLOCK (non-quotation, or quotation page 1 footer) */}
         {!isQuotation && (
-          <div className="mt-6 grid grid-cols-2 gap-8 text-xs">
+          <div className="mt-6 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-4">
             <div>
               <div className="font-bold mb-1">Prepared by:</div>
               <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
               {data.preparedBySignatureUrl ? (
-                <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-6 mb-1 object-contain" style={{ maxWidth: 160 }} />
+                <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
               ) : (
-                <div className="mt-6" />
+                <div className="h-10 mt-2 mb-1" />
               )}
-              <div className="border-t border-gray-500 pt-1 text-gray-500">
-                Signature: <span className="text-gray-400">_______________</span>
-              </div>
+              <div className="border-t border-gray-500 pt-1 text-gray-500">Signature</div>
             </div>
-            <div>
+            <div className="text-right">
               <div className="font-bold mb-1">For &amp; on behalf of</div>
               <div className="font-bold text-[13px]">{coName}</div>
-              <div className="mt-6" />
+              <div className="h-10 mt-2 mb-1" />
               <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
             </div>
           </div>
@@ -648,23 +666,21 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {isQuotation && (
           <>
-            <div className="mt-4 grid grid-cols-2 gap-8 text-xs">
+            <div className="mt-4 grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-3">
               <div>
                 <div className="font-bold mb-1">Prepared by:</div>
                 <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
                 {data.preparedBySignatureUrl ? (
-                  <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-6 mb-1 object-contain" style={{ maxWidth: 160 }} />
+                  <img src={data.preparedBySignatureUrl} alt="Signature" className="h-12 mt-2 mb-1 object-contain" style={{ maxWidth: 160 }} />
                 ) : (
-                  <div className="mt-6" />
+                  <div className="h-10 mt-2 mb-1" />
                 )}
-                <div className="border-t border-gray-500 pt-1 text-gray-500">
-                  Signature: <span className="text-gray-400">_______________</span>
-                </div>
+                <div className="border-t border-gray-500 pt-1 text-gray-500">Signature: ____________________</div>
               </div>
               <div>
                 <div className="font-bold mb-1">For &amp; on behalf of</div>
                 <div className="font-bold text-[13px]">{coName}</div>
-                <div className="mt-6" />
+                <div className="h-10 mt-2 mb-1" />
                 <div className="border-t border-gray-500 pt-1 text-gray-500">Authorised Signatory</div>
               </div>
             </div>

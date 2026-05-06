@@ -87,48 +87,18 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
     return (
       <div
         ref={ref}
-        className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[794px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
+        className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
         style={{ minHeight: 1123 }}
       >
         <style>{`
           @media print {
-            @page { size: A4 portrait; margin: 0; }
-            html, body { background: white !important; height: 297mm !important; overflow: hidden !important; }
+            @page { size: A4 portrait; margin: 4px 3px; }
+            html, body { background: white !important; }
             body * { visibility: hidden; }
             .print-doc, .print-doc * { visibility: visible; }
-            .print-doc {
-              position: absolute; left: 0; top: 0;
-              width: 210mm !important; max-width: 210mm !important;
-              height: 297mm !important; max-height: 297mm !important;
-              box-shadow: none !important; border: none !important;
-              padding: 0 !important; margin: 0 !important; border-radius: 0 !important;
-              overflow: hidden !important;
-              display: flex !important; flex-direction: column !important;
-            }
-            /* Compress header */
-            .print-doc .py-2 { padding-top: 4pt !important; padding-bottom: 4pt !important; }
-            .print-doc .text-\\[22px\\] { font-size: 15pt !important; }
-            .print-doc .text-\\[15px\\] { font-size: 10pt !important; }
-            .print-doc .text-\\[11px\\] { font-size: 7.5pt !important; }
-            .print-doc .text-\\[10px\\] { font-size: 7pt !important; }
-            .print-doc .text-\\[9px\\]  { font-size: 6.5pt !important; }
-            .print-doc .text-xs        { font-size: 7.5pt !important; }
-            /* Compress table cells */
-            .print-doc td, .print-doc th { padding: 1pt 4pt !important; font-size: 7.5pt !important; }
-            /* Compress body spacing */
-            .print-doc .mb-1 { margin-bottom: 2pt !important; }
-            .print-doc .mb-2 { margin-bottom: 3pt !important; }
-            .print-doc .mb-3 { margin-bottom: 4pt !important; }
-            .print-doc .mb-4 { margin-bottom: 5pt !important; }
-            .print-doc .mt-1 { margin-top: 2pt !important; }
-            .print-doc .mt-2 { margin-top: 3pt !important; }
-            .print-doc .mt-4 { margin-top: 5pt !important; }
-            .print-doc .mt-6 { margin-top: 8pt !important; }
-            .print-doc .pt-3 { padding-top: 4pt !important; }
-            .print-doc .px-4 { padding-left: 8pt !important; padding-right: 8pt !important; }
-            .print-doc .p-3  { padding: 4pt !important; }
-            .print-doc .leading-relaxed { line-height: 1.35 !important; }
-            .print-doc .gap-4 { gap: 4pt !important; }
+            .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
+              box-shadow: none !important; border: none !important; padding: 0 !important;
+              margin: 0 !important; border-radius: 0 !important; }
           }
         `}</style>
 
@@ -148,7 +118,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             )}
             <div className={`leading-tight ${logoSrc ? "flex-1" : "flex-1 text-center"}`}>
               <div className="text-[22px] font-black tracking-wider uppercase leading-none">{co.name}</div>
-              <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
+              <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email} | Web: {co.website}</div>
             </div>
           </div>
@@ -251,7 +221,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
         </table>
 
         {/* ── BODY TEXT ── */}
-        <div className="flex-1 flex flex-col px-4 pt-3 text-xs leading-relaxed text-black" style={{ paddingBottom: 12 }}>
+        <div className="flex-1 px-4 pt-3 pb-2 text-xs leading-relaxed text-black">
           <p className="mb-2 text-justify">
             We, <strong>{co.name}</strong>, hereby certify that the above works, materials, and items have been
             duly completed and formally handed over to <strong className="uppercase">{doc.clientName}</strong>
@@ -270,23 +240,53 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             <p className="mb-2 text-gray-600 italic"><strong>Note:</strong> {doc.notes}</p>
           )}
 
-          {/* ── PREPARED BY / AUTHORISED SIGNATORY ── */}
-          <div className="flex gap-8" style={{ marginTop: "auto" }}>
-            <div className="flex-1">
-              <div className="text-[10px] font-bold text-black">Prepared by:</div>
-              <div className="text-[11px] text-black">{co.contact}</div>
-              <div className="border-t border-gray-500 mt-6 pt-1">
-                <span className="text-[10px] text-gray-500">Signature: </span>
-                <span className="text-[10px] text-gray-400">_______________</span>
+          {/* ── SIGNATURE BLOCK ── */}
+          <div className="flex gap-0 w-full mb-4 border border-gray-300">
+            <div className="flex-1 p-3 border-r border-gray-300">
+              <div className="text-[10px] text-gray-500">Handed over by:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] font-semibold text-[#0f2d5a]">Name &amp; Signature</div>
+                <div className="text-[10px] text-gray-500 mt-1">
+                  For &amp; on behalf of <strong>{co.name}</strong>
+                </div>
               </div>
             </div>
-            <div className="flex-1">
-              <div className="text-[10px] text-black">For &amp; on behalf of</div>
-              <div className="text-[11px] font-black uppercase text-black">{co.name}</div>
-              <div className="border-t border-gray-500 mt-6 pt-1">
-                <span className="text-[10px] text-gray-500">Authorised Signatory</span>
+            <div className="flex-1 p-3 border-r border-gray-300">
+              <div className="text-[10px] text-gray-500">Received &amp; Accepted by:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] font-semibold text-[#0f2d5a]">
+                  {doc.receivedByName || "Name, Signature &amp; Stamp"}
+                </div>
+                <div className="text-[10px] text-gray-500 mt-1 uppercase">{doc.clientName}</div>
               </div>
             </div>
+            <div className="flex-1 p-3">
+              <div className="text-[10px] text-gray-500">Handover Date &amp; Time:</div>
+              <div className="mt-2 text-[11px] text-[#0f2d5a]">{dateFmt}</div>
+              <div className="mt-4 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[10px] text-gray-500">Date / Time</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── PREPARED BY / FOR & ON BEHALF ── */}
+          <div className="flex justify-between items-end mb-2">
+            <div>
+              <div className="text-[10px] font-semibold">Prepared by:</div>
+              <div className="text-[11px]">{co.contact}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px]">For &amp; on behalf of</div>
+              <div className="text-[11px] font-black uppercase">{co.name}</div>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-start border-t border-gray-300 pt-1">
+            <div className="text-[10px] text-gray-500">Signature</div>
+            <div className="text-[10px] text-gray-500 text-center italic">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="text-[10px] text-gray-500">Authorised Signatory</div>
           </div>
         </div>
 
@@ -295,7 +295,7 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
           style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
-          <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
+          <div>{co.address} | Tel: {co.phone} | Email: {co.email} | TRN: {co.trn} | {co.website}</div>
         </div>
       </div>
     );

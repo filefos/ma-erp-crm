@@ -93,48 +93,18 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
     return (
       <div
         ref={ref}
-        className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[794px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
+        className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
         style={{ minHeight: 1123 }}
       >
         <style>{`
           @media print {
-            @page { size: A4 portrait; margin: 0; }
-            html, body { background: white !important; height: 297mm !important; overflow: hidden !important; }
+            @page { size: A4 portrait; margin: 4px 3px; }
+            html, body { background: white !important; }
             body * { visibility: hidden; }
             .print-doc, .print-doc * { visibility: visible; }
-            .print-doc {
-              position: absolute; left: 0; top: 0;
-              width: 210mm !important; max-width: 210mm !important;
-              height: 297mm !important; max-height: 297mm !important;
-              box-shadow: none !important; border: none !important;
-              padding: 0 !important; margin: 0 !important; border-radius: 0 !important;
-              overflow: hidden !important;
-              display: flex !important; flex-direction: column !important;
-            }
-            /* Compress header */
-            .print-doc .py-2 { padding-top: 4pt !important; padding-bottom: 4pt !important; }
-            .print-doc .text-\\[22px\\] { font-size: 15pt !important; }
-            .print-doc .text-\\[15px\\] { font-size: 10pt !important; }
-            .print-doc .text-\\[11px\\] { font-size: 7.5pt !important; }
-            .print-doc .text-\\[10px\\] { font-size: 7pt !important; }
-            .print-doc .text-\\[9px\\]  { font-size: 6.5pt !important; }
-            .print-doc .text-xs        { font-size: 7.5pt !important; }
-            /* Compress table cells */
-            .print-doc td, .print-doc th { padding: 1pt 4pt !important; font-size: 7.5pt !important; }
-            /* Compress body spacing */
-            .print-doc .mb-1 { margin-bottom: 2pt !important; }
-            .print-doc .mb-2 { margin-bottom: 3pt !important; }
-            .print-doc .mb-3 { margin-bottom: 4pt !important; }
-            .print-doc .mb-4 { margin-bottom: 5pt !important; }
-            .print-doc .mt-1 { margin-top: 2pt !important; }
-            .print-doc .mt-2 { margin-top: 3pt !important; }
-            .print-doc .mt-4 { margin-top: 5pt !important; }
-            .print-doc .mt-6 { margin-top: 8pt !important; }
-            .print-doc .pt-3 { padding-top: 4pt !important; }
-            .print-doc .px-4 { padding-left: 8pt !important; padding-right: 8pt !important; }
-            .print-doc .p-3  { padding: 4pt !important; }
-            .print-doc .leading-relaxed { line-height: 1.35 !important; }
-            .print-doc .gap-4 { gap: 4pt !important; }
+            .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
+              box-shadow: none !important; border: none !important; padding: 0 !important;
+              margin: 0 !important; border-radius: 0 !important; }
           }
         `}</style>
 
@@ -154,7 +124,7 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
             )}
             <div className={`leading-tight ${logoSrc ? "flex-1" : "flex-1 text-center"}`}>
               <div className="text-[22px] font-black tracking-wider uppercase leading-none">{co.name}</div>
-              <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
+              <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email} | Web: {co.website}</div>
             </div>
           </div>
@@ -216,25 +186,107 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
           </table>
         </div>
 
+        {/* ── SUBJECT BAR ── */}
+        <div
+          className="mx-0 mb-[2px] px-3 py-1 border border-gray-300"
+          style={{ backgroundColor: "#edf2f9" }}
+        >
+          <span className="text-[11px] font-bold text-[#0f2d5a]">Subject: </span>
+          <span className="text-[11px] font-bold text-black">Undertaking Letter for Use of Fire-Rated Materials</span>
+        </div>
+
         {/* ── BODY ── */}
-        <div className="flex-1 flex flex-col px-4 pt-3 text-xs leading-relaxed text-black" style={{ paddingBottom: 12 }}>
-          {/* ── PREPARED BY / AUTHORISED SIGNATORY ── */}
-          <div className="flex gap-8" style={{ marginTop: "auto" }}>
-            <div className="flex-1">
-              <div className="text-[10px] font-bold text-black">Prepared by:</div>
-              <div className="text-[11px] text-black">{doc.signedByName || co.contact}</div>
-              <div className="border-t border-gray-500 mt-6 pt-1">
-                <span className="text-[10px] text-gray-500">Signature: </span>
-                <span className="text-[10px] text-gray-400">_______________</span>
+        <div className="flex-1 px-4 pt-3 pb-10 text-xs leading-relaxed text-black">
+          <p className="mb-2">
+            To,<br />
+            <strong className="uppercase">{doc.clientName}</strong>
+          </p>
+
+          <p className="mb-2">Dear Team,</p>
+
+          <p className="mb-2 text-justify">
+            We, <strong>{co.name}</strong>, located at {co.address}, hereby provide this undertaking
+            in reference to the use of fire-rated materials for{" "}
+            <strong>{projectDesc}</strong>
+            {doc.lpoNumber ? ` as per LPO No. ${doc.lpoNumber}` : ""}
+            {doc.projectRef ? `, Project Reference: ${doc.projectRef}` : ""}.
+          </p>
+
+          <p className="mb-2">We solemnly affirm and undertake that:</p>
+
+          <p className="mb-1 font-bold">Commitment to using the following fire-rated materials:</p>
+
+          <div className="mb-3 pl-2">
+            <MaterialLines text={doc.commitmentText} />
+          </div>
+
+          <p className="mb-2 text-justify">
+            <strong>Responsibility:</strong>{" "}
+            {co.name} accepts full responsibility for the quality and performance of the fire-rated materials
+            specified above. We will ensure that these materials are sourced from reputable suppliers and are
+            installed according to manufacturer guidelines and industry best practices.
+          </p>
+
+          <p className="mb-2 text-justify">
+            We trust that this undertaking satisfies the requirements and provides the necessary assurance
+            regarding our commitment to fire safety and the use of fire-rated materials. Should there be any
+            additional requirements or modifications needed, please do not hesitate to inform us.
+          </p>
+
+          {doc.notes?.trim() && (
+            <p className="mb-2 text-gray-600 italic">{doc.notes}</p>
+          )}
+
+          <p className="mb-4">Thank you for your cooperation and understanding.</p>
+
+          {/* ── SIGNATURE BLOCK ── */}
+          <div className="flex gap-0 w-full mb-4 border border-gray-300">
+            <div className="flex-1 p-3 border-r border-gray-300">
+              <div className="text-[10px] text-gray-500">Prepared / Dispatched By:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] font-semibold text-[#0f2d5a]">{doc.signedByName || "Name & Signature"}</div>
+                <div className="text-[10px] text-gray-500 mt-1">
+                  For &amp; on behalf of <strong>{co.name}</strong>
+                </div>
               </div>
             </div>
-            <div className="flex-1">
-              <div className="text-[10px] text-black">For &amp; on behalf of</div>
-              <div className="text-[11px] font-black uppercase text-black">{co.name}</div>
-              <div className="border-t border-gray-500 mt-6 pt-1">
-                <span className="text-[10px] text-gray-500">Authorised Signatory</span>
+            <div className="flex-1 p-3 border-r border-gray-300">
+              <div className="text-[10px] text-gray-500">Acknowledged &amp; Accepted By:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] font-semibold text-[#0f2d5a]">Name, Signature &amp; Stamp</div>
+                <div className="text-[10px] text-gray-500 mt-1">
+                  <strong className="uppercase">{doc.clientName}</strong>
+                </div>
               </div>
             </div>
+            <div className="flex-1 p-3">
+              <div className="text-[10px] text-gray-500">Date &amp; Authorised Signatory:</div>
+              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
+                <div className="text-[11px] text-[#0f2d5a]">
+                  {doc.signedDate ? fmtDate(doc.signedDate) : "Date / Stamp"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── PREPARED BY / FOR & ON BEHALF ── */}
+          <div className="flex justify-between items-end mb-2">
+            <div>
+              <div className="text-[10px] font-semibold">Prepared by:</div>
+              <div className="text-[11px]">{doc.signedByName || co.contact}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px]">For &amp; on behalf of</div>
+              <div className="text-[11px] font-black uppercase">{co.name}</div>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-start border-t border-gray-300 pt-1">
+            <div className="text-[10px] text-gray-500">Signature</div>
+            <div className="text-[10px] text-gray-500 text-center italic">
+              This is a computer generated document. No signature or stamp required.
+            </div>
+            <div className="text-[10px] text-gray-500">Authorised Signatory</div>
           </div>
         </div>
 
@@ -243,7 +295,7 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
           className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
           style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
-          <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
+          <div>{co.address} | Tel: {co.phone} | Email: {co.email} | TRN: {co.trn} | {co.website}</div>
         </div>
       </div>
     );

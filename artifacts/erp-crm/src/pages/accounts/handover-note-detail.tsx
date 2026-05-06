@@ -81,27 +81,21 @@ export function HandoverNoteDetail({ id }: Props) {
   const addItem = () => setForm(p => ({ ...p, items: [...p.items, EMPTY_ITEM()] }));
   const removeItem = (idx: number) => setForm(p => ({ ...p, items: p.items.filter((_, i) => i !== idx) }));
 
-  const handlePrint = async () => {
+  const handlePrint = () => {
     if (!printRef.current || !hon) return;
-    setExporting(true);
-    try {
-      const { base64 } = await captureElementToPdfBase64(printRef.current, `${hon.honNumber}.pdf`);
-      const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 120000);
-    } catch {
-      toast({ title: "Print failed.", variant: "destructive" });
-    } finally {
-      setExporting(false);
-    }
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(`<!DOCTYPE html><html><head>
+      <title>${hon.honNumber}</title>
+      <style>
+        @page { size: A4 portrait; margin: 0; }
+        body { margin: 0; padding: 0; background: white; }
+        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      </style>
+    </head><body>${printRef.current.outerHTML}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 400);
   };
 
   const handleExportPdf = async () => {
@@ -183,8 +177,6 @@ export function HandoverNoteDetail({ id }: Props) {
             recipientEmail={undefined}
             companyId={(hon as any).companyId ?? undefined}
             docTypeLabel="Handover Note"
-            elementRef={printRef}
-            forceSinglePage
           />
         </div>
       </div>

@@ -37,10 +37,6 @@ interface ExportButtonsProps {
   recipientEmail?: string;
   docTypeLabel?: string;
   companyId?: number;
-  /** Scale the entire document to fit exactly one A4 page in the PDF (e.g. offer letters). */
-  forceSinglePage?: boolean;
-  /** Directly supply the element to capture. When provided, skips the .print-doc DOM query entirely. */
-  elementRef?: React.RefObject<HTMLElement | null>;
 }
 
 function normalizePhone(raw: string): string {
@@ -91,7 +87,7 @@ function extractTableRows(table: HTMLTableElement): (string | number)[][] {
   return rows;
 }
 
-export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId, forceSinglePage, elementRef }: ExportButtonsProps) {
+export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId }: ExportButtonsProps) {
   const { toast } = useToast();
   const label = docTypeLabel ?? "document";
 
@@ -112,8 +108,6 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
   );
   const [mailSending, setMailSending] = useState(false);
 
-  const [pdfDownloading, setPdfDownloading] = useState(false);
-
   const handlePrint = () => {
     const prev = document.title;
     document.title = docNumber;
@@ -121,51 +115,10 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     setTimeout(() => { document.title = prev; }, 3000);
   };
 
-  const [printLoading, setPrintLoading] = useState(false);
-
-  const handlePrintToPdf = async () => {
-    setPrintLoading(true);
-    try {
-      const { base64 } = await generatePdf();
-      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      // Use an anchor click with target="_blank" — not window.open() — so
-      // the browser opens the PDF in a new tab without treating it as a popup.
-      const a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // Revoke after a generous delay so the user has time to print.
-      setTimeout(() => URL.revokeObjectURL(url), 120000);
-    } catch (err) {
-      toast({ title: "Print failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
-    } finally {
-      setPrintLoading(false);
-    }
-  };
-
   const generatePdf = async () => {
-    // Prefer a directly-supplied ref (avoids DOM querying through scaled containers).
-    const el = (elementRef?.current as HTMLElement | null) ?? getPrintEl();
+    const el = getPrintEl();
     if (!el) throw new Error("Could not find the printable document on this page.");
-    return captureElementToPdfBase64(el, `${docNumber}.pdf`, { forceSinglePage });
-  };
-
-  const handleDownloadPdf = async () => {
-    setPdfDownloading(true);
-    try {
-      const { base64, filename } = await generatePdf();
-      const file = base64ToPdfFile(base64, filename);
-      downloadPdfFile(file);
-    } catch (err) {
-      toast({ title: "PDF failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
-    } finally {
-      setPdfDownloading(false);
-    }
+    return captureElementToPdfBase64(el, `${docNumber}.pdf`);
   };
 
   const base64ToPdfFile = (base64: string, filename: string): File => {
@@ -332,13 +285,9 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => void handleDownloadPdf()} disabled={pdfDownloading}>
-            <Download className="w-4 h-4 mr-2 text-gray-600" />
-            {pdfDownloading ? "Generating PDF…" : "Download PDF"}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => void handlePrintToPdf()} disabled={printLoading}>
+          <DropdownMenuItem onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2 text-gray-600" />
-            {printLoading ? "Preparing…" : "Print to PDF"}
+            PDF (Print → Save as PDF)
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleWord}>
             <FileText className="w-4 h-4 mr-2 text-blue-600" />
