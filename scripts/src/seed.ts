@@ -2,10 +2,10 @@ import { db } from "@workspace/db";
 import {
   companiesTable, departmentsTable, usersTable, leadsTable, contactsTable,
   quotationsTable, quotationItemsTable,
-  taxInvoicesTable, projectsTable, suppliersTable,
+  projectsTable, suppliersTable,
   purchaseRequestsTable, purchaseOrdersTable, inventoryItemsTable, stockEntriesTable,
-  assetsTable, employeesTable, attendanceTable, bankAccountsTable, chequesTable,
-  expensesTable, notificationsTable, auditLogsTable,
+  assetsTable, employeesTable, attendanceTable, bankAccountsTable,
+  notificationsTable, auditLogsTable,
   rolesTable, permissionsTable, userCompanyAccessTable,
 } from "@workspace/db";
 import { sql } from "drizzle-orm";
@@ -245,12 +245,7 @@ async function seed() {
     { quotationId: q1.id, description: "Foundation & leveling works (per unit)", quantity: 60, unit: "nos", rate: 1464.28, amount: 87857, sortOrder: 6 },
   ]);
 
-  // Tax invoices
-  await db.insert(taxInvoicesTable).values([
-    { invoiceNumber: "PM-INV-2026-0001", companyId: pm.id, companyTrn: "100234567890001", clientName: "Emirates Catering", invoiceDate: "2026-04-01", supplyDate: "2026-03-28", subtotal: 109524, vatPercent: 5, vatAmount: 5476, grandTotal: 115000, amountPaid: 115000, balance: 0, paymentStatus: "paid" },
-    { invoiceNumber: "PM-INV-2026-0002", companyId: pm.id, companyTrn: "100234567890001", clientName: "Gulf Construction LLC", invoiceDate: "2026-04-15", supplyDate: "2026-04-10", subtotal: 380952, vatPercent: 5, vatAmount: 19048, grandTotal: 400000, amountPaid: 200000, balance: 200000, paymentStatus: "partial" },
-    { invoiceNumber: "EP-INV-2026-0001", companyId: ep.id, companyTrn: "100456789012002", clientName: "Dubai World Corp", invoiceDate: "2026-04-20", supplyDate: "2026-04-18", subtotal: 238095, vatPercent: 5, vatAmount: 11905, grandTotal: 250000, amountPaid: 0, balance: 250000, paymentStatus: "unpaid" },
-  ]);
+  // Tax invoices — intentionally empty so receivables start clean after factory reset
 
   await db.insert(projectsTable).values([
     { projectNumber: "PM-PRJ-2026-0001", projectName: "Emirates Catering Fujairah", clientName: "Emirates Catering", companyId: pm.id, location: "Fujairah", scope: "3 catering units supply and install", projectValue: 115000, stage: "completed", productionStatus: "done", procurementStatus: "done", deliveryStatus: "done", installationStatus: "done", paymentStatus: "paid", startDate: "2026-02-01", endDate: "2026-03-28" },
@@ -304,18 +299,12 @@ async function seed() {
     { employeeId: employees[2].id, date: today, checkIn: "07:45", checkOut: "17:45", overtime: 0.75, status: "present" },
   ]);
 
-  const [bank1] = await db.insert(bankAccountsTable).values([
+  // Bank accounts (company config — not transactional)
+  await db.insert(bankAccountsTable).values([
     { bankName: "Emirates NBD", accountName: "PRIME MAX PREFAB HOUSES IND. LLC.", accountNumber: "1234567890101", iban: "AE070331234567890101001", swiftCode: "EBILAEAD", currency: "AED", companyId: pm.id },
     { bankName: "Mashreq Bank", accountName: "Elite Pre-Fabricated Houses Trading Co. LLC", accountNumber: "5555666677778", iban: "AE200330005555666677778", swiftCode: "BOMLAEAD", currency: "AED", companyId: ep.id },
-  ]).returning();
-
-  await db.insert(chequesTable).values([
-    { chequeNumber: "000001", bankAccountId: bank1.id, payeeName: "Emirates Steel Structures LLC", amount: 100000, amountInWords: "One Hundred Thousand UAE Dirhams Only", chequeDate: "2026-05-01", status: "approved", supplierId: suppliers[0].id, companyId: pm.id, preparedById: userByEmail("accounts@primemax.ae").id },
   ]);
-
-  await db.insert(expensesTable).values([
-    { expenseNumber: "EXP-2026-00001", category: "office", amount: 2500, vatAmount: 125, total: 2625, paymentMethod: "bank_transfer", paymentDate: "2026-04-05", status: "approved", companyId: pm.id, description: "Office rent - April 2026", createdById: userByEmail("accounts@primemax.ae").id },
-  ]);
+  // Cheques & Expenses — intentionally empty so payables/expenses start clean after factory reset
 
   // Audit logs (foundation)
   const sa = userByEmail("admin@erp.com");
