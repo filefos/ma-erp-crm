@@ -93,7 +93,7 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
     return (
       <div
         ref={ref}
-        className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
+        className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[794px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
         style={{ minHeight: 1123 }}
       >
         <style>{`

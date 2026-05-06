@@ -325,7 +325,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         }
       `}</style>
 
-      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[850px] mx-auto py-4 px-0 shadow-lg rounded-lg">
+      <div className="print-doc bg-white text-black font-sans text-[13px] leading-snug max-w-[794px] mx-auto py-4 px-0 shadow-lg rounded-lg">
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="overflow-hidden mb-[2px]">

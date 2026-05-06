@@ -96,7 +96,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
   return (
     <div
       ref={ref}
-      className="print-doc bg-white text-black font-sans max-w-[850px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
+      className="print-doc bg-white text-black font-sans max-w-[794px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
       style={{ minHeight: 1123 }}
     >
       <style>{`
