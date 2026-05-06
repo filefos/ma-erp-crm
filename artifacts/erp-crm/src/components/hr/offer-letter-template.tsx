@@ -111,29 +111,42 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
   return (
     <div
       ref={ref}
-      className="print-doc bg-white text-black font-sans max-w-[850px] mx-auto shadow-lg rounded-lg overflow-hidden flex flex-col"
-      style={{ minHeight: 1123 }}
+      className="print-doc bg-white text-black font-sans max-w-[850px] mx-auto shadow-lg rounded-lg"
     >
       <style>{`
         @media print {
           @page { size: A4 portrait; margin: 0; }
-          html, body { background: white !important; height: 297mm !important; overflow: hidden !important; }
+          html, body { background: white !important; }
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
           .print-doc {
             position: absolute; left: 0; top: 0;
             width: 210mm !important; max-width: 210mm !important;
-            height: 297mm !important; max-height: 297mm !important;
             box-shadow: none !important; border: none !important;
             padding: 0 !important; margin: 0 !important; border-radius: 0 !important;
-            overflow: hidden !important;
-            display: flex !important; flex-direction: column !important;
+          }
+          .ol-header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            width: 210mm;
+            z-index: 100;
+          }
+          .ol-footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            width: 210mm;
+            z-index: 100;
+          }
+          .ol-body {
+            margin-top: 30mm;
+            margin-bottom: 14mm;
+            padding-bottom: 4mm;
           }
         }
       `}</style>
 
       {/* ── LETTERHEAD ── */}
-      <div className="overflow-hidden mb-[2px]">
+      <div className="ol-header overflow-hidden mb-[2px]">
         <div
           className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4"
           style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
@@ -161,7 +174,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
       </div>
 
       {/* ── BODY ── */}
-      <div className="flex-1 flex flex-col px-4 pt-2" style={{ paddingBottom: 10 }}>
+      <div className="ol-body px-4 pt-2" style={{ paddingBottom: 10 }}>
 
         {/* Ref + Date row */}
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#6b7280", marginBottom: 6 }}>
@@ -336,7 +349,6 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
           Please sign and return a copy of this letter within seven (7) days to confirm your acceptance of the above terms.
         </p>
 
-        <div style={{ flex: 1, minHeight: 6 }} />
 
         {/* Signature block */}
         <div style={{ display: "flex", gap: 24, width: "100%", marginTop: 4, marginBottom: 8, fontSize: 10 }}>
@@ -361,7 +373,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
 
       {/* ── FOOTER ── */}
       <div
-        className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
+        className="ol-footer border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
         style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
       >
         <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
