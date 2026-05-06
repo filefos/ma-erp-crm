@@ -65,7 +65,7 @@ async function seed() {
   // ===== COMPANIES (2) =====
   const [pm, ep] = await db.insert(companiesTable).values([
     {
-      name: "PRIME MAX PREFAB HOUSES IND. LLC.",
+      name: "PRIME MAX PREFAB HOUSES IND. LLC. SP.",
       shortName: "Prime Max",
       prefix: "PM",
       address: "Industrial Area 12, Sharjah, United Arab Emirates",
@@ -74,7 +74,7 @@ async function seed() {
       website: "www.primemax-uae.com",
       trn: "100234567890001",
       vatPercent: 5,
-      bankDetails: "Emirates NBD\nA/c Name: PRIME MAX PREFAB HOUSES IND. LLC.\nA/c No: 1234567890101\nIBAN: AE070331234567890101001\nSWIFT: EBILAEAD",
+      bankDetails: "Emirates NBD\nA/c Name: PRIME MAX PREFAB HOUSES IND. LLC. SP.\nA/c No: 1234567890101\nIBAN: AE070331234567890101001\nSWIFT: EBILAEAD",
       logo: "/uploads/logos/prime-max.png",
     },
     {

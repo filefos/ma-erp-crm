@@ -33,7 +33,7 @@ const BANK_DETAILS: Record<number, {
 }> = {
   1: {
     bankName: "Abu Dhabi Commercial Bank (ADCB)",
-    accountTitle: "PRIME MAX PREFAB HOUSES IND LLC",
+    accountTitle: "PRIME MAX PREFAB HOUSES IND. LLC. SP.",
     accountNumber: "14498851920002",
     iban: "AE300030014498851920002",
     swift: "ADCBAEAA",

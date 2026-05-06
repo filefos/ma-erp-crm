@@ -26,7 +26,7 @@ import { PAYMENT_TERMS_PRESETS, getPresetByKey } from "@/lib/payment-terms";
 const BANK_DETAILS: Record<number, { bankName: string; accountTitle: string; accountNumber: string; iban: string; swift: string; currency: string }> = {
   1: {
     bankName: "Abu Dhabi Commercial Bank (ADCB)",
-    accountTitle: "PRIME MAX PREFAB HOUSES IND LLC",
+    accountTitle: "PRIME MAX PREFAB HOUSES IND. LLC. SP.",
     accountNumber: "14498851920002",
     iban: "AE300030014498851920002",
     swift: "ADCBAEAA",

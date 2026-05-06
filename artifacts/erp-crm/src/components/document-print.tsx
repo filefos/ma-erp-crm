@@ -93,7 +93,7 @@ interface CompanyInfo {
 
 const COMPANIES: Record<number, CompanyInfo> = {
   1: {
-    name: "PRIME MAX PREFAB HOUSES IND. LLC.",
+    name: "PRIME MAX PREFAB HOUSES IND. LLC. SP.",
     address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE",
     trn: "105383255400003",
     phone: "056 616 3555",
@@ -102,7 +102,7 @@ const COMPANIES: Record<number, CompanyInfo> = {
     website: "www.primemaxprefab.com",
     bank: {
       bankName: "Abu Dhabi Commercial Bank (ADCB)",
-      accountTitle: "PRIME MAX PREFAB HOUSES IND LLC",
+      accountTitle: "PRIME MAX PREFAB HOUSES IND. LLC. SP.",
       accountNumber: "14498851920002",
       iban: "AE300030014498851920002",
       swift: "ADCBAEAA",

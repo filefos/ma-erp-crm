@@ -65,7 +65,7 @@ const UAE_LAW_CLAUSES = [
 const STAFF_DUTY = "Duty Timing: 08:00 AM – 06:00 PM (Staff). One-side economy class air ticket to home country provided after completion of two (2) continuous years of service.";
 const LABOUR_DUTY = "Duty Timing: 07:00 AM – 07:00 PM (Labour) — total 9 working hours with 2 hours of breaks (including 1 hour of mandatory lunch break). Annual leave with leave salary after completion of two (2) continuous years of service. Cooking facility and company-provided residence are included.";
 
-const PRIME_LEGAL = "PRIME MAX PREFAB HOUSES IND. LLC.";
+const PRIME_LEGAL = "PRIME MAX PREFAB HOUSES IND. LLC. SP.";
 const ELITE_LEGAL = "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC";
 
 export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetterDoc }>(({ doc }, ref) => {
