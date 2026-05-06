@@ -117,6 +117,40 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
     setTimeout(() => { document.title = prev; }, 3000);
   };
 
+  const [printLoading, setPrintLoading] = useState(false);
+
+  const handlePrintToPdf = async () => {
+    setPrintLoading(true);
+    try {
+      const { base64, filename } = await generatePdf();
+      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+      if (win) {
+        win.addEventListener("load", () => {
+          setTimeout(() => {
+            win.focus();
+            win.print();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+          }, 800);
+        });
+      } else {
+        // popup blocked — download instead
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        toast({ title: "Popup blocked", description: "PDF saved to Downloads — open it and print from your viewer." });
+      }
+    } catch (err) {
+      toast({ title: "Print failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+    } finally {
+      setPrintLoading(false);
+    }
+  };
+
   const generatePdf = async () => {
     const el = getPrintEl();
     if (!el) throw new Error("Could not find the printable document on this page.");
@@ -328,9 +362,9 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
             <Download className="w-4 h-4 mr-2 text-gray-600" />
             {pdfDownloading ? "Generating PDF…" : "Download PDF"}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handlePrint}>
+          <DropdownMenuItem onClick={() => void handlePrintToPdf()} disabled={printLoading}>
             <Printer className="w-4 h-4 mr-2 text-gray-600" />
-            Print to PDF
+            {printLoading ? "Preparing…" : "Print to PDF"}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleWord}>
             <FileText className="w-4 h-4 mr-2 text-blue-600" />
