@@ -219,7 +219,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
             </tr>
             <tr>
               <td style={tdLabel}>Probation Period</td>
-              <td style={tdValue}>6 months (Art. 9)</td>
+              <td style={tdValue}>60 days (Art. 9)</td>
               <td style={tdLabel}>Notice Period</td>
               <td style={tdValue}>30 days written notice (post-probation)</td>
             </tr>
