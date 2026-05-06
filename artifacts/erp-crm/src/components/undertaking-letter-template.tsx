@@ -98,13 +98,43 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
       >
         <style>{`
           @media print {
-            @page { size: A4 portrait; margin: 4px 3px; }
-            html, body { background: white !important; }
+            @page { size: A4 portrait; margin: 0; }
+            html, body { background: white !important; height: 297mm !important; overflow: hidden !important; }
             body * { visibility: hidden; }
             .print-doc, .print-doc * { visibility: visible; }
-            .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
-              box-shadow: none !important; border: none !important; padding: 0 !important;
-              margin: 0 !important; border-radius: 0 !important; }
+            .print-doc {
+              position: absolute; left: 0; top: 0;
+              width: 210mm !important; max-width: 210mm !important;
+              height: 297mm !important; max-height: 297mm !important;
+              box-shadow: none !important; border: none !important;
+              padding: 0 !important; margin: 0 !important; border-radius: 0 !important;
+              overflow: hidden !important;
+              display: flex !important; flex-direction: column !important;
+            }
+            /* Compress header */
+            .print-doc .py-2 { padding-top: 4pt !important; padding-bottom: 4pt !important; }
+            .print-doc .text-\\[22px\\] { font-size: 15pt !important; }
+            .print-doc .text-\\[15px\\] { font-size: 10pt !important; }
+            .print-doc .text-\\[11px\\] { font-size: 7.5pt !important; }
+            .print-doc .text-\\[10px\\] { font-size: 7pt !important; }
+            .print-doc .text-\\[9px\\]  { font-size: 6.5pt !important; }
+            .print-doc .text-xs        { font-size: 7.5pt !important; }
+            /* Compress table cells */
+            .print-doc td, .print-doc th { padding: 1pt 4pt !important; font-size: 7.5pt !important; }
+            /* Compress body spacing */
+            .print-doc .mb-1 { margin-bottom: 2pt !important; }
+            .print-doc .mb-2 { margin-bottom: 3pt !important; }
+            .print-doc .mb-3 { margin-bottom: 4pt !important; }
+            .print-doc .mb-4 { margin-bottom: 5pt !important; }
+            .print-doc .mt-1 { margin-top: 2pt !important; }
+            .print-doc .mt-2 { margin-top: 3pt !important; }
+            .print-doc .mt-4 { margin-top: 5pt !important; }
+            .print-doc .mt-6 { margin-top: 8pt !important; }
+            .print-doc .pt-3 { padding-top: 4pt !important; }
+            .print-doc .px-4 { padding-left: 8pt !important; padding-right: 8pt !important; }
+            .print-doc .p-3  { padding: 4pt !important; }
+            .print-doc .leading-relaxed { line-height: 1.35 !important; }
+            .print-doc .gap-4 { gap: 4pt !important; }
           }
         `}</style>
 
