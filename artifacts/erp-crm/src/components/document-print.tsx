@@ -738,7 +738,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   </thead>
                   <tbody>
                     {specSections.flatMap((section, si) => {
-                      const pts = section.points.length > 0 ? section.points : [""];
+                      const pts = section.points.filter(p => p.trim() !== "");
+                      if (pts.length === 0) return [];
                       return pts.map((pt, pi) => (
                         <tr key={`${si}-${pi}`} style={{ backgroundColor: pi % 2 === 0 ? "#ffffff" : "#f4f7fb", ...printStyle }}>
                           {pi === 0 && (
@@ -763,17 +764,15 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                             </td>
                           )}
                           <td style={{ border: "1px solid #bbb", textAlign: "center", fontSize: "8.5pt", fontWeight: 600, padding: "3px 2px", verticalAlign: "top", color: "#333", width: 28 }}>
-                            {pt || pt === "" ? String.fromCharCode(97 + pi) : ""}
+                            {String.fromCharCode(97 + pi)}
                           </td>
                           <td style={{ border: "1px solid #bbb", fontSize: "8.5pt", padding: "3px 8px", verticalAlign: "top", lineHeight: 1.45 }}>
-                            {pt
-                              ? pt.split("\n").map((line, li) => (
-                                  <React.Fragment key={li}>
-                                    {line}
-                                    {li < pt.split("\n").length - 1 && <br />}
-                                  </React.Fragment>
-                                ))
-                              : "\u00a0"}
+                            {pt.split("\n").map((line, li) => (
+                              <React.Fragment key={li}>
+                                {line}
+                                {li < pt.split("\n").length - 1 && <br />}
+                              </React.Fragment>
+                            ))}
                           </td>
                         </tr>
                       ));
