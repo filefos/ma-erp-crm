@@ -187,11 +187,6 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
 
       {/* Body wrapper */}
       <div className="flex-1 flex flex-col px-4 pt-3" style={{ paddingBottom: 12 }}>
-        {/* Subject */}
-        <h1 style={{ textAlign: "center", color: NAVY, fontWeight: 700, fontSize: 16, margin: "4px 0 8px", letterSpacing: 1.2, textTransform: "uppercase" }}>
-          Offer of Employment
-        </h1>
-
         {/* Addressee — collapsed onto one line to save vertical space */}
         <div style={{ fontSize: FS_BODY, lineHeight: LH, color: "#1a1a1a" }}>
           <strong>To:</strong> {doc.candidateName}
