@@ -295,7 +295,6 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
           style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
-          <div className="font-bold">{co.name}</div>
           <div>{co.address} | Tel: {co.phone} | Email: {co.email} | TRN: {co.trn} | {co.website}</div>
         </div>
       </div>
