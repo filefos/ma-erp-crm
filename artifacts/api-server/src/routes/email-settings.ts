@@ -109,7 +109,10 @@ router.post("/email-settings/test-imap", requirePermission("email_settings", "vi
     await client.logout();
     res.json({ success: true, message: "IMAP connection successful!" });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    /* Surface the most useful part of the ImapFlow error */
+    const detail = err.responseText ?? err.response ?? err.serverResponseCode ?? "";
+    const message = detail ? `${err.message}: ${detail}` : err.message;
+    res.status(400).json({ error: message });
   }
 });
 
