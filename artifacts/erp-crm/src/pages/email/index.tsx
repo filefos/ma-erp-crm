@@ -19,7 +19,7 @@ import {
   HelpCircle, BookOpen, Lightbulb, ZoomIn, ZoomOut, AtSign,
   SlidersHorizontal, Minus, Mic, Lock, ChevronsUp, ChevronsDown,
   Table, SpellCheck, Wand2, IndentDecrease, IndentIncrease,
-  Subscript, Superscript,
+  Subscript, Superscript, Check,
 } from "lucide-react";
 import { EmailSettingsModal } from "./settings-modal";
 
