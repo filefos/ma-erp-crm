@@ -1296,10 +1296,18 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
                 <div className="flex items-center gap-1 text-[13px]" style={{ color: "#323130" }}>
                   <span style={{ color: "#605e5c" }}>From:</span>
-                  <span className="font-medium">{settings?.smtpUser ?? accountEmail}</span>
+                  <button className="flex items-center gap-1 font-medium hover:text-[#0078d4] transition-colors">
+                    {settings?.smtpUser || accountEmail}
+                    <ChevronDown className="w-3 h-3" style={{ color: "#605e5c" }} />
+                  </button>
                 </div>
 
                 <div className="ml-auto flex items-center gap-1">
+                  {/* Attach file */}
+                  <label className="cursor-pointer p-1.5 rounded transition-colors hover:bg-gray-100" title="Attach file">
+                    <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
+                    <Paperclip className="w-4 h-4" style={{ color: "#605e5c" }} />
+                  </label>
                   <button
                     onClick={() => { setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
                     className="p-1.5 rounded transition-colors hover:bg-gray-100"
