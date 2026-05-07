@@ -26,12 +26,17 @@ router.post("/deploy", (req, res) => {
 
   res.json({ status: "deploying", deployId });
 
+  const WEB_ROOT = process.env.WEB_ROOT ?? "/var/www/ma-erp";
   const script = [
     `cd ${APP_DIR}`,
     `git pull origin main 2>&1`,
     `pnpm install --frozen-lockfile 2>&1`,
     `pnpm --filter @workspace/erp-crm run build 2>&1`,
     `pnpm --filter @workspace/api-server run build 2>&1`,
+    // Copy fresh frontend dist to nginx-served directory
+    `mkdir -p ${WEB_ROOT}`,
+    `cp -r ${APP_DIR}/artifacts/erp-crm/dist/. ${WEB_ROOT}/`,
+    `chown -R www-data:www-data ${WEB_ROOT} 2>/dev/null || true`,
     `pm2 restart ${PM2_NAME} 2>&1`,
     `echo "Deploy ${deployId} complete"`,
   ].join(" && ");
