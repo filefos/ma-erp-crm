@@ -4,6 +4,62 @@ import { eq } from "drizzle-orm";
 import { requireAuth, inScope, requirePermission } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 import nodemailer from "nodemailer";
+import * as tls from "tls";
+import * as net from "net";
+
+/**
+ * Test IMAP credentials using the raw IMAP LOGIN command (like Python imaplib).
+ * This avoids ImapFlow's SASL PLAIN which some Dovecot servers reject.
+ */
+async function testImapLogin(host: string, port: number, secure: boolean, user: string, pass: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tag = "A001";
+    let buf = "";
+    let loggedIn = false;
+
+    const onData = (chunk: Buffer) => {
+      buf += chunk.toString();
+      const lines = buf.split("\r\n");
+      buf = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!loggedIn) {
+          if (line.startsWith("* OK")) {
+            // Server ready — send LOGIN
+            const cmd = `${tag} LOGIN ${JSON.stringify(user)} ${JSON.stringify(pass)}\r\n`;
+            sock.write(cmd);
+            loggedIn = true;
+          } else if (line.startsWith("* ")) {
+            // Server info line, ignore
+          } else {
+            reject(new Error(`Unexpected greeting: ${line}`));
+            sock.destroy();
+          }
+        } else {
+          if (line.startsWith(`${tag} OK`)) {
+            sock.write(`A002 LOGOUT\r\n`);
+            resolve();
+            sock.destroy();
+          } else if (line.startsWith(`${tag} NO`) || line.startsWith(`${tag} BAD`)) {
+            reject(new Error(`Authentication failed: ${line}`));
+            sock.destroy();
+          }
+        }
+      }
+    };
+
+    let sock: tls.TLSSocket | net.Socket;
+
+    if (secure) {
+      sock = tls.connect({ host, port, rejectUnauthorized: false }, () => {});
+    } else {
+      sock = net.connect({ host, port });
+    }
+
+    sock.on("data", onData);
+    sock.on("error", (err) => reject(err));
+    sock.setTimeout(10000, () => { reject(new Error("IMAP connection timed out")); sock.destroy(); });
+  });
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -97,32 +153,16 @@ router.post("/email-settings/test-imap", requirePermission("email_settings", "vi
     return;
   }
   try {
-    const { ImapFlow } = await import("imapflow");
-    const client = new ImapFlow({
-      host: settings.imapHost,
-      port: settings.imapPort ?? 993,
-      secure: settings.imapSecure === "ssl",
-      auth: { user: settings.imapUser, pass: settings.imapPass },
-      tls: { rejectUnauthorized: false },
-      /* Force LOGIN auth — Dovecot on shared hosting advertises AUTH=PLAIN
-         and AUTH=LOGIN; some ImapFlow versions pick wrong default */
-      logger: false,
-    });
-    await client.connect();
-    await client.logout();
-    res.json({
-      success: true,
-      message: "IMAP connection successful!",
-      debug: { user: settings.imapUser, host: settings.imapHost, port: settings.imapPort },
-    });
+    await testImapLogin(
+      settings.imapHost,
+      settings.imapPort ?? 993,
+      settings.imapSecure === "ssl",
+      settings.imapUser,
+      settings.imapPass,
+    );
+    res.json({ success: true, message: "IMAP connection successful!" });
   } catch (err: any) {
-    /* Surface the most useful part of the ImapFlow error */
-    const detail = err.responseText ?? err.response ?? err.serverResponseCode ?? "";
-    const message = detail ? `${err.message}: ${detail}` : err.message;
-    res.status(400).json({
-      error: message,
-      debug: { user: settings.imapUser, host: settings.imapHost, port: settings.imapPort, passLen: settings.imapPass?.length ?? 0 },
-    });
+    res.status(400).json({ error: err.message });
   }
 });
 
