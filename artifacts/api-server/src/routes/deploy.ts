@@ -37,7 +37,7 @@ router.post("/deploy", (req, res) => {
     `mkdir -p ${WEB_ROOT}`,
     `cp -r ${APP_DIR}/artifacts/erp-crm/dist/. ${WEB_ROOT}/`,
     `chown -R www-data:www-data ${WEB_ROOT} 2>/dev/null || true`,
-    `pm2 restart ${PM2_NAME} 2>&1`,
+    `pm2 startOrRestart ${APP_DIR}/ecosystem.config.cjs --update-env 2>&1`,
     `echo "Deploy ${deployId} complete"`,
   ].join(" && ");
 
