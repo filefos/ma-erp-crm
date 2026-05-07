@@ -704,6 +704,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const [showBcc, setShowBcc] = useState(false);
   const [accountExpanded, setAccountExpanded] = useState(true);
   const [favExpanded, setFavExpanded] = useState(true);
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [compose, setCompose] = useState<ComposeData>({
     toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "",
   });
@@ -793,10 +794,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const saveDraftMutation = useMutation({
     mutationFn: (data: any) => apiFetch("/emails", { method: "POST", body: JSON.stringify(data) }),
     onSuccess: () => {
-      toast({ title: "Draft saved." });
-      setComposing(false);
-      setAttachments([]);
-      setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "" });
+      setDraftSavedAt(new Date());
       qc.invalidateQueries({ queryKey: ["emails"] });
     },
   });
@@ -1276,37 +1274,6 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
             /* ── Compose — full Outlook-style ─────────────────────────────── */
             <div className="flex flex-col h-full">
 
-              {/* Ribbon */}
-              <div className="flex items-center px-2 py-0.5 border-b flex-shrink-0 gap-0.5" style={{ borderColor: "#e1dfdd" }}>
-                <label className="cursor-pointer">
-                  <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
-                  <span className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-gray-100 min-w-[48px] cursor-pointer text-[#444]">
-                    <Paperclip className="w-4 h-4" />
-                    <span className="text-[9px]">Attach File</span>
-                  </span>
-                </label>
-                <span className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-gray-100 min-w-[36px] cursor-pointer text-[#444]">
-                  <Smile className="w-4 h-4" /><span className="text-[9px]">Emoji</span>
-                </span>
-                <span className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-gray-100 min-w-[36px] cursor-pointer text-[#444]">
-                  <LinkIcon className="w-4 h-4" /><span className="text-[9px]">Link</span>
-                </span>
-                <div className="w-px h-8 bg-gray-200 mx-1 self-center" />
-                <span className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-gray-100 min-w-[36px] cursor-pointer text-[#444]">
-                  <Bold className="w-4 h-4" /><span className="text-[9px]">Bold</span>
-                </span>
-                <span className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-gray-100 min-w-[36px] cursor-pointer text-[#444]">
-                  <Italic className="w-4 h-4" /><span className="text-[9px]">Italic</span>
-                </span>
-                <span className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-gray-100 min-w-[36px] cursor-pointer text-[#444]">
-                  <Underline className="w-4 h-4" /><span className="text-[9px]">Underline</span>
-                </span>
-                <div className="w-px h-8 bg-gray-200 mx-1 self-center" />
-                <span className="flex flex-col items-center gap-0.5 px-2 py-1 rounded hover:bg-gray-100 min-w-[36px] cursor-pointer text-[#444]">
-                  <AlertCircle className="w-4 h-4 text-red-400" /><span className="text-[9px]">High</span>
-                </span>
-              </div>
-
               {/* Send row */}
               <div className="flex items-center px-4 py-2 border-b flex-shrink-0 gap-3" style={{ borderColor: "#e1dfdd" }}>
                 <button
@@ -1334,15 +1301,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
                 <div className="ml-auto flex items-center gap-1">
                   <button
-                    onClick={() => saveDraftMutation.mutate({ ...compose, folder: "draft", companyId })}
-                    className="p-1.5 rounded transition-colors hover:bg-gray-100"
-                    style={{ color: "#605e5c" }}
-                    title="Save draft"
-                  >
-                    <FileText className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => { setComposing(false); setAttachments([]); }}
+                    onClick={() => { setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
                     className="p-1.5 rounded transition-colors hover:bg-gray-100"
                     style={{ color: "#605e5c" }}
                     title="Discard"
@@ -1350,7 +1309,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                     <Trash2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => { setComposing(false); setAttachments([]); }}
+                    onClick={() => { setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
                     className="p-1.5 rounded transition-colors hover:bg-gray-100"
                     style={{ color: "#605e5c" }}
                     title="Close"
@@ -1362,7 +1321,12 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
               {/* To */}
               <div className="flex items-center px-4 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd", minHeight: 40 }}>
-                <span className="text-[13px] w-10 flex-shrink-0" style={{ color: "#605e5c" }}>To</span>
+                <button
+                  className="flex-shrink-0 text-[12px] font-medium border rounded px-2 py-0.5 mr-2 select-none"
+                  style={{ borderColor: "#8a8886", color: "#323130", background: "transparent" }}
+                >
+                  To
+                </button>
                 <input
                   type="text"
                   className="flex-1 text-[13px] py-2.5 outline-none bg-transparent"
@@ -1371,8 +1335,8 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                   onChange={e => setCompose(p => ({ ...p, toAddress: e.target.value }))}
                 />
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  {!showCc && <button className="text-[13px] font-normal" style={{ color: "#0078d4" }} onClick={() => setShowCc(true)}>Cc</button>}
-                  {!showBcc && <button className="text-[13px] font-normal" style={{ color: "#0078d4" }} onClick={() => setShowBcc(true)}>Bcc</button>}
+                  {!showCc && <button className="text-[13px] font-normal" style={{ color: "#605e5c" }} onClick={() => setShowCc(true)}>Cc</button>}
+                  {!showBcc && <button className="text-[13px] font-normal" style={{ color: "#605e5c" }} onClick={() => setShowBcc(true)}>Bcc</button>}
                 </div>
               </div>
 
@@ -1397,12 +1361,17 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
               <div className="flex items-center px-4 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd", minHeight: 40 }}>
                 <input
                   type="text"
-                  className="w-full text-[15px] py-2.5 outline-none bg-transparent"
+                  className="flex-1 text-[15px] py-2.5 outline-none bg-transparent"
                   style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
                   placeholder="Add a subject"
                   value={compose.subject}
-                  onChange={e => setCompose(p => ({ ...p, subject: e.target.value }))}
+                  onChange={e => { setCompose(p => ({ ...p, subject: e.target.value })); setDraftSavedAt(null); }}
                 />
+                {draftSavedAt && (
+                  <span className="flex-shrink-0 text-[12px] ml-3" style={{ color: "#605e5c" }}>
+                    Draft saved at {draftSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                  </span>
+                )}
               </div>
 
               {/* Body */}
@@ -1410,7 +1379,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                 <textarea
                   className="w-full h-full resize-none outline-none bg-transparent text-[13px]"
                   style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif", lineHeight: 1.6 }}
-                  placeholder="Write your message…"
+                  placeholder=""
                   value={compose.body}
                   onChange={e => setCompose(p => ({ ...p, body: e.target.value }))}
                 />
