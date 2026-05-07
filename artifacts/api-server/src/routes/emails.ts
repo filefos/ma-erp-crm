@@ -214,6 +214,7 @@ router.post("/emails/sync", requirePermission("emails", "edit"), requireBodyComp
       port: settings.imapPort ?? 993,
       secure: settings.imapSecure === "ssl",
       auth: { user: settings.imapUser, pass: settings.imapPass },
+      tls: { rejectUnauthorized: false },
       logger: false,
     });
 

@@ -103,6 +103,9 @@ router.post("/email-settings/test-imap", requirePermission("email_settings", "vi
       port: settings.imapPort ?? 993,
       secure: settings.imapSecure === "ssl",
       auth: { user: settings.imapUser, pass: settings.imapPass },
+      /* cPanel/shared hosting often uses a shared SSL cert that doesn't
+         match the custom domain — disable strict cert validation */
+      tls: { rejectUnauthorized: false },
       logger: false,
     });
     await client.connect();
