@@ -154,8 +154,18 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
   const testImap = async () => {
     setImapTest({ status: "loading", msg: "" });
     try {
-      await apiFetch("/email-settings/test-imap", { method: "POST", body: JSON.stringify({ companyId }) });
-      setImapTest({ status: "success", msg: "IMAP connection successful!" });
+      const res = await fetch(`${BASE}api/email-settings/test-imap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("erp_token")}` },
+        body: JSON.stringify({ companyId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const debugPart = json.debug ? ` [user: ${json.debug.user}, passLen: ${json.debug.passLen}]` : "";
+        setImapTest({ status: "error", msg: `${json.error}${debugPart}` });
+      } else {
+        setImapTest({ status: "success", msg: "IMAP connection successful!" });
+      }
     } catch (e: any) {
       setImapTest({ status: "error", msg: e.message });
     }

@@ -103,19 +103,26 @@ router.post("/email-settings/test-imap", requirePermission("email_settings", "vi
       port: settings.imapPort ?? 993,
       secure: settings.imapSecure === "ssl",
       auth: { user: settings.imapUser, pass: settings.imapPass },
-      /* cPanel/shared hosting often uses a shared SSL cert that doesn't
-         match the custom domain — disable strict cert validation */
       tls: { rejectUnauthorized: false },
+      /* Force LOGIN auth — Dovecot on shared hosting advertises AUTH=PLAIN
+         and AUTH=LOGIN; some ImapFlow versions pick wrong default */
       logger: false,
     });
     await client.connect();
     await client.logout();
-    res.json({ success: true, message: "IMAP connection successful!" });
+    res.json({
+      success: true,
+      message: "IMAP connection successful!",
+      debug: { user: settings.imapUser, host: settings.imapHost, port: settings.imapPort },
+    });
   } catch (err: any) {
     /* Surface the most useful part of the ImapFlow error */
     const detail = err.responseText ?? err.response ?? err.serverResponseCode ?? "";
     const message = detail ? `${err.message}: ${detail}` : err.message;
-    res.status(400).json({ error: message });
+    res.status(400).json({
+      error: message,
+      debug: { user: settings.imapUser, host: settings.imapHost, port: settings.imapPort, passLen: settings.imapPass?.length ?? 0 },
+    });
   }
 });
 
