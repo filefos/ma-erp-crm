@@ -10,10 +10,13 @@ import {
   Link as LinkIcon, Smile, AlignJustify, Columns2, PanelRight,
   CalendarDays, LayoutGrid, MessageSquare,
   Printer, Undo2, Users, Clock, Tag, PenLine, ImageIcon,
-  AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify as AlignJustifyIcon,
+  List, ListOrdered, Type, Strikethrough, Palette,
   Scissors, Copy, ClipboardPaste, Pen, Highlighter, Eraser,
   HelpCircle, BookOpen, Lightbulb, ZoomIn, ZoomOut, AtSign,
-  SlidersHorizontal, Minus,
+  SlidersHorizontal, Minus, Mic, Lock, ChevronsUp, ChevronsDown,
+  Table, SpellCheck, Wand2, IndentDecrease, IndentIncrease,
+  Subscript, Superscript,
 } from "lucide-react";
 import { EmailSettingsModal } from "./settings-modal";
 
@@ -161,34 +164,135 @@ function OutlookRibbon({
   );
 
   /* ══════════════════════════════════════════════════════════════════════
-     MESSAGE TAB  (actions for selected/open message)
+     MESSAGE TAB  (matches Outlook compose ribbon screenshot exactly)
+     Groups: Clipboard | Basic Text | Paragraph | Insert | Voice |
+             Proofing | Add-ins | Tags | Encrypt | Print |
+             Accessibility | Options
   ══════════════════════════════════════════════════════════════════════ */
   const messageRibbon = (
     <div className="flex items-stretch h-full">
-      <Group label="New">
-        <Btn icon={<PenLine className="w-5 h-5" />} label="New" caret onClick={onNewMail} />
+
+      {/* ── Clipboard ──────────────────────────────────────────────────── */}
+      <Group label="Clipboard">
+        <Btn icon={<ClipboardPaste className="w-5 h-5" />} label="Paste" caret />
+        <div className="flex flex-col justify-center gap-0.5 px-0.5">
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors" style={{ color: "#323130" }}>
+            <Scissors className="w-3.5 h-3.5" /><span>Cut</span>
+          </button>
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors" style={{ color: "#323130" }}>
+            <Copy className="w-3.5 h-3.5" /><span>Copy</span>
+          </button>
+        </div>
       </Group>
-      <Group label="Respond">
-        <Btn icon={<Reply className="w-5 h-5" />} label="Reply" />
-        <Btn icon={<Forward className="w-5 h-5" style={{ transform: "scaleX(-1)" }} />} label="Reply all" />
-        <Btn icon={<Forward className="w-5 h-5" />} label="Forward" />
+
+      {/* ── Basic Text ─────────────────────────────────────────────────── */}
+      <Group label="Basic Text">
+        {/* Font name + size row */}
+        <div className="flex flex-col gap-0.5 pr-1">
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 border rounded px-1.5 h-5 text-[10px] hover:border-[#0078d4] cursor-pointer" style={{ borderColor: "#c8c6c4", minWidth: 72, color: "#323130" }}>
+              <Type className="w-3 h-3 opacity-50" />
+              <span>Aptos</span>
+              <ChevronDown className="w-2.5 h-2.5 opacity-50 ml-auto" />
+            </div>
+            <div className="flex items-center border rounded px-1 h-5 text-[10px] hover:border-[#0078d4] cursor-pointer" style={{ borderColor: "#c8c6c4", minWidth: 28, color: "#323130" }}>
+              <span>11</span>
+              <ChevronDown className="w-2.5 h-2.5 opacity-50" />
+            </div>
+          </div>
+          {/* Formatting buttons row */}
+          <div className="flex items-center gap-0">
+            <button className="px-1 py-0.5 rounded font-bold text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>B</button>
+            <button className="px-1 py-0.5 rounded italic text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>I</button>
+            <button className="px-1 py-0.5 rounded underline text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>U<ChevronDown className="inline w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130", textDecoration: "line-through" }}>S</button>
+            <button className="px-1 py-0.5 rounded text-[12px] hover:bg-[#ebebeb] flex items-center" style={{ color: "#323130" }}><Highlighter className="w-3 h-3" /><ChevronDown className="w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded text-[12px] hover:bg-[#ebebeb] flex items-center" style={{ color: "#323130" }}><Palette className="w-3 h-3" /><ChevronDown className="w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded text-[10px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>x₂</button>
+            <button className="px-1 py-0.5 rounded text-[10px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>Aa<ChevronDown className="inline w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><Eraser className="w-3 h-3" /></button>
+          </div>
+        </div>
       </Group>
-      <Group label="Delete">
-        <Btn icon={<Trash2 className="w-5 h-5" />} label="Delete" />
-        <Btn icon={<Archive className="w-5 h-5" />} label="Archive" />
+
+      {/* ── Paragraph ──────────────────────────────────────────────────── */}
+      <Group label="Paragraph">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-0">
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><List className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><ListOrdered className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><IndentDecrease className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><IndentIncrease className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignJustify className="w-3.5 h-3.5" /></button>
+          </div>
+          <div className="flex items-center gap-0">
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignLeft className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignCenter className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignRight className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignJustifyIcon className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb] flex items-center gap-0" style={{ color: "#323130" }}>
+              <span className="text-[9px] leading-none">≡</span><ChevronDown className="w-2 h-2 opacity-50" />
+            </button>
+          </div>
+        </div>
       </Group>
-      <Group label="Move">
-        <Btn icon={<Columns2 className="w-5 h-5" />} label="Move" caret />
-        <Btn icon={<Flag className="w-5 h-5" />} label="Report" caret />
+
+      {/* ── Insert ─────────────────────────────────────────────────────── */}
+      <Group label="Insert">
+        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
+        <Btn icon={<ImageIcon className="w-5 h-5" />} label="Pictures" />
+        <Btn icon={<Smile className="w-5 h-5" />} label="Emoji" />
+        <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret />
+        <Btn icon={<Table className="w-5 h-5" />} label="Table" />
       </Group>
+
+      {/* ── Voice ──────────────────────────────────────────────────────── */}
+      <Group label="Voice">
+        <Btn icon={<Mic className="w-5 h-5" />} label="Dictate" caret />
+      </Group>
+
+      {/* ── Proofing ───────────────────────────────────────────────────── */}
+      <Group label="Proofing">
+        <Btn icon={<SpellCheck className="w-5 h-5" />} label="Editor" caret />
+      </Group>
+
+      {/* ── Add-ins ────────────────────────────────────────────────────── */}
+      <Group label="Add-ins">
+        <Btn icon={<LayoutGrid className="w-5 h-5" />} label="Apps" />
+      </Group>
+
+      {/* ── Tags ───────────────────────────────────────────────────────── */}
       <Group label="Tags">
-        <Btn icon={<Tag className="w-5 h-5" />} label="Categorize" caret />
-        <Btn icon={<Flag className="w-5 h-5" />} label="Flag" caret />
-        <Btn icon={<Clock className="w-5 h-5" />} label="Snooze" caret />
+        <div className="flex flex-col justify-center gap-0.5 px-0.5">
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors whitespace-nowrap" style={{ color: "#323130" }}>
+            <ChevronsUp className="w-3.5 h-3.5 text-red-500" /><span>High importance</span>
+          </button>
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors whitespace-nowrap" style={{ color: "#323130" }}>
+            <ChevronsDown className="w-3.5 h-3.5 text-blue-400" /><span>Low importance</span>
+          </button>
+        </div>
       </Group>
+
+      {/* ── Encrypt ────────────────────────────────────────────────────── */}
+      <Group label="Encrypt">
+        <Btn icon={<Lock className="w-5 h-5" />} label="Encrypt" caret />
+      </Group>
+
+      {/* ── Print ──────────────────────────────────────────────────────── */}
       <Group label="Print">
-        <Btn icon={<Printer className="w-5 h-5" />} label="Print" />
+        <Btn icon={<Printer className="w-5 h-5" />} label="Print draft" />
       </Group>
+
+      {/* ── Accessibility ──────────────────────────────────────────────── */}
+      <Group label="Accessibility">
+        <Btn icon={<Eye className="w-5 h-5" />} label="Check accessibility" />
+      </Group>
+
+      {/* ── Options ────────────────────────────────────────────────────── */}
+      <Group label="Options">
+        <Btn icon={<Wand2 className="w-5 h-5" />} label="Auto format options" />
+      </Group>
+
     </div>
   );
 
