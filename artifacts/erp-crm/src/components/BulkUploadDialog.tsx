@@ -23,6 +23,26 @@ interface BulkUploadDialogProps {
 
 type ParsedRow = Record<string, string>;
 
+function normalizeRows(rows: ParsedRow[], columns: BulkColumn[]): ParsedRow[] {
+  if (!rows.length) return rows;
+  const sampleKeys = Object.keys(rows[0]);
+  const keyMap: Record<string, string> = {};
+  for (const col of columns) {
+    const match = sampleKeys.find(
+      k => k.trim().toLowerCase() === col.label.trim().toLowerCase()
+    );
+    if (match && match !== col.label) keyMap[match] = col.label;
+  }
+  if (!Object.keys(keyMap).length) return rows;
+  return rows.map(row => {
+    const out: ParsedRow = { ...row };
+    for (const [orig, canonical] of Object.entries(keyMap)) {
+      if (orig in out) { out[canonical] = out[orig]; delete out[orig]; }
+    }
+    return out;
+  });
+}
+
 function parseCsv(text: string): ParsedRow[] {
   const lines: string[][] = [];
   let cur: string[] = [];
@@ -106,7 +126,7 @@ export function BulkUploadDialog({
       let parsed: ParsedRow[] = [];
       if (/\.xlsx?$/i.test(file.name)) parsed = await parseXlsx(file);
       else parsed = parseCsv(await file.text());
-      setRows(parsed);
+      setRows(normalizeRows(parsed, columns));
     } catch (err: any) {
       setProgress(p => ({ ...p, errors: [`Could not read file: ${err?.message ?? err}`] }));
     }
