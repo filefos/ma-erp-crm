@@ -28,13 +28,46 @@ const MENU_TABS = ["File", "Home", "View", "Help", "Message", "Insert", "Format 
 
 function OutlookRibbon({
   activeTab, setActiveTab, onNewMail, onSync, syncing,
+  selectedEmail, onDelete, onArchive, onReply, onForward,
+  onMarkAllRead, onToggleStar, onMove, currentFolder,
 }: {
   activeTab: string;
   setActiveTab: (t: string) => void;
   onNewMail: () => void;
   onSync: () => void;
   syncing: boolean;
+  selectedEmail?: Email | null;
+  onDelete?: () => void;
+  onArchive?: () => void;
+  onReply?: () => void;
+  onForward?: () => void;
+  onMarkAllRead?: () => void;
+  onToggleStar?: () => void;
+  onMove?: (folder: string) => void;
+  currentFolder?: string;
 }) {
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [flagOpen, setFlagOpen] = useState(false);
+  const [categorizeOpen, setCategorizeOpen] = useState(false);
+  const hasSelected = !!selectedEmail;
+
+  const MOVE_FOLDERS = [
+    { key: "inbox",   label: "Inbox" },
+    { key: "sent",    label: "Sent Items" },
+    { key: "draft",   label: "Drafts" },
+    { key: "trash",   label: "Deleted Items" },
+    { key: "starred", label: "Starred" },
+  ];
+
+  const CATEGORIES = [
+    { label: "Red",    color: "#ef4444" },
+    { label: "Orange", color: "#f97316" },
+    { label: "Yellow", color: "#eab308" },
+    { label: "Green",  color: "#22c55e" },
+    { label: "Blue",   color: "#3b82f6" },
+    { label: "Purple", color: "#a855f7" },
+  ];
+
   /* ── Button: tall icon + label (+ optional caret) ───────────────────── */
   function Btn({ icon, label, caret, onClick, disabled }: {
     icon: React.ReactNode; label: string; caret?: boolean; onClick?: () => void; disabled?: boolean;
@@ -79,34 +112,158 @@ function OutlookRibbon({
   const homeRibbon = (
     <div className="flex items-stretch h-full">
       <Group label="New">
-        <Btn icon={<PenLine className="w-5 h-5" />} label="New" caret onClick={onNewMail} />
+        <Btn icon={<PenLine className="w-5 h-5" />} label="New" onClick={onNewMail} />
       </Group>
       <Group label="Delete">
-        <Btn icon={<Trash2 className="w-5 h-5" />} label="Delete" />
-        <Btn icon={<Archive className="w-5 h-5" />} label="Archive" />
+        <Btn
+          icon={<Trash2 className="w-5 h-5" />}
+          label="Delete"
+          disabled={!hasSelected}
+          onClick={() => { onDelete?.(); }}
+        />
+        <Btn
+          icon={<Archive className="w-5 h-5" />}
+          label="Archive"
+          disabled={!hasSelected}
+          onClick={() => { onArchive?.(); }}
+        />
       </Group>
       <Group label="Report">
-        <Btn icon={<AlertCircle className="w-5 h-5" />} label="Report" caret />
+        <Btn icon={<AlertCircle className="w-5 h-5" />} label="Report" disabled={!hasSelected} />
       </Group>
       <Group label="Respond">
-        <Btn icon={<Reply className="w-5 h-5" />} label="Reply" />
-        <Btn icon={<Forward className="w-5 h-5" style={{ transform: "scaleX(-1)" }} />} label="Reply all" caret />
-        <Btn icon={<Forward className="w-5 h-5" />} label="Forward" />
+        <Btn
+          icon={<Reply className="w-5 h-5" />}
+          label="Reply"
+          disabled={!hasSelected}
+          onClick={() => { onReply?.(); }}
+        />
+        <Btn
+          icon={<Reply className="w-5 h-5" style={{ transform: "scaleX(-1)" }} />}
+          label="Reply all"
+          disabled={!hasSelected}
+          onClick={() => { onReply?.(); }}
+        />
+        <Btn
+          icon={<Forward className="w-5 h-5" />}
+          label="Forward"
+          disabled={!hasSelected}
+          onClick={() => { onForward?.(); }}
+        />
       </Group>
+
+      {/* Move with dropdown */}
       <Group label="Move">
-        <Btn icon={<Columns2 className="w-5 h-5" />} label="Move" caret />
+        <div className="relative">
+          <Btn
+            icon={<Columns2 className="w-5 h-5" />}
+            label="Move"
+            caret
+            disabled={!hasSelected}
+            onClick={() => { setMoveOpen(s => !s); setFlagOpen(false); setCategorizeOpen(false); }}
+          />
+          {moveOpen && hasSelected && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMoveOpen(false)} />
+              <div className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden" style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 160 }}>
+                {MOVE_FOLDERS.filter(f => f.key !== currentFolder).map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => { onMove?.(f.key); setMoveOpen(false); }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors text-left"
+                    style={{ color: "#323130" }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </Group>
+
       <Group label="Tags">
-        <Btn icon={<Eye className="w-5 h-5" />} label="Mark all as read" />
-        <Btn icon={<Tag className="w-5 h-5" />} label="Categorize" caret />
-        <Btn icon={<Flag className="w-5 h-5" />} label="Flag" caret />
-        <Btn icon={<Clock className="w-5 h-5" />} label="Snooze" caret />
+        <Btn
+          icon={<Eye className="w-5 h-5" />}
+          label="Mark all as read"
+          onClick={() => { onMarkAllRead?.(); }}
+        />
+
+        {/* Categorize dropdown */}
+        <div className="relative">
+          <Btn
+            icon={<Tag className="w-5 h-5" />}
+            label="Categorize"
+            caret
+            onClick={() => { setCategorizeOpen(s => !s); setMoveOpen(false); setFlagOpen(false); }}
+          />
+          {categorizeOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setCategorizeOpen(false)} />
+              <div className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden" style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 160 }}>
+                <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Color Categories</div>
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.label}
+                    onClick={() => { setCategorizeOpen(false); }}
+                    className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+                    style={{ color: "#323130" }}
+                  >
+                    <span className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: cat.color }} />
+                    {cat.label} Category
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Flag dropdown */}
+        <div className="relative">
+          <Btn
+            icon={<Flag className={`w-5 h-5 ${selectedEmail?.isStarred ? "fill-orange-400 text-orange-400" : ""}`} />}
+            label={selectedEmail?.isStarred ? "Unflag" : "Flag"}
+            caret
+            disabled={!hasSelected}
+            onClick={() => { setFlagOpen(s => !s); setMoveOpen(false); setCategorizeOpen(false); }}
+          />
+          {flagOpen && hasSelected && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setFlagOpen(false)} />
+              <div className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden" style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 160 }}>
+                <button
+                  onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <Flag className="w-3.5 h-3.5 text-orange-500" />
+                  {selectedEmail?.isStarred ? "Remove Flag" : "Flag: Follow up"}
+                </button>
+                <button
+                  onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <Star className="w-3.5 h-3.5 text-orange-500" />
+                  {selectedEmail?.isStarred ? "Remove Star" : "Mark as Starred"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <Btn icon={<Clock className="w-5 h-5" />} label="Snooze" caret disabled={!hasSelected} />
       </Group>
       <Group label="Print">
-        <Btn icon={<Printer className="w-5 h-5" />} label="Print" />
+        <Btn
+          icon={<Printer className="w-5 h-5" />}
+          label="Print"
+          disabled={!hasSelected}
+          onClick={() => window.print()}
+        />
       </Group>
       <Group label="Find">
-        <Btn icon={<Users className="w-5 h-5" />} label="Discover groups" />
+        <Btn icon={<Users className="w-5 h-5" />} label="Find contacts" />
       </Group>
       <Group label="Undo">
         <Btn icon={<Undo2 className="w-5 h-5" />} label="Undo" />
@@ -843,6 +1000,54 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
     setSelectedId(null);
   };
 
+  const handleForward = (email: Email) => {
+    setCompose({
+      toAddress: "",
+      toName: "",
+      ccAddress: "",
+      bccAddress: "",
+      subject: email.subject.startsWith("Fwd:") ? email.subject : `Fwd: ${email.subject}`,
+      body: `\n\n---\n---------- Forwarded message ----------\nFrom: ${email.fromName ?? email.fromAddress}\nDate: ${formatDate(email.createdAt)}\nSubject: ${email.subject}\n\n${email.body}`,
+    });
+    setAttachments([]);
+    setShowCc(false);
+    setShowBcc(false);
+    setComposing(true);
+    setSelectedId(null);
+  };
+
+  const handleMarkAllRead = () => {
+    const unread = inboxEmails.filter(e => !e.isRead);
+    if (unread.length === 0) { toast({ title: "All emails are already read." }); return; }
+    Promise.all(unread.map(e => apiFetch(`/emails/${e.id}`, { method: "PATCH", body: JSON.stringify({ isRead: true }) })))
+      .then(() => { qc.invalidateQueries({ queryKey: ["emails"] }); toast({ title: `${unread.length} email${unread.length === 1 ? "" : "s"} marked as read.` }); })
+      .catch(() => toast({ title: "Failed to mark emails as read.", variant: "destructive" }));
+  };
+
+  const handleArchive = () => {
+    if (!selectedId) return;
+    patchMutation.mutate({ id: selectedId, patch: { folder: "trash" } }, {
+      onSuccess: () => { setSelectedId(null); toast({ title: "Email archived." }); },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!selectedId) return;
+    deleteMutation.mutate(selectedId);
+  };
+
+  const handleToggleStar = () => {
+    if (!selectedId || !selectedEmail) return;
+    patchMutation.mutate({ id: selectedId, patch: { isStarred: !selectedEmail.isStarred } });
+  };
+
+  const handleMove = (targetFolder: string) => {
+    if (!selectedId) return;
+    patchMutation.mutate({ id: selectedId, patch: { folder: targetFolder } }, {
+      onSuccess: () => { setSelectedId(null); toast({ title: `Moved to ${targetFolder}.` }); },
+    });
+  };
+
   const handleSend = () => {
     if (!compose.toAddress || !compose.subject) {
       toast({ title: "To and Subject are required.", variant: "destructive" });
@@ -922,6 +1127,15 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           onNewMail={openCompose}
           onSync={() => syncMutation.mutate()}
           syncing={syncMutation.isPending}
+          selectedEmail={selectedEmail ?? null}
+          onDelete={handleDelete}
+          onArchive={handleArchive}
+          onReply={() => selectedEmail && handleReply(selectedEmail)}
+          onForward={() => selectedEmail && handleForward(selectedEmail)}
+          onMarkAllRead={handleMarkAllRead}
+          onToggleStar={handleToggleStar}
+          onMove={handleMove}
+          currentFolder={folder}
         />
 
         {/* ── Three-pane layout ──────────────────────────────────────────── */}
