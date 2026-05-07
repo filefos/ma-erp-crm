@@ -119,11 +119,13 @@ export function BulkUploadDialog({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [rawHeaders, setRawHeaders] = useState<string[]>([]);
   const [progress, setProgress] = useState({ done: 0, ok: 0, fail: 0, errors: [] as string[] });
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   function reset() {
     setRows([]);
+    setRawHeaders([]);
     setProgress({ done: 0, ok: 0, fail: 0, errors: [] });
     if (fileRef.current) fileRef.current.value = "";
   }
@@ -134,6 +136,7 @@ export function BulkUploadDialog({
       let parsed: ParsedRow[] = [];
       if (/\.xlsx?$/i.test(file.name)) parsed = await parseXlsx(file);
       else parsed = parseCsv(await file.text());
+      if (parsed.length) setRawHeaders(Object.keys(parsed[0]));
       setRows(normalizeRows(parsed, columns));
     } catch (err: any) {
       setProgress(p => ({ ...p, errors: [`Could not read file: ${err?.message ?? err}`] }));
@@ -215,6 +218,25 @@ export function BulkUploadDialog({
             />
             <p className="text-[11px] text-muted-foreground mt-1">Accepts .xlsx or .csv. The first row must be the column headers shown above.</p>
           </div>
+
+          {rawHeaders.length > 0 && (
+            <div className="rounded-lg border bg-blue-50 dark:bg-blue-900/20 p-3">
+              <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">Columns detected in your file:</p>
+              <div className="flex flex-wrap gap-1">
+                {rawHeaders.map(h => {
+                  const matched = columns.some(c =>
+                    [c.label, ...(c.aliases ?? [])].some(a => a.trim().toLowerCase() === h.trim().toLowerCase())
+                  );
+                  return (
+                    <span key={h} className={`inline-block px-2 py-0.5 rounded text-[11px] font-mono border ${matched ? "bg-emerald-100 border-emerald-300 text-emerald-800" : "bg-white border-slate-300 text-slate-600"}`}>
+                      {matched ? "✓ " : ""}{h}
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5">Green = matched to a field. Unmatched columns will be ignored.</p>
+            </div>
+          )}
 
           {rows.length > 0 && (
             <div className="rounded-lg border bg-card">
