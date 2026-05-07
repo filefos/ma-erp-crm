@@ -468,8 +468,41 @@ function OutlookRibbon({
     </div>
   );
 
+  /* ══════════════════════════════════════════════════════════════════════
+     FILE TAB  (Info | New | Save | Print | Account)
+     In Outlook, File opens a backstage panel — here we render it as
+     a ribbon with the equivalent top-level actions.
+  ══════════════════════════════════════════════════════════════════════ */
+  const fileRibbon = (
+    <div className="flex items-stretch h-full">
+      <Group label="Info">
+        <Btn icon={<Mail className="w-5 h-5" />} label="Account settings" caret />
+        <Btn icon={<Settings className="w-5 h-5" />} label="Manage rules" />
+      </Group>
+      <Group label="New">
+        <Btn icon={<PenLine className="w-5 h-5" />} label="New email" onClick={onNewMail} />
+        <Btn icon={<FileText className="w-5 h-5" />} label="New folder" />
+      </Group>
+      <Group label="Open &amp; Export">
+        <Btn icon={<FileIcon className="w-5 h-5" />} label="Open" />
+        <Btn icon={<Send className="w-5 h-5" />} label="Import / Export" caret />
+      </Group>
+      <Group label="Save">
+        <Btn icon={<FileText className="w-5 h-5" />} label="Save attachments" />
+      </Group>
+      <Group label="Print">
+        <Btn icon={<Printer className="w-5 h-5" />} label="Print" />
+      </Group>
+      <Group label="Account">
+        <Btn icon={<Users className="w-5 h-5" />} label="Office account" />
+        <Btn icon={<HelpCircle className="w-5 h-5" />} label="Feedback" />
+      </Group>
+    </div>
+  );
+
   /* ── Map tabs → ribbon content ───────────────────────────────────────── */
   const ribbonMap: Record<string, React.ReactNode> = {
+    File: fileRibbon,
     Home: homeRibbon,
     View: viewRibbon,
     Help: helpRibbon,
