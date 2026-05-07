@@ -9,7 +9,8 @@ import {
   MoreHorizontal, Forward, AlertCircle, Bold, Italic, Underline,
   Link as LinkIcon, Smile, AlignJustify, Columns2, PanelRight,
   CalendarDays, LayoutGrid, MessageSquare,
-  Printer, Undo2, Users, Clock, Tag, PenLine, ImageIcon,
+  Printer, Undo2, Users, Clock, Tag, PenLine, ImageIcon, UserPlus,
+  Shield, ShieldAlert,
   AlignLeft, AlignCenter, AlignRight, AlignJustify as AlignJustifyIcon,
   List, ListOrdered, Type, Strikethrough, Palette,
   Scissors, Copy, ClipboardPaste, Pen, Highlighter, Eraser,
@@ -884,11 +885,24 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   };
 
   const FOLDERS: { key: Folder; label: string; icon: React.ReactNode }[] = [
-    { key: "inbox",   label: "Inbox",     icon: <Inbox   className="w-4 h-4" /> },
-    { key: "sent",    label: "Sent Items", icon: <Send    className="w-4 h-4" /> },
-    { key: "draft",   label: "Drafts",    icon: <FileText className="w-4 h-4" /> },
-    { key: "trash",   label: "Deleted Items", icon: <Trash2 className="w-4 h-4" /> },
-    { key: "starred", label: "Starred",   icon: <Star    className="w-4 h-4" /> },
+    { key: "inbox",   label: "Inbox",        icon: <Inbox    className="w-4 h-4" /> },
+    { key: "sent",    label: "Sent Items",   icon: <Send     className="w-4 h-4" /> },
+    { key: "draft",   label: "Drafts",       icon: <FileText className="w-4 h-4" /> },
+    { key: "trash",   label: "Deleted Items",icon: <Trash2   className="w-4 h-4" /> },
+    { key: "starred", label: "Starred",      icon: <Star     className="w-4 h-4" /> },
+  ];
+
+  /* Outlook-style static sidebar folders (display order matches Outlook exactly).
+     "key" is null for display-only folders that have no API backing.           */
+  const ACCOUNT_FOLDERS: { key: Folder | null; label: string; icon: React.ReactNode }[] = [
+    { key: "inbox",   label: "Inbox",        icon: <Inbox        className="w-4 h-4" /> },
+    { key: null,      label: "Junk",         icon: <Shield       className="w-4 h-4" /> },
+    { key: null,      label: "Junk Email",   icon: <ShieldAlert  className="w-4 h-4" /> },
+    { key: "draft",   label: "Drafts",       icon: <FileText     className="w-4 h-4" /> },
+    { key: "sent",    label: "Sent Items",   icon: <Send         className="w-4 h-4" /> },
+    { key: "trash",   label: "Deleted Items",icon: <Trash2       className="w-4 h-4" /> },
+    { key: null,      label: "Archive",      icon: <Archive      className="w-4 h-4" /> },
+    { key: null,      label: "Outbox",       icon: <RotateCcw    className="w-4 h-4" /> },
   ];
 
   /* ── Avatar initial ─────────────────────────────────────────────────────── */
@@ -993,76 +1007,75 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
             {/* Account section */}
             <div>
+              {/* Account header — plain email + chevron, no avatar */}
               <button
                 className="flex items-center gap-1 w-full px-3 py-1 text-[12px] font-semibold select-none"
                 style={{ color: "#323130" }}
                 onClick={() => setAccountExpanded(s => !s)}
               >
-                {accountExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                    style={{ background: "#0078d4" }}
-                  >
-                    {accountEmail.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="truncate max-w-[130px]">{accountEmail}</span>
-                </span>
-                {isConnected ? (
-                  <span className="ml-auto w-2 h-2 rounded-full bg-green-500 flex-shrink-0" title="Connected" />
-                ) : (
+                {accountExpanded
+                  ? <ChevronDown className="w-3.5 h-3.5 flex-shrink-0" />
+                  : <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />}
+                <span className="truncate">{accountEmail}</span>
+                {!isConnected && (
                   <span className="ml-auto w-2 h-2 rounded-full bg-orange-400 flex-shrink-0" title="Not connected" />
                 )}
               </button>
 
+              {/* Folder list — Outlook order, with hover ··· */}
               {accountExpanded && (
                 <div>
-                  {FOLDERS.map(f => {
-                    const count = folderCounts[f.key] ?? 0;
-                    const active = folder === f.key;
+                  {ACCOUNT_FOLDERS.map(f => {
+                    const active = !!f.key && folder === f.key;
+                    const count = f.key ? (folderCounts[f.key] ?? 0) : 0;
                     return (
-                      <button
-                        key={f.key}
-                        onClick={() => { setFolder(f.key); setSelectedId(null); setComposing(false); }}
-                        className="flex items-center gap-2 w-full px-6 py-1.5 text-[13px] transition-colors"
-                        style={{
-                          background: active ? "#dce9f8" : "transparent",
-                          color: active ? "#0078d4" : "#323130",
-                          fontWeight: active ? 600 : 400,
-                          borderRight: active ? "2px solid #0078d4" : "2px solid transparent",
-                        }}
-                      >
-                        <span style={{ color: active ? "#0078d4" : "#605e5c" }}>{f.icon}</span>
-                        <span className="flex-1 text-left truncate">{f.label}</span>
-                        {count > 0 && (
-                          <span className="text-[11px] font-semibold" style={{ color: active ? "#0078d4" : "#323130" }}>
-                            {count}
-                          </span>
-                        )}
-                      </button>
+                      <div key={f.label} className="group relative">
+                        <button
+                          onClick={() => {
+                            if (f.key) { setFolder(f.key); setSelectedId(null); setComposing(false); }
+                          }}
+                          className="flex items-center gap-2 w-full px-6 py-1.5 text-[13px] transition-colors"
+                          style={{
+                            background: active ? "#dce9f8" : "transparent",
+                            color: active ? "#0078d4" : "#323130",
+                            fontWeight: active ? 600 : 400,
+                            borderRight: active ? "2px solid #0078d4" : "2px solid transparent",
+                            cursor: f.key ? "pointer" : "default",
+                          }}
+                        >
+                          <span style={{ color: active ? "#0078d4" : "#605e5c", flexShrink: 0 }}>{f.icon}</span>
+                          <span className="flex-1 text-left truncate">{f.label}</span>
+                          {count > 0 && (
+                            <span className="text-[11px] font-semibold mr-5" style={{ color: active ? "#0078d4" : "#323130" }}>
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                        {/* ··· hover button */}
+                        <button
+                          className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity rounded px-1 py-0.5 hover:bg-[#e8e8e8]"
+                          style={{ color: "#605e5c", fontSize: 12 }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          ···
+                        </button>
+                      </div>
                     );
                   })}
-                  <button
-                    className="flex items-center gap-2 w-full px-6 py-1.5 text-[13px] transition-colors"
-                    style={{ color: "#605e5c" }}
-                  >
-                    <Archive className="w-4 h-4" />
-                    <span className="flex-1 text-left">Archive</span>
-                  </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Bottom: settings */}
+          {/* Bottom: Add account (matches Outlook) */}
           <div className="border-t px-3 py-2" style={{ borderColor: "#e1dfdd" }}>
             <button
               onClick={() => setShowSettings(true)}
-              className="flex items-center gap-2 w-full text-[12px] px-2 py-1.5 rounded transition-colors hover:bg-gray-100"
-              style={{ color: "#605e5c" }}
+              className="flex items-center gap-2 w-full text-[13px] px-2 py-1.5 rounded transition-colors hover:bg-[#f3f2f1]"
+              style={{ color: "#0078d4" }}
             >
-              <Settings className="w-3.5 h-3.5" />
-              {isConnected ? "Account settings" : "Connect email"}
+              <UserPlus className="w-4 h-4" />
+              {isConnected ? "Add account" : "Add account"}
             </button>
           </div>
         </div>
