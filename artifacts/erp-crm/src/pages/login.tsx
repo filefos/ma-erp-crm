@@ -30,6 +30,7 @@ export function Login() {
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpSent, setOtpSent] = useState(false);
+  const [sentVia, setSentVia] = useState<{ whatsapp: boolean; email: boolean }>({ whatsapp: false, email: false });
   const [resendCountdown, setResendCountdown] = useState(0);
   const digitRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -80,6 +81,7 @@ export function Login() {
         return;
       }
       setMaskedPhone(data.maskedPhone ?? null);
+      setSentVia(data.sentVia ?? { whatsapp: false, email: false });
       setOtpCode(["", "", "", "", "", ""]);
       setOtpStep("code");
       setOtpSent(true);
@@ -258,7 +260,7 @@ export function Login() {
               }`}
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              OTP via SMS
+              OTP Login
             </button>
           </div>
 
@@ -346,7 +348,7 @@ export function Login() {
                       {otpSending ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending OTP...</>
                       ) : (
-                        <><MessageCircle className="w-4 h-4 mr-2" />Send OTP via SMS</>  
+                        <><MessageCircle className="w-4 h-4 mr-2" />Send OTP</>          
                       )}
                     </Button>
                   </form>
@@ -365,14 +367,26 @@ export function Login() {
                     Back
                   </button>
 
-                  <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800 space-y-1">
-                    <p className="font-semibold">OTP sent via SMS</p>
-                    {maskedPhone && (
-                      <p className="text-xs text-green-700">
-                        A 6-digit code was sent to <span className="font-mono font-semibold">{maskedPhone}</span>
-                      </p>
-                    )}
-                    <p className="text-xs text-green-600">Enter the code below. It expires in 5 minutes.</p>
+                  <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800 space-y-2">
+                    <p className="font-semibold">OTP code sent!</p>
+                    <div className="space-y-1">
+                      {sentVia.whatsapp && maskedPhone && (
+                        <p className="text-xs text-green-700 flex items-center gap-1.5">
+                          <span className="text-green-500">✓</span>
+                          WhatsApp → <span className="font-mono font-semibold">{maskedPhone}</span>
+                        </p>
+                      )}
+                      {sentVia.email && (
+                        <p className="text-xs text-green-700 flex items-center gap-1.5">
+                          <span className="text-green-500">✓</span>
+                          Email → <span className="font-mono font-semibold">{otpEmail}</span>
+                        </p>
+                      )}
+                      {!sentVia.whatsapp && !sentVia.email && (
+                        <p className="text-xs text-amber-700">Check with your administrator — delivery not configured yet.</p>
+                      )}
+                    </div>
+                    <p className="text-xs text-green-600">Enter the 6-digit code below. Expires in 5 minutes.</p>
                   </div>
 
                   {/* 6-digit OTP boxes */}

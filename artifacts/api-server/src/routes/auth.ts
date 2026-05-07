@@ -6,7 +6,7 @@ import { requireAuth } from "../middlewares/auth";
 import { audit } from "../lib/audit";
 import { sendLoginAlert } from "../lib/login-notify";
 import { storeOtp, verifyOtp } from "../lib/otp";
-import { sendSmsOtp, maskPhone } from "../lib/sms-send";
+import { sendOtp, maskPhone } from "../lib/otp-send";
 
 const router = Router();
 
@@ -179,16 +179,27 @@ router.post("/auth/request-otp", async (req, res): Promise<void> => {
   }
 
   const code = storeOtp(normalized, user.id, user.phone);
-  const { sent } = await sendSmsOtp(user.phone, code);
+  const result = await sendOtp({
+    phone: user.phone,
+    email: normalized,
+    userName: user.name,
+    code,
+  });
 
-  if (!sent) {
-    // In dev / missing config, log the code so it can still be tested.
-    req.log.info({ code, email: normalized }, "OTP (SMS not configured — shown in server log for testing)");
-  }
+  await audit(req, {
+    action: "otp_requested",
+    entity: "auth",
+    entityId: user.id,
+    details: `OTP requested for ${normalized} — whatsapp:${result.whatsapp} email:${result.email}`,
+    userId: user.id,
+    userName: user.name,
+  });
 
-  await audit(req, { action: "otp_requested", entity: "auth", entityId: user.id, details: `OTP requested for ${normalized}`, userId: user.id, userName: user.name });
-
-  res.json({ success: true, maskedPhone: maskPhone(user.phone) });
+  res.json({
+    success: true,
+    maskedPhone: maskPhone(user.phone),
+    sentVia: { whatsapp: result.whatsapp, email: result.email },
+  });
 });
 
 // ── OTP login: step 2 – verify and issue token ─────────────────────────────
