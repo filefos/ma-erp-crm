@@ -1,8 +1,16 @@
 import { useRef, useState } from "react";
 import ExcelJS from "exceljs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, Download, Loader2, CheckCircle2, AlertCircle, FileSpreadsheet } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Upload, Download, Loader2, CheckCircle2, AlertCircle,
+  FileSpreadsheet, ArrowRight, ArrowLeft, MapPin,
+} from "lucide-react";
 
 export interface BulkColumn {
   key: string;
@@ -23,32 +31,17 @@ interface BulkUploadDialogProps {
 }
 
 type ParsedRow = Record<string, string>;
+type Step = "upload" | "mapping" | "importing";
 
-function normalizeRows(rows: ParsedRow[], columns: BulkColumn[]): ParsedRow[] {
-  if (!rows.length) return rows;
-  const sampleKeys = Object.keys(rows[0]);
-  const keyMap: Record<string, string> = {};
-  const mapped = new Set<string>();
+const SKIP = "__skip__";
 
+function autoSuggest(header: string, columns: BulkColumn[]): string {
+  const h = header.trim().toLowerCase();
   for (const col of columns) {
-    if (mapped.has(col.label)) continue;
     const candidates = [col.label, ...(col.aliases ?? [])];
-    const match = sampleKeys.find(k =>
-      candidates.some(c => c.trim().toLowerCase() === k.trim().toLowerCase())
-    );
-    if (match && match !== col.label) {
-      keyMap[match] = col.label;
-      mapped.add(col.label);
-    }
+    if (candidates.some(c => c.trim().toLowerCase() === h)) return col.label;
   }
-  if (!Object.keys(keyMap).length) return rows;
-  return rows.map(row => {
-    const out: ParsedRow = { ...row };
-    for (const [orig, canonical] of Object.entries(keyMap)) {
-      if (orig in out) { out[canonical] = out[orig]; delete out[orig]; }
-    }
-    return out;
-  });
+  return SKIP;
 }
 
 function parseCsv(text: string): ParsedRow[] {
@@ -98,13 +91,26 @@ async function parseXlsx(file: File): Promise<ParsedRow[]> {
     let any = false;
     headers.forEach((h, idx) => {
       const v = row.getCell(idx + 1).value;
-      const s = v == null ? "" : (typeof v === "object" && "text" in (v as any) ? String((v as any).text) : String(v)).trim();
+      const s = v == null ? "" : (typeof v === "object" && "text" in (v as any)
+        ? String((v as any).text) : String(v)).trim();
       if (s) any = true;
       obj[h] = s;
     });
     if (any) rows.push(obj);
   });
   return rows;
+}
+
+function applyMapping(rawRows: ParsedRow[], colMap: Record<string, string>): ParsedRow[] {
+  return rawRows.map(raw => {
+    const out: ParsedRow = {};
+    for (const [header, target] of Object.entries(colMap)) {
+      if (target !== SKIP && header in raw) {
+        if (!out[target]) out[target] = raw[header];
+      }
+    }
+    return out;
+  });
 }
 
 export function BulkUploadDialog({
@@ -117,41 +123,65 @@ export function BulkUploadDialog({
   onComplete,
 }: BulkUploadDialogProps) {
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [step, setStep] = useState<Step>("upload");
+  const [rawRows, setRawRows] = useState<ParsedRow[]>([]);
   const [rawHeaders, setRawHeaders] = useState<string[]>([]);
+  const [colMap, setColMap] = useState<Record<string, string>>({});
+  const [mappedRows, setMappedRows] = useState<ParsedRow[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [parseError, setParseError] = useState("");
   const [progress, setProgress] = useState({ done: 0, ok: 0, fail: 0, errors: [] as string[] });
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  function reset() {
-    setRows([]);
+  function resetAll() {
+    setStep("upload");
+    setRawRows([]);
     setRawHeaders([]);
+    setColMap({});
+    setMappedRows([]);
+    setBusy(false);
+    setParseError("");
     setProgress({ done: 0, ok: 0, fail: 0, errors: [] });
     if (fileRef.current) fileRef.current.value = "";
   }
 
   async function handleFile(file: File) {
-    reset();
+    setParseError("");
+    setRawRows([]);
+    setRawHeaders([]);
     try {
       let parsed: ParsedRow[] = [];
       if (/\.xlsx?$/i.test(file.name)) parsed = await parseXlsx(file);
       else parsed = parseCsv(await file.text());
-      if (parsed.length) setRawHeaders(Object.keys(parsed[0]));
-      setRows(normalizeRows(parsed, columns));
+      if (!parsed.length) { setParseError("No data rows found in the file."); return; }
+      const headers = Object.keys(parsed[0]).filter(h => h.trim());
+      const suggested: Record<string, string> = {};
+      for (const h of headers) suggested[h] = autoSuggest(h, columns);
+      setRawRows(parsed);
+      setRawHeaders(headers);
+      setColMap(suggested);
+      setStep("mapping");
     } catch (err: any) {
-      setProgress(p => ({ ...p, errors: [`Could not read file: ${err?.message ?? err}`] }));
+      setParseError(`Could not read file: ${err?.message ?? err}`);
     }
   }
 
+  function confirmMapping() {
+    const mapped = applyMapping(rawRows, colMap);
+    setMappedRows(mapped);
+    setProgress({ done: 0, ok: 0, fail: 0, errors: [] });
+    setStep("importing");
+  }
+
   async function importAll() {
-    if (!rows.length || busy) return;
+    if (!mappedRows.length || busy) return;
     setBusy(true);
     setProgress({ done: 0, ok: 0, fail: 0, errors: [] });
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    for (let i = 0; i < mappedRows.length; i++) {
+      const row = mappedRows[i];
       const missing = columns.filter(c => c.required && !row[c.label]).map(c => c.label);
       if (missing.length) {
-        setProgress(p => ({ ...p, done: p.done + 1, fail: p.fail + 1, errors: [...p.errors, `Row ${i + 2}: missing ${missing.join(", ")}`] }));
+        setProgress(p => ({ ...p, done: p.done + 1, fail: p.fail + 1, errors: [...p.errors, `Row ${i + 2}: missing required field(s): ${missing.join(", ")}`] }));
         continue;
       }
       try {
@@ -168,7 +198,7 @@ export function BulkUploadDialog({
   async function downloadTemplate() {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Template");
-    ws.columns = columns.map(c => ({ header: c.label, key: c.key, width: Math.max(14, c.label.length + 4) }));
+    ws.columns = columns.map(c => ({ header: c.label, key: c.key, width: Math.max(16, c.label.length + 4) }));
     ws.addRow(Object.fromEntries(columns.map(c => [c.key, c.example ?? ""])));
     ws.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
     ws.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0F2D5A" } };
@@ -181,121 +211,249 @@ export function BulkUploadDialog({
     URL.revokeObjectURL(a.href);
   }
 
+  const mappedFieldLabels = new Set(Object.values(colMap).filter(v => v !== SKIP));
+  const importDone = progress.done > 0 && progress.done === mappedRows.length && !busy;
+
+  const stepLabels: Record<Step, string> = {
+    upload: "1. Upload File",
+    mapping: "2. Map Columns",
+    importing: "3. Import",
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { reset(); } }}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetAll(); }}>
       <DialogTrigger asChild>
         <Button variant="outline" data-testid="button-bulk-upload">
           <Upload className="w-4 h-4 mr-2" />{triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <div className="space-y-4 pt-2">
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
 
-          <div className="rounded-lg border bg-slate-50 dark:bg-slate-900/40 p-3 space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <FileSpreadsheet className="w-4 h-4 text-[#1e6ab0]" /> Required columns
-              </div>
-              <Button variant="outline" size="sm" onClick={downloadTemplate} data-testid="button-download-template">
-                <Download className="w-3.5 h-3.5 mr-1.5" />Download Excel template
-              </Button>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {columns.map(c => <span key={c.key} className={`inline-block mr-3 ${c.required ? "font-semibold text-[#0f2d5a] dark:text-[#1e6ab0]" : ""}`}>{c.label}{c.required ? " *" : ""}</span>)}
-            </div>
-          </div>
+        {/* Step indicator */}
+        <div className="flex items-center gap-1 text-xs mb-2">
+          {(["upload", "mapping", "importing"] as Step[]).map((s, i) => (
+            <span key={s} className="flex items-center gap-1">
+              {i > 0 && <ArrowRight className="w-3 h-3 text-muted-foreground" />}
+              <span className={`px-2 py-0.5 rounded-full font-medium ${step === s ? "bg-[#0f2d5a] text-white" : "bg-muted text-muted-foreground"}`}>
+                {stepLabels[s]}
+              </span>
+            </span>
+          ))}
+        </div>
 
-          <div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[#0f2d5a] file:text-white hover:file:bg-[#1e6ab0]"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-              data-testid="input-bulk-file"
-            />
-            <p className="text-[11px] text-muted-foreground mt-1">Accepts .xlsx or .csv. The first row must be the column headers shown above.</p>
-          </div>
+        <div className="space-y-4">
 
-          {rawHeaders.length > 0 && (
-            <div className="rounded-lg border bg-blue-50 dark:bg-blue-900/20 p-3">
-              <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">Columns detected in your file:</p>
-              <div className="flex flex-wrap gap-1">
-                {rawHeaders.map(h => {
-                  const matched = columns.some(c =>
-                    [c.label, ...(c.aliases ?? [])].some(a => a.trim().toLowerCase() === h.trim().toLowerCase())
-                  );
-                  return (
-                    <span key={h} className={`inline-block px-2 py-0.5 rounded text-[11px] font-mono border ${matched ? "bg-emerald-100 border-emerald-300 text-emerald-800" : "bg-white border-slate-300 text-slate-600"}`}>
-                      {matched ? "✓ " : ""}{h}
+          {/* ── STEP 1: UPLOAD ─────────────────────────────────────────── */}
+          {step === "upload" && (
+            <>
+              {description && <p className="text-sm text-muted-foreground">{description}</p>}
+
+              <div className="rounded-lg border bg-slate-50 dark:bg-slate-900/40 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <FileSpreadsheet className="w-4 h-4 text-[#1e6ab0]" />
+                    Available fields
+                  </div>
+                  <Button variant="outline" size="sm" onClick={downloadTemplate} data-testid="button-download-template">
+                    <Download className="w-3.5 h-3.5 mr-1.5" />Download template
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {columns.map(c => (
+                    <span key={c.key} className={`text-xs px-2 py-0.5 rounded border ${c.required ? "bg-[#0f2d5a]/10 border-[#0f2d5a]/30 text-[#0f2d5a] font-semibold" : "bg-white border-slate-200 text-slate-600"}`}>
+                      {c.label}{c.required ? " *" : ""}
                     </span>
-                  );
-                })}
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Your file can use any column names — you'll map them to fields in the next step.
+                </p>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1.5">Green = matched to a field. Unmatched columns will be ignored.</p>
-            </div>
+
+              <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center space-y-3">
+                <Upload className="w-8 h-8 mx-auto text-slate-400" />
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Choose your Excel or CSV file</p>
+                  <p className="text-xs text-muted-foreground mt-1">Supports .xlsx, .xls, .csv</p>
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  className="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-[#0f2d5a] file:text-white file:font-medium hover:file:bg-[#1e6ab0] cursor-pointer"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+                  data-testid="input-bulk-file"
+                />
+              </div>
+
+              {parseError && (
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" /> {parseError}
+                </div>
+              )}
+            </>
           )}
 
-          {rows.length > 0 && (
-            <div className="rounded-lg border bg-card">
-              <div className="px-3 py-2 border-b text-sm font-medium flex items-center justify-between">
-                <span>{rows.length} row(s) ready to import</span>
-                {progress.done > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {progress.done}/{rows.length} processed · {progress.ok} ok · {progress.fail} failed
-                  </span>
-                )}
+          {/* ── STEP 2: MAP COLUMNS ────────────────────────────────────── */}
+          {step === "mapping" && (
+            <>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <MapPin className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <span>We detected <strong>{rawHeaders.length} column{rawHeaders.length !== 1 ? "s" : ""}</strong> and <strong>{rawRows.length} row{rawRows.length !== 1 ? "s" : ""}</strong> in your file. Map each column to a contact field below.</span>
               </div>
-              <div className="max-h-48 overflow-auto">
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-50 dark:bg-slate-900/40 sticky top-0">
-                    <tr>{columns.map(c => <th key={c.key} className="text-left px-2 py-1.5 font-medium">{c.label}</th>)}</tr>
+
+              <div className="rounded-lg border overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b">
+                    <tr>
+                      <th className="text-left px-4 py-2.5 font-semibold text-slate-700 w-1/2">Your file column</th>
+                      <th className="text-left px-4 py-2.5 font-semibold text-slate-700">Maps to field</th>
+                      <th className="text-left px-4 py-2.5 font-semibold text-slate-700 text-xs text-muted-foreground">Sample value</th>
+                    </tr>
                   </thead>
                   <tbody>
-                    {rows.slice(0, 50).map((r, i) => (
-                      <tr key={i} className="border-t">
-                        {columns.map(c => <td key={c.key} className="px-2 py-1">{r[c.label] ?? ""}</td>)}
-                      </tr>
-                    ))}
-                    {rows.length > 50 && (
-                      <tr><td colSpan={columns.length} className="text-center py-2 text-muted-foreground">…and {rows.length - 50} more</td></tr>
-                    )}
+                    {rawHeaders.map((h, i) => {
+                      const sample = rawRows[0]?.[h] ?? "";
+                      const isDuplicate = colMap[h] !== SKIP &&
+                        rawHeaders.filter(rh => colMap[rh] === colMap[h]).length > 1;
+                      return (
+                        <tr key={h} className={`border-t ${isDuplicate ? "bg-amber-50" : i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}`}>
+                          <td className="px-4 py-2.5">
+                            <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{h}</span>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <Select
+                              value={colMap[h] ?? SKIP}
+                              onValueChange={(val) => setColMap(prev => ({ ...prev, [h]: val }))}
+                            >
+                              <SelectTrigger className={`h-8 text-sm ${colMap[h] && colMap[h] !== SKIP ? "border-emerald-400 text-emerald-800 bg-emerald-50" : "text-muted-foreground"}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={SKIP}>— Skip this column —</SelectItem>
+                                {columns.map(c => (
+                                  <SelectItem key={c.key} value={c.label}>
+                                    {c.label}{c.required ? " *" : ""}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {isDuplicate && (
+                              <p className="text-[10px] text-amber-600 mt-0.5">Mapped to same field as another column</p>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-xs text-muted-foreground font-mono truncate max-w-[140px]" title={sample}>
+                            {sample || <span className="italic">empty</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
 
-          {progress.errors.length > 0 && (
-            <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
-                <AlertCircle className="w-4 h-4" /> {progress.errors.length} issue(s)
+              {columns.some(c => c.required && !mappedFieldLabels.has(c.label)) && (
+                <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>Required field(s) not yet mapped: <strong>{columns.filter(c => c.required && !mappedFieldLabels.has(c.label)).map(c => c.label).join(", ")}</strong></span>
+                </div>
+              )}
+
+              <div className="flex justify-between gap-2 pt-1">
+                <Button variant="outline" onClick={() => setStep("upload")}>
+                  <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back
+                </Button>
+                <Button
+                  className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                  onClick={confirmMapping}
+                  disabled={Object.values(colMap).every(v => v === SKIP)}
+                >
+                  Confirm mapping <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
               </div>
-              <ul className="mt-2 text-xs text-amber-800 dark:text-amber-300 space-y-0.5 max-h-32 overflow-auto">
-                {progress.errors.slice(0, 30).map((e, i) => <li key={i}>• {e}</li>)}
-              </ul>
-            </div>
+            </>
           )}
 
-          {progress.done > 0 && progress.done === rows.length && !busy && (
-            <div className="flex items-center gap-2 text-sm text-emerald-700">
-              <CheckCircle2 className="w-4 h-4" /> Import finished — {progress.ok} created, {progress.fail} failed.
-            </div>
-          )}
+          {/* ── STEP 3: PREVIEW & IMPORT ───────────────────────────────── */}
+          {step === "importing" && (
+            <>
+              <div className="rounded-lg border bg-card">
+                <div className="px-4 py-2.5 border-b flex items-center justify-between">
+                  <span className="text-sm font-semibold">{mappedRows.length} row{mappedRows.length !== 1 ? "s" : ""} ready to import</span>
+                  {progress.done > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {progress.done}/{mappedRows.length} · <span className="text-emerald-700">{progress.ok} ok</span> · <span className="text-red-600">{progress.fail} failed</span>
+                    </span>
+                  )}
+                </div>
+                <div className="max-h-52 overflow-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-50 sticky top-0 border-b">
+                      <tr>
+                        {columns.filter(c => mappedFieldLabels.has(c.label)).map(c => (
+                          <th key={c.key} className="text-left px-3 py-2 font-medium">{c.label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mappedRows.slice(0, 50).map((r, i) => (
+                        <tr key={i} className="border-t">
+                          {columns.filter(c => mappedFieldLabels.has(c.label)).map(c => (
+                            <td key={c.key} className="px-3 py-1.5 text-slate-600">{r[c.label] || <span className="text-slate-300 italic">—</span>}</td>
+                          ))}
+                        </tr>
+                      ))}
+                      {mappedRows.length > 50 && (
+                        <tr><td colSpan={columns.length} className="text-center py-2 text-muted-foreground italic text-xs">…and {mappedRows.length - 50} more rows</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>Close</Button>
-            <Button
-              onClick={importAll}
-              disabled={!rows.length || busy}
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
-              data-testid="button-bulk-import"
-            >
-              {busy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Importing…</> : <>Import {rows.length || ""} row(s)</>}
-            </Button>
-          </div>
+              {progress.errors.length > 0 && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                    <AlertCircle className="w-4 h-4" /> {progress.errors.length} issue{progress.errors.length !== 1 ? "s" : ""}
+                  </div>
+                  <ul className="mt-2 text-xs text-amber-800 space-y-0.5 max-h-32 overflow-auto">
+                    {progress.errors.slice(0, 30).map((e, i) => <li key={i}>• {e}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {importDone && (
+                <div className="flex items-center gap-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Import finished — {progress.ok} created, {progress.fail} failed.
+                </div>
+              )}
+
+              <div className="flex justify-between gap-2 pt-1">
+                <Button variant="outline" onClick={() => setStep("mapping")} disabled={busy}>
+                  <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />Back
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
+                    {importDone ? "Close" : "Cancel"}
+                  </Button>
+                  <Button
+                    onClick={importAll}
+                    disabled={busy || importDone}
+                    className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                    data-testid="button-bulk-import"
+                  >
+                    {busy
+                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Importing…</>
+                      : <>Import {mappedRows.length} row{mappedRows.length !== 1 ? "s" : ""}</>}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
