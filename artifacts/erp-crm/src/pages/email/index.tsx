@@ -705,6 +705,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const [accountExpanded, setAccountExpanded] = useState(true);
   const [favExpanded, setFavExpanded] = useState(true);
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [sendDropdown, setSendDropdown] = useState(false);
   const [compose, setCompose] = useState<ComposeData>({
     toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "",
   });
@@ -1276,23 +1277,65 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
               {/* Send row */}
               <div className="flex items-center px-4 py-2 border-b flex-shrink-0 gap-3" style={{ borderColor: "#e1dfdd" }}>
-                <button
-                  onClick={handleSend}
-                  disabled={sendMutation.isPending}
-                  className="flex items-center rounded overflow-hidden flex-shrink-0 focus:outline-none"
-                  style={{ border: "1px solid #005a9e" }}
-                >
-                  <span
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-semibold text-white"
-                    style={{ background: "#0078d4" }}
-                  >
-                    {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2l14 6-14 6V9.5l10-1.5-10-1.5V2z"/></svg>}
-                    {sendMutation.isPending ? "Sending…" : "Send"}
-                  </span>
-                  <span className="px-2 py-1.5 text-white border-l" style={{ background: "#0078d4", borderColor: "rgba(255,255,255,0.3)" }}>
-                    <ChevronDown className="w-3 h-3" />
-                  </span>
-                </button>
+                {/* Split Send button with working dropdown */}
+                <div className="relative flex-shrink-0">
+                  <div className="flex items-center rounded overflow-hidden" style={{ border: "1px solid #005a9e" }}>
+                    <button
+                      onClick={handleSend}
+                      disabled={sendMutation.isPending}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-semibold text-white focus:outline-none hover:bg-[#106ebe] active:bg-[#005a9e] transition-colors"
+                      style={{ background: "#0078d4" }}
+                    >
+                      {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2l14 6-14 6V9.5l10-1.5-10-1.5V2z"/></svg>}
+                      {sendMutation.isPending ? "Sending…" : "Send"}
+                    </button>
+                    <button
+                      onClick={() => setSendDropdown(s => !s)}
+                      className="px-2 py-1.5 text-white border-l focus:outline-none hover:bg-[#106ebe] active:bg-[#005a9e] transition-colors"
+                      style={{ background: "#0078d4", borderColor: "rgba(255,255,255,0.3)" }}
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* Dropdown menu */}
+                  {sendDropdown && (
+                    <>
+                      {/* Click-away backdrop */}
+                      <div className="fixed inset-0 z-10" onClick={() => setSendDropdown(false)} />
+                      <div
+                        className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden"
+                        style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 180 }}
+                      >
+                        <button
+                          onClick={() => { setSendDropdown(false); handleSend(); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+                          style={{ color: "#323130" }}
+                        >
+                          <svg className="w-3.5 h-3.5 text-[#0078d4]" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2l14 6-14 6V9.5l10-1.5-10-1.5V2z"/></svg>
+                          Send
+                        </button>
+                        <button
+                          onClick={() => { setSendDropdown(false); saveDraftMutation.mutate({ ...compose, folder: "draft", companyId }); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+                          style={{ color: "#323130" }}
+                        >
+                          <FileText className="w-3.5 h-3.5" style={{ color: "#605e5c" }} />
+                          Save draft
+                        </button>
+                        <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
+                        <button
+                          onClick={() => { setSendDropdown(false); setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+                          style={{ color: "#a4262c" }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Discard
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-1 text-[13px]" style={{ color: "#323130" }}>
                   <span style={{ color: "#605e5c" }}>From:</span>
