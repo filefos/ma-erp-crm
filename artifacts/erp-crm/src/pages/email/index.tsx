@@ -90,6 +90,7 @@ function OutlookRibbon({
       <Group label="Respond">
         <Btn icon={<Reply className="w-5 h-5" />} label="Reply" />
         <Btn icon={<Forward className="w-5 h-5" style={{ transform: "scaleX(-1)" }} />} label="Reply all" caret />
+        <Btn icon={<Forward className="w-5 h-5" />} label="Forward" />
       </Group>
       <Group label="Move">
         <Btn icon={<Columns2 className="w-5 h-5" />} label="Move" caret />
@@ -298,55 +299,121 @@ function OutlookRibbon({
 
   /* ══════════════════════════════════════════════════════════════════════
      INSERT TAB
+     Groups: Attachments | Tables | Images | Links | Text | Symbols
   ══════════════════════════════════════════════════════════════════════ */
   const insertRibbon = (
     <div className="flex items-stretch h-full">
       <Group label="Attachments">
-        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" />
+        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
+      </Group>
+      <Group label="Tables">
+        <Btn icon={<Table className="w-5 h-5" />} label="Table" />
       </Group>
       <Group label="Images">
         <Btn icon={<ImageIcon className="w-5 h-5" />} label="Pictures" />
+        <Btn icon={<Search className="w-5 h-5" />} label="Online pictures" />
       </Group>
       <Group label="Links">
         <Btn icon={<LinkIcon className="w-5 h-5" />} label="Link" />
-        <Btn icon={<AtSign className="w-5 h-5" />} label="Email link" />
+        <Btn icon={<AtSign className="w-5 h-5" />} label="Bookmark" />
       </Group>
       <Group label="Text">
         <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret />
         <Btn icon={<Type className="w-5 h-5" />} label="Text box" />
+        <Btn icon={<FileIcon className="w-5 h-5" />} label="Quick Parts" caret />
       </Group>
       <Group label="Symbols">
         <Btn icon={<Smile className="w-5 h-5" />} label="Emoji" />
+        <Btn icon={<MoreHorizontal className="w-5 h-5" />} label="Symbol" caret />
       </Group>
     </div>
   );
 
   /* ══════════════════════════════════════════════════════════════════════
-     FORMAT TEXT TAB
+     FORMAT TEXT TAB  — mirrors Message tab compact 2-row layout
+     Groups: Clipboard | Basic Text | Paragraph | Styles | Undo
   ══════════════════════════════════════════════════════════════════════ */
   const formatTextRibbon = (
     <div className="flex items-stretch h-full">
+
+      {/* ── Clipboard ──────────────────────────────────────────────────── */}
       <Group label="Clipboard">
         <Btn icon={<ClipboardPaste className="w-5 h-5" />} label="Paste" caret />
-        <Btn icon={<Scissors className="w-5 h-5" />} label="Cut" />
-        <Btn icon={<Copy className="w-5 h-5" />} label="Copy" />
+        <div className="flex flex-col justify-center gap-0.5 px-0.5">
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors" style={{ color: "#323130" }}>
+            <Scissors className="w-3.5 h-3.5" /><span>Cut</span>
+          </button>
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors" style={{ color: "#323130" }}>
+            <Copy className="w-3.5 h-3.5" /><span>Copy</span>
+          </button>
+        </div>
       </Group>
+
+      {/* ── Basic Text — same compact 2-row as Message tab ─────────────── */}
       <Group label="Basic Text">
-        <Btn icon={<Bold className="w-5 h-5" />} label="Bold" />
-        <Btn icon={<Italic className="w-5 h-5" />} label="Italic" />
-        <Btn icon={<Underline className="w-5 h-5" />} label="Underline" caret />
-        <Btn icon={<Type className="w-5 h-5" />} label="Font size" caret />
+        <div className="flex flex-col gap-0.5 pr-1">
+          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 border rounded px-1.5 h-5 text-[10px] hover:border-[#0078d4] cursor-pointer" style={{ borderColor: "#c8c6c4", minWidth: 72, color: "#323130" }}>
+              <Type className="w-3 h-3 opacity-50" /><span>Aptos</span>
+              <ChevronDown className="w-2.5 h-2.5 opacity-50 ml-auto" />
+            </div>
+            <div className="flex items-center border rounded px-1 h-5 text-[10px] hover:border-[#0078d4] cursor-pointer" style={{ borderColor: "#c8c6c4", minWidth: 28, color: "#323130" }}>
+              <span>11</span><ChevronDown className="w-2.5 h-2.5 opacity-50" />
+            </div>
+          </div>
+          <div className="flex items-center gap-0">
+            <button className="px-1 py-0.5 rounded font-bold text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>B</button>
+            <button className="px-1 py-0.5 rounded italic text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>I</button>
+            <button className="px-1 py-0.5 rounded underline text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>U<ChevronDown className="inline w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded text-[12px] hover:bg-[#ebebeb]" style={{ color: "#323130", textDecoration: "line-through" }}>S</button>
+            <button className="px-1 py-0.5 rounded text-[12px] hover:bg-[#ebebeb] flex items-center" style={{ color: "#323130" }}><Highlighter className="w-3 h-3" /><ChevronDown className="w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded text-[12px] hover:bg-[#ebebeb] flex items-center" style={{ color: "#323130" }}><Palette className="w-3 h-3" /><ChevronDown className="w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded text-[10px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>x₂</button>
+            <button className="px-1 py-0.5 rounded text-[10px] hover:bg-[#ebebeb]" style={{ color: "#323130" }}>Aa<ChevronDown className="inline w-2 h-2 opacity-50" /></button>
+            <button className="px-1 py-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><Eraser className="w-3 h-3" /></button>
+          </div>
+        </div>
       </Group>
+
+      {/* ── Paragraph — same compact 2-row as Message tab ──────────────── */}
       <Group label="Paragraph">
-        <Btn icon={<AlignLeft className="w-5 h-5" />} label="Align left" />
-        <Btn icon={<AlignCenter className="w-5 h-5" />} label="Centre" />
-        <Btn icon={<AlignRight className="w-5 h-5" />} label="Align right" />
-        <Btn icon={<List className="w-5 h-5" />} label="Bullets" />
-        <Btn icon={<ListOrdered className="w-5 h-5" />} label="Numbering" />
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-0">
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><List className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><ListOrdered className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><IndentDecrease className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><IndentIncrease className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignJustify className="w-3.5 h-3.5" /></button>
+          </div>
+          <div className="flex items-center gap-0">
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignLeft className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignCenter className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignRight className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb]" style={{ color: "#323130" }}><AlignJustifyIcon className="w-3.5 h-3.5" /></button>
+            <button className="p-0.5 rounded hover:bg-[#ebebeb] flex items-center gap-0" style={{ color: "#323130" }}>
+              <span className="text-[9px] leading-none">≡</span><ChevronDown className="w-2 h-2 opacity-50" />
+            </button>
+          </div>
+        </div>
       </Group>
+
+      {/* ── Styles ─────────────────────────────────────────────────────── */}
+      <Group label="Styles">
+        <div className="flex flex-col justify-center gap-0.5 px-1">
+          <div className="flex items-center gap-1">
+            {["Normal", "Heading 1", "Heading 2"].map(s => (
+              <button key={s} className="border rounded px-1.5 h-5 text-[10px] hover:bg-[#ebebeb] hover:border-[#0078d4] whitespace-nowrap" style={{ borderColor: "#c8c6c4", color: "#323130" }}>{s}</button>
+            ))}
+            <ChevronDown className="w-3 h-3 opacity-50" />
+          </div>
+        </div>
+      </Group>
+
+      {/* ── Undo ───────────────────────────────────────────────────────── */}
       <Group label="Undo">
         <Btn icon={<Undo2 className="w-5 h-5" />} label="Undo" />
       </Group>
+
     </div>
   );
 
@@ -372,13 +439,23 @@ function OutlookRibbon({
 
   /* ══════════════════════════════════════════════════════════════════════
      OPTIONS TAB
+     Groups: Show Fields | Tracking | More Options | Permission
   ══════════════════════════════════════════════════════════════════════ */
   const optionsRibbon = (
     <div className="flex items-stretch h-full">
       <Group label="Show Fields">
         <Btn icon={<Mail className="w-5 h-5" />} label="From" />
         <Btn icon={<Eye className="w-5 h-5" />} label="Bcc" />
-        <Btn icon={<FileText className="w-5 h-5" />} label="Subject" />
+      </Group>
+      <Group label="Tracking">
+        <div className="flex flex-col justify-center gap-0.5 px-0.5">
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors whitespace-nowrap" style={{ color: "#323130" }}>
+            <Eye className="w-3.5 h-3.5" /><span>Request a read receipt</span>
+          </button>
+          <button className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] hover:bg-[#ebebeb] transition-colors whitespace-nowrap" style={{ color: "#323130" }}>
+            <Send className="w-3.5 h-3.5" /><span>Request delivery receipt</span>
+          </button>
+        </div>
       </Group>
       <Group label="More Options">
         <Btn icon={<Clock className="w-5 h-5" />} label="Delay delivery" />
@@ -386,7 +463,7 @@ function OutlookRibbon({
         <Btn icon={<SlidersHorizontal className="w-5 h-5" />} label="Message options" caret />
       </Group>
       <Group label="Permission">
-        <Btn icon={<EyeOff className="w-5 h-5" />} label="Encrypt" caret />
+        <Btn icon={<Lock className="w-5 h-5" />} label="Encrypt" caret />
       </Group>
     </div>
   );
