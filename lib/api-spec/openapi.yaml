@@ -4564,6 +4564,8 @@ components:
           type: string
         designation:
           type: string
+        location:
+          type: string
         companyId:
           type: integer
         clientCode:
@@ -4590,6 +4592,8 @@ components:
         companyName:
           type: string
         designation:
+          type: string
+        location:
           type: string
         companyId:
           type: integer

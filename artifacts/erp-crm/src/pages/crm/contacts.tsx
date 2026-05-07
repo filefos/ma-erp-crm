@@ -28,14 +28,15 @@ import { authHeaders } from "@/lib/ai-client";
 
 type ContactForm = {
   name: string; email: string; phone: string; whatsapp: string;
-  companyName: string; designation: string;
+  companyName: string; designation: string; location: string;
 };
-const emptyForm: ContactForm = { name: "", email: "", phone: "", whatsapp: "", companyName: "", designation: "" };
+const emptyForm: ContactForm = { name: "", email: "", phone: "", whatsapp: "", companyName: "", designation: "", location: "" };
 
 const FIELDS: [keyof ContactForm, string][] = [
-  ["name", "Name *"], ["designation", "Designation"],
+  ["name", "Name *"], ["companyName", "Company"],
+  ["designation", "Designation"], ["location", "Location"],
   ["phone", "Mobile"], ["whatsapp", "WhatsApp"],
-  ["email", "Email"], ["companyName", "Company"],
+  ["email", "Email"],
 ];
 
 export function ContactsList() {
@@ -115,6 +116,7 @@ export function ContactsList() {
       whatsapp: c.whatsapp ?? "",
       companyName: c.companyName ?? "",
       designation: c.designation ?? "",
+      location: (c as any).location ?? "",
     });
     setEditOpen(true);
   };
@@ -236,6 +238,7 @@ export function ContactsList() {
               { header: "Name", key: "name" },
               { header: "Company", key: "companyName" },
               { header: "Designation", key: "designation" },
+              { header: "Location", key: "location" },
               { header: "Phone", key: "phone" },
               { header: "WhatsApp", key: "whatsapp" },
               { header: "Email", key: "email" },
@@ -266,6 +269,8 @@ export function ContactsList() {
                 aliases: ["whatsapp number","wa","wa number","whatsapp no"] },
               { key: "email",       label: "Email",       example: "john@example.com",
                 aliases: ["email address","e-mail","e-mail address","mail"] },
+              { key: "location",    label: "Location",    example: "Dubai, UAE",
+                aliases: ["city","area","address","region","country","emirate","location","place","site"] },
             ]}
             onRow={async (row) => {
               const payload: Record<string, string | number> = {
@@ -275,6 +280,7 @@ export function ContactsList() {
                 phone:       row["Mobile"]      || "",
                 whatsapp:    row["WhatsApp"]    || "",
                 email:       row["Email"]       || "",
+                location:    row["Location"]    || "",
               };
               if (!payload.name && !payload.phone && !payload.email) throw new Error("Row has no identifiable contact data");
               if (activeCompanyId) payload.companyId = activeCompanyId;
@@ -379,6 +385,7 @@ export function ContactsList() {
               <TableHead>Name</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Designation</TableHead>
+              <TableHead>Location</TableHead>
               <TableHead>Mobile</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Actions</TableHead>
@@ -386,9 +393,9 @@ export function ContactsList() {
           </TableHeader>
           <TableBody>
             {isLoading
-              ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+              ? <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
               : filtered.length === 0
-              ? <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow>
+              ? <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No contacts found. Add your first contact.</TableCell></TableRow>
               : filtered.map((c, idx) => (
                 <TableRow
                   key={c.id}
@@ -414,6 +421,7 @@ export function ContactsList() {
                   </TableCell>
                   <TableCell>{c.companyName || "-"}</TableCell>
                   <TableCell>{c.designation || "-"}</TableCell>
+                  <TableCell>{(c as any).location || "-"}</TableCell>
                   <TableCell>{c.phone || "-"}</TableCell>
                   <TableCell>{c.email || "-"}</TableCell>
                   <TableCell>

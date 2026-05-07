@@ -288,6 +288,7 @@ export interface Contact {
   whatsapp?: string;
   companyName?: string;
   designation?: string;
+  location?: string;
   companyId?: number;
   clientCode?: string;
   createdById?: number;
@@ -302,6 +303,7 @@ export interface CreateContactBody {
   whatsapp?: string;
   companyName?: string;
   designation?: string;
+  location?: string;
   companyId?: number;
   notes?: string;
 }

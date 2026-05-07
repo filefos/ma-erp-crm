@@ -13,6 +13,7 @@ export interface CreateContactBody {
   whatsapp?: string;
   companyName?: string;
   designation?: string;
+  location?: string;
   companyId?: number;
   notes?: string;
 }

@@ -10,6 +10,7 @@ export const contactsTable = pgTable("contacts", {
   whatsapp: text("whatsapp"),
   companyName: text("company_name"),
   designation: text("designation"),
+  location: text("location"),
   companyId: integer("company_id"),
   clientCode: text("client_code"),
   notes: text("notes"),
