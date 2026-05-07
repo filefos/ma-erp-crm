@@ -142,7 +142,7 @@ paths:
     post:
       operationId: requestOtp
       tags: [auth]
-      summary: Request OTP (sent to registered mobile via WhatsApp)
+      summary: Request OTP (sent to registered mobile via SMS)
       requestBody:
         required: true
         content:

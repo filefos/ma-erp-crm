@@ -258,7 +258,7 @@ export function Login() {
               }`}
             >
               <MessageCircle className="w-3.5 h-3.5" />
-              OTP via WhatsApp
+              OTP via SMS
             </button>
           </div>
 
@@ -346,7 +346,7 @@ export function Login() {
                       {otpSending ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending OTP...</>
                       ) : (
-                        <><MessageCircle className="w-4 h-4 mr-2" />Send OTP via WhatsApp</>
+                        <><MessageCircle className="w-4 h-4 mr-2" />Send OTP via SMS</>  
                       )}
                     </Button>
                   </form>
@@ -366,7 +366,7 @@ export function Login() {
                   </button>
 
                   <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800 space-y-1">
-                    <p className="font-semibold">OTP sent via WhatsApp</p>
+                    <p className="font-semibold">OTP sent via SMS</p>
                     {maskedPhone && (
                       <p className="text-xs text-green-700">
                         A 6-digit code was sent to <span className="font-mono font-semibold">{maskedPhone}</span>

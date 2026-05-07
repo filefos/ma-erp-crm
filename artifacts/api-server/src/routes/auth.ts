@@ -6,7 +6,7 @@ import { requireAuth } from "../middlewares/auth";
 import { audit } from "../lib/audit";
 import { sendLoginAlert } from "../lib/login-notify";
 import { storeOtp, verifyOtp } from "../lib/otp";
-import { sendWhatsAppOtp, maskPhone } from "../lib/whatsapp-send";
+import { sendSmsOtp, maskPhone } from "../lib/sms-send";
 
 const router = Router();
 
@@ -179,11 +179,11 @@ router.post("/auth/request-otp", async (req, res): Promise<void> => {
   }
 
   const code = storeOtp(normalized, user.id, user.phone);
-  const { sent } = await sendWhatsAppOtp(user.phone, code);
+  const { sent } = await sendSmsOtp(user.phone, code);
 
   if (!sent) {
     // In dev / missing config, log the code so it can still be tested.
-    req.log.info({ code, email: normalized }, "OTP (WhatsApp not configured — shown in server log for testing)");
+    req.log.info({ code, email: normalized }, "OTP (SMS not configured — shown in server log for testing)");
   }
 
   await audit(req, { action: "otp_requested", entity: "auth", entityId: user.id, details: `OTP requested for ${normalized}`, userId: user.id, userName: user.name });
