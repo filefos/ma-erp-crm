@@ -13,6 +13,9 @@ async function chatAnthropic(
   userContent: string,
   maxTokens = 8192,
 ): Promise<string> {
+  if (!anthropic) {
+    throw new Error("Anthropic AI is not configured on this server.");
+  }
   const response = await anthropic.messages.create({
     model: ANTHROPIC_MODEL,
     max_tokens: maxTokens,
