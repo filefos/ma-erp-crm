@@ -7,9 +7,171 @@ import {
   Search, RefreshCw, Eye, EyeOff, Settings, RotateCcw, Loader2,
   Paperclip, FileIcon, ChevronDown, ChevronRight, Flag, Archive,
   MoreHorizontal, Forward, AlertCircle, Bold, Italic, Underline,
-  Link as LinkIcon, Smile,
+  Link as LinkIcon, Smile, AlignJustify, Columns2, PanelRight,
+  CalendarDays, LayoutGrid, MessageSquare, MessagesSquare,
 } from "lucide-react";
 import { EmailSettingsModal } from "./settings-modal";
+
+/* ── Outlook Ribbon ─────────────────────────────────────────────────────────
+   Renders the Outlook-style tab bar + ribbon row.
+   activeTab / setActiveTab are lifted into EmailPanel state.
+──────────────────────────────────────────────────────────────────────────── */
+const MENU_TABS = ["File", "Home", "View", "Help", "Message", "Insert", "Format text", "Draw", "Options"];
+
+function OutlookRibbon({
+  activeTab, setActiveTab, onNewMail, onSync, syncing,
+}: {
+  activeTab: string;
+  setActiveTab: (t: string) => void;
+  onNewMail: () => void;
+  onSync: () => void;
+  syncing: boolean;
+}) {
+  /* ── icon button helper ─────────────────────────────────────────────── */
+  function RibbonBtn({ icon, label, caret, onClick }: {
+    icon: React.ReactNode; label: string; caret?: boolean; onClick?: () => void;
+  }) {
+    return (
+      <button
+        onClick={onClick}
+        className="flex flex-col items-center justify-end gap-0.5 px-2.5 py-1.5 rounded transition-colors hover:bg-[#e8e8e8] min-w-[44px]"
+        style={{ color: "#323130" }}
+      >
+        <span className="text-[18px] leading-none">{icon}</span>
+        <span className="flex items-center gap-0.5 text-[10px] whitespace-nowrap leading-tight" style={{ color: "#323130" }}>
+          {label}
+          {caret && <ChevronDown className="w-2.5 h-2.5 opacity-60" />}
+        </span>
+      </button>
+    );
+  }
+
+  function RibbonDivider() {
+    return <div className="w-px self-stretch my-1.5 mx-1" style={{ background: "#e1dfdd" }} />;
+  }
+
+  function GroupLabel({ label }: { label: string }) {
+    return (
+      <div className="flex flex-col items-center justify-between h-full">
+        <div className="flex items-center gap-0.5 flex-1">{/* buttons injected outside */}</div>
+        <span className="text-[9px] pb-0.5 px-1 border-t w-full text-center mt-auto" style={{ color: "#a19f9d", borderColor: "#e1dfdd" }}>
+          {label}
+        </span>
+      </div>
+    );
+  }
+
+  /* ── Home tab ribbon ─────────────────────────────────────────────────── */
+  const homeRibbon = (
+    <div className="flex items-stretch gap-0 h-full">
+      {/* New */}
+      <div className="flex items-center pr-2">
+        <RibbonBtn icon={<Plus className="w-5 h-5" />} label="New mail" onClick={onNewMail} />
+      </div>
+      <RibbonDivider />
+      {/* Delete group */}
+      <div className="flex items-center gap-0 px-1">
+        <RibbonBtn icon={<Trash2 className="w-5 h-5" />} label="Delete" />
+        <RibbonBtn icon={<Archive className="w-5 h-5" />} label="Archive" />
+        <RibbonBtn icon={<Flag className="w-5 h-5" />} label="Report" />
+      </div>
+      <RibbonDivider />
+      {/* Respond group */}
+      <div className="flex items-center gap-0 px-1">
+        <RibbonBtn icon={<Reply className="w-5 h-5" />} label="Reply" />
+        <RibbonBtn icon={<MessagesSquare className="w-5 h-5" />} label="Reply all" />
+        <RibbonBtn icon={<Forward className="w-5 h-5" />} label="Forward" />
+      </div>
+      <RibbonDivider />
+      {/* Move */}
+      <div className="flex items-center px-1">
+        <RibbonBtn icon={<Columns2 className="w-5 h-5" />} label="Move" caret />
+      </div>
+      <RibbonDivider />
+      {/* Tags */}
+      <div className="flex items-center gap-0 px-1">
+        <RibbonBtn icon={<Eye className="w-5 h-5" />} label="Mark all" />
+        <RibbonBtn icon={<Star className="w-5 h-5" />} label="Categorize" caret />
+        <RibbonBtn icon={<Flag className="w-5 h-5" />} label="Flag" caret />
+      </div>
+      <RibbonDivider />
+      {/* Sync */}
+      <div className="flex items-center px-1">
+        <RibbonBtn
+          icon={syncing ? <RotateCcw className="w-5 h-5 animate-spin" /> : <RotateCcw className="w-5 h-5" />}
+          label={syncing ? "Syncing…" : "Sync"}
+          onClick={onSync}
+        />
+      </div>
+    </div>
+  );
+
+  /* ── View tab ribbon (matches screenshot exactly) ───────────────────── */
+  const viewRibbon = (
+    <div className="flex items-stretch gap-0 h-full">
+      {/* Settings group */}
+      <div className="flex items-center pr-2">
+        <RibbonBtn icon={<Settings className="w-5 h-5" />} label="View settings" caret />
+      </div>
+      <RibbonDivider />
+      {/* Messages group */}
+      <div className="flex items-center gap-0 px-1">
+        <RibbonBtn icon={<MessagesSquare className="w-5 h-5" />} label="Conversations" />
+        <RibbonBtn icon={<MessageSquare className="w-5 h-5" />} label="Message preview" caret />
+        <RibbonBtn
+          icon={syncing ? <RotateCcw className="w-5 h-5 animate-spin" /> : <RotateCcw className="w-5 h-5" />}
+          label="Sync"
+          onClick={onSync}
+        />
+      </div>
+      <RibbonDivider />
+      {/* Layout group */}
+      <div className="flex items-center gap-0 px-1">
+        <RibbonBtn icon={<AlignJustify className="w-5 h-5" />} label="Ribbon" />
+        <RibbonBtn icon={<LayoutGrid className="w-5 h-5" />} label="Folder pane" caret />
+        <RibbonBtn icon={<PanelRight className="w-5 h-5" />} label="Reading pane" caret />
+        <RibbonBtn icon={<CalendarDays className="w-5 h-5" />} label="My day" caret />
+        <RibbonBtn icon={<Columns2 className="w-5 h-5" />} label="Density" caret />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex-shrink-0 select-none border-b" style={{ borderColor: "#e1dfdd", background: "#ffffff" }}>
+
+      {/* ── Tab bar ──────────────────────────────────────────────────────── */}
+      <div className="flex items-center px-1" style={{ height: 32, background: "#ffffff" }}>
+        {/* Hamburger */}
+        <button className="p-1.5 mr-1 rounded hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+          <AlignJustify className="w-4 h-4" />
+        </button>
+        {MENU_TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="px-3 h-full text-[13px] transition-colors relative"
+            style={{
+              color: activeTab === tab ? "#0078d4" : "#323130",
+              fontWeight: activeTab === tab ? 600 : 400,
+              borderBottom: activeTab === tab ? "2px solid #0078d4" : "2px solid transparent",
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Ribbon row ───────────────────────────────────────────────────── */}
+      <div
+        className="flex items-center px-2 overflow-x-auto"
+        style={{ height: 68, background: "#ffffff", borderTop: "1px solid #f3f2f1" }}
+      >
+        {activeTab === "View" ? viewRibbon : homeRibbon}
+      </div>
+
+    </div>
+  );
+}
 
 type Folder = "inbox" | "sent" | "draft" | "trash" | "starred";
 
@@ -154,6 +316,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const companyId: number = companyIdProp ?? (user as any)?.companyId ?? 1;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [activeTab, setActiveTab] = useState("Home");
   const [folder, setFolder] = useState<Folder>("inbox");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [composing, setComposing] = useState(false);
@@ -359,9 +522,21 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   return (
     <>
       <div
-        className="flex overflow-hidden bg-white"
+        className="flex flex-col overflow-hidden bg-white"
         style={{ height: "calc(100vh - 120px)", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
       >
+
+        {/* ── Outlook Ribbon ─────────────────────────────────────────────── */}
+        <OutlookRibbon
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onNewMail={openCompose}
+          onSync={() => syncMutation.mutate()}
+          syncing={syncMutation.isPending}
+        />
+
+        {/* ── Three-pane layout ──────────────────────────────────────────── */}
+        <div className="flex flex-1 overflow-hidden">
 
         {/* ════════════════════════════════════════════════════════════════════
             LEFT SIDEBAR — folder tree (Outlook style)
@@ -1019,6 +1194,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
             </div>
           )}
         </div>
+        </div>{/* end three-pane layout */}
       </div>
 
       <EmailSettingsModal
