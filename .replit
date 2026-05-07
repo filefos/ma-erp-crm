@@ -45,3 +45,8 @@ externalPort = 3000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+DEPLOY_SECRET = "0d1a95ed3a4a67ec0282d2bc9685bee4d2880c09662a2470e4b269751c485106"

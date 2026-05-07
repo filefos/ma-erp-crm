@@ -1,0 +1,28 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger VPS deploy webhook
+        run: |
+          echo "Triggering deploy on VPS..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_SECRET }}" \
+            -H "Content-Type: application/json" \
+            http://187.127.77.150/api/deploy \
+            --max-time 15)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -1)
+          echo "Response: $BODY"
+          echo "HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Deploy webhook failed with status $HTTP_CODE"
+            exit 1
+          fi
+          echo "Deploy triggered successfully!"
