@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,10 +26,36 @@ import { EmailSettingsModal } from "./settings-modal";
 ──────────────────────────────────────────────────────────────────────────── */
 const MENU_TABS = ["File", "Home", "View", "Help", "Message", "Insert", "Format text", "Draw", "Options"];
 
+/* ── FixedDropdown ────────────────────────────────────────────────────────────
+   Renders a dropdown at a fixed viewport position, escaping any overflow
+   clipping on ancestor containers (e.g. the ribbon's overflow-x-auto row).
+──────────────────────────────────────────────────────────────────────────── */
+function FixedDropdown({ triggerRef, open, onClose, children, minWidth = 160 }: {
+  triggerRef: React.RefObject<HTMLDivElement | null>;
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  minWidth?: number;
+}) {
+  if (!open) return null;
+  const rect = triggerRef.current?.getBoundingClientRect();
+  const top  = rect ? rect.bottom + 4 : 0;
+  const left = rect ? rect.left      : 0;
+  return (
+    <>
+      <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={onClose} />
+      <div style={{ position: "fixed", top, left, zIndex: 9999, minWidth, background: "#ffffff", border: "1px solid #e1dfdd", borderRadius: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+        {children}
+      </div>
+    </>
+  );
+}
+
 function OutlookRibbon({
   activeTab, setActiveTab, onNewMail, onSync, syncing,
   selectedEmail, onDelete, onArchive, onReply, onForward,
   onMarkAllRead, onToggleStar, onMove, currentFolder,
+  sidebarVisible, onToggleSidebar, readingPaneLayout, onChangeReadingPane,
 }: {
   activeTab: string;
   setActiveTab: (t: string) => void;
@@ -45,11 +71,32 @@ function OutlookRibbon({
   onToggleStar?: () => void;
   onMove?: (folder: string) => void;
   currentFolder?: string;
+  sidebarVisible?: boolean;
+  onToggleSidebar?: () => void;
+  readingPaneLayout?: "right" | "bottom" | "off";
+  onChangeReadingPane?: (layout: "right" | "bottom" | "off") => void;
 }) {
   const [moveOpen, setMoveOpen] = useState(false);
   const [flagOpen, setFlagOpen] = useState(false);
   const [categorizeOpen, setCategorizeOpen] = useState(false);
+  const [folderPaneOpen, setFolderPaneOpen] = useState(false);
+  const [readingPaneOpen, setReadingPaneOpen] = useState(false);
+  const [densityOpen, setDensityOpen] = useState(false);
   const hasSelected = !!selectedEmail;
+
+  const moveTriggerRef       = useRef<HTMLDivElement>(null);
+  const flagTriggerRef       = useRef<HTMLDivElement>(null);
+  const categorizeTriggerRef = useRef<HTMLDivElement>(null);
+  const folderPaneTriggerRef = useRef<HTMLDivElement>(null);
+  const readingPaneTriggerRef = useRef<HTMLDivElement>(null);
+  const densityTriggerRef    = useRef<HTMLDivElement>(null);
+
+  const closeAll = () => {
+    setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false);
+    setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false);
+  };
+
+  useEffect(() => { closeAll(); }, [activeTab]);
 
   const MOVE_FOLDERS = [
     { key: "inbox",   label: "Inbox" },
@@ -154,32 +201,27 @@ function OutlookRibbon({
 
       {/* Move with dropdown */}
       <Group label="Move">
-        <div className="relative">
+        <div ref={moveTriggerRef}>
           <Btn
             icon={<Columns2 className="w-5 h-5" />}
             label="Move"
             caret
             disabled={!hasSelected}
-            onClick={() => { setMoveOpen(s => !s); setFlagOpen(false); setCategorizeOpen(false); }}
+            onClick={() => { setMoveOpen(s => !s); setFlagOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
           />
-          {moveOpen && hasSelected && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setMoveOpen(false)} />
-              <div className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden" style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 160 }}>
-                {MOVE_FOLDERS.filter(f => f.key !== currentFolder).map(f => (
-                  <button
-                    key={f.key}
-                    onClick={() => { onMove?.(f.key); setMoveOpen(false); }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors text-left"
-                    style={{ color: "#323130" }}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </div>
+        <FixedDropdown triggerRef={moveTriggerRef} open={moveOpen && hasSelected} onClose={() => setMoveOpen(false)}>
+          {MOVE_FOLDERS.filter(f => f.key !== currentFolder).map(f => (
+            <button
+              key={f.key}
+              onClick={() => { onMove?.(f.key); setMoveOpen(false); }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors text-left"
+              style={{ color: "#323130" }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </FixedDropdown>
       </Group>
 
       <Group label="Tags">
@@ -190,67 +232,57 @@ function OutlookRibbon({
         />
 
         {/* Categorize dropdown */}
-        <div className="relative">
+        <div ref={categorizeTriggerRef}>
           <Btn
             icon={<Tag className="w-5 h-5" />}
             label="Categorize"
             caret
-            onClick={() => { setCategorizeOpen(s => !s); setMoveOpen(false); setFlagOpen(false); }}
+            onClick={() => { setCategorizeOpen(s => !s); setMoveOpen(false); setFlagOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
           />
-          {categorizeOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setCategorizeOpen(false)} />
-              <div className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden" style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 160 }}>
-                <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Color Categories</div>
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat.label}
-                    onClick={() => { setCategorizeOpen(false); }}
-                    className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
-                    style={{ color: "#323130" }}
-                  >
-                    <span className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: cat.color }} />
-                    {cat.label} Category
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </div>
+        <FixedDropdown triggerRef={categorizeTriggerRef} open={categorizeOpen} onClose={() => setCategorizeOpen(false)}>
+          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Color Categories</div>
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.label}
+              onClick={() => { setCategorizeOpen(false); }}
+              className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              style={{ color: "#323130" }}
+            >
+              <span className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: cat.color }} />
+              {cat.label} Category
+            </button>
+          ))}
+        </FixedDropdown>
 
         {/* Flag dropdown */}
-        <div className="relative">
+        <div ref={flagTriggerRef}>
           <Btn
             icon={<Flag className={`w-5 h-5 ${selectedEmail?.isStarred ? "fill-orange-400 text-orange-400" : ""}`} />}
             label={selectedEmail?.isStarred ? "Unflag" : "Flag"}
             caret
             disabled={!hasSelected}
-            onClick={() => { setFlagOpen(s => !s); setMoveOpen(false); setCategorizeOpen(false); }}
+            onClick={() => { setFlagOpen(s => !s); setMoveOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
           />
-          {flagOpen && hasSelected && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setFlagOpen(false)} />
-              <div className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden" style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 160 }}>
-                <button
-                  onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
-                  style={{ color: "#323130" }}
-                >
-                  <Flag className="w-3.5 h-3.5 text-orange-500" />
-                  {selectedEmail?.isStarred ? "Remove Flag" : "Flag: Follow up"}
-                </button>
-                <button
-                  onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
-                  style={{ color: "#323130" }}
-                >
-                  <Star className="w-3.5 h-3.5 text-orange-500" />
-                  {selectedEmail?.isStarred ? "Remove Star" : "Mark as Starred"}
-                </button>
-              </div>
-            </>
-          )}
         </div>
+        <FixedDropdown triggerRef={flagTriggerRef} open={flagOpen && hasSelected} onClose={() => setFlagOpen(false)}>
+          <button
+            onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
+            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+            style={{ color: "#323130" }}
+          >
+            <Flag className="w-3.5 h-3.5 text-orange-500" />
+            {selectedEmail?.isStarred ? "Remove Flag" : "Flag: Follow up"}
+          </button>
+          <button
+            onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
+            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+            style={{ color: "#323130" }}
+          >
+            <Star className="w-3.5 h-3.5 text-orange-500" />
+            {selectedEmail?.isStarred ? "Remove Star" : "Mark as Starred"}
+          </button>
+        </FixedDropdown>
 
         <Btn icon={<Clock className="w-5 h-5" />} label="Snooze" caret disabled={!hasSelected} />
       </Group>
@@ -274,6 +306,12 @@ function OutlookRibbon({
   /* ══════════════════════════════════════════════════════════════════════
      VIEW TAB  (Settings | Messages | Layout)
   ══════════════════════════════════════════════════════════════════════ */
+  const DENSITY_OPTIONS = [
+    { key: "compact",   label: "Compact" },
+    { key: "normal",    label: "Normal" },
+    { key: "spacious",  label: "Spacious" },
+  ] as const;
+
   const viewRibbon = (
     <div className="flex items-stretch h-full">
       <Group label="Settings">
@@ -290,10 +328,86 @@ function OutlookRibbon({
       </Group>
       <Group label="Layout">
         <Btn icon={<AlignJustify className="w-5 h-5" />} label="Ribbon" />
-        <Btn icon={<PanelRight className="w-5 h-5" />} label="Folder pane" caret />
-        <Btn icon={<Columns2 className="w-5 h-5" />} label="Reading pane" caret />
+
+        {/* Folder pane dropdown */}
+        <div ref={folderPaneTriggerRef}>
+          <Btn
+            icon={<PanelRight className="w-5 h-5" />}
+            label="Folder pane"
+            caret
+            onClick={() => { setFolderPaneOpen(s => !s); setReadingPaneOpen(false); setDensityOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
+          />
+        </div>
+        <FixedDropdown triggerRef={folderPaneTriggerRef} open={folderPaneOpen} onClose={() => setFolderPaneOpen(false)}>
+          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Folder Pane</div>
+          {[{ key: true,  label: "Normal" }, { key: false, label: "Off" }].map(opt => (
+            <button
+              key={String(opt.key)}
+              onClick={() => { onToggleSidebar?.(); setFolderPaneOpen(false); }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              style={{ color: "#323130", fontWeight: sidebarVisible === opt.key ? 600 : 400 }}
+            >
+              {sidebarVisible === opt.key && <span className="w-2 h-2 rounded-full bg-[#0078d4] flex-shrink-0" />}
+              {sidebarVisible !== opt.key && <span className="w-2 h-2 flex-shrink-0" />}
+              {opt.label}
+            </button>
+          ))}
+        </FixedDropdown>
+
+        {/* Reading pane dropdown */}
+        <div ref={readingPaneTriggerRef}>
+          <Btn
+            icon={<Columns2 className="w-5 h-5" />}
+            label="Reading pane"
+            caret
+            onClick={() => { setReadingPaneOpen(s => !s); setFolderPaneOpen(false); setDensityOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
+          />
+        </div>
+        <FixedDropdown triggerRef={readingPaneTriggerRef} open={readingPaneOpen} onClose={() => setReadingPaneOpen(false)}>
+          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Reading Pane</div>
+          {([
+            { key: "right",  label: "Right" },
+            { key: "bottom", label: "Bottom" },
+            { key: "off",    label: "Off" },
+          ] as const).map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => { onChangeReadingPane?.(opt.key); setReadingPaneOpen(false); }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              style={{ color: "#323130", fontWeight: readingPaneLayout === opt.key ? 600 : 400 }}
+            >
+              {readingPaneLayout === opt.key && <span className="w-2 h-2 rounded-full bg-[#0078d4] flex-shrink-0" />}
+              {readingPaneLayout !== opt.key && <span className="w-2 h-2 flex-shrink-0" />}
+              {opt.label}
+            </button>
+          ))}
+        </FixedDropdown>
+
         <Btn icon={<CalendarDays className="w-5 h-5" />} label="My Day" caret />
-        <Btn icon={<SlidersHorizontal className="w-5 h-5" />} label="Density" caret />
+
+        {/* Density dropdown */}
+        <div ref={densityTriggerRef}>
+          <Btn
+            icon={<SlidersHorizontal className="w-5 h-5" />}
+            label="Density"
+            caret
+            onClick={() => { setDensityOpen(s => !s); setFolderPaneOpen(false); setReadingPaneOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
+          />
+        </div>
+        <FixedDropdown triggerRef={densityTriggerRef} open={densityOpen} onClose={() => setDensityOpen(false)}>
+          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Message Density</div>
+          {DENSITY_OPTIONS.map(opt => (
+            <button
+              key={opt.key}
+              onClick={() => { setDensityOpen(false); }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              style={{ color: "#323130" }}
+            >
+              <span className="w-2 h-2 flex-shrink-0" />
+              {opt.label}
+            </button>
+          ))}
+        </FixedDropdown>
       </Group>
       <Group label="Zoom">
         <Btn icon={<ZoomIn className="w-5 h-5" />} label="Zoom in" />
@@ -854,6 +968,8 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const [folder, setFolder] = useState<Folder>("inbox");
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [composing, setComposing] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [readingPaneLayout, setReadingPaneLayout] = useState<"right" | "bottom" | "off">("right");
   const [search, setSearch] = useState("");
   const [showSettings, setShowSettings] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -1136,17 +1252,21 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           onToggleStar={handleToggleStar}
           onMove={handleMove}
           currentFolder={folder}
+          sidebarVisible={sidebarVisible}
+          onToggleSidebar={() => setSidebarVisible(v => !v)}
+          readingPaneLayout={readingPaneLayout}
+          onChangeReadingPane={setReadingPaneLayout}
         />
 
         {/* ── Three-pane layout ──────────────────────────────────────────── */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className={`flex flex-1 overflow-hidden ${readingPaneLayout === "bottom" ? "flex-col" : "flex-row"}`}>
 
         {/* ════════════════════════════════════════════════════════════════════
             LEFT SIDEBAR — folder tree (Outlook style)
         ════════════════════════════════════════════════════════════════════ */}
         <div
           className="flex flex-col border-r"
-          style={{ width: 220, minWidth: 220, background: "#ffffff", borderColor: "#e1dfdd" }}
+          style={{ width: 220, minWidth: 220, background: "#ffffff", borderColor: "#e1dfdd", display: sidebarVisible ? undefined : "none" }}
         >
           {/* New mail button */}
           <div className="px-3 pt-3 pb-2">
@@ -1483,7 +1603,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
         {/* ════════════════════════════════════════════════════════════════════
             RIGHT PANE — compose / reading / empty
         ════════════════════════════════════════════════════════════════════ */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+        <div className="flex-1 flex flex-col overflow-hidden bg-white" style={{ display: readingPaneLayout !== "off" ? undefined : "none" }}>
 
           {composing ? (
             /* ── Compose — full Outlook-style ─────────────────────────────── */
