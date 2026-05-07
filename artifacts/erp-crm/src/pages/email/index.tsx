@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,15 +40,26 @@ function FixedDropdown({ triggerRef, open, onClose, children, minWidth = 160 }: 
 }) {
   if (!open) return null;
   const rect = triggerRef.current?.getBoundingClientRect();
-  const top  = rect ? rect.bottom + 4 : 0;
-  const left = rect ? rect.left      : 0;
-  return (
+  const top  = rect ? rect.bottom + 4 : 8;
+  const left = rect ? rect.left      : 8;
+  return createPortal(
     <>
-      <div style={{ position: "fixed", inset: 0, zIndex: 9998 }} onClick={onClose} />
-      <div style={{ position: "fixed", top, left, zIndex: 9999, minWidth, background: "#ffffff", border: "1px solid #e1dfdd", borderRadius: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+      <div
+        style={{ position: "fixed", inset: 0, zIndex: 99998 }}
+        onClick={onClose}
+      />
+      <div
+        style={{
+          position: "fixed", top, left, zIndex: 99999, minWidth,
+          background: "#ffffff", border: "1px solid #e1dfdd",
+          borderRadius: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+          overflow: "hidden",
+        }}
+      >
         {children}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -82,18 +94,21 @@ function OutlookRibbon({
   const [folderPaneOpen, setFolderPaneOpen] = useState(false);
   const [readingPaneOpen, setReadingPaneOpen] = useState(false);
   const [densityOpen, setDensityOpen] = useState(false);
+  const [signatureOpen, setSignatureOpen] = useState(false);
   const hasSelected = !!selectedEmail;
 
-  const moveTriggerRef       = useRef<HTMLDivElement>(null);
-  const flagTriggerRef       = useRef<HTMLDivElement>(null);
-  const categorizeTriggerRef = useRef<HTMLDivElement>(null);
-  const folderPaneTriggerRef = useRef<HTMLDivElement>(null);
+  const moveTriggerRef        = useRef<HTMLDivElement>(null);
+  const flagTriggerRef        = useRef<HTMLDivElement>(null);
+  const categorizeTriggerRef  = useRef<HTMLDivElement>(null);
+  const folderPaneTriggerRef  = useRef<HTMLDivElement>(null);
   const readingPaneTriggerRef = useRef<HTMLDivElement>(null);
-  const densityTriggerRef    = useRef<HTMLDivElement>(null);
+  const densityTriggerRef     = useRef<HTMLDivElement>(null);
+  const signatureTriggerRef   = useRef<HTMLDivElement>(null);
 
   const closeAll = () => {
     setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false);
     setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false);
+    setSignatureOpen(false);
   };
 
   useEffect(() => { closeAll(); }, [activeTab]);
@@ -515,7 +530,19 @@ function OutlookRibbon({
         <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
         <Btn icon={<ImageIcon className="w-5 h-5" />} label="Pictures" />
         <Btn icon={<Smile className="w-5 h-5" />} label="Emoji" />
-        <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret />
+        <div ref={signatureTriggerRef}>
+          <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
+        </div>
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={200}>
+          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+            <PenLine className="w-3.5 h-3.5" />No signature
+          </button>
+          <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+            <Settings className="w-3.5 h-3.5" />Manage signatures…
+          </button>
+        </FixedDropdown>
         <Btn icon={<Table className="w-5 h-5" />} label="Table" />
       </Group>
 
@@ -590,7 +617,19 @@ function OutlookRibbon({
         <Btn icon={<AtSign className="w-5 h-5" />} label="Bookmark" />
       </Group>
       <Group label="Text">
-        <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret />
+        <div ref={signatureTriggerRef}>
+          <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
+        </div>
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={200}>
+          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+            <PenLine className="w-3.5 h-3.5" />No signature
+          </button>
+          <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+            <Settings className="w-3.5 h-3.5" />Manage signatures…
+          </button>
+        </FixedDropdown>
         <Btn icon={<Type className="w-5 h-5" />} label="Text box" />
         <Btn icon={<FileIcon className="w-5 h-5" />} label="Quick Parts" caret />
       </Group>
@@ -979,6 +1018,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const [favExpanded, setFavExpanded] = useState(true);
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [sendDropdown, setSendDropdown] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [compose, setCompose] = useState<ComposeData>({
     toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "",
   });
@@ -1042,6 +1082,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
       toast({ title: data.message ?? "Inbox synced!" });
       qc.invalidateQueries({ queryKey: ["emails"] });
       setFolder("inbox");
+      setLastSynced(new Date());
     },
     onError: (e: any) => {
       if (e.message?.includes("not configured")) {
@@ -1257,6 +1298,31 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           readingPaneLayout={readingPaneLayout}
           onChangeReadingPane={setReadingPaneLayout}
         />
+
+        {/* ── Sync progress bar ───────────────────────────────────────────── */}
+        {syncMutation.isPending && (
+          <div style={{ background: "#f3f2f1", borderBottom: "1px solid #e1dfdd", padding: "0 12px", height: 28, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "#0078d4" }} />
+            <div style={{ flex: 1, height: 4, background: "#e1dfdd", borderRadius: 2, overflow: "hidden" }}>
+              <div
+                style={{
+                  height: "100%", borderRadius: 2, background: "#0078d4",
+                  width: "40%",
+                  animation: "sync-slide 1.2s ease-in-out infinite",
+                }}
+              />
+            </div>
+            <span style={{ fontSize: 11, color: "#605e5c", whiteSpace: "nowrap" }}>Syncing inbox…</span>
+          </div>
+        )}
+        {!syncMutation.isPending && lastSynced && (
+          <div style={{ background: "#f9f8f7", borderBottom: "1px solid #e1dfdd", padding: "0 12px", height: 22, display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <RefreshCw className="w-3 h-3" style={{ color: "#8a8886" }} />
+            <span style={{ fontSize: 11, color: "#8a8886" }}>
+              Last synced: {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
+        )}
 
         {/* ── Three-pane layout ──────────────────────────────────────────── */}
         <div className={`flex flex-1 overflow-hidden ${readingPaneLayout === "bottom" ? "flex-col" : "flex-row"}`}>

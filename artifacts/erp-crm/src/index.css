@@ -191,3 +191,9 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+@keyframes sync-slide {
+  0%   { transform: translateX(-150%); }
+  50%  { transform: translateX(100%); }
+  100% { transform: translateX(250%); }
+}
