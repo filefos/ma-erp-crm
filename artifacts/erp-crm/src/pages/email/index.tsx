@@ -1325,6 +1325,15 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                         </button>
                         <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
                         <button
+                          onClick={() => { setSendDropdown(false); setShowSettings(true); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+                          style={{ color: "#323130" }}
+                        >
+                          <Settings className="w-3.5 h-3.5" style={{ color: "#605e5c" }} />
+                          Manage account
+                        </button>
+                        <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
+                        <button
                           onClick={() => { setSendDropdown(false); setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
                           className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
                           style={{ color: "#a4262c" }}
