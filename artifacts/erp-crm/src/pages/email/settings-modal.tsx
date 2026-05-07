@@ -336,7 +336,22 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
               <Input {...F("imapUser")} placeholder="you@yourdomain.com" className="h-8 text-sm" />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Password / App Password *</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Password / App Password *</Label>
+                <button
+                  type="button"
+                  className="text-[10px] text-[#0078d4] hover:underline"
+                  onClick={() => {
+                    if (!form.smtpPass || form.smtpPass === MASKED) {
+                      alert("Go to the Outgoing Mail (SMTP) tab first, click the password field and type your password, then come back here.");
+                    } else {
+                      setForm(f => ({ ...f, imapPass: f.smtpPass }));
+                    }
+                  }}
+                >
+                  Same as SMTP password
+                </button>
+              </div>
               <Input {...FPass("imapPass")} type="password" className="h-8 text-sm" />
             </div>
             <div className="bg-orange-50 border border-orange-200 rounded-md p-2.5 text-xs text-orange-800">
