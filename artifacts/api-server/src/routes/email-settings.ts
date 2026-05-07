@@ -4,60 +4,70 @@ import { eq } from "drizzle-orm";
 import { requireAuth, inScope, requirePermission } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 import nodemailer from "nodemailer";
-import * as tls from "tls";
-import * as net from "net";
+import { spawn } from "child_process";
 
 /**
- * Test IMAP credentials using the raw IMAP LOGIN command (like Python imaplib).
- * This avoids ImapFlow's SASL PLAIN which some Dovecot servers reject.
+ * Test IMAP credentials using Python imaplib via subprocess.
+ * Python's imaplib sends the raw IMAP LOGIN command which works reliably
+ * with Dovecot/Xmart servers that reject ImapFlow's SASL PLAIN.
+ * Password is passed via stdin to avoid it appearing in the process list.
  */
 async function testImapLogin(host: string, port: number, secure: boolean, user: string, pass: string): Promise<void> {
+  const secureMode = secure ? "ssl" : "plain";
+  // Inline Python script — reads password from stdin, args: host port secure user
+  const pyCode = `
+import sys, imaplib, ssl
+host, port, secure, user = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
+password = sys.stdin.read()
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+try:
+    if secure == "ssl":
+        m = imaplib.IMAP4_SSL(host, port, ssl_context=ctx)
+    else:
+        m = imaplib.IMAP4(host, port)
+        if secure == "starttls":
+            m.starttls(ssl_context=ctx)
+    typ, data = m.login(user, password)
+    if typ == "OK":
+        m.logout()
+        sys.exit(0)
+    else:
+        print(f"Login returned: {typ} {data}", file=sys.stderr)
+        sys.exit(1)
+except imaplib.IMAP4.error as e:
+    print(f"IMAP error: {e}", file=sys.stderr)
+    sys.exit(1)
+except Exception as e:
+    print(f"Error: {e}", file=sys.stderr)
+    sys.exit(1)
+`;
+
   return new Promise((resolve, reject) => {
-    const tag = "A001";
-    let buf = "";
-    let loggedIn = false;
+    const proc = spawn("python3", ["-c", pyCode, host, String(port), secureMode, user], {
+      timeout: 15000,
+    });
 
-    const onData = (chunk: Buffer) => {
-      buf += chunk.toString();
-      const lines = buf.split("\r\n");
-      buf = lines.pop() ?? "";
-      for (const line of lines) {
-        if (!loggedIn) {
-          if (line.startsWith("* OK")) {
-            // Server ready — send LOGIN
-            const cmd = `${tag} LOGIN ${JSON.stringify(user)} ${JSON.stringify(pass)}\r\n`;
-            sock.write(cmd);
-            loggedIn = true;
-          } else if (line.startsWith("* ")) {
-            // Server info line, ignore
-          } else {
-            reject(new Error(`Unexpected greeting: ${line}`));
-            sock.destroy();
-          }
-        } else {
-          if (line.startsWith(`${tag} OK`)) {
-            sock.write(`A002 LOGOUT\r\n`);
-            resolve();
-            sock.destroy();
-          } else if (line.startsWith(`${tag} NO`) || line.startsWith(`${tag} BAD`)) {
-            reject(new Error(`Authentication failed: ${line}`));
-            sock.destroy();
-          }
-        }
+    let stderr = "";
+    proc.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+
+    // Write password to stdin then close it
+    proc.stdin.write(pass);
+    proc.stdin.end();
+
+    proc.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        const msg = stderr.trim() || "Authentication failed";
+        reject(new Error(msg));
       }
-    };
+    });
 
-    let sock: tls.TLSSocket | net.Socket;
-
-    if (secure) {
-      sock = tls.connect({ host, port, rejectUnauthorized: false }, () => {});
-    } else {
-      sock = net.connect({ host, port });
-    }
-
-    sock.on("data", onData);
-    sock.on("error", (err) => reject(err));
-    sock.setTimeout(10000, () => { reject(new Error("IMAP connection timed out")); sock.destroy(); });
+    proc.on("error", (err) => {
+      reject(new Error(`Failed to start python3: ${err.message}`));
+    });
   });
 }
 
