@@ -166,6 +166,14 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [key]: e.target.value })),
   });
 
+  const MASKED = "••••••••";
+  const FPass = (key: "smtpPass" | "imapPass") => ({
+    value: form[key],
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [key]: e.target.value })),
+    onFocus: () => { if (form[key] === MASKED) setForm(f => ({ ...f, [key]: "" })); },
+    placeholder: form[key] === MASKED ? "Click to change password" : "Enter password",
+  });
+
   return (
     <Dialog open={open} onOpenChange={v => { if (!v) { setConfirmDisconnect(false); onClose(); } }}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
@@ -274,7 +282,7 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Password / App Password *</Label>
-              <Input {...F("smtpPass")} type="password" placeholder="Enter password" className="h-8 text-sm" />
+              <Input {...FPass("smtpPass")} type="password" className="h-8 text-sm" />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Display Name (shown as sender)</Label>
@@ -319,7 +327,7 @@ export function EmailSettingsModal({ open, onClose, companyId }: EmailSettingsMo
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Password / App Password *</Label>
-              <Input {...F("imapPass")} type="password" placeholder="Enter password" className="h-8 text-sm" />
+              <Input {...FPass("imapPass")} type="password" className="h-8 text-sm" />
             </div>
             <div className="bg-orange-50 border border-orange-200 rounded-md p-2.5 text-xs text-orange-800">
               <strong>Tip:</strong> For Gmail or Outlook, generate an <strong>App Password</strong> from your account's security settings instead of your main password.
