@@ -306,4 +306,21 @@ router.delete("/users/:id", requirePermissionLevel("super_admin"), async (req, r
   res.json({ success: true });
 });
 
+router.delete("/users/:id/permanent", requirePermissionLevel("super_admin"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (req.user?.id === id) {
+    res.status(400).json({ error: "You cannot delete your own account." });
+    return;
+  }
+  const [before] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  if (!before) {
+    res.status(404).json({ error: "User not found." });
+    return;
+  }
+  await db.delete(userCompanyAccessTable).where(eq(userCompanyAccessTable.userId, id));
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+  await audit(req, { action: "delete", entity: "user", entityId: id, details: `Permanently deleted user ${before.email}` });
+  res.json({ success: true });
+});
+
 export default router;

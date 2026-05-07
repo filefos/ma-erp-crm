@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Power, Pencil, ShieldCheck, Loader2, KeyRound } from "lucide-react";
+import { Search, Plus, Power, Pencil, ShieldCheck, Loader2, KeyRound, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -364,6 +364,9 @@ export function UsersList() {
   const [editing, setEditing] = useState<EditableUser | null>(null);
   const [permsFor, setPermsFor] = useState<{ id: number; name: string } | null>(null);
   const [pwdChangeFor, setPwdChangeFor] = useState<EditableUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState<{ id: number; name: string; email: string } | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "user", departmentId: "none", companyId: "all", permissionLevel: "user" });
   const queryClient = useQueryClient();
   const { data: users, isLoading } = useListUsers();
@@ -373,6 +376,28 @@ export function UsersList() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
   const create = useCreateUser({ mutation: { onSuccess: () => { invalidate(); setOpen(false); } } });
   const update = useUpdateUser({ mutation: { onSuccess: invalidate } });
+
+  const handlePermanentDelete = async () => {
+    if (!deletingUser) return;
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      const token = localStorage.getItem("erp_token");
+      const res = await fetch(`/api/users/${deletingUser.id}/permanent`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setDeleteError(d.error ?? "Failed to delete user.");
+        return;
+      }
+      invalidate();
+      setDeletingUser(null);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const filtered = (users ?? [])
     .filter(u => !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()))
@@ -559,6 +584,17 @@ export function UsersList() {
                       >
                         <Power className={`w-3.5 h-3.5 ${u.isActive ? "text-emerald-600" : "text-muted-foreground"}`} />
                       </Button>
+                      {isSuperAdmin && (me as any)?.id !== u.id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="Permanently delete user"
+                          data-testid={`delete-user-${u.id}`}
+                          onClick={() => { setDeleteError(""); setDeletingUser({ id: u.id, name: u.name, email: u.email }); }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -593,6 +629,35 @@ export function UsersList() {
           onClose={() => setPwdChangeFor(null)}
         />
       )}
+
+      <Dialog open={!!deletingUser} onOpenChange={(v) => { if (!v) { setDeletingUser(null); setDeleteError(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-4 h-4" /> Permanently Delete User
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-sm">You are about to permanently delete:</p>
+            <div className="bg-red-50 border border-red-200 rounded p-3">
+              <p className="font-semibold text-sm">{deletingUser?.name}</p>
+              <p className="text-xs text-muted-foreground">{deletingUser?.email}</p>
+            </div>
+            <p className="text-sm text-red-700 font-medium">This action cannot be undone. All data associated with this user will be permanently removed.</p>
+            {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+          </div>
+          <DialogFooter className="border-t pt-3 mt-2">
+            <Button variant="outline" onClick={() => { setDeletingUser(null); setDeleteError(""); }}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={handlePermanentDelete}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />Deleting...</> : "Delete Permanently"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
