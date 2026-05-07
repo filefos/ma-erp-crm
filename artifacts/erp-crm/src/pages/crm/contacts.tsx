@@ -15,13 +15,12 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+
 import { Label } from "@/components/ui/label";
-import { Search, Plus, Trash2, ArrowLeft, ArrowRight, Upload, ChevronDown, Pencil } from "lucide-react";
+import { Search, Plus, Trash2, ArrowLeft, ArrowRight, Pencil } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
+import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -248,18 +247,42 @@ export function ContactsList() {
           <Button variant="outline" onClick={goCreateLeadDirect} data-testid="button-convert-to-lead">
             <ArrowRight className="w-4 h-4 mr-2" />Convert To Lead
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" data-testid="button-import-contacts">
-                <Upload className="w-4 h-4 mr-2" />Import Contacts <ChevronDown className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => toast({ title: "Excel import", description: "Coming in next phase." })}>From Excel (.xlsx)</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast({ title: "CSV import", description: "Coming in next phase." })}>From CSV (.csv)</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast({ title: "PDF import", description: "Coming in next phase." })}>From PDF (.pdf)</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <BulkUploadDialog
+            title="Import Contacts"
+            description="Upload an Excel (.xlsx) or CSV file to bulk-import contacts. Download the template to see the required format."
+            triggerLabel="Import Contacts"
+            templateFilename="contacts-import-template"
+            columns={[
+              { key: "name",        label: "Name",        required: true,  example: "John Doe" },
+              { key: "companyName", label: "Company",                       example: "Acme Corp" },
+              { key: "designation", label: "Designation",                   example: "Manager" },
+              { key: "phone",       label: "Mobile",                        example: "+971501234567" },
+              { key: "whatsapp",    label: "WhatsApp",                      example: "+971501234567" },
+              { key: "email",       label: "Email",                         example: "john@example.com" },
+            ]}
+            onRow={async (row) => {
+              const payload: Record<string, string | number> = {
+                name:        row["Name"]        ?? "",
+                companyName: row["Company"]     ?? "",
+                designation: row["Designation"] ?? "",
+                phone:       row["Mobile"]      ?? "",
+                whatsapp:    row["WhatsApp"]    ?? "",
+                email:       row["Email"]       ?? "",
+              };
+              if (activeCompanyId) payload.companyId = activeCompanyId;
+              const res = await fetch(`${import.meta.env.BASE_URL}api/contacts`, {
+                method: "POST",
+                headers: { ...authHeaders(), "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify(payload),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error((err as any).message ?? `HTTP ${res.status}`);
+              }
+            }}
+            onComplete={() => queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() })}
+          />
 
           {/* Add Contact dialog */}
           <Dialog open={open} onOpenChange={setOpen}>
