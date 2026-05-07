@@ -9,6 +9,7 @@ export interface BulkColumn {
   label: string;
   required?: boolean;
   example?: string | number;
+  aliases?: string[];
 }
 
 interface BulkUploadDialogProps {
@@ -27,11 +28,18 @@ function normalizeRows(rows: ParsedRow[], columns: BulkColumn[]): ParsedRow[] {
   if (!rows.length) return rows;
   const sampleKeys = Object.keys(rows[0]);
   const keyMap: Record<string, string> = {};
+  const mapped = new Set<string>();
+
   for (const col of columns) {
-    const match = sampleKeys.find(
-      k => k.trim().toLowerCase() === col.label.trim().toLowerCase()
+    if (mapped.has(col.label)) continue;
+    const candidates = [col.label, ...(col.aliases ?? [])];
+    const match = sampleKeys.find(k =>
+      candidates.some(c => c.trim().toLowerCase() === k.trim().toLowerCase())
     );
-    if (match && match !== col.label) keyMap[match] = col.label;
+    if (match && match !== col.label) {
+      keyMap[match] = col.label;
+      mapped.add(col.label);
+    }
   }
   if (!Object.keys(keyMap).length) return rows;
   return rows.map(row => {

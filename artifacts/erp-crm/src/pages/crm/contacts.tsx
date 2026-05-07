@@ -253,22 +253,29 @@ export function ContactsList() {
             triggerLabel="Import Contacts"
             templateFilename="contacts-import-template"
             columns={[
-              { key: "name",        label: "Name",        required: true,  example: "John Doe" },
-              { key: "companyName", label: "Company",                       example: "Acme Corp" },
-              { key: "designation", label: "Designation",                   example: "Manager" },
-              { key: "phone",       label: "Mobile",                        example: "+971501234567" },
-              { key: "whatsapp",    label: "WhatsApp",                      example: "+971501234567" },
-              { key: "email",       label: "Email",                         example: "john@example.com" },
+              { key: "name",        label: "Name",        example: "John Doe",
+                aliases: ["full name","contact name","client name","customer name","person name","contact","client","person"] },
+              { key: "companyName", label: "Company",     example: "Acme Corp",
+                aliases: ["company name","organisation","organization","firm","employer","account","account name","business","business name"] },
+              { key: "designation", label: "Designation", example: "Manager",
+                aliases: ["title","job title","position","role","post","department"] },
+              { key: "phone",       label: "Mobile",      example: "+971501234567",
+                aliases: ["phone","phone number","mobile number","telephone","tel","cell","contact number","mob","contact no"] },
+              { key: "whatsapp",    label: "WhatsApp",    example: "+971501234567",
+                aliases: ["whatsapp number","wa","wa number","whatsapp no"] },
+              { key: "email",       label: "Email",       example: "john@example.com",
+                aliases: ["email address","e-mail","e-mail address","mail"] },
             ]}
             onRow={async (row) => {
               const payload: Record<string, string | number> = {
-                name:        row["Name"]        ?? "",
-                companyName: row["Company"]     ?? "",
-                designation: row["Designation"] ?? "",
-                phone:       row["Mobile"]      ?? "",
-                whatsapp:    row["WhatsApp"]    ?? "",
-                email:       row["Email"]       ?? "",
+                name:        row["Name"]        || "",
+                companyName: row["Company"]     || "",
+                designation: row["Designation"] || "",
+                phone:       row["Mobile"]      || "",
+                whatsapp:    row["WhatsApp"]    || "",
+                email:       row["Email"]       || "",
               };
+              if (!payload.name && !payload.phone && !payload.email) return;
               if (activeCompanyId) payload.companyId = activeCompanyId;
               const res = await fetch(`${import.meta.env.BASE_URL}api/contacts`, {
                 method: "POST",
