@@ -138,6 +138,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/request-otp:
+    post:
+      operationId: requestOtp
+      tags: [auth]
+      summary: Request OTP (sent to registered mobile via WhatsApp)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestOtpBody"
+      responses:
+        "200":
+          description: OTP requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestOtpResponse"
+        "422":
+          description: No mobile number on file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-otp:
+    post:
+      operationId: verifyOtp
+      tags: [auth]
+      summary: Verify OTP and sign in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyOtpBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/change-password:
     post:
       operationId: changePassword
@@ -4070,6 +4120,35 @@ components:
           nullable: true
           description: Optional — the company workspace the user wants to enter. Must be in the user's accessibleCompanies. If omitted, the user's primary companyId is used.
       required: [email, password]
+
+    RequestOtpBody:
+      type: object
+      properties:
+        email:
+          type: string
+      required: [email]
+
+    RequestOtpResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        maskedPhone:
+          type: string
+          nullable: true
+      required: [success]
+
+    VerifyOtpBody:
+      type: object
+      properties:
+        email:
+          type: string
+        otp:
+          type: string
+        companyId:
+          type: integer
+          nullable: true
+      required: [email, otp]
 
     ChangePasswordBody:
       type: object

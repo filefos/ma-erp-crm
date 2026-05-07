@@ -111,6 +111,57 @@ export const GetMeResponse = zod.object({
 });
 
 /**
+ * @summary Request OTP (sent to registered mobile via WhatsApp)
+ */
+export const RequestOtpBody = zod.object({
+  email: zod.string(),
+});
+
+export const RequestOtpResponse = zod.object({
+  success: zod.boolean(),
+  maskedPhone: zod.string().nullish(),
+});
+
+/**
+ * @summary Verify OTP and sign in
+ */
+export const VerifyOtpBody = zod.object({
+  email: zod.string(),
+  otp: zod.string(),
+  companyId: zod.number().nullish(),
+});
+
+export const VerifyOtpResponse = zod.object({
+  user: zod.object({
+    id: zod.number(),
+    name: zod.string(),
+    email: zod.string(),
+    phone: zod.string().optional(),
+    role: zod.string(),
+    departmentId: zod.number().optional(),
+    departmentName: zod.string().optional(),
+    companyId: zod.number().optional(),
+    companyName: zod.string().optional(),
+    permissionLevel: zod.string().optional(),
+    status: zod.string().optional(),
+    lastLoginAt: zod.string().optional(),
+    accessibleCompanies: zod
+      .array(
+        zod.object({
+          id: zod.number(),
+          name: zod.string(),
+          shortName: zod.string(),
+          prefix: zod.string(),
+        }),
+      )
+      .optional(),
+    isActive: zod.boolean(),
+    createdAt: zod.string(),
+  }),
+  token: zod.string(),
+});
+
+/**
  * @summary Change password
  */
 export const ChangePasswordBody = zod.object({

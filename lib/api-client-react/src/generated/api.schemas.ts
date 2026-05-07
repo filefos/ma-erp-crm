@@ -26,6 +26,21 @@ export interface LoginBody {
   companyId?: number | null;
 }
 
+export interface RequestOtpBody {
+  email: string;
+}
+
+export interface RequestOtpResponse {
+  success: boolean;
+  maskedPhone?: string | null;
+}
+
+export interface VerifyOtpBody {
+  email: string;
+  otp: string;
+  companyId?: number | null;
+}
+
 export interface ChangePasswordBody {
   currentPassword: string;
   newPassword: string;

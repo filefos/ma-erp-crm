@@ -5,6 +5,8 @@ import { hashPassword, verifyPassword, generateToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/auth";
 import { audit } from "../lib/audit";
 import { sendLoginAlert } from "../lib/login-notify";
+import { storeOtp, verifyOtp } from "../lib/otp";
+import { sendWhatsAppOtp, maskPhone } from "../lib/whatsapp-send";
 
 const router = Router();
 
@@ -152,6 +154,118 @@ router.get("/auth/me", requireAuth, async (req, res): Promise<void> => {
       : [];
   const { passwordHash: _, ...userWithoutHash } = user;
   res.json({ ...userWithoutHash, companyName, departmentName, accessibleCompanies });
+});
+
+// ── OTP login: step 1 – request a code ─────────────────────────────────────
+router.post("/auth/request-otp", async (req, res): Promise<void> => {
+  const { email } = req.body;
+  if (!email || typeof email !== "string") {
+    res.status(400).json({ error: "email is required" });
+    return;
+  }
+
+  const normalized = email.toLowerCase().trim();
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, normalized));
+
+  // Return a generic success even for unknown emails (don't leak existence).
+  if (!user || !user.isActive) {
+    res.json({ success: true, maskedPhone: null });
+    return;
+  }
+
+  if (!user.phone) {
+    res.status(422).json({ error: "No mobile number on file for this account. Contact your administrator." });
+    return;
+  }
+
+  const code = storeOtp(normalized, user.id, user.phone);
+  const { sent } = await sendWhatsAppOtp(user.phone, code);
+
+  if (!sent) {
+    // In dev / missing config, log the code so it can still be tested.
+    req.log.info({ code, email: normalized }, "OTP (WhatsApp not configured — shown in server log for testing)");
+  }
+
+  await audit(req, { action: "otp_requested", entity: "auth", entityId: user.id, details: `OTP requested for ${normalized}`, userId: user.id, userName: user.name });
+
+  res.json({ success: true, maskedPhone: maskPhone(user.phone) });
+});
+
+// ── OTP login: step 2 – verify and issue token ─────────────────────────────
+router.post("/auth/verify-otp", async (req, res): Promise<void> => {
+  const { email, otp, companyId: requestedCompanyId } = req.body;
+  if (!email || !otp) {
+    res.status(400).json({ error: "email and otp are required" });
+    return;
+  }
+
+  const normalized = email.toLowerCase().trim();
+  const result = verifyOtp(normalized, String(otp));
+
+  if (!result.ok) {
+    const messages: Record<string, string> = {
+      not_found: "No OTP requested for this email. Please request a new one.",
+      expired: "OTP has expired. Please request a new one.",
+      invalid: "Incorrect OTP. Please try again.",
+      too_many_attempts: "Too many incorrect attempts. Please request a new OTP.",
+    };
+    res.status(401).json({ error: messages[result.reason] ?? "Invalid OTP" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, result.userId));
+  if (!user || !user.isActive) {
+    res.status(401).json({ error: "Account not found or inactive" });
+    return;
+  }
+
+  const access = await db.select().from(userCompanyAccessTable).where(eq(userCompanyAccessTable.userId, user.id));
+  const allCos = await db.select().from(companiesTable);
+  const accessibleCompanies = access.length
+    ? access
+        .map(a => allCos.find(c => c.id === a.companyId))
+        .filter((c): c is typeof allCos[number] => Boolean(c))
+        .map(c => ({ id: c.id, name: c.name, shortName: c.shortName, prefix: c.prefix }))
+    : user.companyId
+      ? allCos.filter(c => c.id === user.companyId).map(c => ({ id: c.id, name: c.name, shortName: c.shortName, prefix: c.prefix }))
+      : [];
+
+  let activeCompanyId: number | null = user.companyId ?? null;
+  if (requestedCompanyId !== undefined && requestedCompanyId !== null) {
+    const reqId = Number(requestedCompanyId);
+    if (Number.isFinite(reqId) && accessibleCompanies.some(c => c.id === reqId)) {
+      activeCompanyId = reqId;
+    }
+  }
+
+  const token = generateToken(user.id);
+  await db.update(usersTable).set({ lastLoginAt: new Date() }).where(eq(usersTable.id, user.id));
+
+  let companyName: string | undefined;
+  let departmentName: string | undefined;
+  if (activeCompanyId) {
+    const [co] = await db.select().from(companiesTable).where(eq(companiesTable.id, activeCompanyId));
+    companyName = co?.name;
+  }
+  if (user.departmentId) {
+    const [dept] = await db.select().from(departmentsTable).where(eq(departmentsTable.id, user.departmentId));
+    departmentName = dept?.name;
+  }
+
+  await audit(req, { action: "login_otp", entity: "auth", entityId: user.id, details: `${user.email} signed in via OTP to ${companyName ?? "default workspace"}`, userId: user.id, userName: user.name });
+
+  sendLoginAlert({
+    loginUserName: user.name,
+    loginUserEmail: user.email,
+    companyName: companyName ?? "default workspace",
+    ipAddress: req.ip ?? undefined,
+  }).catch(() => {});
+
+  const { passwordHash: _, ...userWithoutHash } = user;
+  res.json({
+    user: { ...userWithoutHash, companyId: activeCompanyId, companyName, departmentName, accessibleCompanies },
+    token,
+  });
 });
 
 router.post("/auth/change-password", requireAuth, async (req, res): Promise<void> => {
