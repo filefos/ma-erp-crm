@@ -40,7 +40,7 @@ function FixedDropdown({ triggerRef, open, onClose, children, minWidth = 160 }: 
 }) {
   if (!open) return null;
   const rect = triggerRef.current?.getBoundingClientRect();
-  const top  = rect ? rect.bottom + 4 : 8;
+  const top  = rect ? rect.bottom + 6 : 8;
   const left = rect ? rect.left      : 8;
   return createPortal(
     <>
@@ -51,8 +51,8 @@ function FixedDropdown({ triggerRef, open, onClose, children, minWidth = 160 }: 
       <div
         style={{
           position: "fixed", top, left, zIndex: 99999, minWidth,
-          background: "#ffffff", border: "1px solid #e1dfdd",
-          borderRadius: 4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+          background: "#ffffff", border: "1px solid #d6d2ce",
+          borderRadius: 6, boxShadow: "0 8px 28px rgba(0,0,0,0.18)",
           overflow: "hidden",
         }}
       >
@@ -225,12 +225,12 @@ function OutlookRibbon({
             onClick={() => { setMoveOpen(s => !s); setFlagOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
-        <FixedDropdown triggerRef={moveTriggerRef} open={moveOpen && hasSelected} onClose={() => setMoveOpen(false)}>
+        <FixedDropdown triggerRef={moveTriggerRef} open={moveOpen && hasSelected} onClose={() => setMoveOpen(false)} minWidth={220}>
           {MOVE_FOLDERS.filter(f => f.key !== currentFolder).map(f => (
             <button
               key={f.key}
               onClick={() => { onMove?.(f.key); setMoveOpen(false); }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors text-left"
+              className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors text-left"
               style={{ color: "#323130" }}
             >
               {f.label}
@@ -255,16 +255,16 @@ function OutlookRibbon({
             onClick={() => { setCategorizeOpen(s => !s); setMoveOpen(false); setFlagOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
-        <FixedDropdown triggerRef={categorizeTriggerRef} open={categorizeOpen} onClose={() => setCategorizeOpen(false)}>
-          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Color Categories</div>
+        <FixedDropdown triggerRef={categorizeTriggerRef} open={categorizeOpen} onClose={() => setCategorizeOpen(false)} minWidth={230}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Color Categories</div>
           {CATEGORIES.map(cat => (
             <button
               key={cat.label}
               onClick={() => { setCategorizeOpen(false); }}
-              className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
               style={{ color: "#323130" }}
             >
-              <span className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: cat.color }} />
+              <span className="w-4.5 h-4.5 rounded flex-shrink-0" style={{ background: cat.color, width: 18, height: 18 }} />
               {cat.label} Category
             </button>
           ))}
@@ -280,21 +280,21 @@ function OutlookRibbon({
             onClick={() => { setFlagOpen(s => !s); setMoveOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
-        <FixedDropdown triggerRef={flagTriggerRef} open={flagOpen && hasSelected} onClose={() => setFlagOpen(false)}>
+        <FixedDropdown triggerRef={flagTriggerRef} open={flagOpen && hasSelected} onClose={() => setFlagOpen(false)} minWidth={220}>
           <button
             onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
-            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+            className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
             style={{ color: "#323130" }}
           >
-            <Flag className="w-3.5 h-3.5 text-orange-500" />
+            <Flag className="w-4 h-4 text-orange-500" />
             {selectedEmail?.isStarred ? "Remove Flag" : "Flag: Follow up"}
           </button>
           <button
             onClick={() => { onToggleStar?.(); setFlagOpen(false); }}
-            className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+            className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
             style={{ color: "#323130" }}
           >
-            <Star className="w-3.5 h-3.5 text-orange-500" />
+            <Star className="w-4 h-4 text-orange-500" />
             {selectedEmail?.isStarred ? "Remove Star" : "Mark as Starred"}
           </button>
         </FixedDropdown>
@@ -353,17 +353,18 @@ function OutlookRibbon({
             onClick={() => { setFolderPaneOpen(s => !s); setReadingPaneOpen(false); setDensityOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
           />
         </div>
-        <FixedDropdown triggerRef={folderPaneTriggerRef} open={folderPaneOpen} onClose={() => setFolderPaneOpen(false)}>
-          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Folder Pane</div>
+        <FixedDropdown triggerRef={folderPaneTriggerRef} open={folderPaneOpen} onClose={() => setFolderPaneOpen(false)} minWidth={220}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Folder Pane</div>
           {[{ key: true,  label: "Normal" }, { key: false, label: "Off" }].map(opt => (
             <button
               key={String(opt.key)}
               onClick={() => { onToggleSidebar?.(); setFolderPaneOpen(false); }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
               style={{ color: "#323130", fontWeight: sidebarVisible === opt.key ? 600 : 400 }}
             >
-              {sidebarVisible === opt.key && <span className="w-2 h-2 rounded-full bg-[#0078d4] flex-shrink-0" />}
-              {sidebarVisible !== opt.key && <span className="w-2 h-2 flex-shrink-0" />}
+              {sidebarVisible === opt.key
+                ? <span className="w-2.5 h-2.5 rounded-full bg-[#0078d4] flex-shrink-0" />
+                : <span className="w-2.5 h-2.5 flex-shrink-0" />}
               {opt.label}
             </button>
           ))}
@@ -378,8 +379,8 @@ function OutlookRibbon({
             onClick={() => { setReadingPaneOpen(s => !s); setFolderPaneOpen(false); setDensityOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
           />
         </div>
-        <FixedDropdown triggerRef={readingPaneTriggerRef} open={readingPaneOpen} onClose={() => setReadingPaneOpen(false)}>
-          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Reading Pane</div>
+        <FixedDropdown triggerRef={readingPaneTriggerRef} open={readingPaneOpen} onClose={() => setReadingPaneOpen(false)} minWidth={220}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Reading Pane</div>
           {([
             { key: "right",  label: "Right" },
             { key: "bottom", label: "Bottom" },
@@ -388,11 +389,12 @@ function OutlookRibbon({
             <button
               key={opt.key}
               onClick={() => { onChangeReadingPane?.(opt.key); setReadingPaneOpen(false); }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
               style={{ color: "#323130", fontWeight: readingPaneLayout === opt.key ? 600 : 400 }}
             >
-              {readingPaneLayout === opt.key && <span className="w-2 h-2 rounded-full bg-[#0078d4] flex-shrink-0" />}
-              {readingPaneLayout !== opt.key && <span className="w-2 h-2 flex-shrink-0" />}
+              {readingPaneLayout === opt.key
+                ? <span className="w-2.5 h-2.5 rounded-full bg-[#0078d4] flex-shrink-0" />
+                : <span className="w-2.5 h-2.5 flex-shrink-0" />}
               {opt.label}
             </button>
           ))}
@@ -409,16 +411,16 @@ function OutlookRibbon({
             onClick={() => { setDensityOpen(s => !s); setFolderPaneOpen(false); setReadingPaneOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
           />
         </div>
-        <FixedDropdown triggerRef={densityTriggerRef} open={densityOpen} onClose={() => setDensityOpen(false)}>
-          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Message Density</div>
+        <FixedDropdown triggerRef={densityTriggerRef} open={densityOpen} onClose={() => setDensityOpen(false)} minWidth={220}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Message Density</div>
           {DENSITY_OPTIONS.map(opt => (
             <button
               key={opt.key}
               onClick={() => { setDensityOpen(false); }}
-              className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
               style={{ color: "#323130" }}
             >
-              <span className="w-2 h-2 flex-shrink-0" />
+              <span className="w-2.5 h-2.5 flex-shrink-0" />
               {opt.label}
             </button>
           ))}
@@ -533,14 +535,14 @@ function OutlookRibbon({
         <div ref={signatureTriggerRef}>
           <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={200}>
-          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
-            <PenLine className="w-3.5 h-3.5" />No signature
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={230}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+            <PenLine className="w-4 h-4" />No signature
           </button>
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
-            <Settings className="w-3.5 h-3.5" />Manage signatures…
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+            <Settings className="w-4 h-4" />Manage signatures…
           </button>
         </FixedDropdown>
         <Btn icon={<Table className="w-5 h-5" />} label="Table" />
@@ -620,14 +622,14 @@ function OutlookRibbon({
         <div ref={signatureTriggerRef}>
           <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={200}>
-          <div className="px-3 py-1.5 text-[11px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
-            <PenLine className="w-3.5 h-3.5" />No signature
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={230}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+            <PenLine className="w-4 h-4" />No signature
           </button>
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-2 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
-            <Settings className="w-3.5 h-3.5" />Manage signatures…
+          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+            <Settings className="w-4 h-4" />Manage signatures…
           </button>
         </FixedDropdown>
         <Btn icon={<Type className="w-5 h-5" />} label="Text box" />
