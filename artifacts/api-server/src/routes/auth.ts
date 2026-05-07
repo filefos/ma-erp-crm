@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { hashPassword, verifyPassword, generateToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/auth";
 import { audit } from "../lib/audit";
-import { sendLoginAlert } from "../lib/whatsapp-notify";
+import { sendLoginAlert } from "../lib/login-notify";
 
 const router = Router();
 
