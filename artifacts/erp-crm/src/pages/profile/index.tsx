@@ -45,6 +45,14 @@ export function MyProfile() {
     getAutomationLevel().then(r => { if (!cancelled) setAutoLevel(r.automationLevel); }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (window.location.hash === "#signature") {
+      setTimeout(() => {
+        document.getElementById("signature")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  }, []);
   const onChangeAutoLevel = async (v: AutomationLevel) => {
     setAutoLevel(v);
     setAutoSaving(true);
@@ -218,7 +226,7 @@ export function MyProfile() {
       </Card>
 
       {/* Signature */}
-      <Card>
+      <Card id="signature">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">My Signature</CardTitle>
           <CardDescription>Upload your signature image. It will appear on printed documents (quotations, invoices, POs, etc.).</CardDescription>

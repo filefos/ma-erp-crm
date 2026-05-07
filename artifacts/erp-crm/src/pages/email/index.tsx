@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -96,6 +97,7 @@ function OutlookRibbon({
   const [densityOpen, setDensityOpen] = useState(false);
   const [signatureOpen, setSignatureOpen] = useState(false);
   const hasSelected = !!selectedEmail;
+  const [, navigate] = useLocation();
 
   const moveTriggerRef        = useRef<HTMLDivElement>(null);
   const flagTriggerRef        = useRef<HTMLDivElement>(null);
@@ -541,7 +543,7 @@ function OutlookRibbon({
             <PenLine className="w-4 h-4" />No signature
           </button>
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+          <button onClick={() => { setSignatureOpen(false); navigate("/profile#signature"); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
             <Settings className="w-4 h-4" />Manage signatures…
           </button>
         </FixedDropdown>
@@ -628,7 +630,7 @@ function OutlookRibbon({
             <PenLine className="w-4 h-4" />No signature
           </button>
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+          <button onClick={() => { setSignatureOpen(false); navigate("/profile#signature"); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
             <Settings className="w-4 h-4" />Manage signatures…
           </button>
         </FixedDropdown>
