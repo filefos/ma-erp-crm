@@ -249,7 +249,7 @@ function WordsRow({ words, colSpan }: { words: string; colSpan?: number }) {
 export function DocumentPrint({ data }: { data: DocumentData }) {
   const co = COMPANIES[data.companyId] ?? COMPANIES[1];
   const coName = data.companyRef ?? co.name;
-  const defaultLogo = data.companyId === 1 ? "/prime-max-logo.png" : undefined;
+  const defaultLogo = data.companyId === 1 ? "/prime-max-logo.png" : "/elite-prefab-logo.svg";
   const companyLogo = data.companyLogo ?? defaultLogo;
   const isDelivery = data.type === "delivery_note";
   const _now = new Date();

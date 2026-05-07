@@ -131,7 +131,7 @@ export const OfferLetterTemplate = forwardRef<HTMLDivElement, { doc: OfferLetter
                   const logoSrc = doc.companyLogoUrl
                     || (doc.letterhead === "prime" || (!doc.letterhead && isPrime)
                       ? "/erp-crm/prime-max-logo.png"
-                      : null);
+                      : "/erp-crm/elite-prefab-logo.svg");
                   return logoSrc ? (
                     <img
                       src={logoSrc}

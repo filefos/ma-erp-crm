@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
+  <!-- House rooftops - similar to Prime Max style but mirrored/slightly different arrangement -->
+  <!-- Left roof -->
+  <polyline points="30,110 100,45 170,110" fill="none" stroke="#152965" stroke-width="11" stroke-linejoin="round" stroke-linecap="square"/>
+  <!-- Right roof (offset, overlapping) -->
+  <polyline points="80,110 160,38 240,110" fill="none" stroke="#152965" stroke-width="11" stroke-linejoin="round" stroke-linecap="square"/>
+  <!-- Horizontal base line -->
+  <line x1="30" y1="118" x2="240" y2="118" stroke="#152965" stroke-width="7"/>
+  <line x1="50" y1="128" x2="220" y2="128" stroke="#152965" stroke-width="3.5"/>
+
+  <!-- Company name -->
+  <text x="200" y="160" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="34" fill="#152965" text-anchor="middle" letter-spacing="2">ELITE PREFAB</text>
+
+  <!-- Subtitle with decorative dashes -->
+  <line x1="30" y1="175" x2="90" y2="175" stroke="#152965" stroke-width="2.5"/>
+  <text x="200" y="179" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#152965" text-anchor="middle" letter-spacing="1.5">HOUSES TRADING CO. LLC</text>
+  <line x1="310" y1="175" x2="370" y2="175" stroke="#152965" stroke-width="2.5"/>
+</svg>
