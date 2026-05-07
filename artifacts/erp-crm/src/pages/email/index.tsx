@@ -69,6 +69,7 @@ function OutlookRibbon({
   selectedEmail, onDelete, onArchive, onReply, onForward,
   onMarkAllRead, onToggleStar, onMove, currentFolder,
   sidebarVisible, onToggleSidebar, readingPaneLayout, onChangeReadingPane,
+  signatureText, signatureEnabled, onInsertSignature, onRemoveSignature, onManageSignatures,
 }: {
   activeTab: string;
   setActiveTab: (t: string) => void;
@@ -88,6 +89,11 @@ function OutlookRibbon({
   onToggleSidebar?: () => void;
   readingPaneLayout?: "right" | "bottom" | "off";
   onChangeReadingPane?: (layout: "right" | "bottom" | "off") => void;
+  signatureText?: string;
+  signatureEnabled?: boolean;
+  onInsertSignature?: () => void;
+  onRemoveSignature?: () => void;
+  onManageSignatures?: () => void;
 }) {
   const [moveOpen, setMoveOpen] = useState(false);
   const [flagOpen, setFlagOpen] = useState(false);
@@ -537,13 +543,17 @@ function OutlookRibbon({
         <div ref={signatureTriggerRef}>
           <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={230}>
-          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
-            <PenLine className="w-4 h-4" />No signature
-          </button>
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={240}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Insert Signature</div>
+          {signatureText ? (
+            <button onClick={() => { setSignatureOpen(false); signatureEnabled ? onRemoveSignature?.() : onInsertSignature?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+              <PenLine className="w-4 h-4" />{signatureEnabled ? "Remove signature" : "Insert signature"}
+            </button>
+          ) : (
+            <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signature saved yet</div>
+          )}
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => { setSignatureOpen(false); navigate("/profile#signature"); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
             <Settings className="w-4 h-4" />Manage signatures…
           </button>
         </FixedDropdown>
@@ -624,13 +634,17 @@ function OutlookRibbon({
         <div ref={signatureTriggerRef}>
           <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={230}>
-          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Signatures</div>
-          <button onClick={() => setSignatureOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
-            <PenLine className="w-4 h-4" />No signature
-          </button>
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={240}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Insert Signature</div>
+          {signatureText ? (
+            <button onClick={() => { setSignatureOpen(false); signatureEnabled ? onRemoveSignature?.() : onInsertSignature?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+              <PenLine className="w-4 h-4" />{signatureEnabled ? "Remove signature" : "Insert signature"}
+            </button>
+          ) : (
+            <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signature saved yet</div>
+          )}
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => { setSignatureOpen(false); navigate("/profile#signature"); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
+          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
             <Settings className="w-4 h-4" />Manage signatures…
           </button>
         </FixedDropdown>
@@ -1026,6 +1040,11 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const [compose, setCompose] = useState<ComposeData>({
     toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "",
   });
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signatureText, setSignatureText] = useState<string>("");
+  const [signatureSaving, setSignatureSaving] = useState(false);
+  const [signatureSaved, setSignatureSaved] = useState(false);
+  const [signatureEnabled, setSignatureEnabled] = useState(true);
 
   const { data: settings } = useQuery({
     queryKey: ["email-settings", companyId],
@@ -1034,6 +1053,30 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
   const isConnected = !!(settings?.smtpHost && settings?.smtpUser);
   const accountEmail = settings?.smtpUser ?? (companyId === 1 ? "info@primemaxprefab.com" : "info@eliteprefab.com");
+  const token = localStorage.getItem("erp_token");
+
+  // Load saved email signature from user profile
+  useEffect(() => {
+    const sig = (user as any)?.emailSignature;
+    if (sig) setSignatureText(sig);
+  }, [(user as any)?.emailSignature]);
+
+  const handleSaveEmailSignature = async () => {
+    if (!user) return;
+    setSignatureSaving(true);
+    try {
+      await fetch(`/api/users/${(user as any).id}/email-signature`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ emailSignature: signatureText }),
+      });
+      setSignatureSaved(true);
+      setTimeout(() => setSignatureSaved(false), 2500);
+      qc.invalidateQueries({ queryKey: ["me"] });
+    } finally {
+      setSignatureSaving(false);
+    }
+  };
 
   const emailsKey = ["emails", folder, search];
   const { data: emails = [], isLoading, refetch } = useQuery<Email[]>({
@@ -1240,13 +1283,17 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
   const removeAttachment = (idx: number) => setAttachments(prev => prev.filter((_, i) => i !== idx));
 
+  const buildSignatureBlock = () =>
+    signatureText ? `\n\n--\n${signatureText}` : "";
+
   const openCompose = () => {
     setComposing(true);
     setSelectedId(null);
     setAttachments([]);
     setShowCc(false);
     setShowBcc(false);
-    setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "" });
+    setSignatureEnabled(true);
+    setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: signatureText ? buildSignatureBlock() : "" });
   };
 
   const FOLDERS: { key: Folder; label: string; icon: React.ReactNode }[] = [
@@ -1301,6 +1348,17 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           onToggleSidebar={() => setSidebarVisible(v => !v)}
           readingPaneLayout={readingPaneLayout}
           onChangeReadingPane={setReadingPaneLayout}
+          signatureText={signatureText}
+          signatureEnabled={signatureEnabled}
+          onInsertSignature={() => {
+            setSignatureEnabled(true);
+            setCompose(p => ({ ...p, body: p.body + buildSignatureBlock() }));
+          }}
+          onRemoveSignature={() => {
+            setSignatureEnabled(false);
+            setCompose(p => ({ ...p, body: p.body.replace(buildSignatureBlock(), "") }));
+          }}
+          onManageSignatures={() => setShowSignatureModal(true)}
         />
 
         {/* ── Sync progress bar ───────────────────────────────────────────── */}
@@ -2024,6 +2082,95 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
         onClose={() => setShowSettings(false)}
         companyId={companyId}
       />
+
+      {/* ── Manage Signatures Modal ─────────────────────────────────────── */}
+      {showSignatureModal && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setShowSignatureModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-2xl w-full max-w-xl mx-4 flex flex-col"
+            style={{ maxHeight: "90vh" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div>
+                <h2 className="text-base font-semibold" style={{ color: "#323130" }}>Email Signature</h2>
+                <p className="text-[12px] mt-0.5" style={{ color: "#605e5c" }}>
+                  This signature will be automatically added to new emails you compose.
+                </p>
+              </div>
+              <button onClick={() => setShowSignatureModal(false)} className="p-1 rounded hover:bg-gray-100">
+                <X className="w-5 h-5" style={{ color: "#605e5c" }} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+              <div>
+                <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>
+                  Signature text
+                </label>
+                <textarea
+                  className="w-full border rounded-md p-3 text-[13px] resize-none outline-none focus:border-[#0078d4]"
+                  style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", minHeight: 180 }}
+                  placeholder={"Best regards,\nYour Name\nJob Title | Prime Max Prefab\nPhone: +971 XX XXX XXXX\nEmail: name@primemax.ae"}
+                  value={signatureText}
+                  onChange={e => setSignatureText(e.target.value)}
+                />
+              </div>
+
+              {signatureText && (
+                <div>
+                  <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>Preview</label>
+                  <div
+                    className="border rounded-md p-4 bg-gray-50 text-[13px] whitespace-pre-wrap"
+                    style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", borderLeft: "3px solid #0078d4" }}
+                  >
+                    {signatureText}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 rounded-b-lg">
+              <button
+                onClick={() => { setSignatureText(""); }}
+                className="text-[13px] text-red-500 hover:text-red-700 transition-colors"
+              >
+                Clear signature
+              </button>
+              <div className="flex items-center gap-3">
+                {signatureSaved && (
+                  <span className="text-[13px] text-emerald-600 flex items-center gap-1">
+                    <Check className="w-4 h-4" />Saved!
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowSignatureModal(false)}
+                  className="px-4 py-2 text-[13px] rounded border hover:bg-gray-100 transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => { await handleSaveEmailSignature(); }}
+                  disabled={signatureSaving}
+                  className="px-5 py-2 text-[13px] rounded text-white font-medium transition-colors disabled:opacity-60"
+                  style={{ background: signatureSaving ? "#a19f9d" : "#0078d4" }}
+                >
+                  {signatureSaving ? "Saving…" : "Save signature"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

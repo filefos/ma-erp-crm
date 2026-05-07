@@ -298,6 +298,17 @@ router.put("/users/:id/signature", requireAuth, async (req, res): Promise<void> 
   res.json({ success: true });
 });
 
+router.put("/users/:id/email-signature", requireAuth, async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  if (req.user?.id !== id) {
+    res.status(403).json({ error: "You can only update your own email signature" });
+    return;
+  }
+  const { emailSignature } = req.body;
+  await db.update(usersTable).set({ emailSignature: emailSignature ?? null, updatedAt: new Date() }).where(eq(usersTable.id, id));
+  res.json({ success: true });
+});
+
 router.delete("/users/:id", requirePermissionLevel("super_admin"), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [before] = await db.select().from(usersTable).where(eq(usersTable.id, id));
