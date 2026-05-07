@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { hashPassword, verifyPassword, generateToken } from "../lib/auth";
 import { requireAuth } from "../middlewares/auth";
 import { audit } from "../lib/audit";
+import { sendLoginAlert } from "../lib/whatsapp-notify";
 
 const router = Router();
 
@@ -107,6 +108,13 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   await audit(req, { action: "login", entity: "auth", entityId: user.id, details: `${user.email} signed in to ${companyName ?? "default workspace"}`, userId: user.id, userName: user.name });
+
+  sendLoginAlert({
+    loginUserName: user.name,
+    loginUserEmail: user.email,
+    companyName: companyName ?? "default workspace",
+    ipAddress: req.ip ?? undefined,
+  }).catch(() => {});
 
   const { passwordHash: _, ...userWithoutHash } = user;
   res.json({
