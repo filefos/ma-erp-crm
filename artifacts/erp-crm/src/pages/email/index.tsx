@@ -8,13 +8,17 @@ import {
   Paperclip, FileIcon, ChevronDown, ChevronRight, Flag, Archive,
   MoreHorizontal, Forward, AlertCircle, Bold, Italic, Underline,
   Link as LinkIcon, Smile, AlignJustify, Columns2, PanelRight,
-  CalendarDays, LayoutGrid, MessageSquare, MessagesSquare,
+  CalendarDays, LayoutGrid, MessageSquare,
+  Printer, Undo2, Users, Clock, Tag, PenLine, ImageIcon,
+  AlignLeft, AlignCenter, AlignRight, List, ListOrdered, Type,
+  Scissors, Copy, ClipboardPaste, Pen, Highlighter, Eraser,
+  HelpCircle, BookOpen, Lightbulb, ZoomIn, ZoomOut, AtSign,
+  SlidersHorizontal, Minus,
 } from "lucide-react";
 import { EmailSettingsModal } from "./settings-modal";
 
 /* ── Outlook Ribbon ─────────────────────────────────────────────────────────
-   Renders the Outlook-style tab bar + ribbon row.
-   activeTab / setActiveTab are lifted into EmailPanel state.
+   Renders the Outlook-style tab bar + ribbon row with labelled groups.
 ──────────────────────────────────────────────────────────────────────────── */
 const MENU_TABS = ["File", "Home", "View", "Help", "Message", "Insert", "Format text", "Draw", "Options"];
 
@@ -27,121 +31,279 @@ function OutlookRibbon({
   onSync: () => void;
   syncing: boolean;
 }) {
-  /* ── icon button helper ─────────────────────────────────────────────── */
-  function RibbonBtn({ icon, label, caret, onClick }: {
-    icon: React.ReactNode; label: string; caret?: boolean; onClick?: () => void;
+  /* ── Button: tall icon + label (+ optional caret) ───────────────────── */
+  function Btn({ icon, label, caret, onClick, disabled }: {
+    icon: React.ReactNode; label: string; caret?: boolean; onClick?: () => void; disabled?: boolean;
   }) {
     return (
       <button
         onClick={onClick}
-        className="flex flex-col items-center justify-end gap-0.5 px-2.5 py-1.5 rounded transition-colors hover:bg-[#e8e8e8] min-w-[44px]"
+        disabled={disabled}
+        className="flex flex-col items-center justify-center gap-[3px] px-2 py-1 rounded transition-colors hover:bg-[#ebebeb] min-w-[40px] disabled:opacity-40"
         style={{ color: "#323130" }}
       >
-        <span className="text-[18px] leading-none">{icon}</span>
-        <span className="flex items-center gap-0.5 text-[10px] whitespace-nowrap leading-tight" style={{ color: "#323130" }}>
-          {label}
-          {caret && <ChevronDown className="w-2.5 h-2.5 opacity-60" />}
+        <span className="flex items-center justify-center" style={{ width: 22, height: 22 }}>{icon}</span>
+        <span className="flex items-center gap-[2px] text-[10px] whitespace-nowrap leading-none" style={{ color: "#323130" }}>
+          {label}{caret && <ChevronDown className="w-[9px] h-[9px] opacity-55 ml-[1px]" />}
         </span>
       </button>
     );
   }
 
-  function RibbonDivider() {
-    return <div className="w-px self-stretch my-1.5 mx-1" style={{ background: "#e1dfdd" }} />;
-  }
-
-  function GroupLabel({ label }: { label: string }) {
+  /* ── Labelled group wrapper ─────────────────────────────────────────── */
+  function Group({ label, children }: { label: string; children: React.ReactNode }) {
     return (
-      <div className="flex flex-col items-center justify-between h-full">
-        <div className="flex items-center gap-0.5 flex-1">{/* buttons injected outside */}</div>
-        <span className="text-[9px] pb-0.5 px-1 border-t w-full text-center mt-auto" style={{ color: "#a19f9d", borderColor: "#e1dfdd" }}>
-          {label}
-        </span>
+      <div className="flex h-full">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-0 flex-1 px-1 pt-1 pb-0">{children}</div>
+          <div
+            className="text-[9px] text-center px-2 pb-[3px] pt-[2px] border-t"
+            style={{ color: "#a19f9d", borderColor: "#e1dfdd" }}
+          >
+            {label}
+          </div>
+        </div>
+        <div className="w-px mx-1 my-2" style={{ background: "#e1dfdd" }} />
       </div>
     );
   }
 
-  /* ── Home tab ribbon ─────────────────────────────────────────────────── */
+  /* ══════════════════════════════════════════════════════════════════════
+     HOME TAB  (matches screenshot: New | Delete | Report | Respond |
+                Move | Tags | Print | Find | Undo)
+  ══════════════════════════════════════════════════════════════════════ */
   const homeRibbon = (
-    <div className="flex items-stretch gap-0 h-full">
-      {/* New */}
-      <div className="flex items-center pr-2">
-        <RibbonBtn icon={<Plus className="w-5 h-5" />} label="New mail" onClick={onNewMail} />
-      </div>
-      <RibbonDivider />
-      {/* Delete group */}
-      <div className="flex items-center gap-0 px-1">
-        <RibbonBtn icon={<Trash2 className="w-5 h-5" />} label="Delete" />
-        <RibbonBtn icon={<Archive className="w-5 h-5" />} label="Archive" />
-        <RibbonBtn icon={<Flag className="w-5 h-5" />} label="Report" />
-      </div>
-      <RibbonDivider />
-      {/* Respond group */}
-      <div className="flex items-center gap-0 px-1">
-        <RibbonBtn icon={<Reply className="w-5 h-5" />} label="Reply" />
-        <RibbonBtn icon={<MessagesSquare className="w-5 h-5" />} label="Reply all" />
-        <RibbonBtn icon={<Forward className="w-5 h-5" />} label="Forward" />
-      </div>
-      <RibbonDivider />
-      {/* Move */}
-      <div className="flex items-center px-1">
-        <RibbonBtn icon={<Columns2 className="w-5 h-5" />} label="Move" caret />
-      </div>
-      <RibbonDivider />
-      {/* Tags */}
-      <div className="flex items-center gap-0 px-1">
-        <RibbonBtn icon={<Eye className="w-5 h-5" />} label="Mark all" />
-        <RibbonBtn icon={<Star className="w-5 h-5" />} label="Categorize" caret />
-        <RibbonBtn icon={<Flag className="w-5 h-5" />} label="Flag" caret />
-      </div>
-      <RibbonDivider />
-      {/* Sync */}
-      <div className="flex items-center px-1">
-        <RibbonBtn
-          icon={syncing ? <RotateCcw className="w-5 h-5 animate-spin" /> : <RotateCcw className="w-5 h-5" />}
-          label={syncing ? "Syncing…" : "Sync"}
-          onClick={onSync}
-        />
-      </div>
+    <div className="flex items-stretch h-full">
+      <Group label="New">
+        <Btn icon={<PenLine className="w-5 h-5" />} label="New" caret onClick={onNewMail} />
+      </Group>
+      <Group label="Delete">
+        <Btn icon={<Trash2 className="w-5 h-5" />} label="Delete" />
+        <Btn icon={<Archive className="w-5 h-5" />} label="Archive" />
+      </Group>
+      <Group label="Report">
+        <Btn icon={<AlertCircle className="w-5 h-5" />} label="Report" caret />
+      </Group>
+      <Group label="Respond">
+        <Btn icon={<Reply className="w-5 h-5" />} label="Reply" />
+        <Btn icon={<Forward className="w-5 h-5" style={{ transform: "scaleX(-1)" }} />} label="Reply all" caret />
+      </Group>
+      <Group label="Move">
+        <Btn icon={<Columns2 className="w-5 h-5" />} label="Move" caret />
+      </Group>
+      <Group label="Tags">
+        <Btn icon={<Eye className="w-5 h-5" />} label="Mark all as read" />
+        <Btn icon={<Tag className="w-5 h-5" />} label="Categorize" caret />
+        <Btn icon={<Flag className="w-5 h-5" />} label="Flag" caret />
+        <Btn icon={<Clock className="w-5 h-5" />} label="Snooze" caret />
+      </Group>
+      <Group label="Print">
+        <Btn icon={<Printer className="w-5 h-5" />} label="Print" />
+      </Group>
+      <Group label="Find">
+        <Btn icon={<Users className="w-5 h-5" />} label="Discover groups" />
+      </Group>
+      <Group label="Undo">
+        <Btn icon={<Undo2 className="w-5 h-5" />} label="Undo" />
+      </Group>
     </div>
   );
 
-  /* ── View tab ribbon (matches screenshot exactly) ───────────────────── */
+  /* ══════════════════════════════════════════════════════════════════════
+     VIEW TAB  (Settings | Messages | Layout)
+  ══════════════════════════════════════════════════════════════════════ */
   const viewRibbon = (
-    <div className="flex items-stretch gap-0 h-full">
-      {/* Settings group */}
-      <div className="flex items-center pr-2">
-        <RibbonBtn icon={<Settings className="w-5 h-5" />} label="View settings" caret />
-      </div>
-      <RibbonDivider />
-      {/* Messages group */}
-      <div className="flex items-center gap-0 px-1">
-        <RibbonBtn icon={<MessagesSquare className="w-5 h-5" />} label="Conversations" />
-        <RibbonBtn icon={<MessageSquare className="w-5 h-5" />} label="Message preview" caret />
-        <RibbonBtn
-          icon={syncing ? <RotateCcw className="w-5 h-5 animate-spin" /> : <RotateCcw className="w-5 h-5" />}
+    <div className="flex items-stretch h-full">
+      <Group label="Settings">
+        <Btn icon={<Settings className="w-5 h-5" />} label="View settings" caret />
+      </Group>
+      <Group label="Messages">
+        <Btn icon={<MessageSquare className="w-5 h-5" />} label="Conversations" />
+        <Btn icon={<LayoutGrid className="w-5 h-5" />} label="Message preview" caret />
+        <Btn
+          icon={<RotateCcw className={`w-5 h-5${syncing ? " animate-spin" : ""}`} />}
           label="Sync"
           onClick={onSync}
         />
-      </div>
-      <RibbonDivider />
-      {/* Layout group */}
-      <div className="flex items-center gap-0 px-1">
-        <RibbonBtn icon={<AlignJustify className="w-5 h-5" />} label="Ribbon" />
-        <RibbonBtn icon={<LayoutGrid className="w-5 h-5" />} label="Folder pane" caret />
-        <RibbonBtn icon={<PanelRight className="w-5 h-5" />} label="Reading pane" caret />
-        <RibbonBtn icon={<CalendarDays className="w-5 h-5" />} label="My day" caret />
-        <RibbonBtn icon={<Columns2 className="w-5 h-5" />} label="Density" caret />
-      </div>
+      </Group>
+      <Group label="Layout">
+        <Btn icon={<AlignJustify className="w-5 h-5" />} label="Ribbon" />
+        <Btn icon={<PanelRight className="w-5 h-5" />} label="Folder pane" caret />
+        <Btn icon={<Columns2 className="w-5 h-5" />} label="Reading pane" caret />
+        <Btn icon={<CalendarDays className="w-5 h-5" />} label="My Day" caret />
+        <Btn icon={<SlidersHorizontal className="w-5 h-5" />} label="Density" caret />
+      </Group>
+      <Group label="Zoom">
+        <Btn icon={<ZoomIn className="w-5 h-5" />} label="Zoom in" />
+        <Btn icon={<ZoomOut className="w-5 h-5" />} label="Zoom out" />
+      </Group>
     </div>
   );
+
+  /* ══════════════════════════════════════════════════════════════════════
+     HELP TAB
+  ══════════════════════════════════════════════════════════════════════ */
+  const helpRibbon = (
+    <div className="flex items-stretch h-full">
+      <Group label="Help">
+        <Btn icon={<HelpCircle className="w-5 h-5" />} label="Help" />
+        <Btn icon={<BookOpen className="w-5 h-5" />} label="What's new" />
+      </Group>
+      <Group label="Community">
+        <Btn icon={<Lightbulb className="w-5 h-5" />} label="Suggest a feature" />
+        <Btn icon={<Users className="w-5 h-5" />} label="Community" />
+      </Group>
+      <Group label="Show">
+        <Btn icon={<FileText className="w-5 h-5" />} label="Keyboard shortcuts" />
+        <Btn icon={<AlertCircle className="w-5 h-5" />} label="About" />
+      </Group>
+    </div>
+  );
+
+  /* ══════════════════════════════════════════════════════════════════════
+     MESSAGE TAB  (actions for selected/open message)
+  ══════════════════════════════════════════════════════════════════════ */
+  const messageRibbon = (
+    <div className="flex items-stretch h-full">
+      <Group label="New">
+        <Btn icon={<PenLine className="w-5 h-5" />} label="New" caret onClick={onNewMail} />
+      </Group>
+      <Group label="Respond">
+        <Btn icon={<Reply className="w-5 h-5" />} label="Reply" />
+        <Btn icon={<Forward className="w-5 h-5" style={{ transform: "scaleX(-1)" }} />} label="Reply all" />
+        <Btn icon={<Forward className="w-5 h-5" />} label="Forward" />
+      </Group>
+      <Group label="Delete">
+        <Btn icon={<Trash2 className="w-5 h-5" />} label="Delete" />
+        <Btn icon={<Archive className="w-5 h-5" />} label="Archive" />
+      </Group>
+      <Group label="Move">
+        <Btn icon={<Columns2 className="w-5 h-5" />} label="Move" caret />
+        <Btn icon={<Flag className="w-5 h-5" />} label="Report" caret />
+      </Group>
+      <Group label="Tags">
+        <Btn icon={<Tag className="w-5 h-5" />} label="Categorize" caret />
+        <Btn icon={<Flag className="w-5 h-5" />} label="Flag" caret />
+        <Btn icon={<Clock className="w-5 h-5" />} label="Snooze" caret />
+      </Group>
+      <Group label="Print">
+        <Btn icon={<Printer className="w-5 h-5" />} label="Print" />
+      </Group>
+    </div>
+  );
+
+  /* ══════════════════════════════════════════════════════════════════════
+     INSERT TAB
+  ══════════════════════════════════════════════════════════════════════ */
+  const insertRibbon = (
+    <div className="flex items-stretch h-full">
+      <Group label="Attachments">
+        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" />
+      </Group>
+      <Group label="Images">
+        <Btn icon={<ImageIcon className="w-5 h-5" />} label="Pictures" />
+      </Group>
+      <Group label="Links">
+        <Btn icon={<LinkIcon className="w-5 h-5" />} label="Link" />
+        <Btn icon={<AtSign className="w-5 h-5" />} label="Email link" />
+      </Group>
+      <Group label="Text">
+        <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret />
+        <Btn icon={<Type className="w-5 h-5" />} label="Text box" />
+      </Group>
+      <Group label="Symbols">
+        <Btn icon={<Smile className="w-5 h-5" />} label="Emoji" />
+      </Group>
+    </div>
+  );
+
+  /* ══════════════════════════════════════════════════════════════════════
+     FORMAT TEXT TAB
+  ══════════════════════════════════════════════════════════════════════ */
+  const formatTextRibbon = (
+    <div className="flex items-stretch h-full">
+      <Group label="Clipboard">
+        <Btn icon={<ClipboardPaste className="w-5 h-5" />} label="Paste" caret />
+        <Btn icon={<Scissors className="w-5 h-5" />} label="Cut" />
+        <Btn icon={<Copy className="w-5 h-5" />} label="Copy" />
+      </Group>
+      <Group label="Basic Text">
+        <Btn icon={<Bold className="w-5 h-5" />} label="Bold" />
+        <Btn icon={<Italic className="w-5 h-5" />} label="Italic" />
+        <Btn icon={<Underline className="w-5 h-5" />} label="Underline" caret />
+        <Btn icon={<Type className="w-5 h-5" />} label="Font size" caret />
+      </Group>
+      <Group label="Paragraph">
+        <Btn icon={<AlignLeft className="w-5 h-5" />} label="Align left" />
+        <Btn icon={<AlignCenter className="w-5 h-5" />} label="Centre" />
+        <Btn icon={<AlignRight className="w-5 h-5" />} label="Align right" />
+        <Btn icon={<List className="w-5 h-5" />} label="Bullets" />
+        <Btn icon={<ListOrdered className="w-5 h-5" />} label="Numbering" />
+      </Group>
+      <Group label="Undo">
+        <Btn icon={<Undo2 className="w-5 h-5" />} label="Undo" />
+      </Group>
+    </div>
+  );
+
+  /* ══════════════════════════════════════════════════════════════════════
+     DRAW TAB
+  ══════════════════════════════════════════════════════════════════════ */
+  const drawRibbon = (
+    <div className="flex items-stretch h-full">
+      <Group label="Tools">
+        <Btn icon={<Pen className="w-5 h-5" />} label="Pen" />
+        <Btn icon={<Highlighter className="w-5 h-5" />} label="Highlighter" />
+        <Btn icon={<Eraser className="w-5 h-5" />} label="Eraser" />
+      </Group>
+      <Group label="Insert">
+        <Btn icon={<Minus className="w-5 h-5" />} label="Line" />
+        <Btn icon={<ImageIcon className="w-5 h-5" />} label="Image" />
+      </Group>
+      <Group label="Undo">
+        <Btn icon={<Undo2 className="w-5 h-5" />} label="Undo" />
+      </Group>
+    </div>
+  );
+
+  /* ══════════════════════════════════════════════════════════════════════
+     OPTIONS TAB
+  ══════════════════════════════════════════════════════════════════════ */
+  const optionsRibbon = (
+    <div className="flex items-stretch h-full">
+      <Group label="Show Fields">
+        <Btn icon={<Mail className="w-5 h-5" />} label="From" />
+        <Btn icon={<Eye className="w-5 h-5" />} label="Bcc" />
+        <Btn icon={<FileText className="w-5 h-5" />} label="Subject" />
+      </Group>
+      <Group label="More Options">
+        <Btn icon={<Clock className="w-5 h-5" />} label="Delay delivery" />
+        <Btn icon={<Reply className="w-5 h-5" />} label="Direct replies to" />
+        <Btn icon={<SlidersHorizontal className="w-5 h-5" />} label="Message options" caret />
+      </Group>
+      <Group label="Permission">
+        <Btn icon={<EyeOff className="w-5 h-5" />} label="Encrypt" caret />
+      </Group>
+    </div>
+  );
+
+  /* ── Map tabs → ribbon content ───────────────────────────────────────── */
+  const ribbonMap: Record<string, React.ReactNode> = {
+    Home: homeRibbon,
+    View: viewRibbon,
+    Help: helpRibbon,
+    Message: messageRibbon,
+    Insert: insertRibbon,
+    "Format text": formatTextRibbon,
+    Draw: drawRibbon,
+    Options: optionsRibbon,
+  };
 
   return (
     <div className="flex-shrink-0 select-none border-b" style={{ borderColor: "#e1dfdd", background: "#ffffff" }}>
 
       {/* ── Tab bar ──────────────────────────────────────────────────────── */}
       <div className="flex items-center px-1" style={{ height: 32, background: "#ffffff" }}>
-        {/* Hamburger */}
         <button className="p-1.5 mr-1 rounded hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
           <AlignJustify className="w-4 h-4" />
         </button>
@@ -163,10 +325,10 @@ function OutlookRibbon({
 
       {/* ── Ribbon row ───────────────────────────────────────────────────── */}
       <div
-        className="flex items-center px-2 overflow-x-auto"
-        style={{ height: 68, background: "#ffffff", borderTop: "1px solid #f3f2f1" }}
+        className="flex items-stretch px-2 overflow-x-auto"
+        style={{ height: 72, background: "#ffffff", borderTop: "1px solid #f3f2f1" }}
       >
-        {activeTab === "View" ? viewRibbon : homeRibbon}
+        {ribbonMap[activeTab] ?? homeRibbon}
       </div>
 
     </div>
