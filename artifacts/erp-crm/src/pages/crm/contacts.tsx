@@ -254,7 +254,8 @@ export function ContactsList() {
             templateFilename="contacts-import-template"
             columns={[
               { key: "name",        label: "Name",        example: "John Doe",
-                aliases: ["full name","contact name","client name","customer name","person name","contact","client","person"] },
+                aliases: ["full name","contact name","client name","customer name","person name","contact","client","person",
+                          "contact detail","contact details","contact info","contact information","details","detail"] },
               { key: "companyName", label: "Company",     example: "Acme Corp",
                 aliases: ["company name","organisation","organization","firm","employer","account","account name","business","business name"] },
               { key: "designation", label: "Designation", example: "Manager",
@@ -275,7 +276,7 @@ export function ContactsList() {
                 whatsapp:    row["WhatsApp"]    || "",
                 email:       row["Email"]       || "",
               };
-              if (!payload.name && !payload.phone && !payload.email) return;
+              if (!payload.name && !payload.phone && !payload.email) throw new Error("Row has no identifiable contact data");
               if (activeCompanyId) payload.companyId = activeCompanyId;
               const res = await fetch(`${import.meta.env.BASE_URL}api/contacts`, {
                 method: "POST",
