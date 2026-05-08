@@ -1042,10 +1042,14 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   });
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signatureText, setSignatureText] = useState<string>("");
-  const [signatureMode, setSignatureMode] = useState<"text" | "image">("text");
   const [signatureSaving, setSignatureSaving] = useState(false);
   const [signatureSaved, setSignatureSaved] = useState(false);
   const [signatureEnabled, setSignatureEnabled] = useState(true);
+  const [sigName, setSigName] = useState("My Signature");
+  const [sigDefaultNew, setSigDefaultNew] = useState(true);
+  const [sigDefaultReplies, setSigDefaultReplies] = useState(false);
+  const [sigTab, setSigTab] = useState<"format" | "insert">("format");
+  const sigEditorRef = useRef<HTMLDivElement>(null);
 
   const { data: settings } = useQuery({
     queryKey: ["email-settings", companyId],
@@ -1059,28 +1063,37 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   // Load saved email signature from user profile
   useEffect(() => {
     const sig = (user as any)?.emailSignature;
-    if (sig) {
-      setSignatureText(sig);
-      setSignatureMode(sig.startsWith("data:image") ? "image" : "text");
-    }
+    if (sig) setSignatureText(sig);
   }, [(user as any)?.emailSignature]);
 
   const handleSaveEmailSignature = async () => {
     if (!user) return;
     setSignatureSaving(true);
+    const html = sigEditorRef.current?.innerHTML ?? "";
+    setSignatureText(html);
     try {
       await fetch(`/api/users/${(user as any).id}/email-signature`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ emailSignature: signatureText }),
+        body: JSON.stringify({ emailSignature: html }),
       });
       setSignatureSaved(true);
-      setTimeout(() => setSignatureSaved(false), 2500);
+      setTimeout(() => {
+        setSignatureSaved(false);
+        setShowSignatureModal(false);
+      }, 1200);
       qc.invalidateQueries({ queryKey: ["me"] });
     } finally {
       setSignatureSaving(false);
     }
   };
+
+  // Sync editor content when modal opens
+  useEffect(() => {
+    if (showSignatureModal && sigEditorRef.current) {
+      sigEditorRef.current.innerHTML = signatureText || "";
+    }
+  }, [showSignatureModal]);
 
   const emailsKey = ["emails", folder, search];
   const { data: emails = [], isLoading, refetch } = useQuery<Email[]>({
@@ -1287,11 +1300,11 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
   const removeAttachment = (idx: number) => setAttachments(prev => prev.filter((_, i) => i !== idx));
 
-  const isGifSignature = signatureText.startsWith("data:image");
-
   const buildSignatureBlock = () => {
     if (!signatureText) return "";
-    if (isGifSignature) return `\n\n<img src="${signatureText}" alt="signature" style="max-width:400px;" />`;
+    // If HTML (from rich text editor or legacy data:image), embed directly
+    if (signatureText.startsWith("<") || signatureText.startsWith("data:image"))
+      return `\n\n${signatureText}`;
     return `\n\n--\n${signatureText}`;
   };
 
@@ -2092,7 +2105,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
         companyId={companyId}
       />
 
-      {/* ── Manage Signatures Modal ─────────────────────────────────────── */}
+      {/* ── Edit Signature Modal (Outlook-style) ───────────────────────── */}
       {showSignatureModal && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center"
@@ -2100,138 +2113,241 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           onClick={() => setShowSignatureModal(false)}
         >
           <div
-            className="bg-white rounded-lg shadow-2xl w-full max-w-xl mx-4 flex flex-col"
-            style={{ maxHeight: "90vh" }}
+            className="bg-white shadow-2xl w-full flex flex-col"
+            style={{ maxWidth: 820, maxHeight: "92vh", borderRadius: 4, border: "1px solid #c8c6c4" }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <div>
-                <h2 className="text-base font-semibold" style={{ color: "#323130" }}>Email Signature</h2>
-                <p className="text-[12px] mt-0.5" style={{ color: "#605e5c" }}>
-                  This signature will be automatically added to new emails you compose.
-                </p>
-              </div>
-              <button onClick={() => setShowSignatureModal(false)} className="p-1 rounded hover:bg-gray-100">
-                <X className="w-5 h-5" style={{ color: "#605e5c" }} />
-              </button>
+            {/* ── Title bar ── */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-3">
+              <h2 className="text-[18px] font-semibold" style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>Edit signature</h2>
+              <span className="text-[13px] flex items-center gap-1.5" style={{ color: "#605e5c" }}>
+                <Mail className="w-4 h-4" />
+                {accountEmail}
+              </span>
             </div>
 
-            {/* Tabs */}
-            <div className="flex border-b px-6">
-              {(["text", "image"] as const).map(m => (
+            {/* ── Toolbar tabs ── */}
+            <div className="flex border-b px-6 gap-1" style={{ borderColor: "#e1dfdd" }}>
+              {(["format", "insert"] as const).map(t => (
                 <button
-                  key={m}
-                  onClick={() => { setSignatureMode(m); if (m !== (signatureText.startsWith("data:image") ? "image" : "text")) setSignatureText(""); }}
-                  className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${signatureMode === m ? "border-[#0078d4] text-[#0078d4]" : "border-transparent text-[#605e5c] hover:text-[#323130]"}`}
+                  key={t}
+                  onClick={() => setSigTab(t)}
+                  className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px`}
+                  style={{
+                    borderBottomColor: sigTab === t ? "#0078d4" : "transparent",
+                    color: sigTab === t ? "#0078d4" : "#605e5c",
+                    fontFamily: "'Segoe UI', system-ui, sans-serif",
+                  }}
                 >
-                  {m === "text" ? "Text" : "Image / GIF"}
+                  {t === "format" ? "Format text" : "Insert"}
                 </button>
               ))}
             </div>
 
-            {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-              {signatureMode === "text" ? (
+            {/* ── Toolbar ribbon ── */}
+            <div className="border-b px-3 py-1.5 flex items-center gap-1 flex-wrap" style={{ borderColor: "#e1dfdd", background: "#faf9f8", minHeight: 52 }}>
+              {sigTab === "format" ? (
                 <>
-                  <div>
-                    <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>Signature text</label>
-                    <textarea
-                      className="w-full border rounded-md p-3 text-[13px] resize-none outline-none focus:border-[#0078d4]"
-                      style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", minHeight: 180 }}
-                      placeholder={"Best regards,\nYour Name\nJob Title | Prime Max Prefab\nPhone: +971 XX XXX XXXX\nEmail: name@primemax.ae"}
-                      value={signatureText.startsWith("data:image") ? "" : signatureText}
-                      onChange={e => setSignatureText(e.target.value)}
-                    />
-                  </div>
-                  {signatureText && !signatureText.startsWith("data:image") && (
-                    <div>
-                      <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>Preview</label>
-                      <div className="border rounded-md p-4 bg-gray-50 text-[13px] whitespace-pre-wrap" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", borderLeft: "3px solid #0078d4" }}>
-                        {signatureText}
-                      </div>
-                    </div>
-                  )}
+                  {/* Font family */}
+                  <select
+                    className="border rounded px-1.5 py-0.5 text-[12px] outline-none focus:border-[#0078d4]"
+                    style={{ borderColor: "#c8c6c4", color: "#323130", height: 26, minWidth: 110 }}
+                    onChange={e => { sigEditorRef.current?.focus(); document.execCommand("fontName", false, e.target.value); }}
+                    defaultValue="Segoe UI"
+                  >
+                    {["Segoe UI","Arial","Calibri","Times New Roman","Georgia","Courier New","Verdana","Tahoma"].map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                  {/* Font size */}
+                  <select
+                    className="border rounded px-1 py-0.5 text-[12px] outline-none focus:border-[#0078d4]"
+                    style={{ borderColor: "#c8c6c4", color: "#323130", height: 26, width: 52 }}
+                    onChange={e => { sigEditorRef.current?.focus(); document.execCommand("fontSize", false, e.target.value); }}
+                    defaultValue="3"
+                  >
+                    {[["1","8"],["2","10"],["3","12"],["4","14"],["5","18"],["6","24"],["7","36"]].map(([v,l]) => (
+                      <option key={v} value={v}>{l}</option>
+                    ))}
+                  </select>
+                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
+                  {/* Bold */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("bold"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] font-bold text-[14px]" style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui" }} title="Bold">B</button>
+                  {/* Italic */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("italic"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] italic text-[14px]" style={{ color: "#323130" }} title="Italic">I</button>
+                  {/* Underline */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("underline"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] underline text-[14px]" style={{ color: "#323130" }} title="Underline">U</button>
+                  {/* Strikethrough */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("strikeThrough"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] line-through text-[14px]" style={{ color: "#323130" }} title="Strikethrough">S</button>
+                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
+                  {/* Text color */}
+                  <label className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] cursor-pointer relative" title="Font color">
+                    <span className="text-[12px] font-bold" style={{ color: "#323130" }}>A</span>
+                    <input type="color" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" defaultValue="#000000"
+                      onChange={e => { sigEditorRef.current?.focus(); document.execCommand("foreColor", false, e.target.value); }} />
+                  </label>
+                  {/* Highlight color */}
+                  <label className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] cursor-pointer relative" title="Highlight">
+                    <span className="text-[12px]" style={{ background: "#ffff00", padding: "1px 3px", color: "#323130" }}>ab</span>
+                    <input type="color" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" defaultValue="#ffff00"
+                      onChange={e => { sigEditorRef.current?.focus(); document.execCommand("backColor", false, e.target.value); }} />
+                  </label>
+                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
+                  {/* Bullet list */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("insertUnorderedList"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Bullet list">
+                    <List className="w-4 h-4" style={{ color: "#323130" }} />
+                  </button>
+                  {/* Numbered list */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("insertOrderedList"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Numbered list">
+                    <ListOrdered className="w-4 h-4" style={{ color: "#323130" }} />
+                  </button>
+                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
+                  {/* Align left */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyLeft"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align left">
+                    <AlignLeft className="w-4 h-4" style={{ color: "#323130" }} />
+                  </button>
+                  {/* Align center */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyCenter"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align center">
+                    <AlignCenter className="w-4 h-4" style={{ color: "#323130" }} />
+                  </button>
+                  {/* Align right */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyRight"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align right">
+                    <AlignRight className="w-4 h-4" style={{ color: "#323130" }} />
+                  </button>
+                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
+                  {/* Insert link */}
+                  <button onMouseDown={e => {
+                    e.preventDefault();
+                    const url = window.prompt("Enter URL:", "https://");
+                    if (url) { sigEditorRef.current?.focus(); document.execCommand("createLink", false, url); }
+                  }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Insert link">
+                    <LinkIcon className="w-4 h-4" style={{ color: "#323130" }} />
+                  </button>
+                  {/* Clear formatting */}
+                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("removeFormat"); }}
+                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Clear formatting">
+                    <Eraser className="w-4 h-4" style={{ color: "#323130" }} />
+                  </button>
                 </>
               ) : (
-                <>
-                  <p className="text-[12px]" style={{ color: "#605e5c" }}>
-                    Upload a GIF or image, or paste one from your clipboard (Ctrl+V / Cmd+V).
-                  </p>
-
-                  {/* Drop / paste zone */}
-                  <div
-                    className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors hover:border-[#0078d4] hover:bg-blue-50"
-                    style={{ minHeight: 140, borderColor: "#d1d5db" }}
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={e => {
-                      e.preventDefault();
-                      const file = e.dataTransfer.files[0];
-                      if (!file || !file.type.startsWith("image/")) return;
-                      const reader = new FileReader();
-                      reader.onload = ev => setSignatureText(ev.target?.result as string);
-                      reader.readAsDataURL(file);
-                    }}
-                    onPaste={e => {
-                      const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
-                      if (!item) return;
-                      const file = item.getAsFile();
+                /* Insert tab — image/GIF upload */
+                <button
+                  onMouseDown={e => {
+                    e.preventDefault();
+                    const inp = document.createElement("input");
+                    inp.type = "file";
+                    inp.accept = "image/*,.gif";
+                    inp.onchange = () => {
+                      const file = inp.files?.[0];
                       if (!file) return;
                       const reader = new FileReader();
-                      reader.onload = ev => setSignatureText(ev.target?.result as string);
-                      reader.readAsDataURL(file);
-                    }}
-                    tabIndex={0}
-                    onClick={() => {
-                      const inp = document.createElement("input");
-                      inp.type = "file";
-                      inp.accept = "image/*,.gif";
-                      inp.onchange = () => {
-                        const file = inp.files?.[0];
-                        if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = ev => setSignatureText(ev.target?.result as string);
-                        reader.readAsDataURL(file);
+                      reader.onload = ev => {
+                        const src = ev.target?.result as string;
+                        sigEditorRef.current?.focus();
+                        document.execCommand("insertImage", false, src);
                       };
-                      inp.click();
-                    }}
-                  >
-                    {signatureText.startsWith("data:image") ? (
-                      <img src={signatureText} alt="signature preview" style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 4 }} />
-                    ) : (
-                      <>
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-[13px] font-medium" style={{ color: "#323130" }}>Click to upload or drag & drop</p>
-                          <p className="text-[12px] mt-0.5" style={{ color: "#a19f9d" }}>GIF, PNG, JPG supported — or paste with Ctrl+V</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {signatureText.startsWith("data:image") && (
-                    <button
-                      onClick={() => setSignatureText("")}
-                      className="text-[12px] text-red-500 hover:text-red-700 transition-colors"
-                    >
-                      Remove image
-                    </button>
-                  )}
-                </>
+                      reader.readAsDataURL(file);
+                    };
+                    inp.click();
+                  }}
+                  className="flex items-center gap-2 px-3 py-1 rounded border hover:bg-[#ebebeb] text-[12px]"
+                  style={{ borderColor: "#c8c6c4", color: "#323130" }}
+                >
+                  <ImageIcon className="w-4 h-4" /> Insert Image / GIF
+                </button>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 rounded-b-lg">
-              <button
-                onClick={() => { setSignatureText(""); }}
-                className="text-[13px] text-red-500 hover:text-red-700 transition-colors"
-              >
-                Clear signature
-              </button>
-              <div className="flex items-center gap-3">
+            {/* ── Signature name ── */}
+            <div className="px-5 pt-3 pb-1">
+              <input
+                className="w-full border-b text-[13px] outline-none pb-1 bg-transparent"
+                style={{ borderColor: "#c8c6c4", color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
+                placeholder="Add a signature name"
+                value={sigName}
+                onChange={e => setSigName(e.target.value)}
+              />
+            </div>
+
+            {/* ── Rich text editor ── */}
+            <div className="flex-1 overflow-y-auto px-5 py-3" style={{ minHeight: 220 }}>
+              <div
+                ref={sigEditorRef}
+                contentEditable
+                suppressContentEditableWarning
+                className="outline-none min-h-[200px] w-full"
+                style={{
+                  fontFamily: "'Segoe UI', system-ui, sans-serif",
+                  fontSize: 13,
+                  color: "#323130",
+                  lineHeight: 1.6,
+                }}
+                onPaste={e => {
+                  // Handle image paste directly into editor
+                  const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
+                  if (item) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      const src = ev.target?.result as string;
+                      document.execCommand("insertImage", false, src);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                onDrop={e => {
+                  const file = e.dataTransfer.files[0];
+                  if (file?.type.startsWith("image/")) {
+                    e.preventDefault();
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      const src = ev.target?.result as string;
+                      sigEditorRef.current?.focus();
+                      document.execCommand("insertImage", false, src);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                onDragOver={e => e.preventDefault()}
+              />
+            </div>
+
+            {/* ── Defaults + footer ── */}
+            <div className="border-t px-5 py-4" style={{ borderColor: "#e1dfdd" }}>
+              <div className="flex items-center gap-6 mb-4">
+                <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none" style={{ color: "#323130" }}>
+                  <input
+                    type="checkbox"
+                    checked={sigDefaultNew}
+                    onChange={e => setSigDefaultNew(e.target.checked)}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: "#0078d4" }}
+                  />
+                  Set default for new messages
+                </label>
+                <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none" style={{ color: "#323130" }}>
+                  <input
+                    type="checkbox"
+                    checked={sigDefaultReplies}
+                    onChange={e => setSigDefaultReplies(e.target.checked)}
+                    className="w-4 h-4 rounded"
+                    style={{ accentColor: "#0078d4" }}
+                  />
+                  Set default for replies and forwards
+                </label>
+              </div>
+              <div className="flex items-center justify-end gap-3">
                 {signatureSaved && (
                   <span className="text-[13px] text-emerald-600 flex items-center gap-1">
                     <Check className="w-4 h-4" />Saved!
@@ -2239,18 +2355,22 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                 )}
                 <button
                   onClick={() => setShowSignatureModal(false)}
-                  className="px-4 py-2 text-[13px] rounded border hover:bg-gray-100 transition-colors"
-                  style={{ color: "#323130" }}
+                  className="px-5 py-1.5 text-[13px] rounded border hover:bg-gray-50 transition-colors"
+                  style={{ borderColor: "#c8c6c4", color: "#323130" }}
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={async () => { await handleSaveEmailSignature(); }}
+                  onClick={handleSaveEmailSignature}
                   disabled={signatureSaving}
-                  className="px-5 py-2 text-[13px] rounded text-white font-medium transition-colors disabled:opacity-60"
-                  style={{ background: signatureSaving ? "#a19f9d" : "#0078d4" }}
+                  className="px-5 py-1.5 text-[13px] rounded border transition-colors disabled:opacity-50"
+                  style={{
+                    background: signatureSaving ? "#f3f2f1" : "#f3f2f1",
+                    borderColor: "#c8c6c4",
+                    color: signatureSaving ? "#a19f9d" : "#323130",
+                  }}
                 >
-                  {signatureSaving ? "Saving…" : "Save signature"}
+                  {signatureSaving ? "Saving…" : "Save"}
                 </button>
               </div>
             </div>
