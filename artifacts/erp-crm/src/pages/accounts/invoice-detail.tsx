@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2, Mail } from "lucide-react";
+import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2, Mail, Loader2 } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 import { useAuth } from "@/hooks/useAuth";
 import { authHeaders } from "@/lib/ai-client";
 
@@ -33,6 +34,7 @@ export function InvoiceDetail({ id }: Props) {
   const { openCompose } = useEmailCompose();
   const [converting, setConverting] = useState(false);
   const [creatingJournal, setCreatingJournal] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const handleAutoJournal = async () => {
     if (creatingJournal) return;
@@ -198,17 +200,31 @@ export function InvoiceDetail({ id }: Props) {
           </Button>
           <Button
             size="sm" variant="outline"
-            onClick={() => openCompose({
-              toAddress: (inv as any).clientEmail ?? "",
-              toName: inv.clientName ?? "",
-              subject: `Tax Invoice ${inv.invoiceNumber ?? ""} – ${inv.clientName ?? ""}`,
-              body: `Dear ${inv.clientName ?? "Sir/Madam"},\n\nPlease find attached Tax Invoice ${inv.invoiceNumber ?? ""} amounting to AED ${Number(inv.grandTotal ?? 0).toLocaleString()}.\n\nPayment Status: ${inv.paymentStatus ?? "unpaid"}\n\nKindly process the payment at your earliest convenience.\n\nBest regards,\nPrime Max Prefab`,
-              clientName: inv.clientName ?? "",
-              sourceRef: inv.invoiceNumber ?? "",
-              companyId: inv.companyId ?? undefined,
-            })}
+            disabled={generatingPdf}
+            onClick={async () => {
+              const docEl = document.querySelector<HTMLElement>(".print-doc");
+              let attachments: { filename: string; content: string; contentType: string; size: number }[] = [];
+              if (docEl) {
+                setGeneratingPdf(true);
+                try {
+                  const filename = `TaxInvoice_${inv.invoiceNumber ?? inv.id ?? "doc"}.pdf`;
+                  const { base64 } = await captureElementToPdfBase64(docEl, filename);
+                  attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
+                } catch { /* fall through */ } finally { setGeneratingPdf(false); }
+              }
+              openCompose({
+                toAddress: (inv as any).clientEmail ?? "",
+                toName: inv.clientName ?? "",
+                subject: `Tax Invoice ${inv.invoiceNumber ?? ""} – ${inv.clientName ?? ""}`,
+                body: `Dear ${inv.clientName ?? "Sir/Madam"},\n\nPlease find attached Tax Invoice ${inv.invoiceNumber ?? ""} amounting to AED ${Number(inv.grandTotal ?? 0).toLocaleString()}.\n\nPayment Status: ${inv.paymentStatus ?? "unpaid"}\n\nKindly process the payment at your earliest convenience.\n\nBest regards,\nPrime Max Prefab`,
+                clientName: inv.clientName ?? "",
+                sourceRef: inv.invoiceNumber ?? "",
+                companyId: inv.companyId ?? undefined,
+                attachments,
+              });
+            }}
           >
-            <Mail className="w-4 h-4 mr-1" />Send Email
+            {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
           <ExportButtons docNumber={inv.invoiceNumber ?? inv.id?.toString() ?? "Invoice"} recipientPhone={(inv as any).clientPhone ?? undefined} recipientEmail={(inv as any).clientEmail ?? undefined} companyId={inv.companyId ?? undefined} docTypeLabel="Tax Invoice" />
         </div>

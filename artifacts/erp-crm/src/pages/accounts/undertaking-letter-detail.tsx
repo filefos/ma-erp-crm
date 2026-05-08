@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { ArrowLeft, Pencil, CheckCircle, Download, Printer, Mail } from "lucide-react";
+import { ArrowLeft, Pencil, CheckCircle, Download, Printer, Mail, Loader2 } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { UndertakingLetterTemplate } from "@/components/undertaking-letter-template";
@@ -34,6 +34,7 @@ export function UndertakingLetterDetail({ id }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
   const [editMode, setEditMode] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const { data: ul, isLoading } = useGetUndertakingLetter(ulId, {
     query: { queryKey: getGetUndertakingLetterQueryKey(ulId), enabled: !!ulId },
@@ -148,17 +149,31 @@ export function UndertakingLetterDetail({ id }: Props) {
         <div className="ml-auto flex gap-2">
           <Button
             size="sm" variant="outline"
-            onClick={() => openCompose({
-              toAddress: "",
-              toName: ul.clientName ?? "",
-              subject: `Undertaking Letter ${ul.ulNumber ?? ""} – ${ul.clientName ?? ""}`,
-              body: `Dear ${ul.clientName ?? "Sir/Madam"},\n\nPlease find attached our Undertaking Letter ${ul.ulNumber ?? ""} as per your request.\n\nKindly review and confirm your receipt.\n\nBest regards,\nPrime Max Prefab`,
-              clientName: ul.clientName ?? "",
-              sourceRef: ul.ulNumber ?? "",
-              companyId: (ul as any).companyId ?? undefined,
-            })}
+            disabled={generatingPdf}
+            onClick={async () => {
+              const el = printRef.current;
+              let attachments: { filename: string; content: string; contentType: string; size: number }[] = [];
+              if (el) {
+                setGeneratingPdf(true);
+                try {
+                  const filename = `UndertakingLetter_${ul.ulNumber ?? ul.id ?? "doc"}.pdf`;
+                  const { base64 } = await captureElementToPdfBase64(el, filename);
+                  attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
+                } catch { /* fall through */ } finally { setGeneratingPdf(false); }
+              }
+              openCompose({
+                toAddress: "",
+                toName: ul.clientName ?? "",
+                subject: `Undertaking Letter ${ul.ulNumber ?? ""} – ${ul.clientName ?? ""}`,
+                body: `Dear ${ul.clientName ?? "Sir/Madam"},\n\nPlease find attached our Undertaking Letter ${ul.ulNumber ?? ""} as per your request.\n\nKindly review and confirm your receipt.\n\nBest regards,\nPrime Max Prefab`,
+                clientName: ul.clientName ?? "",
+                sourceRef: ul.ulNumber ?? "",
+                companyId: (ul as any).companyId ?? undefined,
+                attachments,
+              });
+            }}
           >
-            <Mail className="w-4 h-4 mr-1.5" />Send Email
+            {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1.5" />Send Email</>}
           </Button>
           <Button size="sm" variant="outline" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-1.5" />Print / PDF

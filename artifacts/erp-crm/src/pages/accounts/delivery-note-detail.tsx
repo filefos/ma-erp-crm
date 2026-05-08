@@ -7,7 +7,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { ArrowLeft, Receipt, Mail } from "lucide-react";
+import { useState } from "react";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { ArrowLeft, Receipt, Mail, Loader2 } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
@@ -25,6 +27,7 @@ export function DeliveryNoteDetail({ id }: Props) {
   const dnId = parseInt(id, 10);
   const { user } = useAuth();
   const { openCompose } = useEmailCompose();
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const { data: dn, isLoading } = useGetDeliveryNote(dnId, {
     query: { queryKey: getGetDeliveryNoteQueryKey(dnId), enabled: !!dnId },
@@ -93,17 +96,31 @@ export function DeliveryNoteDetail({ id }: Props) {
         <div className="ml-auto flex gap-2">
           <Button
             size="sm" variant="outline"
-            onClick={() => openCompose({
-              toAddress: (dn as any).clientEmail ?? "",
-              toName: dn.clientName ?? "",
-              subject: `Delivery Note ${dn.dnNumber ?? ""} – ${dn.projectName ?? dn.clientName ?? ""}`,
-              body: `Dear ${dn.clientName ?? "Sir/Madam"},\n\nPlease find attached Delivery Note ${dn.dnNumber ?? ""} for ${dn.projectName ?? "your project"}.\n\nDelivery Status: ${dn.status ?? ""}\n\nKindly acknowledge receipt of the delivered items.\n\nBest regards,\nPrime Max Prefab`,
-              clientName: dn.clientName ?? "",
-              sourceRef: dn.dnNumber ?? "",
-              companyId: dn.companyId ?? undefined,
-            })}
+            disabled={generatingPdf}
+            onClick={async () => {
+              const docEl = document.querySelector<HTMLElement>(".print-doc");
+              let attachments: { filename: string; content: string; contentType: string; size: number }[] = [];
+              if (docEl) {
+                setGeneratingPdf(true);
+                try {
+                  const filename = `DeliveryNote_${dn.dnNumber ?? dn.id ?? "doc"}.pdf`;
+                  const { base64 } = await captureElementToPdfBase64(docEl, filename);
+                  attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
+                } catch { /* fall through */ } finally { setGeneratingPdf(false); }
+              }
+              openCompose({
+                toAddress: (dn as any).clientEmail ?? "",
+                toName: dn.clientName ?? "",
+                subject: `Delivery Note ${dn.dnNumber ?? ""} – ${dn.projectName ?? dn.clientName ?? ""}`,
+                body: `Dear ${dn.clientName ?? "Sir/Madam"},\n\nPlease find attached Delivery Note ${dn.dnNumber ?? ""} for ${dn.projectName ?? "your project"}.\n\nDelivery Status: ${dn.status ?? ""}\n\nKindly acknowledge receipt of the delivered items.\n\nBest regards,\nPrime Max Prefab`,
+                clientName: dn.clientName ?? "",
+                sourceRef: dn.dnNumber ?? "",
+                companyId: dn.companyId ?? undefined,
+                attachments,
+              });
+            }}
           >
-            <Mail className="w-4 h-4 mr-1" />Send Email
+            {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
           <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} recipientEmail={(dn as any).clientEmail ?? undefined} companyId={dn.companyId ?? undefined} docTypeLabel="Delivery Note" />
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 import {
   useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
   useCreateTaxInvoice, useCreateDeliveryNote,
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2, Mail } from "lucide-react";
+import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2, Mail, Loader2 } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { DocumentPrint } from "@/components/document-print";
@@ -53,6 +54,7 @@ export function QuotationDetail({ id }: Props) {
   const { user } = useAuth();
   const { openCompose } = useEmailCompose();
   const [converting, setConverting] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [convertOpen, setConvertOpen] = useState<ConvertTarget | null>(null);
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [selected, setSelected] = useState<boolean[]>([]);
@@ -400,17 +402,42 @@ export function QuotationDetail({ id }: Props) {
 
           <Button
             size="sm" variant="outline"
-            onClick={() => openCompose({
-              toAddress: q.clientEmail ?? "",
-              toName: q.clientName ?? "",
-              subject: `Quotation ${q.quotationNumber ?? ""} – ${q.projectName ?? q.clientName ?? ""}`,
-              body: `Dear ${q.clientName ?? "Sir/Madam"},\n\nPlease find attached our quotation ${q.quotationNumber ?? ""} for ${q.projectName ?? "your project"}.\n\nTotal Value: AED ${Number(q.grandTotal ?? 0).toLocaleString()}\n\nFor any queries, please do not hesitate to contact us.\n\nBest regards,\nPrime Max Prefab`,
-              clientName: q.clientName ?? "",
-              sourceRef: q.quotationNumber ?? "",
-              companyId: q.companyId ?? undefined,
-            })}
+            disabled={generatingPdf}
+            onClick={async () => {
+              const docEl = document.querySelector<HTMLElement>(".print-doc");
+              let attachments: { filename: string; content: string; contentType: string; size: number }[] = [];
+              if (docEl) {
+                setGeneratingPdf(true);
+                try {
+                  const filename = `Quotation_${q.quotationNumber ?? q.id ?? "doc"}.pdf`;
+                  const { base64 } = await captureElementToPdfBase64(docEl, filename);
+                  attachments = [{
+                    filename,
+                    content: base64,
+                    contentType: "application/pdf",
+                    size: Math.round(base64.length * 0.75),
+                  }];
+                } catch {
+                  /* fall through — open compose without attachment */
+                } finally {
+                  setGeneratingPdf(false);
+                }
+              }
+              openCompose({
+                toAddress: q.clientEmail ?? "",
+                toName: q.clientName ?? "",
+                subject: `Quotation ${q.quotationNumber ?? ""} – ${q.projectName ?? q.clientName ?? ""}`,
+                body: `Dear ${q.clientName ?? "Sir/Madam"},\n\nPlease find attached our quotation ${q.quotationNumber ?? ""} for ${q.projectName ?? "your project"}.\n\nTotal Value: AED ${Number(q.grandTotal ?? 0).toLocaleString()}\n\nFor any queries, please do not hesitate to contact us.\n\nBest regards,\nPrime Max Prefab`,
+                clientName: q.clientName ?? "",
+                sourceRef: q.quotationNumber ?? "",
+                companyId: q.companyId ?? undefined,
+                attachments,
+              });
+            }}
           >
-            <Mail className="w-4 h-4 mr-1" />Send Email
+            {generatingPdf
+              ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</>
+              : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
           <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} recipientPhone={q.clientPhone ?? undefined} recipientEmail={q.clientEmail ?? undefined} companyId={q.companyId ?? undefined} docTypeLabel="Quotation" />
         </div>
