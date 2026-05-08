@@ -130,14 +130,6 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    label: "Email",
-    icon: Mail,
-    items: [
-      { href: "/email/dashboard", label: "Email Dashboard", icon: LayoutDashboard },
-      { href: "/email", label: "Email Panel", icon: Mail },
-    ],
-  },
-  {
     label: "Reports",
     icon: BarChart,
     items: [
@@ -155,7 +147,6 @@ const NAV: NavGroup[] = [
       { href: "/admin/users", label: "Users", icon: UserCog },
       { href: "/admin/roles", label: "Roles & Permissions", icon: KeyRound },
       { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
-      { href: "/admin/emails", label: "All Company Emails", icon: Mail },
       { href: "/admin/reset", label: "Reset Center", icon: RotateCcw },
       { href: "/admin/activity-monitor", label: "User Activity Monitor", icon: MonitorCheck },
     ],
@@ -507,7 +498,6 @@ const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
   projects:    { label: "Projects",    href: "/projects/dashboard" },
   hr:          { label: "HR",          href: "/hr/dashboard" },
   assets:      { label: "Assets",      href: "/assets/dashboard" },
-  email:       { label: "Email",       href: "/email/dashboard" },
   reports:     { label: "Reports",     href: "/reports/dashboard" },
   admin:       { label: "Admin",       href: "/admin/companies" },
 };

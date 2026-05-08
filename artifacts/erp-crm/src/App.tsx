@@ -53,7 +53,6 @@ import { SalesDashboard } from "@/pages/sales/dashboard";
 import { ProjectsDashboard } from "@/pages/projects/dashboard";
 import { HrDashboard } from "@/pages/hr/dashboard";
 import { AssetsDashboard } from "@/pages/assets/dashboard";
-import { EmailDashboard } from "@/pages/email/dashboard";
 import { ReportsDashboard } from "@/pages/reports/dashboard";
 import { ChequeDetail } from "@/pages/accounts/cheque-detail";
 import { InventoryItemsList } from "@/pages/inventory/items";
@@ -83,14 +82,12 @@ import { AuditLogsList } from "@/pages/admin/audit-logs";
 import { CompaniesAdmin } from "@/pages/admin/companies";
 import { DepartmentsAdmin } from "@/pages/admin/departments";
 import { RolesAdmin } from "@/pages/admin/roles";
-import { AdminEmailPanel } from "@/pages/admin/emails";
 import { AdminResetCenter } from "@/pages/admin/reset";
 import { ActivityMonitor } from "@/pages/admin/activity-monitor";
 import { AdminGuard } from "@/components/AdminGuard";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import { NotificationsList } from "@/pages/notifications/index";
 import { MyProfile } from "@/pages/profile/index";
-import { EmailPanel } from "@/pages/email/index";
 import NotFound from "@/pages/not-found";
 import { EmailComposeProvider } from "@/contexts/email-compose-context";
 import { EmailComposeModal } from "@/components/email-compose-modal";
@@ -399,9 +396,6 @@ function Router() {
       <Route path="/admin/audit-logs">
         <AdminGuard><AuditLogsList /></AdminGuard>
       </Route>
-      <Route path="/admin/emails">
-        <AdminGuard><AdminEmailPanel /></AdminGuard>
-      </Route>
       <Route path="/admin/reset">
         <AdminGuard><AdminResetCenter /></AdminGuard>
       </Route>
@@ -415,12 +409,6 @@ function Router() {
 
       <Route path="/notifications" component={NotificationsList} />
       <Route path="/profile" component={MyProfile} />
-      <Route path="/email/dashboard">
-        <ModuleGuard module="emails"><EmailDashboard /></ModuleGuard>
-      </Route>
-      <Route path="/email">
-        <ModuleGuard module="emails"><EmailPanel /></ModuleGuard>
-      </Route>
 
       <Route path="/" component={Dashboard} />
       <Route component={NotFound} />
