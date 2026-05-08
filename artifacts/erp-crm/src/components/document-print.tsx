@@ -860,39 +860,39 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             />
           </div>
         )}
-      </div>
 
-      {/* ══════════════════════════════════════════════════════════════
-          CUSTOM SECTIONS — one page-break section per entry (Quotation only)
-      ══════════════════════════════════════════════════════════════ */}
-      {isQuotation && (data.customSections ?? []).map((sec, si) => (
-        <div key={si} className="print-page-break mt-8">
-          <div className="overflow-hidden mb-[2px]">
-            <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-              {companyLogo && (
-                <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
-              )}
-              <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
-                <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
-                <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
-                <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+        {/* ══════════════════════════════════════════════════════════════
+            CUSTOM SECTIONS — one page-break section per entry (Quotation only)
+        ══════════════════════════════════════════════════════════════ */}
+        {isQuotation && (data.customSections ?? []).map((sec, si) => (
+          <div key={si} className="print-page-break mt-8">
+            <div className="overflow-hidden mb-[2px]">
+              <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                {companyLogo && (
+                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
+                )}
+                <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
+                  <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
+                  <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
+                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+                </div>
+              </div>
+              <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span className="text-[15px] font-black tracking-widest uppercase">{sec.title || "ADDITIONAL SECTION"}</span>
               </div>
             </div>
-            <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-              <span className="text-[15px] font-black tracking-widest uppercase">{sec.title || "ADDITIONAL SECTION"}</span>
+
+            <div className="border border-gray-400 p-4 text-[11px] bg-gray-50 mb-4" style={{ lineHeight: "1.7", whiteSpace: "pre-line", minHeight: 160 }}>
+              {sec.content || <span className="text-gray-400 italic">No content provided.</span>}
             </div>
-          </div>
 
-          <div className="border border-gray-400 p-4 text-[11px] bg-gray-50 mb-4" style={{ lineHeight: "1.7", whiteSpace: "pre-line", minHeight: 160 }}>
-            {sec.content || <span className="text-gray-400 italic">No content provided.</span>}
+            <PageFooter
+              left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
+              page={`Additional Page ${si + 1}`}
+            />
           </div>
-
-          <PageFooter
-            left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
-            page={`Additional Page ${si + 1}`}
-          />
-        </div>
-      ))}
+        ))}
+      </div>
     </>
   );
 }
