@@ -150,6 +150,7 @@ const NAV: NavGroup[] = [
       { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
       { href: "/admin/reset", label: "Reset Center", icon: RotateCcw },
       { href: "/admin/activity-monitor", label: "User Activity Monitor", icon: MonitorCheck },
+      { href: "/admin/company-documents", label: "Company Documents", icon: FileText },
     ],
   },
 ];

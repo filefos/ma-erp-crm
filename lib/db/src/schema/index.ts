@@ -21,3 +21,4 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./delegated-tasks";
 export * from "./lpo-acknowledgments";
+export * from "./company-documents";

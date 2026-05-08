@@ -1,0 +1,89 @@
+Create a new Admin Panel section named “COMPANY DOCUMENT”.
+
+Purpose:
+This section is for storing and managing all company-related documents with multiple attachments for each document category.
+
+Location:
+Add this section inside the Admin Panel with the exact name:
+
+“COMPANY DOCUMENT”
+
+Required document categories:
+1. Trade Licence - Multi Attachment
+2. Accounts Detail - Multi Attachment
+3. VAT Certificate - Multi Attachment
+4. Corporate Certificate - Multi Attachment
+5. Tenancy Contract - Multi Attachment
+6. Partner Detail - Multi Attachment
+7. MOA Certificate - Multi Attachment
+8. Establishment Card - Multi Attachment
+9. Emirates ID - Multi Attachment
+10. Passport - Multi Attachment
+11. Driving Licence - Multi Attachment
+12. Vehicle Registration - Multi Attachment
+13. More Attachment With Name - Multi Attachment
+
+Frontend requirements:
+- Create one page under Admin Panel called “COMPANY DOCUMENT”.
+- Show all document categories clearly.
+- Each category must allow multiple file uploads.
+- User must be able to:
+  - Upload files
+  - View files
+  - Download files
+  - Replace/update files
+  - Delete files
+  - Add remarks/notes
+- “More Attachment With Name” should allow user to type a custom attachment name and upload multiple files under that name.
+
+Update attachment rule:
+When user updates/replaces an attachment, show a confirmation question:
+
+“Do you want to keep the previous attachment?”
+
+If user selects YES:
+- Keep the previous attachment.
+- Save the new attachment also.
+- New attachment should use the same document name with revision number.
+- Example:
+  Existing file name: Trade Licence
+  New updated file name: Trade Licence R1
+  Next update: Trade Licence R2
+
+If user selects NO:
+- Replace the old attachment with the new one.
+- Keep only the latest uploaded attachment.
+
+Backend requirements:
+- Create database table/model for company documents.
+- Store:
+  - Document category
+  - Custom document name, if any
+  - Original file name
+  - Stored file path
+  - Revision number
+  - Upload date
+  - Updated date
+  - Uploaded by
+  - Remarks/notes
+  - Status: Active / Replaced / Archived
+- Support multiple attachments under each category.
+- Support revision history when previous attachments are kept.
+- Create APIs for:
+  - Upload company document
+  - Fetch all company documents
+  - Fetch by category
+  - View/download document
+  - Update/replace document
+  - Delete/archive document
+  - Add custom attachment name
+
+Validation:
+- Allow common document file types such as PDF, JPG, PNG, DOC, DOCX, XLS, XLSX.
+- Prevent duplicate overwrite unless user confirms replacement.
+- Keep previous file safely if user selects YES.
+- Do not delete old file automatically when revision history is required.
+- Ensure all files are linked to the correct document category.
+
+Final result:
+Admin user can open Admin Panel → COMPANY DOCUMENT and manage all company documents in one place with multi-attachment support, revision control, and the option to keep previous attachments while adding new ones as R1, R2, R3, etc.
