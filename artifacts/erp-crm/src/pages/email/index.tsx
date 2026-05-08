@@ -1199,6 +1199,8 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const [sigDefaultNew, setSigDefaultNew] = useState(true);
   const [sigDefaultReplies, setSigDefaultReplies] = useState(false);
   const [sigTab, setSigTab] = useState<"format" | "insert">("format");
+  const [sigSourceMode, setSigSourceMode] = useState(false);
+  const [sigSourceHtml, setSigSourceHtml] = useState("");
   const sigEditorRef = useRef<HTMLDivElement>(null);
 
   const { data: settings } = useQuery({
@@ -1232,7 +1234,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const handleSaveEmailSignature = async () => {
     if (!user) return;
     setSignatureSaving(true);
-    const html = sigEditorRef.current?.innerHTML ?? "";
+    const html = sigSourceMode ? sigSourceHtml : (sigEditorRef.current?.innerHTML ?? "");
     let updatedSigs: SigEntry[];
     if (editingSigId) {
       updatedSigs = signatures.map(s =>
@@ -2350,6 +2352,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                     <button
                       key={sig.id}
                       onClick={() => {
+                        setSigSourceMode(false);
                         setEditingSigId(sig.id);
                         setSigName(sig.name);
                         setSigDefaultNew(sig.defaultNew);
@@ -2378,6 +2381,8 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                 <div className="border-t px-3 py-2" style={{ borderColor: "#e1dfdd" }}>
                   <button
                     onClick={() => {
+                      setSigSourceMode(false);
+                      setSigSourceHtml("");
                       setEditingSigId(null);
                       setSigName("New Signature");
                       setSigDefaultNew(false);
@@ -2399,24 +2404,53 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
               <div className="flex flex-col flex-1 overflow-hidden">
 
                 {/* Toolbar tabs */}
-                <div className="flex border-b px-4 gap-1 flex-shrink-0" style={{ borderColor: "#e1dfdd" }}>
+                <div className="flex border-b px-4 gap-1 flex-shrink-0 items-center" style={{ borderColor: "#e1dfdd" }}>
                   {(["format", "insert"] as const).map(t => (
                     <button
                       key={t}
-                      onClick={() => setSigTab(t)}
+                      onClick={() => {
+                        if (sigSourceMode) {
+                          const html = sigSourceHtml;
+                          setSigSourceMode(false);
+                          setTimeout(() => { if (sigEditorRef.current) sigEditorRef.current.innerHTML = html; }, 0);
+                        }
+                        setSigTab(t);
+                      }}
                       className="px-4 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px"
                       style={{
-                        borderBottomColor: sigTab === t ? "#0078d4" : "transparent",
-                        color: sigTab === t ? "#0078d4" : "#605e5c",
+                        borderBottomColor: !sigSourceMode && sigTab === t ? "#0078d4" : "transparent",
+                        color: !sigSourceMode && sigTab === t ? "#0078d4" : "#605e5c",
                       }}
                     >
                       {t === "format" ? "Format text" : "Insert"}
                     </button>
                   ))}
+                  {/* HTML source toggle */}
+                  <button
+                    onClick={() => {
+                      if (sigSourceMode) {
+                        const html = sigSourceHtml;
+                        setSigSourceMode(false);
+                        setTimeout(() => { if (sigEditorRef.current) sigEditorRef.current.innerHTML = html; }, 0);
+                      } else {
+                        setSigSourceHtml(sigEditorRef.current?.innerHTML ?? "");
+                        setSigSourceMode(true);
+                      }
+                    }}
+                    className="ml-auto px-2.5 py-1 mb-1 rounded border font-mono text-[12px] transition-colors flex items-center gap-1"
+                    style={{
+                      borderColor: sigSourceMode ? "#0078d4" : "#c8c6c4",
+                      background: sigSourceMode ? "#e8f0fb" : "transparent",
+                      color: sigSourceMode ? "#0078d4" : "#605e5c",
+                    }}
+                    title={sigSourceMode ? "Switch to visual editor" : "Edit HTML source"}
+                  >
+                    {"</>"}
+                  </button>
                 </div>
 
-                {/* Toolbar ribbon */}
-                <div className="border-b px-3 py-1.5 flex items-center gap-1 flex-wrap flex-shrink-0" style={{ borderColor: "#e1dfdd", background: "#faf9f8", minHeight: 48 }}>
+                {/* Toolbar ribbon — hidden in source mode */}
+                <div className="border-b px-3 py-1.5 flex items-center gap-1 flex-wrap flex-shrink-0" style={{ borderColor: "#e1dfdd", background: "#faf9f8", minHeight: 48, display: sigSourceMode ? "none" : undefined }}>
                   {sigTab === "format" ? (
                     <>
                       <select className="border rounded px-1.5 py-0.5 text-[12px] outline-none focus:border-[#0078d4]" style={{ borderColor: "#c8c6c4", color: "#323130", height: 26, minWidth: 108 }}
@@ -2485,35 +2519,46 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                   />
                 </div>
 
-                {/* Rich text editor */}
+                {/* Editor area — visual or HTML source */}
                 <div className="flex-1 overflow-y-auto px-4 py-2" style={{ minHeight: 0 }}>
-                  <div
-                    ref={sigEditorRef}
-                    contentEditable
-                    suppressContentEditableWarning
-                    className="outline-none min-h-[120px] w-full"
-                    style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, color: "#323130", lineHeight: 1.6 }}
-                    onPaste={e => {
-                      const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
-                      if (item) {
-                        e.preventDefault();
-                        const file = item.getAsFile(); if (!file) return;
-                        const reader = new FileReader();
-                        reader.onload = ev => { const src = ev.target?.result as string; document.execCommand("insertImage", false, src); };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    onDrop={e => {
-                      const file = e.dataTransfer.files[0];
-                      if (file?.type.startsWith("image/")) {
-                        e.preventDefault();
-                        const reader = new FileReader();
-                        reader.onload = ev => { const src = ev.target?.result as string; sigEditorRef.current?.focus(); document.execCommand("insertImage", false, src); };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    onDragOver={e => e.preventDefault()}
-                  />
+                  {sigSourceMode ? (
+                    <textarea
+                      className="w-full font-mono text-[12px] outline-none resize-none border rounded p-3 bg-[#fafafa]"
+                      style={{ color: "#1e1e1e", borderColor: "#e1dfdd", lineHeight: 1.7, minHeight: 220, height: "100%" }}
+                      value={sigSourceHtml}
+                      onChange={e => setSigSourceHtml(e.target.value)}
+                      spellCheck={false}
+                      placeholder="<!-- paste or type HTML here -->"
+                    />
+                  ) : (
+                    <div
+                      ref={sigEditorRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      className="outline-none min-h-[120px] w-full"
+                      style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, color: "#323130", lineHeight: 1.6 }}
+                      onPaste={e => {
+                        const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
+                        if (item) {
+                          e.preventDefault();
+                          const file = item.getAsFile(); if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = ev => { const src = ev.target?.result as string; document.execCommand("insertImage", false, src); };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      onDrop={e => {
+                        const file = e.dataTransfer.files[0];
+                        if (file?.type.startsWith("image/")) {
+                          e.preventDefault();
+                          const reader = new FileReader();
+                          reader.onload = ev => { const src = ev.target?.result as string; sigEditorRef.current?.focus(); document.execCommand("insertImage", false, src); };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      onDragOver={e => e.preventDefault()}
+                    />
+                  )}
                 </div>
 
                 {/* Footer: defaults + actions */}
