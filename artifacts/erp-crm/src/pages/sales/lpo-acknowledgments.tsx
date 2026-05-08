@@ -403,7 +403,7 @@ export function LpoAcknowledgments() {
               </Button>
               <Button
                 className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
-                disabled={uploading || !file || !form.clientRef.trim()}
+                disabled={uploading || !file}
                 onClick={handleUpload}
               >
                 {uploading
