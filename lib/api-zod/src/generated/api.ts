@@ -1144,6 +1144,7 @@ export const ListQuotationsResponseItem = zod.object({
   approvedByName: zod.string().optional(),
   leadId: zod.number().optional(),
   dealId: zod.number().optional(),
+  clientCode: zod.string().optional(),
   items: zod
     .array(
       zod.object({
@@ -1240,6 +1241,7 @@ export const GetQuotationResponse = zod.object({
   approvedByName: zod.string().optional(),
   leadId: zod.number().optional(),
   dealId: zod.number().optional(),
+  clientCode: zod.string().optional(),
   items: zod
     .array(
       zod.object({
@@ -1332,6 +1334,7 @@ export const UpdateQuotationResponse = zod.object({
   approvedByName: zod.string().optional(),
   leadId: zod.number().optional(),
   dealId: zod.number().optional(),
+  clientCode: zod.string().optional(),
   items: zod
     .array(
       zod.object({
@@ -1402,6 +1405,7 @@ export const ApproveQuotationResponse = zod
     approvedByName: zod.string().optional(),
     leadId: zod.number().optional(),
     dealId: zod.number().optional(),
+    clientCode: zod.string().optional(),
     items: zod
       .array(
         zod.object({

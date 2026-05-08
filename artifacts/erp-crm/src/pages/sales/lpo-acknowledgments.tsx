@@ -339,7 +339,7 @@ export function LpoAcknowledgments() {
                     setForm(f => ({
                       ...f,
                       quotationNumber: v,
-                      clientRef: q?.clientName ?? f.clientRef,
+                      clientRef: q?.clientCode || q?.clientName || f.clientRef,
                     }));
                   }
                 }}

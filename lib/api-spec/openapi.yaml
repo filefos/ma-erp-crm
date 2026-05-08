@@ -4852,6 +4852,8 @@ components:
           type: integer
         dealId:
           type: integer
+        clientCode:
+          type: string
         items:
           type: array
           items:

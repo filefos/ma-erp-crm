@@ -37,6 +37,7 @@ export interface Quotation {
   approvedByName?: string;
   leadId?: number;
   dealId?: number;
+  clientCode?: string;
   items?: QuotationItem[];
   createdAt: string;
   updatedAt?: string;
