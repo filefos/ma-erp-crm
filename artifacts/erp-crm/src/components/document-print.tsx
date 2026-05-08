@@ -249,8 +249,9 @@ function WordsRow({ words, colSpan }: { words: string; colSpan?: number }) {
 export function DocumentPrint({ data }: { data: DocumentData }) {
   const co = COMPANIES[data.companyId] ?? COMPANIES[1];
   const coName = data.companyRef ?? co.name;
-  const defaultLogo = data.companyId === 1 ? "/prime-max-logo.png" : "/elite-prefab-logo.svg";
-  const companyLogo = data.companyLogo ?? defaultLogo;
+  const companyLogo = data.companyId === 2
+    ? `${import.meta.env.BASE_URL}elite-prefab-logo.svg`
+    : `${import.meta.env.BASE_URL}prime-max-logo.png`;
   const isDelivery = data.type === "delivery_note";
   const _now = new Date();
   const printDate = _now.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -340,7 +341,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             )}
             <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
               <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
-              <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
+              <div className="text-[11px] mt-[3px] opacity-90">{co.address}{!isQuotation ? ` | TRN: ${co.trn}` : ""}</div>
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
             </div>
           </div>
@@ -693,7 +694,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 )}
                 <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
                   <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
-                  <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
+                  <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
@@ -787,7 +788,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 )}
                 <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
                   <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
-                  <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
+                  <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
@@ -873,7 +874,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 )}
                 <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
                   <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
-                  <div className="text-[11px] mt-[3px] opacity-90">{co.address} | TRN: {co.trn}</div>
+                  <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
