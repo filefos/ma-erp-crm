@@ -61,19 +61,36 @@ router.get("/company-documents", async (req, res): Promise<void> => {
 });
 
 // GET /company-documents/:id/file — serve raw file
+// Accepts Bearer token via Authorization header OR ?token= query param
+// (the query-param form is needed for <iframe src> and <a href download>
+//  which the browser cannot send custom headers for).
 router.get("/company-documents/:id/file", async (req, res): Promise<void> => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Admin only" }); return; }
+  // Resolve token from header or query param
+  let token: string | undefined;
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else if (typeof req.query.token === "string") {
+    token = req.query.token;
+  }
+  if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { getUserFromToken } = await import("../lib/auth");
+  const user = await getUserFromToken(token);
+  if (!user || !user.isActive) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const isAdminUser = user.role === "super_admin" || user.role === "company_admin" ||
+    user.permissionLevel === "super_admin" || user.permissionLevel === "company_admin";
+  if (!isAdminUser) { res.status(403).json({ error: "Admin only" }); return; }
+
   const id = parseInt(req.params.id, 10);
   const [row] = await db.select().from(companyDocumentsTable).where(eq(companyDocumentsTable.id, id));
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
 
-  const allowed = scopedCompanyIds(req);
-  if (allowed !== null && !allowed.includes(row.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
-
   const buffer = Buffer.from(row.fileContent, "base64");
   const disposition = req.query.download === "1" ? "attachment" : "inline";
   res.setHeader("Content-Type", row.contentType);
-  res.setHeader("Content-Disposition", `${disposition}; filename="${row.fileName}"`);
+  res.setHeader("Content-Disposition", `${disposition}; filename="${encodeURIComponent(row.fileName)}"`);
   res.setHeader("Content-Length", buffer.length);
   res.send(buffer);
 });

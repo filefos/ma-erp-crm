@@ -54,6 +54,16 @@ import { authHeaders } from "@/lib/ai-client";
 
 const BASE = import.meta.env.BASE_URL;
 const MAX_MB = 25;
+
+function getToken(): string {
+  return localStorage.getItem("erp_token") ?? "";
+}
+
+function fileUrl(id: number, download = false): string {
+  const token = getToken();
+  const dl = download ? "&download=1" : "";
+  return `${BASE}api/company-documents/${id}/file?token=${encodeURIComponent(token)}${dl}`;
+}
 const ACCEPT = ".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx";
 const ALLOWED_TYPES = new Set([
   "application/pdf",
@@ -429,7 +439,7 @@ export function CompanyDocuments() {
             className="h-7 px-2.5 text-xs text-green-700 border-green-300 hover:bg-green-50 flex-shrink-0"
             onClick={() => {
               const a = document.createElement("a");
-              a.href = `${BASE}api/company-documents/${doc.id}/file?download=1`;
+              a.href = fileUrl(doc.id, true);
               a.download = doc.fileName;
               a.click();
             }}
@@ -492,8 +502,8 @@ export function CompanyDocuments() {
     const expanded = expandedCats.has(cat);
     return (
       <div className="border border-gray-200 rounded-xl overflow-hidden">
-        <button
-          className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left"
+        <div
+          className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={() => toggleCat(cat)}
         >
           <div className="flex items-center gap-3">
@@ -521,7 +531,7 @@ export function CompanyDocuments() {
             <Upload className="w-3 h-3 mr-1" />
             Upload
           </Button>
-        </button>
+        </div>
         {expanded && (
           <div className="border-t border-gray-100 bg-gray-50/50 p-4 space-y-2">
             {catDocs.length === 0 ? (
@@ -848,7 +858,7 @@ export function CompanyDocuments() {
                 onClick={() => {
                   if (!viewDoc) return;
                   const a = document.createElement("a");
-                  a.href = `${BASE}api/company-documents/${viewDoc.id}/file?download=1`;
+                  a.href = fileUrl(viewDoc.id, true);
                   a.download = viewDoc.fileName;
                   a.click();
                 }}
@@ -863,14 +873,14 @@ export function CompanyDocuments() {
               (viewDoc.contentType.startsWith("image/") ? (
                 <div className="w-full h-full flex items-center justify-center bg-gray-100 p-4">
                   <img
-                    src={`${BASE}api/company-documents/${viewDoc.id}/file`}
+                    src={fileUrl(viewDoc.id)}
                     alt={viewDoc.fileName}
                     className="max-w-full max-h-full object-contain rounded-lg shadow"
                   />
                 </div>
               ) : (
                 <iframe
-                  src={`${BASE}api/company-documents/${viewDoc.id}/file`}
+                  src={fileUrl(viewDoc.id)}
                   className="w-full h-full border-0"
                   title="Company Document"
                 />
