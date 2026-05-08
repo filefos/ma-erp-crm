@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft } from "lucide-react";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 
@@ -61,6 +61,7 @@ export function LpoAcknowledgments() {
   const [file, setFile] = useState<{ name: string; content: string; size: number; type: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadedRecord, setUploadedRecord] = useState<AckRecord | null>(null);
+  const [previewBackRecord, setPreviewBackRecord] = useState<AckRecord | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
 
@@ -363,7 +364,7 @@ export function LpoAcknowledgments() {
 
       {/* ─── Upload Dialog ─── */}
       <Dialog open={uploadOpen} onOpenChange={v => {
-        if (!v) { setUploadOpen(false); setFile(null); setUploadedRecord(null); }
+        if (!v) { setUploadOpen(false); setFile(null); setUploadedRecord(null); setPreviewBackRecord(null); }
       }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -393,9 +394,9 @@ export function LpoAcknowledgments() {
                   variant="outline"
                   className="flex flex-col h-16 gap-1 border-[#1e6ab0]/40 text-[#1e6ab0] hover:bg-blue-50"
                   onClick={() => {
-                    setUploadOpen(false);
-                    setUploadedRecord(null);
+                    setPreviewBackRecord(uploadedRecord);
                     setViewRecord(uploadedRecord);
+                    setUploadOpen(false);
                   }}
                 >
                   <Eye className="w-5 h-5" />
@@ -534,12 +535,35 @@ export function LpoAcknowledgments() {
       </Dialog>
 
       {/* ─── View PDF Dialog ─── */}
-      <Dialog open={!!viewRecord} onOpenChange={open => { if (!open) setViewRecord(null); }}>
+      <Dialog open={!!viewRecord} onOpenChange={open => {
+        if (!open) {
+          setViewRecord(null);
+          setPreviewBackRecord(null);
+        }
+      }}>
         <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 pt-5 pb-3 border-b flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-sm">{viewRecord?.customerName} — {viewRecord?.fileName}</DialogTitle>
-              <Button size="sm" variant="outline" className="text-green-700 border-green-300"
+            <div className="flex items-center justify-between gap-3">
+              {/* Back button — only shown when opened from the upload success screen */}
+              {previewBackRecord && (
+                <Button
+                  size="sm" variant="ghost"
+                  className="flex items-center gap-1.5 text-[#1e6ab0] hover:bg-blue-50 flex-shrink-0 -ml-2"
+                  onClick={() => {
+                    setViewRecord(null);
+                    setUploadedRecord(previewBackRecord);
+                    setPreviewBackRecord(null);
+                    setUploadOpen(true);
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="text-xs font-medium">Back</span>
+                </Button>
+              )}
+              <DialogTitle className="text-sm flex-1 truncate min-w-0">
+                {viewRecord?.customerName} — {viewRecord?.fileName}
+              </DialogTitle>
+              <Button size="sm" variant="outline" className="text-green-700 border-green-300 flex-shrink-0"
                 onClick={() => {
                   if (!viewRecord) return;
                   if (blobUrl) {
