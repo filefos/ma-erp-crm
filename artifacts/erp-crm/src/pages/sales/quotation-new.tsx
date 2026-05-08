@@ -116,6 +116,9 @@ export function QuotationNew() {
   const [showTC, setShowTC] = useState(false);
   const [customSections, setCustomSections] = useState<{ title: string; content: string }[]>([]);
 
+  // When opened via ?delegated=1 the admin has hidden contact details from the salesperson.
+  const isDelegated = (typeof window !== "undefined" ? window.location.search : "").includes("delegated=1");
+
   // Prefill form once the lead is loaded. Field names mirror leads schema.
   useEffect(() => {
     if (!leadForPrefill) return;
@@ -123,10 +126,12 @@ export function QuotationNew() {
     setForm(p => ({
       ...p,
       companyId: l.companyId ? String(l.companyId) : p.companyId,
-      clientName: l.companyName ?? l.leadName ?? p.clientName,
-      clientContactPerson: l.leadName ?? p.clientContactPerson,
-      clientEmail: l.email ?? p.clientEmail,
-      clientPhone: l.phone ?? p.clientPhone,
+      // Contact fields are hidden when this form is opened from a delegated task
+      clientName: isDelegated ? p.clientName : (l.companyName ?? l.leadName ?? p.clientName),
+      clientContactPerson: isDelegated ? p.clientContactPerson : (l.leadName ?? p.clientContactPerson),
+      clientEmail: isDelegated ? p.clientEmail : (l.email ?? p.clientEmail),
+      clientPhone: isDelegated ? p.clientPhone : (l.phone ?? p.clientPhone),
+      // Project fields are always pre-filled
       customerTrn: l.trnNumber ?? p.customerTrn,
       projectName: l.requirementType ?? p.projectName,
       projectLocation: l.officeAddress ?? l.location ?? p.projectLocation,

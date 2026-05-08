@@ -1,6 +1,25 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
+export type LeadPreview = {
+  id: number;
+  leadName: string;
+  requirementType?: string | null;
+  location?: string | null;
+  officeAddress?: string | null;
+  budget?: number | null;
+  quantity?: number | null;
+  notes?: string | null;
+  source?: string | null;
+  status?: string | null;
+  leadScore?: string | null;
+  trnNumber?: string | null;
+  companyType?: string | null;
+  website?: string | null;
+  licenseNumber?: string | null;
+  companyId?: number | null;
+};
+
 export type DelegatedTask = {
   id: number;
   companyId: number;
@@ -18,6 +37,7 @@ export type DelegatedTask = {
   grantedByName?: string;
   grantedToName?: string;
   leadName?: string | null;
+  leadPreview?: LeadPreview | null;
 };
 
 type DelegatedTaskContextValue = {

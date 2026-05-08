@@ -15,12 +15,37 @@ async function enrichTask(task: typeof delegatedTasksTable.$inferSelect) {
     .from(usersTable).where(eq(usersTable.id, task.grantedByUserId));
   const [grantedTo] = await db.select({ id: usersTable.id, name: usersTable.name })
     .from(usersTable).where(eq(usersTable.id, task.grantedToUserId));
+
   let leadName: string | undefined;
+  let leadPreview: Record<string, unknown> | null = null;
+
   if (task.leadId) {
-    const [lead] = await db.select({ leadName: leadsTable.leadName }).from(leadsTable).where(eq(leadsTable.id, task.leadId));
+    // Fetch lead but intentionally exclude sensitive contact fields:
+    // phone, whatsapp, email, companyName, contactPerson
+    const [lead] = await db.select({
+      id: leadsTable.id,
+      leadName: leadsTable.leadName,
+      requirementType: leadsTable.requirementType,
+      location: leadsTable.location,
+      officeAddress: leadsTable.officeAddress,
+      budget: leadsTable.budget,
+      quantity: leadsTable.quantity,
+      notes: leadsTable.notes,
+      source: leadsTable.source,
+      status: leadsTable.status,
+      leadScore: leadsTable.leadScore,
+      trnNumber: leadsTable.trnNumber,
+      companyType: leadsTable.companyType,
+      website: leadsTable.website,
+      licenseNumber: leadsTable.licenseNumber,
+      companyId: leadsTable.companyId,
+    }).from(leadsTable).where(eq(leadsTable.id, task.leadId));
+
     leadName = lead?.leadName;
+    if (lead) leadPreview = lead as Record<string, unknown>;
   }
-  return { ...task, grantedByName: grantedBy?.name, grantedToName: grantedTo?.name, leadName };
+
+  return { ...task, grantedByName: grantedBy?.name, grantedToName: grantedTo?.name, leadName, leadPreview };
 }
 
 router.get("/delegated-tasks/mine", async (req, res): Promise<void> => {
