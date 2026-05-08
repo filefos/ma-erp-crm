@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
-  useListLpos, useCreateLpo, useUpdateLpo, useListCompanies,
+  useListLpos, useCreateLpo, useUpdateLpo, useListCompanies, useListQuotations,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Plus, Pencil, Paperclip, FileIcon, X, Download,
-  Building2, Calendar, DollarSign, FileText, ClipboardList, Sparkles, Upload,
+  Building2, Calendar, DollarSign, FileText, ClipboardList, Sparkles, Upload, Link2,
 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
@@ -44,13 +44,101 @@ type LpoForm = {
   clientName: string; lpoNumber: string; lpoDate: string; lpoValue: string;
   paymentTerms: string; projectRef: string; scope: string; deliverySchedule: string;
   notes: string; status: string; companyId: string;
+  quotationId: string;
 };
 
 const EMPTY_FORM: LpoForm = {
   clientName: "", lpoNumber: "", lpoDate: "", lpoValue: "",
-  paymentTerms: "30 days", projectRef: "", scope: "",
+  paymentTerms: "", projectRef: "", scope: "",
   deliverySchedule: "", notes: "", status: "active", companyId: "",
+  quotationId: "",
 };
+
+// ── Quotation Picker ─────────────────────────────────────────────────────────
+function QuotationPicker({
+  quotations,
+  value,
+  onChange,
+}: {
+  quotations: any[];
+  value: string;
+  onChange: (id: string, q: any | null) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const selected = quotations.find(q => String(q.id) === value) ?? null;
+
+  const filtered = quotations.filter(q =>
+    !search ||
+    (q.quotationNumber ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (q.clientName ?? "").toLowerCase().includes(search.toLowerCase())
+  ).slice(0, 10);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  if (selected) {
+    return (
+      <div className="flex items-center gap-2 border border-blue-200 rounded-md px-3 py-2 bg-blue-50/60">
+        <Link2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="font-mono text-sm font-bold text-blue-900">{selected.quotationNumber}</div>
+          <div className="text-xs text-blue-700 truncate">{selected.clientName}</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => { onChange("", null); setSearch(""); }}
+          className="p-0.5 rounded hover:bg-blue-200 text-blue-500"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <Input
+        value={search}
+        onChange={e => { setSearch(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Search quotation number or client name…"
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-52 overflow-y-auto">
+          {filtered.map(q => (
+            <button
+              key={q.id}
+              type="button"
+              className="w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b border-gray-50 last:border-0 transition-colors"
+              onClick={() => { onChange(String(q.id), q); setOpen(false); }}
+            >
+              <div className="font-mono text-sm font-bold text-[#0f2d5a]">{q.quotationNumber}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {q.clientName}
+                {q.grandTotal ? ` · AED ${Number(q.grandTotal).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : ""}
+                {q.paymentTerms ? ` · ${q.paymentTerms}` : ""}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      {open && search && filtered.length === 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-sm px-3 py-3 text-sm text-muted-foreground">
+          No quotations found for "{search}"
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function LposList() {
   const { toast } = useToast();
@@ -70,6 +158,7 @@ export function LposList() {
 
   const { data: lpos = [], isLoading } = useListLpos();
   const { data: companies = [] } = useListCompanies();
+  const { data: quotations = [] } = useListQuotations();
   const { filterByCompany } = useActiveCompany();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/lpos"] });
@@ -130,6 +219,9 @@ export function LposList() {
   const totalValue = filtered.reduce((s, l) => s + (l.lpoValue ?? 0), 0);
   const selectedLpo = lpos.find(l => l.id === detailId);
 
+  // Lookup: quotationId → quotationNumber for display in the list
+  const quotationById = new Map<number, any>(quotations.map((q: any) => [q.id, q]));
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
@@ -162,13 +254,14 @@ export function LposList() {
       lpoNumber: lpo.lpoNumber ?? "",
       lpoDate: (lpo as any).lpoDate ?? "",
       lpoValue: String(lpo.lpoValue ?? ""),
-      paymentTerms: (lpo as any).paymentTerms ?? "30 days",
+      paymentTerms: (lpo as any).paymentTerms ?? "",
       projectRef: (lpo as any).projectRef ?? "",
       scope: (lpo as any).scope ?? "",
       deliverySchedule: (lpo as any).deliverySchedule ?? "",
       notes: (lpo as any).notes ?? "",
       status: lpo.status ?? "active",
       companyId: String(lpo.companyId),
+      quotationId: String((lpo as any).quotationId ?? ""),
     });
     setEditAttachments(((lpo as any).attachments ?? []) as AttachmentMeta[]);
   };
@@ -195,7 +288,6 @@ export function LposList() {
       });
       const json = await extractLpoFields(fileBase64, file.type);
       const x = json.extracted ?? {};
-      // Auto-attach the source file too so the LPO has the image on save.
       const srcAtt: AttachmentMeta = { filename: file.name, content: fileBase64, contentType: file.type, size: file.size };
       setAttachments(p => [...p, srcAtt]);
       setForm(p => ({
@@ -205,7 +297,8 @@ export function LposList() {
         lpoDate: x.lpoDate || p.lpoDate,
         lpoValue: x.lpoValue != null && x.lpoValue !== "" ? String(x.lpoValue) : p.lpoValue,
         projectRef: x.projectRef || p.projectRef,
-        paymentTerms: x.paymentTerms || p.paymentTerms,
+        // AI extracted paymentTerms are only applied if no quotation is linked
+        paymentTerms: p.quotationId ? p.paymentTerms : (x.paymentTerms || p.paymentTerms),
         scope: x.scope || p.scope,
         deliverySchedule: x.deliverySchedule || p.deliverySchedule,
         notes: x.notes || p.notes,
@@ -224,6 +317,7 @@ export function LposList() {
         ...form,
         lpoValue: parseFloat(form.lpoValue) || 0,
         companyId: parseInt(form.companyId, 10),
+        quotationId: form.quotationId ? parseInt(form.quotationId, 10) : undefined,
         attachments: attachments as any,
       } as any,
     });
@@ -237,6 +331,7 @@ export function LposList() {
         ...editForm,
         lpoValue: parseFloat(editForm.lpoValue) || 0,
         companyId: parseInt(editForm.companyId, 10),
+        quotationId: editForm.quotationId ? parseInt(editForm.quotationId, 10) : undefined,
         attachments: editAttachments as any,
       } as any,
     });
@@ -293,6 +388,7 @@ export function LposList() {
           <TableHeader>
             <TableRow>
               <TableHead>LPO Number</TableHead>
+              <TableHead>Our Quotation #</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Project Code</TableHead>
               <TableHead>LPO Date</TableHead>
@@ -304,48 +400,60 @@ export function LposList() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No LPOs found.</TableCell></TableRow>
-            ) : filtered.map(l => (
-              <TableRow
-                key={l.id}
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => openDetail(l.id)}
-              >
-                <TableCell className="font-medium text-primary font-mono text-sm">{l.lpoNumber}</TableCell>
-                <TableCell className="font-medium">{l.clientName}</TableCell>
-                <TableCell>
-                  {(l as any).projectRef ? (
-                    <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold bg-[#0f2d5a]/8 text-[#0f2d5a] border border-[#0f2d5a]/20 rounded-md px-2 py-0.5">
-                      {(l as any).projectRef}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">—</span>
-                  )}
-                </TableCell>
-                <TableCell>{(l as any).lpoDate || "-"}</TableCell>
-                <TableCell className="text-right font-medium">
-                  AED {(l.lpoValue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </TableCell>
-                <TableCell className="text-sm">{(l as any).paymentTerms || "-"}</TableCell>
-                <TableCell>
-                  {((l as any).attachments ?? []).length > 0 ? (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Paperclip className="w-3.5 h-3.5" />
-                      <span className="text-xs">{((l as any).attachments as any[]).length}</span>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">—</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className={statusBadge(l.status ?? "active")}>
-                    {l.status}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No LPOs found.</TableCell></TableRow>
+            ) : filtered.map(l => {
+              const linkedQ = (l as any).quotationId ? quotationById.get((l as any).quotationId) : null;
+              return (
+                <TableRow
+                  key={l.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => openDetail(l.id)}
+                >
+                  <TableCell className="font-medium text-primary font-mono text-sm">{l.lpoNumber}</TableCell>
+                  <TableCell>
+                    {linkedQ ? (
+                      <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200 rounded-md px-2 py-0.5">
+                        <Link2 className="w-2.5 h-2.5" />{linkedQ.quotationNumber}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">{l.clientName}</TableCell>
+                  <TableCell>
+                    {(l as any).projectRef ? (
+                      <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold bg-[#0f2d5a]/8 text-[#0f2d5a] border border-[#0f2d5a]/20 rounded-md px-2 py-0.5">
+                        {(l as any).projectRef}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>{(l as any).lpoDate || "-"}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    AED {(l.lpoValue ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-sm max-w-[180px] truncate" title={(l as any).paymentTerms || ""}>{(l as any).paymentTerms || "-"}</TableCell>
+                  <TableCell>
+                    {((l as any).attachments ?? []).length > 0 ? (
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Paperclip className="w-3.5 h-3.5" />
+                        <span className="text-xs">{((l as any).attachments as any[]).length}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className={statusBadge(l.status ?? "active")}>
+                      {l.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -384,6 +492,7 @@ export function LposList() {
             form={form} setForm={setForm}
             attachments={attachments} setAttachments={setAttachments}
             companies={companies as any[]}
+            quotations={quotations as any[]}
             fileInputRef={fileInputRef}
             onFileChange={e => handleFileSelect(e, false)}
           />
@@ -427,6 +536,7 @@ export function LposList() {
                 form={editForm} setForm={setEditForm}
                 attachments={editAttachments} setAttachments={setEditAttachments}
                 companies={companies as any[]}
+                quotations={quotations as any[]}
                 fileInputRef={fileInputRef}
                 onFileChange={e => handleFileSelect(e, true)}
                 isEdit
@@ -443,7 +553,16 @@ export function LposList() {
               </div>
             </>
           ) : (
-            selectedLpo && <LpoDetailView lpo={selectedLpo as any} />
+            selectedLpo && (
+              <LpoDetailView
+                lpo={selectedLpo as any}
+                linkedQuotation={
+                  (selectedLpo as any).quotationId
+                    ? quotationById.get((selectedLpo as any).quotationId) ?? null
+                    : null
+                }
+              />
+            )
           )}
         </DialogContent>
       </Dialog>
@@ -452,13 +571,14 @@ export function LposList() {
 }
 
 function LpoFormFields({
-  form, setForm, attachments, setAttachments, companies, fileInputRef, onFileChange, isEdit = false,
+  form, setForm, attachments, setAttachments, companies, quotations, fileInputRef, onFileChange, isEdit = false,
 }: {
   form: LpoForm;
   setForm: React.Dispatch<React.SetStateAction<LpoForm>>;
   attachments: AttachmentMeta[];
   setAttachments: React.Dispatch<React.SetStateAction<AttachmentMeta[]>>;
   companies: Array<{ id: number; shortName?: string; name?: string }>;
+  quotations: any[];
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isEdit?: boolean;
@@ -466,41 +586,88 @@ function LpoFormFields({
   const f = (k: keyof LpoForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm(p => ({ ...p, [k]: e.target.value }));
 
+  const isQuotationLinked = !!form.quotationId;
+
+  const handleQuotationSelect = (id: string, q: any | null) => {
+    if (!q) {
+      setForm(p => ({ ...p, quotationId: "" }));
+      return;
+    }
+    setForm(p => ({
+      ...p,
+      quotationId: id,
+      clientName: q.clientName ?? p.clientName,
+      lpoValue: q.grandTotal != null ? String(Number(q.grandTotal).toFixed(2)) : p.lpoValue,
+      paymentTerms: q.paymentTerms ?? p.paymentTerms,
+      companyId: q.companyId ? String(q.companyId) : p.companyId,
+      projectRef: q.projectName ?? p.projectRef,
+    }));
+  };
+
   return (
     <div className="space-y-4 py-2">
+      {/* Quotation linkage — always first */}
+      <div className="space-y-1.5 p-3 bg-blue-50/40 border border-blue-100 rounded-lg">
+        <Label className="text-blue-900 font-semibold flex items-center gap-1.5">
+          <Link2 className="w-3.5 h-3.5" /> Link to Our Quotation #
+          <span className="text-muted-foreground font-normal text-xs ml-1">— auto-fills client, value &amp; payment terms</span>
+        </Label>
+        <QuotationPicker
+          quotations={quotations}
+          value={form.quotationId}
+          onChange={handleQuotationSelect}
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1 col-span-2">
-          <Label>Client Name *</Label>
+          <Label>
+            Client Name *
+            {isQuotationLinked && (
+              <span className="ml-2 text-[10px] text-blue-600 font-normal bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5">from quotation</span>
+            )}
+          </Label>
           <Input value={form.clientName} onChange={f("clientName")} placeholder="Client / Company name" />
         </div>
         <div className="space-y-1">
-          <Label>LPO Number *</Label>
-          <Input value={form.lpoNumber} onChange={f("lpoNumber")} placeholder="Client's LPO reference no." />
+          <Label>LPO Number *
+            <span className="text-muted-foreground font-normal text-xs ml-1">(client&apos;s PO reference)</span>
+          </Label>
+          <Input value={form.lpoNumber} onChange={f("lpoNumber")} placeholder="e.g. LPO/CLIENT/2025/001" />
         </div>
         <div className="space-y-1">
           <Label>LPO Date</Label>
           <Input type="date" value={form.lpoDate} onChange={f("lpoDate")} />
         </div>
         <div className="space-y-1">
-          <Label>LPO Value (AED) *</Label>
+          <Label>
+            LPO Value (AED) *
+            {isQuotationLinked && (
+              <span className="ml-2 text-[10px] text-blue-600 font-normal bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5">from quotation</span>
+            )}
+          </Label>
           <Input type="number" value={form.lpoValue} onChange={f("lpoValue")} placeholder="0.00" />
         </div>
         <div className="space-y-1">
-          <Label>Payment Terms</Label>
-          <Select value={form.paymentTerms} onValueChange={v => setForm(p => ({ ...p, paymentTerms: v }))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="immediate">Immediate / Cash</SelectItem>
-              <SelectItem value="15 days">Net 15 Days</SelectItem>
-              <SelectItem value="30 days">Net 30 Days</SelectItem>
-              <SelectItem value="45 days">Net 45 Days</SelectItem>
-              <SelectItem value="60 days">Net 60 Days</SelectItem>
-              <SelectItem value="advance">100% Advance</SelectItem>
-            </SelectContent>
-          </Select>
+          <Label>
+            Payment Terms
+            {isQuotationLinked ? (
+              <span className="ml-2 text-[10px] text-blue-600 font-semibold bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5">strictly from quotation</span>
+            ) : null}
+          </Label>
+          <Input
+            value={form.paymentTerms}
+            onChange={f("paymentTerms")}
+            placeholder="e.g. 50% advance, 50% on delivery"
+            readOnly={isQuotationLinked}
+            className={isQuotationLinked ? "bg-blue-50/50 border-blue-200 text-blue-900 cursor-default" : ""}
+          />
+          {isQuotationLinked && (
+            <p className="text-[10px] text-blue-600">Payment terms are locked to the linked quotation and will be used for all auto-created invoices.</p>
+          )}
         </div>
         <div className="space-y-1">
-          <Label>Project Name <span className="text-muted-foreground font-normal text-xs">(optional — Project Code auto-generated on save)</span></Label>
+          <Label>Project Name <span className="text-muted-foreground font-normal text-xs">(Project Code auto-generated on save)</span></Label>
           <Input value={form.projectRef} onChange={f("projectRef")} placeholder="e.g. Warehouse Extension Phase 2" />
         </div>
         <div className="space-y-1">
@@ -579,7 +746,7 @@ function LpoFormFields({
   );
 }
 
-function LpoDetailView({ lpo }: { lpo: any }) {
+function LpoDetailView({ lpo, linkedQuotation }: { lpo: any; linkedQuotation: any | null }) {
   const atts: AttachmentMeta[] = lpo.attachments ?? [];
   const BASE_URL = import.meta.env.BASE_URL;
 
@@ -599,6 +766,25 @@ function LpoDetailView({ lpo }: { lpo: any }) {
 
   return (
     <div className="space-y-5 py-1">
+      {/* Linked quotation banner */}
+      {linkedQuotation && (
+        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <Link2 className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-blue-700/70 font-medium mb-0.5">Linked to Our Quotation</div>
+            <div className="font-mono font-bold text-blue-900 text-base tracking-wide">{linkedQuotation.quotationNumber}</div>
+            {linkedQuotation.clientName && (
+              <div className="text-xs text-blue-600 mt-0.5">{linkedQuotation.clientName}</div>
+            )}
+          </div>
+          <div className="text-[10px] text-blue-600/70 text-right leading-4">
+            Payment terms<br />from quotation
+          </div>
+        </div>
+      )}
+
       {/* Auto-allocated project code banner */}
       {lpo.projectRef && (
         <div className="flex items-center gap-3 bg-[#0f2d5a]/5 border border-[#0f2d5a]/20 rounded-xl px-4 py-3">
@@ -629,7 +815,7 @@ function LpoDetailView({ lpo }: { lpo: any }) {
         </div>
         <div className="bg-gray-50 rounded-xl p-3 text-center">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Payment Terms</div>
-          <div className="text-sm font-semibold text-gray-800">{lpo.paymentTerms || "—"}</div>
+          <div className="text-xs font-semibold text-gray-800 leading-tight">{lpo.paymentTerms || "—"}</div>
         </div>
       </div>
 

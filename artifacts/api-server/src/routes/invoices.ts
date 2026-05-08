@@ -492,8 +492,14 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
     if (!clientCode && q?.clientCode) clientCode = q.clientCode;
   }
 
+  // Payment terms MUST come from the linked quotation when one is set.
+  // This is the source-of-truth — the frontend pre-fills it but the backend
+  // enforces it so manual edits can never override a quotation's terms.
+  const resolvedPaymentTerms =
+    quotation?.paymentTerms || data.paymentTerms || null;
+
   const [lpo] = await db.insert(lposTable).values({
-    ...data, lpoNumber, clientCode, createdById: req.user?.id,
+    ...data, lpoNumber, clientCode, paymentTerms: resolvedPaymentTerms, createdById: req.user?.id,
   } as any).returning();
   await notifyAccountsOfLpo(req, lpo, "created");
 
@@ -535,12 +541,25 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
   }
 
   // AUTO-CREATE draft Proforma + draft Tax Invoice from this LPO.
-  // Per spec: "LPO uses AI extract → user reviews → auto-create BOTH draft Proforma + draft Tax Invoice."
+  // Payment terms are sourced strictly from the linked quotation (fallback: lpo field).
+  // Line items, VAT %, subtotal/vatAmount are inherited from the quotation when available
+  // so the accountant has a fully pre-populated draft to review — not a blank document.
   const today = new Date().toISOString().split("T")[0];
-  const value = Number(lpo.lpoValue ?? quotation?.grandTotal ?? 0);
-  const vatPercent = 5;
-  const subtotal = +(value / (1 + vatPercent / 100)).toFixed(2);
-  const vatAmount = +(value - subtotal).toFixed(2);
+
+  // Use quotation financials when available; otherwise back-calculate from LPO value.
+  const invoicePaymentTerms = quotation?.paymentTerms ?? lpo.paymentTerms ?? null;
+  const invoiceItems        = (quotation as any)?.items ?? lpo.items ?? "[]";
+  const vatPercent          = quotation?.vatPercent ?? 5;
+  const value               = Number(lpo.lpoValue ?? quotation?.grandTotal ?? 0);
+  // If quotation has its own subtotal/vat, use them directly (more accurate).
+  // Otherwise derive them from the LPO value (assumes VAT-inclusive amount).
+  const subtotal = quotation?.subtotal != null
+    ? Number(quotation.subtotal)
+    : +(value / (1 + vatPercent / 100)).toFixed(2);
+  const vatAmount = quotation?.vatAmount != null
+    ? Number(quotation.vatAmount)
+    : +(value - subtotal).toFixed(2);
+  const grandTotal = +(subtotal + vatAmount).toFixed(2) || value;
 
   let createdPi: any = null;
   let createdTi: any = null;
@@ -551,19 +570,24 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
       companyId: lpo.companyId,
       clientCode,
       clientName: lpo.clientName,
+      clientEmail: (quotation as any)?.clientEmail ?? null,
+      clientPhone: (quotation as any)?.clientPhone ?? null,
       projectName: resolvedProjectRef ?? quotation?.projectName ?? null,
+      projectLocation: (quotation as any)?.projectLocation ?? null,
       projectRef: resolvedProjectRef ?? null,
       projectId: resolvedProjectId ?? null,
       quotationId: lpo.quotationId,
       lpoId: lpo.id,
-      subtotal, vatPercent, vatAmount,
-      total: value,
-      paymentTerms: lpo.paymentTerms,
+      subtotal,
+      vatPercent,
+      vatAmount,
+      total: grandTotal,
+      paymentTerms: invoicePaymentTerms,
       validityDate: today,
       status: "draft",
       preparedById: req.user?.id,
       createdById: req.user?.id,
-      items: lpo.items ?? "[]",
+      items: invoiceItems,
     } as any).returning();
     createdPi = pi;
   } catch (err) {
@@ -582,12 +606,14 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
       projectId: resolvedProjectId ?? null,
       quotationId: lpo.quotationId,
       lpoId: lpo.id,
-      paymentTerms: lpo.paymentTerms,
-      items: lpo.items ?? "[]",
-      subtotal, vatPercent, vatAmount,
-      grandTotal: value,
+      paymentTerms: invoicePaymentTerms,
+      items: invoiceItems,
+      subtotal,
+      vatPercent,
+      vatAmount,
+      grandTotal,
       amountPaid: 0,
-      balance: value,
+      balance: grandTotal,
       paymentStatus: "unpaid",
       status: "draft",
       createdById: req.user?.id,
