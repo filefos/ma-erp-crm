@@ -1,7 +1,15 @@
 import { useState, useRef, useEffect } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useListQuotations } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2 } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 
@@ -56,6 +64,7 @@ export function LpoAcknowledgments() {
   const [file, setFile] = useState<{ name: string; content: string; size: number; type: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [numPages, setNumPages] = useState<number>(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -467,20 +476,38 @@ export function LpoAcknowledgments() {
               </Button>
             </div>
           </DialogHeader>
-          <div className="flex-1 min-h-0 flex flex-col">
-            {viewRecord && blobUrl && (
-              <embed
-                src={blobUrl}
-                type="application/pdf"
-                className="w-full flex-1 min-h-0"
-                style={{ height: "100%" }}
-              />
-            )}
+          <div className="flex-1 min-h-0 overflow-y-auto bg-gray-100 flex flex-col items-center py-4 gap-3">
             {viewRecord && !blobUrl && (
-              <div className="w-full flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground text-sm">
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground text-sm">
                 <Loader2 className="w-6 h-6 animate-spin" />
-                <span>Loading preview…</span>
+                <span>Loading PDF…</span>
               </div>
+            )}
+            {viewRecord && blobUrl && (
+              <Document
+                file={blobUrl}
+                onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+                onLoadError={() => {
+                  toast({ title: "Could not render PDF", variant: "destructive" });
+                  if (viewRecord) window.open(blobUrl!, "_blank");
+                }}
+                loading={
+                  <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground text-sm mt-20">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Rendering pages…</span>
+                  </div>
+                }
+              >
+                {Array.from({ length: numPages }, (_, i) => (
+                  <Page
+                    key={i + 1}
+                    pageNumber={i + 1}
+                    className="shadow-md mb-2"
+                    renderTextLayer={true}
+                    renderAnnotationLayer={false}
+                  />
+                ))}
+              </Document>
             )}
           </div>
         </DialogContent>
