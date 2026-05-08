@@ -17,6 +17,7 @@ import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { AccountsPageHeader } from "@/components/accounts-page-header";
 import { CompanyField } from "@/components/CompanyField";
 import { useQueryClient } from "@tanstack/react-query";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 
 const paymentStatusColors: Record<string, string> = {
   paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -287,24 +288,30 @@ export function TaxInvoicesList() {
                   <TableCell className="text-right font-medium text-red-600">AED {inv.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell><Badge variant="secondary" className={paymentStatusColors[inv.paymentStatus] ?? ""}>{inv.paymentStatus}</Badge></TableCell>
                   <TableCell>
-                    {inv.clientPhone && (
-                      <WhatsAppQuickIcon
-                        phone={inv.clientPhone}
-                        context="invoice"
-                        defaultTemplateId={isOverdue ? "payment_reminder" : "invoice_sent"}
-                        vars={{
-                          name: inv.clientName,
-                          companyName: inv.clientName,
-                          number: inv.invoiceNumber,
-                          amount: isOverdue
-                            ? Number(inv.balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
-                            : Number(inv.grandTotal ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 }),
-                          dueDate: inv.dueDate,
-                        }}
-                        className="h-7 w-7"
-                        testId={`button-wa-invoice-${inv.id}`}
+                    <div className="flex items-center gap-1">
+                      {inv.clientPhone && (
+                        <WhatsAppQuickIcon
+                          phone={inv.clientPhone}
+                          context="invoice"
+                          defaultTemplateId={isOverdue ? "payment_reminder" : "invoice_sent"}
+                          vars={{
+                            name: inv.clientName,
+                            companyName: inv.clientName,
+                            number: inv.invoiceNumber,
+                            amount: isOverdue
+                              ? Number(inv.balance ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                              : Number(inv.grandTotal ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 }),
+                            dueDate: inv.dueDate,
+                          }}
+                          className="h-7 w-7"
+                          testId={`button-wa-invoice-${inv.id}`}
+                        />
+                      )}
+                      <DelegateTaskButton
+                        taskType="tax_invoice"
+                        taskLabel={`Follow up Invoice ${inv.invoiceNumber} — ${inv.clientName}`}
                       />
-                    )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );

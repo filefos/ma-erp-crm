@@ -15,6 +15,7 @@ import { Search, Plus, Trash2 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -236,11 +237,12 @@ export function ProformaInvoicesList() {
               <TableHead className="text-right">Total (AED)</TableHead>
               <TableHead>Valid Until</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
-            filtered?.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No proforma invoices found.</TableCell></TableRow> :
+            {isLoading ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow> :
+            filtered?.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No proforma invoices found.</TableCell></TableRow> :
             filtered?.map(inv => (
               <TableRow key={inv.id}>
                 <TableCell>
@@ -258,6 +260,12 @@ export function ProformaInvoicesList() {
                 <TableCell className="text-right font-medium">AED {(inv.total ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                 <TableCell>{inv.validityDate || "-"}</TableCell>
                 <TableCell><Badge variant="secondary" className={statusColors[inv.status] ?? ""}>{inv.status}</Badge></TableCell>
+                <TableCell>
+                  <DelegateTaskButton
+                    taskType="proforma_invoice"
+                    taskLabel={`Follow up Proforma ${inv.piNumber} — ${inv.clientName}`}
+                  />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -34,7 +34,6 @@ async function enrichTask(task: typeof delegatedTasksTable.$inferSelect) {
       source: leadsTable.source,
       status: leadsTable.status,
       leadScore: leadsTable.leadScore,
-      trnNumber: leadsTable.trnNumber,
       companyType: leadsTable.companyType,
       website: leadsTable.website,
       licenseNumber: leadsTable.licenseNumber,

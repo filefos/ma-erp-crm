@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getListQuotationsQueryKey } from "@workspace/api-client-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -119,6 +120,10 @@ export function QuotationsList() {
                         <Check className="w-3 h-3 mr-1" />Approve
                       </Button>
                     )}
+                    <DelegateTaskButton
+                      taskType="quotation"
+                      taskLabel={`Follow up Quotation ${q.quotationNumber} — ${q.clientName}`}
+                    />
                   </div>
                 </TableCell>
               </TableRow>

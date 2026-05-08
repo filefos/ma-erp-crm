@@ -13,6 +13,7 @@ import { Search, Plus, Truck } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 import { AccountsPageHeader } from "@/components/accounts-page-header";
 
 const statusColors: Record<string, string> = {
@@ -122,6 +123,7 @@ export function DeliveryNotesList() {
               <TableHead>Driver</TableHead>
               <TableHead>Vehicle</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -145,6 +147,12 @@ export function DeliveryNotesList() {
                 <TableCell>{n.driverName || "-"}</TableCell>
                 <TableCell className="font-mono text-xs">{(n as any).vehicleNumber || "-"}</TableCell>
                 <TableCell><Badge variant="secondary" className={statusColors[n.status] ?? ""}>{n.status}</Badge></TableCell>
+                <TableCell>
+                  <DelegateTaskButton
+                    taskType="delivery_note"
+                    taskLabel={`Process Delivery Note ${n.dnNumber} — ${n.clientName}`}
+                  />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

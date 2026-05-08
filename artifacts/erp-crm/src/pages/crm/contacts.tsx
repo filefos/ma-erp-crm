@@ -25,6 +25,7 @@ import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { authHeaders } from "@/lib/ai-client";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 
 type ContactForm = {
   name: string; email: string; phone: string; whatsapp: string;
@@ -436,6 +437,10 @@ export function ContactsList() {
                           testId={`button-wa-contact-${c.id}`}
                         />
                       )}
+                      <DelegateTaskButton
+                        taskType="custom"
+                        taskLabel={`Follow up with ${c.name}${c.companyName ? ` — ${c.companyName}` : ""}`}
+                      />
                       <Button
                         variant="ghost" size="icon"
                         className="text-[#1e6ab0] hover:text-[#0f2d5a]"

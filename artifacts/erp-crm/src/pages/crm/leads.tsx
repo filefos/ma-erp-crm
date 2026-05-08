@@ -19,6 +19,7 @@ import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ExecutiveHeader, StatusBadge, AIScoreBadge, Avatar, KPIWidget } from "@/components/crm/premium";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 
 const SOURCES = ["website", "referral", "social_media", "cold_call", "exhibition", "walk_in", "tender", "other"];
 const STATUSES = ["new", "contacted", "qualified", "site_visit", "quotation_required", "quotation_sent", "negotiation", "won", "lost"];
@@ -450,6 +451,11 @@ export function LeadsList() {
                           <CalendarIcon className="w-3.5 h-3.5 text-orange-600" />
                         </Link>
                       </Button>
+                      <DelegateTaskButton
+                        taskType="quotation"
+                        taskLabel={`Create Quotation for ${lead.leadName}`}
+                        leadId={lead.id}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>

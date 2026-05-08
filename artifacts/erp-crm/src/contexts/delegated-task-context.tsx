@@ -13,7 +13,6 @@ export type LeadPreview = {
   source?: string | null;
   status?: string | null;
   leadScore?: string | null;
-  trnNumber?: string | null;
   companyType?: string | null;
   website?: string | null;
   licenseNumber?: string | null;

@@ -14,6 +14,7 @@ import { Search, Plus, Trash2, FileText } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { Link } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 
 const statusColors: Record<string, string> = {
   draft:     "bg-gray-100 text-gray-700",
@@ -354,13 +355,14 @@ export function PurchaseOrdersList() {
               <TableHead>Payment Terms</TableHead>
               <TableHead className="text-right">Total (AED)</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Loading...</TableCell></TableRow>
             ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No purchase orders found.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No purchase orders found.</TableCell></TableRow>
             ) : filtered.map(po => (
               <TableRow key={po.id} className="cursor-pointer hover:bg-muted/50">
                 <TableCell>
@@ -385,6 +387,12 @@ export function PurchaseOrdersList() {
                   <Badge variant="secondary" className={`capitalize ${statusColors[po.status] ?? ""}`}>
                     {po.status}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <DelegateTaskButton
+                    taskType="lpo"
+                    taskLabel={`Process LPO ${po.poNumber} — ${(po as any).supplierName || "Supplier"}`}
+                  />
                 </TableCell>
               </TableRow>
             ))}

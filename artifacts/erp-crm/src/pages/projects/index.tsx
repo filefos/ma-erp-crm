@@ -11,6 +11,7 @@ import { Search, Target } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DelegateTaskButton } from "@/components/delegate-task-button";
 
 const stageColors: Record<string, string> = {
   new_project:  "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
@@ -123,21 +124,27 @@ export function ProjectsList() {
                   <TableCell className="text-xs">{p.endDate || "-"}</TableCell>
                   <TableCell className="text-xs">{p.deliveryDate || "-"}</TableCell>
                   <TableCell>
-                    {p.clientPhone && (
-                      <WhatsAppQuickIcon
-                        phone={p.clientPhone}
-                        context="project"
-                        defaultTemplateId="delivery_update"
-                        vars={{
-                          name: p.clientName,
-                          companyName: p.clientName,
-                          number: p.projectNumber,
-                          date: p.deliveryDate,
-                        }}
-                        className="h-7 w-7"
-                        testId={`button-wa-project-${p.id}`}
+                    <div className="flex items-center gap-1">
+                      {p.clientPhone && (
+                        <WhatsAppQuickIcon
+                          phone={p.clientPhone}
+                          context="project"
+                          defaultTemplateId="delivery_update"
+                          vars={{
+                            name: p.clientName,
+                            companyName: p.clientName,
+                            number: p.projectNumber,
+                            date: p.deliveryDate,
+                          }}
+                          className="h-7 w-7"
+                          testId={`button-wa-project-${p.id}`}
+                        />
+                      )}
+                      <DelegateTaskButton
+                        taskType="custom"
+                        taskLabel={`Follow up Project ${p.projectNumber} — ${p.projectName}`}
                       />
-                    )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );

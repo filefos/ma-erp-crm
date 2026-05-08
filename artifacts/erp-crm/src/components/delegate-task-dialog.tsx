@@ -32,11 +32,13 @@ interface DelegateTaskDialogProps {
   defaultLeadId?: number;
   defaultLeadName?: string;
   defaultUserId?: number;
+  defaultTaskType?: string;
+  defaultTaskLabel?: string;
 }
 
 const BASE = import.meta.env.BASE_URL ?? "/";
 
-export function DelegateTaskDialog({ open, onClose, defaultLeadId, defaultLeadName, defaultUserId }: DelegateTaskDialogProps) {
+export function DelegateTaskDialog({ open, onClose, defaultLeadId, defaultLeadName, defaultUserId, defaultTaskType, defaultTaskLabel }: DelegateTaskDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: users = [] } = useListUsers();
@@ -44,8 +46,10 @@ export function DelegateTaskDialog({ open, onClose, defaultLeadId, defaultLeadNa
   const { data: allLeads = [] } = useListLeads();
 
   const [grantedToUserId, setGrantedToUserId] = useState(defaultUserId ? String(defaultUserId) : "");
-  const [taskType, setTaskType] = useState("quotation");
-  const [taskLabel, setTaskLabel] = useState(defaultLeadName ? `Create ${TASK_TYPES[0].label} for ${defaultLeadName}` : "");
+  const [taskType, setTaskType] = useState(defaultTaskType ?? "quotation");
+  const [taskLabel, setTaskLabel] = useState(
+    defaultTaskLabel ?? (defaultLeadName ? `Create ${TASK_TYPES[0].label} for ${defaultLeadName}` : "")
+  );
   const [durationMinutes, setDurationMinutes] = useState("15");
   const [companyId, setCompanyId] = useState(String((user as any)?.companyId ?? companies[0]?.id ?? ""));
   const [submitting, setSubmitting] = useState(false);
