@@ -5,9 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 const STORAGE_KEY = "erp_active_company_id";
 const CHANGE_EVENT = "erp:active-company-changed";
 
-const COMPANY_INFO: Record<number, { name: string; short: string; poweredBy: string }> = {
-  1: { name: "Prime Max Prefab Houses Ind. LLC", short: "Prime Max", poweredBy: "Prime Solution" },
-  2: { name: "Elite Prefab Industries LLC", short: "Elite Prefab", poweredBy: "Prime Solution" },
+const COMPANY_INFO: Record<number, { name: string; short: string; poweredBy: string; logoSrc: string }> = {
+  1: { name: "Prime Max Prefab Houses Ind. LLC", short: "Prime Max", poweredBy: "Prime Solution", logoSrc: "/prime-max-logo.png" },
+  2: { name: "Elite Prefab Industries LLC", short: "Elite Prefab", poweredBy: "Prime Solution", logoSrc: "/elite-prefab-logo.svg" },
 };
 
 function readStored(): number | null {
@@ -79,6 +79,7 @@ export function useActiveCompany() {
     companyName: info.name,
     companyShort: info.short,
     poweredBy: info.poweredBy,
+    logoSrc: info.logoSrc,
     setActiveCompany,
     filterByCompany,
   };

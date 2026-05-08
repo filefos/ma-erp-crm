@@ -384,6 +384,17 @@ function CompanySwitcher() {
   );
 }
 
+function HeaderLogo() {
+  const { companyShort, logoSrc } = useActiveCompany();
+  return (
+    <img
+      src={logoSrc}
+      alt={companyShort}
+      className="h-9 w-auto object-contain max-w-[180px]"
+    />
+  );
+}
+
 function NotificationBell() {
   const [, navigate] = useLocation();
   const { data: notifications } = useListNotifications();
@@ -403,7 +414,7 @@ function NotificationBell() {
 
 function SidebarContent() {
   const { user, logout } = useAuth();
-  const { companyShort, poweredBy } = useActiveCompany();
+  const { companyShort, poweredBy, logoSrc } = useActiveCompany();
   const { can } = usePermissions();
   const u = user as { name?: string; permissionLevel?: string; role?: string; departmentName?: string; uniqueUserId?: string | null } | undefined;
   const level = u?.permissionLevel ?? "user";
@@ -412,16 +423,15 @@ function SidebarContent() {
   return (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Logo */}
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#1e6ab0] rounded-lg flex items-center justify-center shrink-0 ring-1 ring-white/15">
-            <Building2 className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <div className="text-sm font-bold text-white leading-tight">{companyShort}</div>
-            <div className="text-[11px] text-white/50 leading-tight">Powered by {poweredBy}</div>
-          </div>
+      <div className="px-4 py-3 border-b border-white/10">
+        <div className="bg-white rounded-lg px-3 py-2 inline-block">
+          <img
+            src={logoSrc}
+            alt={companyShort}
+            className="h-8 w-auto object-contain max-w-[140px]"
+          />
         </div>
+        <div className="text-[10px] text-white/40 mt-1.5 leading-tight">Powered by {poweredBy}</div>
       </div>
 
       {/* Navigation */}
@@ -604,15 +614,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </Sheet>
             </div>
 
-            {/* Brand wordmark */}
-            <div className="hidden md:flex items-baseline gap-2 min-w-0">
-              <span
-                className="text-[18px] font-extrabold text-[#0f2d5a] leading-none"
-                style={{ fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: "-0.01em" }}
-              >
-                PRIME ERP
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-gray-500 font-medium">Systems</span>
+            {/* Brand logo */}
+            <div className="hidden md:flex items-center min-w-0">
+              <HeaderLogo />
             </div>
 
             <div className="flex-1" />
