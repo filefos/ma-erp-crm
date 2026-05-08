@@ -467,17 +467,19 @@ export function LpoAcknowledgments() {
               </Button>
             </div>
           </DialogHeader>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 flex flex-col">
             {viewRecord && blobUrl && (
-              <iframe
+              <embed
                 src={blobUrl}
-                className="w-full h-full border-0"
-                title="LPO Acknowledgment"
+                type="application/pdf"
+                className="w-full flex-1 min-h-0"
+                style={{ height: "100%" }}
               />
             )}
             {viewRecord && !blobUrl && (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />Loading preview…
+              <div className="w-full flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground text-sm">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span>Loading preview…</span>
               </div>
             )}
           </div>
