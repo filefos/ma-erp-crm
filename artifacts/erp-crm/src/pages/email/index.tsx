@@ -1042,6 +1042,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   });
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signatureText, setSignatureText] = useState<string>("");
+  const [signatureMode, setSignatureMode] = useState<"text" | "image">("text");
   const [signatureSaving, setSignatureSaving] = useState(false);
   const [signatureSaved, setSignatureSaved] = useState(false);
   const [signatureEnabled, setSignatureEnabled] = useState(true);
@@ -1058,7 +1059,10 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   // Load saved email signature from user profile
   useEffect(() => {
     const sig = (user as any)?.emailSignature;
-    if (sig) setSignatureText(sig);
+    if (sig) {
+      setSignatureText(sig);
+      setSignatureMode(sig.startsWith("data:image") ? "image" : "text");
+    }
   }, [(user as any)?.emailSignature]);
 
   const handleSaveEmailSignature = async () => {
@@ -1283,8 +1287,13 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
   const removeAttachment = (idx: number) => setAttachments(prev => prev.filter((_, i) => i !== idx));
 
-  const buildSignatureBlock = () =>
-    signatureText ? `\n\n--\n${signatureText}` : "";
+  const isGifSignature = signatureText.startsWith("data:image");
+
+  const buildSignatureBlock = () => {
+    if (!signatureText) return "";
+    if (isGifSignature) return `\n\n<img src="${signatureText}" alt="signature" style="max-width:400px;" />`;
+    return `\n\n--\n${signatureText}`;
+  };
 
   const openCompose = () => {
     setComposing(true);
@@ -2108,31 +2117,109 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
               </button>
             </div>
 
+            {/* Tabs */}
+            <div className="flex border-b px-6">
+              {(["text", "image"] as const).map(m => (
+                <button
+                  key={m}
+                  onClick={() => { setSignatureMode(m); if (m !== (signatureText.startsWith("data:image") ? "image" : "text")) setSignatureText(""); }}
+                  className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${signatureMode === m ? "border-[#0078d4] text-[#0078d4]" : "border-transparent text-[#605e5c] hover:text-[#323130]"}`}
+                >
+                  {m === "text" ? "Text" : "Image / GIF"}
+                </button>
+              ))}
+            </div>
+
             {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-              <div>
-                <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>
-                  Signature text
-                </label>
-                <textarea
-                  className="w-full border rounded-md p-3 text-[13px] resize-none outline-none focus:border-[#0078d4]"
-                  style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", minHeight: 180 }}
-                  placeholder={"Best regards,\nYour Name\nJob Title | Prime Max Prefab\nPhone: +971 XX XXX XXXX\nEmail: name@primemax.ae"}
-                  value={signatureText}
-                  onChange={e => setSignatureText(e.target.value)}
-                />
-              </div>
-
-              {signatureText && (
-                <div>
-                  <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>Preview</label>
-                  <div
-                    className="border rounded-md p-4 bg-gray-50 text-[13px] whitespace-pre-wrap"
-                    style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", borderLeft: "3px solid #0078d4" }}
-                  >
-                    {signatureText}
+              {signatureMode === "text" ? (
+                <>
+                  <div>
+                    <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>Signature text</label>
+                    <textarea
+                      className="w-full border rounded-md p-3 text-[13px] resize-none outline-none focus:border-[#0078d4]"
+                      style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", minHeight: 180 }}
+                      placeholder={"Best regards,\nYour Name\nJob Title | Prime Max Prefab\nPhone: +971 XX XXX XXXX\nEmail: name@primemax.ae"}
+                      value={signatureText.startsWith("data:image") ? "" : signatureText}
+                      onChange={e => setSignatureText(e.target.value)}
+                    />
                   </div>
-                </div>
+                  {signatureText && !signatureText.startsWith("data:image") && (
+                    <div>
+                      <label className="block text-[13px] font-medium mb-2" style={{ color: "#323130" }}>Preview</label>
+                      <div className="border rounded-md p-4 bg-gray-50 text-[13px] whitespace-pre-wrap" style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", color: "#323130", borderLeft: "3px solid #0078d4" }}>
+                        {signatureText}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-[12px]" style={{ color: "#605e5c" }}>
+                    Upload a GIF or image, or paste one from your clipboard (Ctrl+V / Cmd+V).
+                  </p>
+
+                  {/* Drop / paste zone */}
+                  <div
+                    className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors hover:border-[#0078d4] hover:bg-blue-50"
+                    style={{ minHeight: 140, borderColor: "#d1d5db" }}
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={e => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files[0];
+                      if (!file || !file.type.startsWith("image/")) return;
+                      const reader = new FileReader();
+                      reader.onload = ev => setSignatureText(ev.target?.result as string);
+                      reader.readAsDataURL(file);
+                    }}
+                    onPaste={e => {
+                      const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
+                      if (!item) return;
+                      const file = item.getAsFile();
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = ev => setSignatureText(ev.target?.result as string);
+                      reader.readAsDataURL(file);
+                    }}
+                    tabIndex={0}
+                    onClick={() => {
+                      const inp = document.createElement("input");
+                      inp.type = "file";
+                      inp.accept = "image/*,.gif";
+                      inp.onchange = () => {
+                        const file = inp.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = ev => setSignatureText(ev.target?.result as string);
+                        reader.readAsDataURL(file);
+                      };
+                      inp.click();
+                    }}
+                  >
+                    {signatureText.startsWith("data:image") ? (
+                      <img src={signatureText} alt="signature preview" style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 4 }} />
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[13px] font-medium" style={{ color: "#323130" }}>Click to upload or drag & drop</p>
+                          <p className="text-[12px] mt-0.5" style={{ color: "#a19f9d" }}>GIF, PNG, JPG supported — or paste with Ctrl+V</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {signatureText.startsWith("data:image") && (
+                    <button
+                      onClick={() => setSignatureText("")}
+                      className="text-[12px] text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      Remove image
+                    </button>
+                  )}
+                </>
               )}
             </div>
 
