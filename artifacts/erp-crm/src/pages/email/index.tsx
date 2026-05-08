@@ -32,6 +32,43 @@ interface SigEntry { id: string; name: string; html: string; defaultNew: boolean
 const READING_TABS = ["File", "Home", "View", "Help"];
 const COMPOSE_TABS  = ["File", "Message", "Insert", "Format text", "Draw", "Options"];
 
+/* ── Button: tall icon + label (+ optional caret) ───────────────────────── */
+function Btn({ icon, label, caret, onClick, disabled }: {
+  icon: React.ReactNode; label: string; caret?: boolean; onClick?: () => void; disabled?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex flex-col items-center justify-center gap-[3px] px-2 py-1 rounded transition-colors hover:bg-[#ebebeb] min-w-[40px] disabled:opacity-40"
+      style={{ color: "#323130" }}
+    >
+      <span className="flex items-center justify-center" style={{ width: 22, height: 22 }}>{icon}</span>
+      <span className="flex items-center gap-[2px] text-[10px] whitespace-nowrap leading-none" style={{ color: "#323130" }}>
+        {label}{caret && <ChevronDown className="w-[9px] h-[9px] opacity-55 ml-[1px]" />}
+      </span>
+    </button>
+  );
+}
+
+/* ── Labelled group wrapper ──────────────────────────────────────────────── */
+function Group({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex h-full">
+      <div className="flex flex-col">
+        <div className="flex items-center gap-0 flex-1 px-1 pt-1 pb-0">{children}</div>
+        <div
+          className="text-[9px] text-center px-2 pb-[3px] pt-[2px] border-t"
+          style={{ color: "#a19f9d", borderColor: "#e1dfdd" }}
+        >
+          {label}
+        </div>
+      </div>
+      <div className="w-px mx-1 my-2" style={{ background: "#e1dfdd" }} />
+    </div>
+  );
+}
+
 /* ── FixedDropdown ────────────────────────────────────────────────────────────
    Renders a dropdown at a fixed viewport position, escaping any overflow
    clipping on ancestor containers (e.g. the ribbon's overflow-x-auto row).
@@ -45,8 +82,9 @@ function FixedDropdown({ triggerRef, open, onClose, children, minWidth = 160 }: 
 }) {
   if (!open) return null;
   const rect = triggerRef.current?.getBoundingClientRect();
-  const top  = rect ? rect.bottom + 6 : 8;
-  const left = rect ? rect.left      : 8;
+  if (!rect) return null;
+  const top  = rect.bottom + 6;
+  const left = Math.min(rect.left, window.innerWidth - minWidth - 8);
   return createPortal(
     <>
       <div
@@ -158,43 +196,6 @@ function OutlookRibbon({
     { label: "Blue",   color: "#3b82f6" },
     { label: "Purple", color: "#a855f7" },
   ];
-
-  /* ── Button: tall icon + label (+ optional caret) ───────────────────── */
-  function Btn({ icon, label, caret, onClick, disabled }: {
-    icon: React.ReactNode; label: string; caret?: boolean; onClick?: () => void; disabled?: boolean;
-  }) {
-    return (
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        className="flex flex-col items-center justify-center gap-[3px] px-2 py-1 rounded transition-colors hover:bg-[#ebebeb] min-w-[40px] disabled:opacity-40"
-        style={{ color: "#323130" }}
-      >
-        <span className="flex items-center justify-center" style={{ width: 22, height: 22 }}>{icon}</span>
-        <span className="flex items-center gap-[2px] text-[10px] whitespace-nowrap leading-none" style={{ color: "#323130" }}>
-          {label}{caret && <ChevronDown className="w-[9px] h-[9px] opacity-55 ml-[1px]" />}
-        </span>
-      </button>
-    );
-  }
-
-  /* ── Labelled group wrapper ─────────────────────────────────────────── */
-  function Group({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-      <div className="flex h-full">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-0 flex-1 px-1 pt-1 pb-0">{children}</div>
-          <div
-            className="text-[9px] text-center px-2 pb-[3px] pt-[2px] border-t"
-            style={{ color: "#a19f9d", borderColor: "#e1dfdd" }}
-          >
-            {label}
-          </div>
-        </div>
-        <div className="w-px mx-1 my-2" style={{ background: "#e1dfdd" }} />
-      </div>
-    );
-  }
 
   /* ══════════════════════════════════════════════════════════════════════
      HOME TAB  (matches screenshot: New | Delete | Report | Respond |

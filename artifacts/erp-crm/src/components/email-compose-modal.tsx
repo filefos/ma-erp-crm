@@ -167,6 +167,7 @@ export function EmailComposeModal() {
   const [attachments, setAttachments] = useState<EmailAttachment[]>([]);
   const [sending, setSending] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [sendDrop, setSendDrop] = useState(false);
 
   const explorerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -411,24 +412,52 @@ export function EmailComposeModal() {
 
           {/* ── Action row: Send + From ─────────────────────────────────── */}
           <div className="flex items-center px-4 py-2 gap-3 border-b border-[#e1dfdd] shrink-0">
-            {/* Send button — Outlook blue pill */}
-            <button
-              onClick={handleSend}
-              disabled={sending}
-              className="flex items-center rounded overflow-hidden shadow-sm focus:outline-none"
-              style={{ border: "1px solid #005a9e" }}
-            >
-              <span className="flex items-center gap-1.5 bg-[#0078d4] hover:bg-[#106ebe] active:bg-[#005a9e] text-white px-3.5 py-1.5 text-[13px] font-semibold transition-colors">
-                {sending
-                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  : <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2l14 6-14 6V9.5l10-1.5-10-1.5V2z"/></svg>
-                }
-                {sending ? "Sending…" : "Send"}
-              </span>
-              <span className="bg-[#0078d4] hover:bg-[#106ebe] active:bg-[#005a9e] text-white px-2 py-1.5 border-l border-white/30 transition-colors">
-                <ChevronDown className="w-3 h-3" />
-              </span>
-            </button>
+            {/* Send button — Outlook blue pill with dropdown */}
+            <div className="relative flex-shrink-0">
+              <div className="flex items-center rounded overflow-hidden shadow-sm" style={{ border: "1px solid #005a9e" }}>
+                <button
+                  onClick={handleSend}
+                  disabled={sending}
+                  className="flex items-center gap-1.5 bg-[#0078d4] hover:bg-[#106ebe] active:bg-[#005a9e] disabled:opacity-60 text-white px-3.5 py-1.5 text-[13px] font-semibold transition-colors focus:outline-none"
+                >
+                  {sending
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2l14 6-14 6V9.5l10-1.5-10-1.5V2z"/></svg>
+                  }
+                  {sending ? "Sending…" : "Send"}
+                </button>
+                <button
+                  onClick={() => setSendDrop(s => !s)}
+                  disabled={sending}
+                  className="bg-[#0078d4] hover:bg-[#106ebe] active:bg-[#005a9e] disabled:opacity-60 text-white px-2 py-1.5 border-l border-white/30 transition-colors focus:outline-none"
+                >
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
+              {sendDrop && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setSendDrop(false)} />
+                  <div className="absolute left-0 top-full mt-1 z-50 rounded shadow-lg border overflow-hidden" style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 180 }}>
+                    <button
+                      onClick={() => { setSendDrop(false); handleDraft(); }}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors text-left"
+                      style={{ color: "#323130" }}
+                    >
+                      <FileText className="w-4 h-4 text-[#605e5c]" />
+                      Save as Draft
+                    </button>
+                    <button
+                      onClick={() => { setSendDrop(false); closeCompose(); }}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors text-left"
+                      style={{ color: "#c42b1c" }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Discard
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* From */}
             <div className="flex items-center gap-1 text-[13px] text-[#323130]">
