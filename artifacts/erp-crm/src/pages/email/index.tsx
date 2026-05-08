@@ -23,6 +23,9 @@ import {
 } from "lucide-react";
 import { EmailSettingsModal } from "./settings-modal";
 
+/* ── Signature entry type ────────────────────────────────────────────────── */
+interface SigEntry { id: string; name: string; html: string; defaultNew: boolean; defaultReplies: boolean; }
+
 /* ── Outlook Ribbon ─────────────────────────────────────────────────────────
    Renders the Outlook-style tab bar + ribbon row with labelled groups.
 ──────────────────────────────────────────────────────────────────────────── */
@@ -69,7 +72,8 @@ function OutlookRibbon({
   selectedEmail, onDelete, onArchive, onReply, onForward,
   onMarkAllRead, onToggleStar, onMove, currentFolder,
   sidebarVisible, onToggleSidebar, readingPaneLayout, onChangeReadingPane,
-  signatureText, signatureEnabled, onInsertSignature, onRemoveSignature, onManageSignatures,
+  signatures, onInsertSignatureById, onManageSignatures,
+  onPrint, onSettings, onLogout,
 }: {
   activeTab: string;
   setActiveTab: (t: string) => void;
@@ -89,11 +93,12 @@ function OutlookRibbon({
   onToggleSidebar?: () => void;
   readingPaneLayout?: "right" | "bottom" | "off";
   onChangeReadingPane?: (layout: "right" | "bottom" | "off") => void;
-  signatureText?: string;
-  signatureEnabled?: boolean;
-  onInsertSignature?: () => void;
-  onRemoveSignature?: () => void;
+  signatures?: SigEntry[];
+  onInsertSignatureById?: (id: string) => void;
   onManageSignatures?: () => void;
+  onPrint?: () => void;
+  onSettings?: () => void;
+  onLogout?: () => void;
 }) {
   const [moveOpen, setMoveOpen] = useState(false);
   const [flagOpen, setFlagOpen] = useState(false);
@@ -102,6 +107,7 @@ function OutlookRibbon({
   const [readingPaneOpen, setReadingPaneOpen] = useState(false);
   const [densityOpen, setDensityOpen] = useState(false);
   const [signatureOpen, setSignatureOpen] = useState(false);
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const hasSelected = !!selectedEmail;
   const [, navigate] = useLocation();
 
@@ -112,11 +118,12 @@ function OutlookRibbon({
   const readingPaneTriggerRef = useRef<HTMLDivElement>(null);
   const densityTriggerRef     = useRef<HTMLDivElement>(null);
   const signatureTriggerRef   = useRef<HTMLDivElement>(null);
+  const fileTabRef            = useRef<HTMLDivElement>(null);
 
   const closeAll = () => {
     setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false);
     setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false);
-    setSignatureOpen(false);
+    setSignatureOpen(false); setFileMenuOpen(false);
   };
 
   useEffect(() => { closeAll(); }, [activeTab]);
@@ -543,18 +550,24 @@ function OutlookRibbon({
         <div ref={signatureTriggerRef}>
           <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={240}>
-          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Insert Signature</div>
-          {signatureText ? (
-            <button onClick={() => { setSignatureOpen(false); signatureEnabled ? onRemoveSignature?.() : onInsertSignature?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
-              <PenLine className="w-4 h-4" />{signatureEnabled ? "Remove signature" : "Insert signature"}
-            </button>
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={220}>
+          {(signatures ?? []).length > 0 ? (
+            (signatures ?? []).map(sig => (
+              <button
+                key={sig.id}
+                onClick={() => { setSignatureOpen(false); onInsertSignatureById?.(sig.id); }}
+                className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors text-left"
+                style={{ color: "#323130" }}
+              >
+                {sig.name}
+              </button>
+            ))
           ) : (
-            <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signature saved yet</div>
+            <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signatures saved yet</div>
           )}
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
-            <Settings className="w-4 h-4" />Manage signatures…
+          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+            Signatures…
           </button>
         </FixedDropdown>
         <Btn icon={<Table className="w-5 h-5" />} label="Table" />
@@ -634,18 +647,24 @@ function OutlookRibbon({
         <div ref={signatureTriggerRef}>
           <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={240}>
-          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Insert Signature</div>
-          {signatureText ? (
-            <button onClick={() => { setSignatureOpen(false); signatureEnabled ? onRemoveSignature?.() : onInsertSignature?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
-              <PenLine className="w-4 h-4" />{signatureEnabled ? "Remove signature" : "Insert signature"}
-            </button>
+        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={220}>
+          {(signatures ?? []).length > 0 ? (
+            (signatures ?? []).map(sig => (
+              <button
+                key={sig.id}
+                onClick={() => { setSignatureOpen(false); onInsertSignatureById?.(sig.id); }}
+                className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors text-left"
+                style={{ color: "#323130" }}
+              >
+                {sig.name}
+              </button>
+            ))
           ) : (
-            <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signature saved yet</div>
+            <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signatures saved yet</div>
           )}
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#0078d4" }}>
-            <Settings className="w-4 h-4" />Manage signatures…
+          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+            Signatures…
           </button>
         </FixedDropdown>
         <Btn icon={<Type className="w-5 h-5" />} label="Text box" />
@@ -851,6 +870,88 @@ function OutlookRibbon({
           <AlignJustify className="w-4 h-4" />
         </button>
         {MENU_TABS.map(tab => (
+          tab === "File" ? (
+            <div key="File" ref={fileTabRef} className="relative h-full flex items-center">
+              <button
+                onClick={() => { setFileMenuOpen(v => !v); }}
+                className="px-3 h-full text-[13px] transition-colors relative"
+                style={{
+                  color: fileMenuOpen ? "#0078d4" : "#323130",
+                  fontWeight: fileMenuOpen ? 600 : 400,
+                  borderBottom: fileMenuOpen ? "2px solid #0078d4" : "2px solid transparent",
+                }}
+              >
+                File
+              </button>
+              <FixedDropdown triggerRef={fileTabRef} open={fileMenuOpen} onClose={() => setFileMenuOpen(false)} minWidth={230}>
+                {/* Account info */}
+                <button
+                  onClick={() => { setFileMenuOpen(false); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  Account info
+                </button>
+                {/* Save as */}
+                <button
+                  onClick={() => { setFileMenuOpen(false); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span className="flex-1 text-left">Save as</span>
+                  <ChevronRight className="w-4 h-4 ml-auto" style={{ color: "#605e5c" }} />
+                </button>
+                {/* Print */}
+                <button
+                  onClick={() => { setFileMenuOpen(false); onPrint?.(); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  Print
+                </button>
+                {/* Open and export */}
+                <button
+                  onClick={() => { setFileMenuOpen(false); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                  Open and export
+                </button>
+                <div className="border-t my-1" style={{ borderColor: "#e1dfdd" }} />
+                {/* Settings */}
+                <button
+                  onClick={() => { setFileMenuOpen(false); onSettings?.(); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                  Settings
+                </button>
+                {/* About Outlook */}
+                <button
+                  onClick={() => { setFileMenuOpen(false); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  About Outlook
+                </button>
+                {/* Exit */}
+                <button
+                  onClick={() => { setFileMenuOpen(false); onLogout?.(); }}
+                  className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
+                  style={{ color: "#323130" }}
+                >
+                  <svg className="w-[18px] h-[18px] flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                  Exit
+                </button>
+              </FixedDropdown>
+            </div>
+          ) : (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -863,6 +964,7 @@ function OutlookRibbon({
           >
             {tab}
           </button>
+          )
         ))}
       </div>
 
@@ -1041,10 +1143,11 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
     toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "",
   });
   const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [signatureText, setSignatureText] = useState<string>("");
+  const [signatures, setSignatures] = useState<SigEntry[]>([]);
+  const [selectedSigId, setSelectedSigId] = useState<string | null>(null);
+  const [editingSigId, setEditingSigId] = useState<string | null>(null);
   const [signatureSaving, setSignatureSaving] = useState(false);
   const [signatureSaved, setSignatureSaved] = useState(false);
-  const [signatureEnabled, setSignatureEnabled] = useState(true);
   const [sigName, setSigName] = useState("My Signature");
   const [sigDefaultNew, setSigDefaultNew] = useState(true);
   const [sigDefaultReplies, setSigDefaultReplies] = useState(false);
@@ -1060,39 +1163,89 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const accountEmail = settings?.smtpUser ?? (companyId === 1 ? "info@primemaxprefab.com" : "info@eliteprefab.com");
   const token = localStorage.getItem("erp_token");
 
-  // Load saved email signature from user profile
+  // Load saved signatures from user profile (JSON array or legacy plain text)
   useEffect(() => {
-    const sig = (user as any)?.emailSignature;
-    if (sig) setSignatureText(sig);
+    const raw = (user as any)?.emailSignature;
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setSignatures(parsed);
+        const defSig = parsed.find((s: SigEntry) => s.defaultNew) ?? parsed[0];
+        if (defSig) setSelectedSigId(defSig.id);
+        return;
+      }
+    } catch { /* fall through */ }
+    // Legacy: plain HTML/text stored directly
+    const legacy: SigEntry = { id: "legacy", name: "My Signature", html: raw, defaultNew: true, defaultReplies: false };
+    setSignatures([legacy]);
+    setSelectedSigId("legacy");
   }, [(user as any)?.emailSignature]);
 
   const handleSaveEmailSignature = async () => {
     if (!user) return;
     setSignatureSaving(true);
     const html = sigEditorRef.current?.innerHTML ?? "";
-    setSignatureText(html);
+    let updatedSigs: SigEntry[];
+    if (editingSigId) {
+      updatedSigs = signatures.map(s =>
+        s.id === editingSigId
+          ? { ...s, name: sigName, html, defaultNew: sigDefaultNew, defaultReplies: sigDefaultReplies }
+          : s
+      );
+    } else {
+      const newSig: SigEntry = { id: Date.now().toString(), name: sigName || "Untitled", html, defaultNew: sigDefaultNew, defaultReplies: sigDefaultReplies };
+      updatedSigs = [...signatures, newSig];
+    }
+    // Enforce single defaultNew / defaultReplies
+    if (sigDefaultNew) updatedSigs = updatedSigs.map(s => ({ ...s, defaultNew: s.id === (editingSigId ?? updatedSigs[updatedSigs.length - 1].id) }));
+    if (sigDefaultReplies) updatedSigs = updatedSigs.map(s => ({ ...s, defaultReplies: s.id === (editingSigId ?? updatedSigs[updatedSigs.length - 1].id) }));
+    setSignatures(updatedSigs);
     try {
       await fetch(`/api/users/${(user as any).id}/email-signature`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ emailSignature: html }),
+        body: JSON.stringify({ emailSignature: JSON.stringify(updatedSigs) }),
       });
       setSignatureSaved(true);
-      setTimeout(() => {
-        setSignatureSaved(false);
-        setShowSignatureModal(false);
-      }, 1200);
+      setTimeout(() => setSignatureSaved(false), 2000);
       qc.invalidateQueries({ queryKey: ["me"] });
     } finally {
       setSignatureSaving(false);
     }
   };
 
-  // Sync editor content when modal opens
-  useEffect(() => {
-    if (showSignatureModal && sigEditorRef.current) {
-      sigEditorRef.current.innerHTML = signatureText || "";
+  const handleDeleteSignature = async (id: string) => {
+    const updatedSigs = signatures.filter(s => s.id !== id);
+    setSignatures(updatedSigs);
+    if (editingSigId === id) {
+      const next = updatedSigs[0] ?? null;
+      setEditingSigId(next?.id ?? null);
+      setSigName(next?.name ?? "My Signature");
+      setSigDefaultNew(next?.defaultNew ?? true);
+      setSigDefaultReplies(next?.defaultReplies ?? false);
+      if (sigEditorRef.current) sigEditorRef.current.innerHTML = next?.html ?? "";
     }
+    await fetch(`/api/users/${(user as any)?.id}/email-signature`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emailSignature: JSON.stringify(updatedSigs) }),
+    });
+    qc.invalidateQueries({ queryKey: ["me"] });
+  };
+
+  // When modal opens, select first signature for editing
+  useEffect(() => {
+    if (!showSignatureModal) return;
+    const first = signatures[0] ?? null;
+    setEditingSigId(first?.id ?? null);
+    setSigName(first?.name ?? "My Signature");
+    setSigDefaultNew(first?.defaultNew ?? true);
+    setSigDefaultReplies(first?.defaultReplies ?? false);
+    setSigTab("format");
+    setTimeout(() => {
+      if (sigEditorRef.current) sigEditorRef.current.innerHTML = first?.html ?? "";
+    }, 0);
   }, [showSignatureModal]);
 
   const emailsKey = ["emails", folder, search];
@@ -1300,12 +1453,13 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
   const removeAttachment = (idx: number) => setAttachments(prev => prev.filter((_, i) => i !== idx));
 
-  const buildSignatureBlock = () => {
-    if (!signatureText) return "";
-    // If HTML (from rich text editor or legacy data:image), embed directly
-    if (signatureText.startsWith("<") || signatureText.startsWith("data:image"))
-      return `\n\n${signatureText}`;
-    return `\n\n--\n${signatureText}`;
+  const buildSignatureBlock = (sigId?: string | null) => {
+    const id = sigId ?? selectedSigId;
+    const sig = signatures.find(s => s.id === id);
+    if (!sig?.html) return "";
+    if (sig.html.startsWith("<") || sig.html.startsWith("data:image"))
+      return `\n\n${sig.html}`;
+    return `\n\n--\n${sig.html}`;
   };
 
   const openCompose = () => {
@@ -1314,8 +1468,10 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
     setAttachments([]);
     setShowCc(false);
     setShowBcc(false);
-    setSignatureEnabled(true);
-    setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: signatureText ? buildSignatureBlock() : "" });
+    const defSig = signatures.find(s => s.defaultNew) ?? signatures[0] ?? null;
+    const sigBlock = defSig ? buildSignatureBlock(defSig.id) : "";
+    setSelectedSigId(defSig?.id ?? null);
+    setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: sigBlock });
   };
 
   const FOLDERS: { key: Folder; label: string; icon: React.ReactNode }[] = [
@@ -1370,17 +1526,21 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           onToggleSidebar={() => setSidebarVisible(v => !v)}
           readingPaneLayout={readingPaneLayout}
           onChangeReadingPane={setReadingPaneLayout}
-          signatureText={signatureText}
-          signatureEnabled={signatureEnabled}
-          onInsertSignature={() => {
-            setSignatureEnabled(true);
-            setCompose(p => ({ ...p, body: p.body + buildSignatureBlock() }));
-          }}
-          onRemoveSignature={() => {
-            setSignatureEnabled(false);
-            setCompose(p => ({ ...p, body: p.body.replace(buildSignatureBlock(), "") }));
+          signatures={signatures}
+          onInsertSignatureById={(id) => {
+            const block = buildSignatureBlock(id);
+            setSelectedSigId(id);
+            setCompose(p => {
+              // Remove previous signature block if any, then append new one
+              const prev = buildSignatureBlock(selectedSigId);
+              const body = prev ? p.body.replace(prev, "") : p.body;
+              return { ...p, body: body + block };
+            });
           }}
           onManageSignatures={() => setShowSignatureModal(true)}
+          onPrint={() => window.print()}
+          onSettings={() => setShowSettings(true)}
+          onLogout={() => { localStorage.removeItem("erp_token"); window.location.href = "/"; }}
         />
 
         {/* ── Sync progress bar ───────────────────────────────────────────── */}
@@ -2105,7 +2265,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
         companyId={companyId}
       />
 
-      {/* ── Edit Signature Modal (Outlook-style) ───────────────────────── */}
+      {/* ── Edit Signatures Modal (Outlook-style, with sidebar) ─────────── */}
       {showSignatureModal && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center"
@@ -2113,267 +2273,246 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           onClick={() => setShowSignatureModal(false)}
         >
           <div
-            className="bg-white shadow-2xl w-full flex flex-col"
-            style={{ maxWidth: 820, maxHeight: "92vh", borderRadius: 4, border: "1px solid #c8c6c4" }}
+            className="bg-white shadow-2xl flex flex-col"
+            style={{ width: "min(96vw, 920px)", height: "min(92vh, 640px)", borderRadius: 4, border: "1px solid #c8c6c4" }}
             onClick={e => e.stopPropagation()}
           >
             {/* ── Title bar ── */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
-              <h2 className="text-[18px] font-semibold" style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>Edit signature</h2>
-              <span className="text-[13px] flex items-center gap-1.5" style={{ color: "#605e5c" }}>
-                <Mail className="w-4 h-4" />
-                {accountEmail}
-              </span>
+            <div className="flex items-center justify-between px-5 pt-4 pb-2 flex-shrink-0">
+              <h2 className="text-[17px] font-semibold" style={{ color: "#323130" }}>Signatures and Stationery</h2>
+              <button onClick={() => setShowSignatureModal(false)} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#f3f2f1]" style={{ color: "#605e5c" }}>
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* ── Toolbar tabs ── */}
-            <div className="flex border-b px-6 gap-1" style={{ borderColor: "#e1dfdd" }}>
-              {(["format", "insert"] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setSigTab(t)}
-                  className={`px-4 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px`}
-                  style={{
-                    borderBottomColor: sigTab === t ? "#0078d4" : "transparent",
-                    color: sigTab === t ? "#0078d4" : "#605e5c",
-                    fontFamily: "'Segoe UI', system-ui, sans-serif",
-                  }}
-                >
-                  {t === "format" ? "Format text" : "Insert"}
-                </button>
-              ))}
-            </div>
+            {/* ── Two-column body ── */}
+            <div className="flex flex-1 overflow-hidden border-t" style={{ borderColor: "#e1dfdd" }}>
 
-            {/* ── Toolbar ribbon ── */}
-            <div className="border-b px-3 py-1.5 flex items-center gap-1 flex-wrap" style={{ borderColor: "#e1dfdd", background: "#faf9f8", minHeight: 52 }}>
-              {sigTab === "format" ? (
-                <>
-                  {/* Font family */}
-                  <select
-                    className="border rounded px-1.5 py-0.5 text-[12px] outline-none focus:border-[#0078d4]"
-                    style={{ borderColor: "#c8c6c4", color: "#323130", height: 26, minWidth: 110 }}
-                    onChange={e => { sigEditorRef.current?.focus(); document.execCommand("fontName", false, e.target.value); }}
-                    defaultValue="Segoe UI"
-                  >
-                    {["Segoe UI","Arial","Calibri","Times New Roman","Georgia","Courier New","Verdana","Tahoma"].map(f => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
-                  </select>
-                  {/* Font size */}
-                  <select
-                    className="border rounded px-1 py-0.5 text-[12px] outline-none focus:border-[#0078d4]"
-                    style={{ borderColor: "#c8c6c4", color: "#323130", height: 26, width: 52 }}
-                    onChange={e => { sigEditorRef.current?.focus(); document.execCommand("fontSize", false, e.target.value); }}
-                    defaultValue="3"
-                  >
-                    {[["1","8"],["2","10"],["3","12"],["4","14"],["5","18"],["6","24"],["7","36"]].map(([v,l]) => (
-                      <option key={v} value={v}>{l}</option>
-                    ))}
-                  </select>
-                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
-                  {/* Bold */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("bold"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] font-bold text-[14px]" style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui" }} title="Bold">B</button>
-                  {/* Italic */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("italic"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] italic text-[14px]" style={{ color: "#323130" }} title="Italic">I</button>
-                  {/* Underline */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("underline"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] underline text-[14px]" style={{ color: "#323130" }} title="Underline">U</button>
-                  {/* Strikethrough */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("strikeThrough"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] line-through text-[14px]" style={{ color: "#323130" }} title="Strikethrough">S</button>
-                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
-                  {/* Text color */}
-                  <label className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] cursor-pointer relative" title="Font color">
-                    <span className="text-[12px] font-bold" style={{ color: "#323130" }}>A</span>
-                    <input type="color" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" defaultValue="#000000"
-                      onChange={e => { sigEditorRef.current?.focus(); document.execCommand("foreColor", false, e.target.value); }} />
-                  </label>
-                  {/* Highlight color */}
-                  <label className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] cursor-pointer relative" title="Highlight">
-                    <span className="text-[12px]" style={{ background: "#ffff00", padding: "1px 3px", color: "#323130" }}>ab</span>
-                    <input type="color" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" defaultValue="#ffff00"
-                      onChange={e => { sigEditorRef.current?.focus(); document.execCommand("backColor", false, e.target.value); }} />
-                  </label>
-                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
-                  {/* Bullet list */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("insertUnorderedList"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Bullet list">
-                    <List className="w-4 h-4" style={{ color: "#323130" }} />
-                  </button>
-                  {/* Numbered list */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("insertOrderedList"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Numbered list">
-                    <ListOrdered className="w-4 h-4" style={{ color: "#323130" }} />
-                  </button>
-                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
-                  {/* Align left */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyLeft"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align left">
-                    <AlignLeft className="w-4 h-4" style={{ color: "#323130" }} />
-                  </button>
-                  {/* Align center */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyCenter"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align center">
-                    <AlignCenter className="w-4 h-4" style={{ color: "#323130" }} />
-                  </button>
-                  {/* Align right */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyRight"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align right">
-                    <AlignRight className="w-4 h-4" style={{ color: "#323130" }} />
-                  </button>
-                  <div className="w-px h-6 mx-1" style={{ background: "#c8c6c4" }} />
-                  {/* Insert link */}
-                  <button onMouseDown={e => {
-                    e.preventDefault();
-                    const url = window.prompt("Enter URL:", "https://");
-                    if (url) { sigEditorRef.current?.focus(); document.execCommand("createLink", false, url); }
-                  }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Insert link">
-                    <LinkIcon className="w-4 h-4" style={{ color: "#323130" }} />
-                  </button>
-                  {/* Clear formatting */}
-                  <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("removeFormat"); }}
-                    className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Clear formatting">
-                    <Eraser className="w-4 h-4" style={{ color: "#323130" }} />
-                  </button>
-                </>
-              ) : (
-                /* Insert tab — image/GIF upload */
-                <button
-                  onMouseDown={e => {
-                    e.preventDefault();
-                    const inp = document.createElement("input");
-                    inp.type = "file";
-                    inp.accept = "image/*,.gif";
-                    inp.onchange = () => {
-                      const file = inp.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = ev => {
-                        const src = ev.target?.result as string;
+              {/* ── Left sidebar: signature list ── */}
+              <div className="flex flex-col flex-shrink-0 border-r" style={{ width: 200, borderColor: "#e1dfdd", background: "#faf9f8" }}>
+                <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide" style={{ color: "#605e5c" }}>Signatures</div>
+                <div className="flex-1 overflow-y-auto">
+                  {signatures.map(sig => (
+                    <button
+                      key={sig.id}
+                      onClick={() => {
+                        setEditingSigId(sig.id);
+                        setSigName(sig.name);
+                        setSigDefaultNew(sig.defaultNew);
+                        setSigDefaultReplies(sig.defaultReplies);
+                        setTimeout(() => {
+                          if (sigEditorRef.current) sigEditorRef.current.innerHTML = sig.html;
+                        }, 0);
+                      }}
+                      className="flex items-center w-full px-3 py-2 text-[13px] text-left transition-colors"
+                      style={{
+                        background: editingSigId === sig.id ? "#e8f0fb" : "transparent",
+                        color: editingSigId === sig.id ? "#0078d4" : "#323130",
+                        fontWeight: editingSigId === sig.id ? 600 : 400,
+                        borderLeft: editingSigId === sig.id ? "2px solid #0078d4" : "2px solid transparent",
+                      }}
+                    >
+                      <PenLine className="w-3.5 h-3.5 mr-2 flex-shrink-0" style={{ color: editingSigId === sig.id ? "#0078d4" : "#8a8886" }} />
+                      <span className="truncate">{sig.name}</span>
+                    </button>
+                  ))}
+                  {signatures.length === 0 && (
+                    <div className="px-3 py-3 text-[12px] italic" style={{ color: "#a19f9d" }}>No signatures yet</div>
+                  )}
+                </div>
+                {/* New signature button */}
+                <div className="border-t px-3 py-2" style={{ borderColor: "#e1dfdd" }}>
+                  <button
+                    onClick={() => {
+                      setEditingSigId(null);
+                      setSigName("New Signature");
+                      setSigDefaultNew(false);
+                      setSigDefaultReplies(false);
+                      setTimeout(() => {
+                        if (sigEditorRef.current) sigEditorRef.current.innerHTML = "";
                         sigEditorRef.current?.focus();
-                        document.execCommand("insertImage", false, src);
-                      };
-                      reader.readAsDataURL(file);
-                    };
-                    inp.click();
-                  }}
-                  className="flex items-center gap-2 px-3 py-1 rounded border hover:bg-[#ebebeb] text-[12px]"
-                  style={{ borderColor: "#c8c6c4", color: "#323130" }}
-                >
-                  <ImageIcon className="w-4 h-4" /> Insert Image / GIF
-                </button>
-              )}
-            </div>
-
-            {/* ── Signature name ── */}
-            <div className="px-5 pt-3 pb-1">
-              <input
-                className="w-full border-b text-[13px] outline-none pb-1 bg-transparent"
-                style={{ borderColor: "#c8c6c4", color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
-                placeholder="Add a signature name"
-                value={sigName}
-                onChange={e => setSigName(e.target.value)}
-              />
-            </div>
-
-            {/* ── Rich text editor ── */}
-            <div className="flex-1 overflow-y-auto px-5 py-3" style={{ minHeight: 220 }}>
-              <div
-                ref={sigEditorRef}
-                contentEditable
-                suppressContentEditableWarning
-                className="outline-none min-h-[200px] w-full"
-                style={{
-                  fontFamily: "'Segoe UI', system-ui, sans-serif",
-                  fontSize: 13,
-                  color: "#323130",
-                  lineHeight: 1.6,
-                }}
-                onPaste={e => {
-                  // Handle image paste directly into editor
-                  const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
-                  if (item) {
-                    e.preventDefault();
-                    const file = item.getAsFile();
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                      const src = ev.target?.result as string;
-                      document.execCommand("insertImage", false, src);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                onDrop={e => {
-                  const file = e.dataTransfer.files[0];
-                  if (file?.type.startsWith("image/")) {
-                    e.preventDefault();
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                      const src = ev.target?.result as string;
-                      sigEditorRef.current?.focus();
-                      document.execCommand("insertImage", false, src);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                onDragOver={e => e.preventDefault()}
-              />
-            </div>
-
-            {/* ── Defaults + footer ── */}
-            <div className="border-t px-5 py-4" style={{ borderColor: "#e1dfdd" }}>
-              <div className="flex items-center gap-6 mb-4">
-                <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none" style={{ color: "#323130" }}>
-                  <input
-                    type="checkbox"
-                    checked={sigDefaultNew}
-                    onChange={e => setSigDefaultNew(e.target.checked)}
-                    className="w-4 h-4 rounded"
-                    style={{ accentColor: "#0078d4" }}
-                  />
-                  Set default for new messages
-                </label>
-                <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none" style={{ color: "#323130" }}>
-                  <input
-                    type="checkbox"
-                    checked={sigDefaultReplies}
-                    onChange={e => setSigDefaultReplies(e.target.checked)}
-                    className="w-4 h-4 rounded"
-                    style={{ accentColor: "#0078d4" }}
-                  />
-                  Set default for replies and forwards
-                </label>
+                      }, 0);
+                    }}
+                    className="flex items-center gap-2 w-full px-2 py-1.5 rounded text-[12px] hover:bg-[#ebebeb] transition-colors"
+                    style={{ color: "#0078d4" }}
+                  >
+                    <Plus className="w-3.5 h-3.5" /> New signature
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center justify-end gap-3">
-                {signatureSaved && (
-                  <span className="text-[13px] text-emerald-600 flex items-center gap-1">
-                    <Check className="w-4 h-4" />Saved!
-                  </span>
-                )}
-                <button
-                  onClick={() => setShowSignatureModal(false)}
-                  className="px-5 py-1.5 text-[13px] rounded border hover:bg-gray-50 transition-colors"
-                  style={{ borderColor: "#c8c6c4", color: "#323130" }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveEmailSignature}
-                  disabled={signatureSaving}
-                  className="px-5 py-1.5 text-[13px] rounded border transition-colors disabled:opacity-50"
-                  style={{
-                    background: signatureSaving ? "#f3f2f1" : "#f3f2f1",
-                    borderColor: "#c8c6c4",
-                    color: signatureSaving ? "#a19f9d" : "#323130",
-                  }}
-                >
-                  {signatureSaving ? "Saving…" : "Save"}
-                </button>
-              </div>
-            </div>
+
+              {/* ── Right: editor panel ── */}
+              <div className="flex flex-col flex-1 overflow-hidden">
+
+                {/* Toolbar tabs */}
+                <div className="flex border-b px-4 gap-1 flex-shrink-0" style={{ borderColor: "#e1dfdd" }}>
+                  {(["format", "insert"] as const).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => setSigTab(t)}
+                      className="px-4 py-2 text-[13px] font-medium border-b-2 transition-colors -mb-px"
+                      style={{
+                        borderBottomColor: sigTab === t ? "#0078d4" : "transparent",
+                        color: sigTab === t ? "#0078d4" : "#605e5c",
+                      }}
+                    >
+                      {t === "format" ? "Format text" : "Insert"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Toolbar ribbon */}
+                <div className="border-b px-3 py-1.5 flex items-center gap-1 flex-wrap flex-shrink-0" style={{ borderColor: "#e1dfdd", background: "#faf9f8", minHeight: 48 }}>
+                  {sigTab === "format" ? (
+                    <>
+                      <select className="border rounded px-1.5 py-0.5 text-[12px] outline-none focus:border-[#0078d4]" style={{ borderColor: "#c8c6c4", color: "#323130", height: 26, minWidth: 108 }}
+                        onChange={e => { sigEditorRef.current?.focus(); document.execCommand("fontName", false, e.target.value); }} defaultValue="Segoe UI">
+                        {["Segoe UI","Arial","Calibri","Times New Roman","Georgia","Courier New","Verdana","Tahoma"].map(f => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                      <select className="border rounded px-1 py-0.5 text-[12px] outline-none focus:border-[#0078d4]" style={{ borderColor: "#c8c6c4", color: "#323130", height: 26, width: 50 }}
+                        onChange={e => { sigEditorRef.current?.focus(); document.execCommand("fontSize", false, e.target.value); }} defaultValue="3">
+                        {[["1","8"],["2","10"],["3","12"],["4","14"],["5","18"],["6","24"],["7","36"]].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                      </select>
+                      <div className="w-px h-5 mx-0.5" style={{ background: "#c8c6c4" }} />
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("bold"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] font-bold text-[14px]" style={{ color: "#323130" }} title="Bold">B</button>
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("italic"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] italic text-[14px]" style={{ color: "#323130" }} title="Italic">I</button>
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("underline"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] underline text-[14px]" style={{ color: "#323130" }} title="Underline">U</button>
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("strikeThrough"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] line-through text-[14px]" style={{ color: "#323130" }} title="Strikethrough">S</button>
+                      <div className="w-px h-5 mx-0.5" style={{ background: "#c8c6c4" }} />
+                      <label className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] cursor-pointer relative" title="Font color">
+                        <span className="text-[12px] font-bold" style={{ color: "#323130" }}>A</span>
+                        <input type="color" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" defaultValue="#000000" onChange={e => { sigEditorRef.current?.focus(); document.execCommand("foreColor", false, e.target.value); }} />
+                      </label>
+                      <label className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb] cursor-pointer relative" title="Highlight">
+                        <span className="text-[11px] px-0.5" style={{ background: "#ffff00", color: "#323130" }}>ab</span>
+                        <input type="color" className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" defaultValue="#ffff00" onChange={e => { sigEditorRef.current?.focus(); document.execCommand("backColor", false, e.target.value); }} />
+                      </label>
+                      <div className="w-px h-5 mx-0.5" style={{ background: "#c8c6c4" }} />
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("insertUnorderedList"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Bullet list"><List className="w-4 h-4" style={{ color: "#323130" }} /></button>
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("insertOrderedList"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Numbered list"><ListOrdered className="w-4 h-4" style={{ color: "#323130" }} /></button>
+                      <div className="w-px h-5 mx-0.5" style={{ background: "#c8c6c4" }} />
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyLeft"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align left"><AlignLeft className="w-4 h-4" style={{ color: "#323130" }} /></button>
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyCenter"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align center"><AlignCenter className="w-4 h-4" style={{ color: "#323130" }} /></button>
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("justifyRight"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Align right"><AlignRight className="w-4 h-4" style={{ color: "#323130" }} /></button>
+                      <div className="w-px h-5 mx-0.5" style={{ background: "#c8c6c4" }} />
+                      <button onMouseDown={e => { e.preventDefault(); const url = window.prompt("Enter URL:", "https://"); if (url) { sigEditorRef.current?.focus(); document.execCommand("createLink", false, url); } }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Insert link"><LinkIcon className="w-4 h-4" style={{ color: "#323130" }} /></button>
+                      <button onMouseDown={e => { e.preventDefault(); sigEditorRef.current?.focus(); document.execCommand("removeFormat"); }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#ebebeb]" title="Clear formatting"><Eraser className="w-4 h-4" style={{ color: "#323130" }} /></button>
+                    </>
+                  ) : (
+                    <button
+                      onMouseDown={e => {
+                        e.preventDefault();
+                        const inp = document.createElement("input");
+                        inp.type = "file"; inp.accept = "image/*,.gif";
+                        inp.onchange = () => {
+                          const file = inp.files?.[0]; if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = ev => { const src = ev.target?.result as string; sigEditorRef.current?.focus(); document.execCommand("insertImage", false, src); };
+                          reader.readAsDataURL(file);
+                        };
+                        inp.click();
+                      }}
+                      className="flex items-center gap-2 px-3 py-1 rounded border hover:bg-[#ebebeb] text-[12px]"
+                      style={{ borderColor: "#c8c6c4", color: "#323130" }}
+                    >
+                      <ImageIcon className="w-4 h-4" /> Insert Image / GIF
+                    </button>
+                  )}
+                </div>
+
+                {/* Signature name input */}
+                <div className="px-4 pt-3 pb-1 flex-shrink-0">
+                  <input
+                    className="w-full border-b text-[13px] outline-none pb-1 bg-transparent"
+                    style={{ borderColor: "#c8c6c4", color: "#323130" }}
+                    placeholder="Signature name"
+                    value={sigName}
+                    onChange={e => setSigName(e.target.value)}
+                  />
+                </div>
+
+                {/* Rich text editor */}
+                <div className="flex-1 overflow-y-auto px-4 py-2" style={{ minHeight: 0 }}>
+                  <div
+                    ref={sigEditorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="outline-none min-h-[120px] w-full"
+                    style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: 13, color: "#323130", lineHeight: 1.6 }}
+                    onPaste={e => {
+                      const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith("image/"));
+                      if (item) {
+                        e.preventDefault();
+                        const file = item.getAsFile(); if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = ev => { const src = ev.target?.result as string; document.execCommand("insertImage", false, src); };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    onDrop={e => {
+                      const file = e.dataTransfer.files[0];
+                      if (file?.type.startsWith("image/")) {
+                        e.preventDefault();
+                        const reader = new FileReader();
+                        reader.onload = ev => { const src = ev.target?.result as string; sigEditorRef.current?.focus(); document.execCommand("insertImage", false, src); };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    onDragOver={e => e.preventDefault()}
+                  />
+                </div>
+
+                {/* Footer: defaults + actions */}
+                <div className="border-t px-4 py-3 flex-shrink-0" style={{ borderColor: "#e1dfdd" }}>
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mb-3">
+                    <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none" style={{ color: "#323130" }}>
+                      <input type="checkbox" checked={sigDefaultNew} onChange={e => setSigDefaultNew(e.target.checked)} className="w-4 h-4 rounded" style={{ accentColor: "#0078d4" }} />
+                      Default for new messages
+                    </label>
+                    <label className="flex items-center gap-2 text-[13px] cursor-pointer select-none" style={{ color: "#323130" }}>
+                      <input type="checkbox" checked={sigDefaultReplies} onChange={e => setSigDefaultReplies(e.target.checked)} className="w-4 h-4 rounded" style={{ accentColor: "#0078d4" }} />
+                      Default for replies / forwards
+                    </label>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {editingSigId && (
+                        <button
+                          onClick={() => editingSigId && handleDeleteSignature(editingSigId)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded border hover:bg-red-50 transition-colors"
+                          style={{ borderColor: "#c8c6c4", color: "#c50f1f" }}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {signatureSaved && (
+                        <span className="text-[13px] text-emerald-600 flex items-center gap-1">
+                          <Check className="w-4 h-4" />Saved!
+                        </span>
+                      )}
+                      <button
+                        onClick={() => setShowSignatureModal(false)}
+                        className="px-4 py-1.5 text-[13px] rounded border hover:bg-gray-50 transition-colors"
+                        style={{ borderColor: "#c8c6c4", color: "#323130" }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveEmailSignature}
+                        disabled={signatureSaving}
+                        className="px-4 py-1.5 text-[13px] rounded border transition-colors disabled:opacity-50"
+                        style={{ background: "#0078d4", borderColor: "#0078d4", color: "#ffffff" }}
+                      >
+                        {signatureSaving ? "Saving…" : "Save"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>{/* end right panel */}
+            </div>{/* end two-column body */}
           </div>
         </div>,
         document.body
