@@ -56,17 +56,26 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
   const quotationNumber = await genQuotationNumber(data.companyId);
 
   const items = data.items ?? [];
-  let subtotal = 0;
+  let projectItemsSubtotal = 0;
   for (const item of items) {
     const amount = (item.quantity ?? 1) * (item.rate ?? 0) * (1 - (item.discount ?? 0) / 100);
     item.amount = amount;
-    subtotal += amount;
+    projectItemsSubtotal += amount;
   }
   const discount = data.discount ?? 0;
-  const discountedSubtotal = subtotal * (1 - discount / 100);
+  const discountedProjectTotal = projectItemsSubtotal * (1 - discount / 100);
+  let additionalTotal = 0;
+  try {
+    const parsedAdditional = data.additionalItems ? JSON.parse(data.additionalItems) : [];
+    for (const ai of parsedAdditional) {
+      if (ai.status === "Included") additionalTotal += (ai.price ?? 0) * (ai.quantity ?? 1);
+    }
+  } catch { /* ignore malformed JSON */ }
+  const subtotal = discountedProjectTotal; // project items only, stored for display
+  const combinedSubtotal = discountedProjectTotal + additionalTotal;
   const vatPercent = data.vatPercent ?? 5;
-  const vatAmount = discountedSubtotal * vatPercent / 100;
-  const grandTotal = discountedSubtotal + vatAmount;
+  const vatAmount = +(combinedSubtotal * vatPercent / 100).toFixed(2);
+  const grandTotal = +(combinedSubtotal + vatAmount).toFixed(2);
 
   // Inherit Client Code: from body → from linked lead → auto-generate per company.
   let clientCode: string | undefined = data.clientCode;
@@ -127,17 +136,26 @@ router.put("/quotations/:id", requirePermission("quotations", "edit"), requireBo
   }
 
   const items = data.items ?? [];
-  let subtotal = 0;
+  let projectItemsSubtotal = 0;
   for (const item of items) {
     const amount = (item.quantity ?? 1) * (item.rate ?? 0) * (1 - (item.discount ?? 0) / 100);
     item.amount = amount;
-    subtotal += amount;
+    projectItemsSubtotal += amount;
   }
   const discount = data.discount ?? 0;
-  const discountedSubtotal = subtotal * (1 - discount / 100);
+  const discountedProjectTotal = projectItemsSubtotal * (1 - discount / 100);
+  let additionalTotal = 0;
+  try {
+    const parsedAdditional = data.additionalItems ? JSON.parse(data.additionalItems) : [];
+    for (const ai of parsedAdditional) {
+      if (ai.status === "Included") additionalTotal += (ai.price ?? 0) * (ai.quantity ?? 1);
+    }
+  } catch { /* ignore malformed JSON */ }
+  const subtotal = discountedProjectTotal; // project items only, stored for display
+  const combinedSubtotal = discountedProjectTotal + additionalTotal;
   const vatPercent = data.vatPercent ?? 5;
-  const vatAmount = discountedSubtotal * vatPercent / 100;
-  const grandTotal = discountedSubtotal + vatAmount;
+  const vatAmount = +(combinedSubtotal * vatPercent / 100).toFixed(2);
+  const grandTotal = +(combinedSubtotal + vatAmount).toFixed(2);
 
   const [q] = await db.update(quotationsTable).set({
     ...data, subtotal, vatAmount, grandTotal, items: undefined, updatedAt: new Date(),

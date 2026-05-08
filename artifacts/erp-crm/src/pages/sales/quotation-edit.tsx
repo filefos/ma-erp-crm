@@ -208,10 +208,12 @@ export function QuotationEdit({ id }: Props) {
     });
   };
 
-  const subtotal = items.reduce((s, it) => s + it.amount, 0);
-  const discountedSubtotal = subtotal * (1 - form.discount / 100);
-  const vatAmount = discountedSubtotal * form.vatPercent / 100;
-  const grandTotal = discountedSubtotal + vatAmount;
+  const projectItemsTotal = items.reduce((s, it) => s + (it.amount || 0), 0);
+  const discountedProjectTotal = projectItemsTotal * (1 - (form.discount || 0) / 100);
+  const additionalTotal = additionalItems.reduce((s, ai) => s + (ai.status === "Included" ? (ai.amount || 0) : 0), 0);
+  const combinedSubtotal = discountedProjectTotal + additionalTotal;
+  const vatAmount = +(combinedSubtotal * (form.vatPercent || 0) / 100).toFixed(2);
+  const grandTotal = +(combinedSubtotal + vatAmount).toFixed(2);
 
   const handleSave = (status: string) => {
     if (!form.companyId || !form.clientName) return;
@@ -438,7 +440,7 @@ export function QuotationEdit({ id }: Props) {
             <div className="w-80 space-y-2 text-sm">
               <div className="flex justify-between font-semibold border-t pt-2">
                 <span className="text-muted-foreground">Project Items Subtotal (Excl. VAT)</span>
-                <span>AED {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>AED {projectItemsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
@@ -559,7 +561,7 @@ export function QuotationEdit({ id }: Props) {
             <div className="w-80 flex-shrink-0 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal (Project Items)</span>
-                <span>AED {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>AED {projectItemsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm text-muted-foreground">Discount (%)</span>
@@ -570,6 +572,18 @@ export function QuotationEdit({ id }: Props) {
                   onChange={e => setForm(p => ({ ...p, discount: parseFloat(e.target.value) || 0 }))}
                 />
               </div>
+              {additionalTotal > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Additional Commercial Items</span>
+                  <span>AED {additionalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+              {additionalTotal > 0 && (
+                <div className="flex justify-between text-sm font-medium border-t pt-2">
+                  <span className="text-muted-foreground">Combined Subtotal (Excl. VAT)</span>
+                  <span>AED {combinedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm text-muted-foreground">VAT (%)</span>
                 <Input

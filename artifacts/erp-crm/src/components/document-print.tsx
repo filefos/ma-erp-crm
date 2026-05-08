@@ -260,9 +260,15 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
   const isTax = data.type === "tax_invoice";
   const isPO = data.type === "purchase_order";
   const vat = data.vatPercent ?? 5;
-  const subtotal = data.subtotal ?? data.items.reduce((s, i) => s + (i.total ?? (i.unitPrice ?? 0) * i.quantity), 0);
-  const vatAmt = data.vatAmount ?? (subtotal * vat / 100);
+  const projectItemsSubtotal = data.subtotal ?? data.items.reduce((s, i) => s + (i.total ?? (i.unitPrice ?? 0) * i.quantity), 0);
+  const additionalTotal = (data.additionalItems ?? []).reduce(
+    (s, ai) => s + (ai.status === "Included" ? ((ai.price ?? 0) * (ai.quantity ?? 1)) : 0), 0
+  );
+  const combinedSubtotalExclVat = projectItemsSubtotal + additionalTotal;
+  const vatAmt = data.vatAmount ?? +(combinedSubtotalExclVat * vat / 100).toFixed(2);
   const grand = data.grandTotal;
+  // Keep 'subtotal' as project-items-only alias for BAR 1
+  const subtotal = projectItemsSubtotal;
   const docDate = data.invoiceDate ?? data.date ?? new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   const clientContact = data.clientContactPerson ?? data.clientContact ?? "—";
   const customerTrn = data.customerTrn ?? data.clientTrn ?? "—";
@@ -530,10 +536,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             {/* ── BAR 2: TOTAL AMOUNT IN WORDS = EXCLUDING VAT ─────────────── */}
             <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
               <tbody>
-                <NavyBar amount={formatAED(subtotal)}>
+                <NavyBar amount={formatAED(combinedSubtotalExclVat)}>
                   Total Amount in Words = Excluding VAT
                 </NavyBar>
-                <WordsRow words={numberToWords(subtotal)} />
+                <WordsRow words={numberToWords(combinedSubtotalExclVat)} />
               </tbody>
             </table>
 
