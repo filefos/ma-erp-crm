@@ -1,4 +1,3 @@
-import "dotenv/config";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startSupplierExpiryWorker } from "./jobs/supplier-expiry";
