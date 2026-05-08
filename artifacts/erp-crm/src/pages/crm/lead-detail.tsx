@@ -188,7 +188,23 @@ export function LeadDetail({ id }: Props) {
                 {l.companyName && <p className="text-muted-foreground text-sm mt-0.5">{l.companyName}</p>}
               </>
             )}
-            <div className="font-mono text-sm text-primary mt-1">{l.leadNumber}</div>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <span className="font-mono text-sm text-primary">{l.leadNumber}</span>
+              {l.clientCode && (
+                <span className="inline-flex items-center gap-1.5 font-mono text-sm bg-[#0f2d5a]/8 text-[#0f2d5a] border border-[#0f2d5a]/20 rounded px-2 py-0.5">
+                  <span className="text-xs text-muted-foreground font-sans">Customer ID:</span>
+                  {l.clientCode}
+                  <button
+                    type="button"
+                    title="Copy Customer ID"
+                    className="ml-0.5 hover:text-[#1e6ab0] transition-colors"
+                    onClick={() => { navigator.clipboard.writeText(l.clientCode); }}
+                  >
+                    <Copy className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {editing ? (
