@@ -29,7 +29,8 @@ interface SigEntry { id: string; name: string; html: string; defaultNew: boolean
 /* ── Outlook Ribbon ─────────────────────────────────────────────────────────
    Renders the Outlook-style tab bar + ribbon row with labelled groups.
 ──────────────────────────────────────────────────────────────────────────── */
-const MENU_TABS = ["File", "Home", "View", "Help", "Message", "Insert", "Format text", "Draw", "Options"];
+const READING_TABS = ["File", "Home", "View", "Help"];
+const COMPOSE_TABS  = ["File", "Message", "Insert", "Format text", "Draw", "Options"];
 
 /* ── FixedDropdown ────────────────────────────────────────────────────────────
    Renders a dropdown at a fixed viewport position, escaping any overflow
@@ -68,15 +69,16 @@ function FixedDropdown({ triggerRef, open, onClose, children, minWidth = 160 }: 
 }
 
 function OutlookRibbon({
-  activeTab, setActiveTab, onNewMail, onSync, syncing,
+  activeTab, setActiveTab, composing, onNewMail, onSync, syncing,
   selectedEmail, onDelete, onArchive, onReply, onForward,
   onMarkAllRead, onToggleStar, onMove, currentFolder,
   sidebarVisible, onToggleSidebar, readingPaneLayout, onChangeReadingPane,
   signatures, onInsertSignatureById, onManageSignatures,
-  onPrint, onSettings, onLogout,
+  onPrint, onSettings, onLogout, onAttachFile,
 }: {
   activeTab: string;
   setActiveTab: (t: string) => void;
+  composing?: boolean;
   onNewMail: () => void;
   onSync: () => void;
   syncing: boolean;
@@ -99,6 +101,7 @@ function OutlookRibbon({
   onPrint?: () => void;
   onSettings?: () => void;
   onLogout?: () => void;
+  onAttachFile?: () => void;
 }) {
   const [moveOpen, setMoveOpen] = useState(false);
   const [flagOpen, setFlagOpen] = useState(false);
@@ -136,6 +139,8 @@ function OutlookRibbon({
   };
 
   useEffect(() => { closeAll(); }, [activeTab]);
+
+  const activeTabs = composing ? COMPOSE_TABS : READING_TABS;
 
   const MOVE_FOLDERS = [
     { key: "inbox",   label: "Inbox" },
@@ -585,7 +590,7 @@ function OutlookRibbon({
 
       {/* ── Insert ─────────────────────────────────────────────────────── */}
       <Group label="Insert">
-        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
+        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret onClick={() => onAttachFile?.()} />
         <Btn icon={<ImageIcon className="w-5 h-5" />} label="Pictures" />
         <Btn icon={<Smile className="w-5 h-5" />} label="Emoji" />
         <div ref={sigMsgRef}>
@@ -671,7 +676,7 @@ function OutlookRibbon({
   const insertRibbon = (
     <div className="flex items-stretch h-full">
       <Group label="Attachments">
-        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
+        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret onClick={() => onAttachFile?.()} />
       </Group>
       <Group label="Tables">
         <Btn icon={<Table className="w-5 h-5" />} label="Table" />
@@ -910,7 +915,7 @@ function OutlookRibbon({
         <button className="p-1.5 mr-1 rounded hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
           <AlignJustify className="w-4 h-4" />
         </button>
-        {MENU_TABS.map(tab => (
+        {activeTabs.map(tab => (
           tab === "File" ? (
             <div key="File" ref={fileTabRef} className="relative h-full flex items-center">
               <button
@@ -1503,6 +1508,11 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
     return `\n\n--\n${sig.html}`;
   };
 
+  // Auto-switch ribbon to the contextually correct tab when compose mode changes
+  useEffect(() => {
+    setActiveTab(composing ? "Message" : "Home");
+  }, [composing]);
+
   const openCompose = () => {
     setComposing(true);
     setSelectedId(null);
@@ -1551,8 +1561,10 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
         <OutlookRibbon
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          composing={composing}
           onNewMail={openCompose}
           onSync={() => syncMutation.mutate()}
+          onAttachFile={() => fileInputRef.current?.click()}
           syncing={syncMutation.isPending}
           selectedEmail={selectedEmail ?? null}
           onDelete={handleDelete}
