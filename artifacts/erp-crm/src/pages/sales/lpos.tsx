@@ -630,10 +630,10 @@ function LpoFormFields({
           <Input value={form.clientName} onChange={f("clientName")} placeholder="Client / Company name" />
         </div>
         <div className="space-y-1">
-          <Label>LPO Number *
-            <span className="text-muted-foreground font-normal text-xs ml-1">(client&apos;s PO reference)</span>
+          <Label>Client LPO Number *
+            <span className="text-muted-foreground font-normal text-xs ml-1">(as printed on the client&apos;s purchase order)</span>
           </Label>
-          <Input value={form.lpoNumber} onChange={f("lpoNumber")} placeholder="e.g. LPO/CLIENT/2025/001" />
+          <Input value={form.lpoNumber} onChange={f("lpoNumber")} placeholder="e.g. LPO/ABC-CORP/2025/001" />
         </div>
         <div className="space-y-1">
           <Label>LPO Date</Label>

@@ -481,9 +481,13 @@ router.post("/lpos/extract", requirePermission("lpos", "create"), async (req, re
 
 router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
-  const lpoNumber = await genDocNumber(data.companyId, "LPO", lposTable);
 
-  // Inherit Client Code from linked quotation if not provided.
+  // lpoNumber comes directly from the client's physical LPO document — it is the
+  // reference number printed on the purchase order the client sent us (e.g. "LPO/ABC/2025/001").
+  // We do NOT generate a system number here; the client's number IS the canonical identifier.
+  if (!data.lpoNumber) { res.status(400).json({ error: "lpoNumber is required" }); return; }
+
+  // Inherit Client Code + full quotation details from linked quotation if provided.
   let clientCode: string | undefined = data.clientCode;
   let quotation: typeof quotationsTable.$inferSelect | undefined;
   if (data.quotationId) {
@@ -493,13 +497,13 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
   }
 
   // Payment terms MUST come from the linked quotation when one is set.
-  // This is the source-of-truth — the frontend pre-fills it but the backend
-  // enforces it so manual edits can never override a quotation's terms.
+  // The backend is the source-of-truth — frontend pre-fills for UX convenience only.
+  // Never fall back to a generic default; use null so the draft invoice stays editable.
   const resolvedPaymentTerms =
     quotation?.paymentTerms || data.paymentTerms || null;
 
   const [lpo] = await db.insert(lposTable).values({
-    ...data, lpoNumber, clientCode, paymentTerms: resolvedPaymentTerms, createdById: req.user?.id,
+    ...data, clientCode, paymentTerms: resolvedPaymentTerms, createdById: req.user?.id,
   } as any).returning();
   await notifyAccountsOfLpo(req, lpo, "created");
 
@@ -738,7 +742,23 @@ router.put("/lpos/:id", requirePermission("lpos", "edit"), requireBodyCompanyAcc
       res.status(403).json({ error: "Forbidden" }); return;
     }
   }
-  const [lpo] = await db.update(lposTable).set({ ...req.body, updatedAt: new Date() }).where(eq(lposTable.id, id)).returning();
+  // Re-enforce quotation payment terms on every edit — the quotation is the
+  // source-of-truth and its terms must never be silently overwritten.
+  const effectiveQuotationId = req.body.quotationId ?? existing.quotationId;
+  let editPaymentTerms: string | null = req.body.paymentTerms ?? null;
+  if (effectiveQuotationId) {
+    const [q] = await db
+      .select({ paymentTerms: quotationsTable.paymentTerms })
+      .from(quotationsTable)
+      .where(eq(quotationsTable.id, effectiveQuotationId));
+    if (q?.paymentTerms) editPaymentTerms = q.paymentTerms;
+  }
+
+  const [lpo] = await db
+    .update(lposTable)
+    .set({ ...req.body, quotationId: effectiveQuotationId, paymentTerms: editPaymentTerms, updatedAt: new Date() })
+    .where(eq(lposTable.id, id))
+    .returning();
   // Re-notify accountants only when attachments grew (someone uploaded the
   // client LPO file after the initial save).
   const oldCount = Array.isArray(existing.attachments) ? (existing.attachments as unknown[]).length : 0;
