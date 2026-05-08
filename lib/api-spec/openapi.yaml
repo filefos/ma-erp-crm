@@ -4081,6 +4081,91 @@ paths:
               schema:
                 $ref: "#/components/schemas/JournalEntry"
 
+  /delegated-tasks:
+    get:
+      operationId: listDelegatedTasks
+      tags: [delegated-tasks]
+      summary: List all delegated tasks (admin)
+      responses:
+        "200":
+          description: List of delegated tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DelegatedTask"
+    post:
+      operationId: createDelegatedTask
+      tags: [delegated-tasks]
+      summary: Create a delegated task (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDelegatedTaskBody"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegatedTask"
+
+  /delegated-tasks/mine:
+    get:
+      operationId: getMyDelegatedTasks
+      tags: [delegated-tasks]
+      summary: Get active delegated tasks for current user
+      responses:
+        "200":
+          description: Active delegated tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DelegatedTask"
+
+  /delegated-tasks/{id}/complete:
+    patch:
+      operationId: completeDelegatedTask
+      tags: [delegated-tasks]
+      summary: Mark delegated task as complete
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegatedTask"
+
+  /delegated-tasks/{id}/revoke:
+    patch:
+      operationId: revokeDelegatedTask
+      tags: [delegated-tasks]
+      summary: Revoke a delegated task (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task revoked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegatedTask"
+
 components:
   schemas:
     HealthStatus:
@@ -7447,3 +7532,66 @@ components:
               type: array
               items:
                 type: string
+
+    DelegatedTask:
+      type: object
+      properties:
+        id:
+          type: integer
+        companyId:
+          type: integer
+        grantedByUserId:
+          type: integer
+        grantedToUserId:
+          type: integer
+        taskType:
+          type: string
+        taskLabel:
+          type: string
+        leadId:
+          type: integer
+          nullable: true
+        durationMinutes:
+          type: integer
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        revokedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        grantedByName:
+          type: string
+        grantedToName:
+          type: string
+        leadName:
+          type: string
+          nullable: true
+      required: [id, companyId, grantedByUserId, grantedToUserId, taskType, taskLabel, durationMinutes, expiresAt, status, createdAt]
+
+    CreateDelegatedTaskBody:
+      type: object
+      properties:
+        companyId:
+          type: integer
+        grantedToUserId:
+          type: integer
+        taskType:
+          type: string
+        taskLabel:
+          type: string
+        leadId:
+          type: integer
+          nullable: true
+        durationMinutes:
+          type: integer
+      required: [companyId, grantedToUserId, taskType, taskLabel, durationMinutes]

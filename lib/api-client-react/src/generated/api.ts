@@ -39,6 +39,7 @@ import type {
   CreateChequeBody,
   CreateCompanyBody,
   CreateContactBody,
+  CreateDelegatedTaskBody,
   CreateDeliveryNoteBody,
   CreateDepartmentBody,
   CreateEmployeeAttachmentBody,
@@ -66,6 +67,7 @@ import type {
   CreateUndertakingLetterBody,
   CreateUserBody,
   DashboardSummary,
+  DelegatedTask,
   DeleteChartOfAccount200,
   DeleteJournalEntry200,
   DeletePaymentMade200,
@@ -566,7 +568,7 @@ export function useGetMe<
 }
 
 /**
- * @summary Request OTP (sent to registered mobile via WhatsApp)
+ * @summary Request OTP (sent to registered mobile via SMS)
  */
 export const getRequestOtpUrl = () => {
   return `/api/auth/request-otp`;
@@ -629,7 +631,7 @@ export type RequestOtpMutationBody = BodyType<RequestOtpBody>;
 export type RequestOtpMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Request OTP (sent to registered mobile via WhatsApp)
+ * @summary Request OTP (sent to registered mobile via SMS)
  */
 export const useRequestOtp = <
   TError = ErrorType<ErrorResponse>,
@@ -17108,4 +17110,408 @@ export const useApproveJournalEntry = <
   TContext
 > => {
   return useMutation(getApproveJournalEntryMutationOptions(options));
+};
+
+/**
+ * @summary List all delegated tasks (admin)
+ */
+export const getListDelegatedTasksUrl = () => {
+  return `/api/delegated-tasks`;
+};
+
+export const listDelegatedTasks = async (
+  options?: RequestInit,
+): Promise<DelegatedTask[]> => {
+  return customFetch<DelegatedTask[]>(getListDelegatedTasksUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListDelegatedTasksQueryKey = () => {
+  return [`/api/delegated-tasks`] as const;
+};
+
+export const getListDelegatedTasksQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDelegatedTasks>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listDelegatedTasks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDelegatedTasksQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listDelegatedTasks>>
+  > = ({ signal }) => listDelegatedTasks({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDelegatedTasks>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListDelegatedTasksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listDelegatedTasks>>
+>;
+export type ListDelegatedTasksQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all delegated tasks (admin)
+ */
+
+export function useListDelegatedTasks<
+  TData = Awaited<ReturnType<typeof listDelegatedTasks>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listDelegatedTasks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListDelegatedTasksQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a delegated task (admin)
+ */
+export const getCreateDelegatedTaskUrl = () => {
+  return `/api/delegated-tasks`;
+};
+
+export const createDelegatedTask = async (
+  createDelegatedTaskBody: CreateDelegatedTaskBody,
+  options?: RequestInit,
+): Promise<DelegatedTask> => {
+  return customFetch<DelegatedTask>(getCreateDelegatedTaskUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createDelegatedTaskBody),
+  });
+};
+
+export const getCreateDelegatedTaskMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDelegatedTask>>,
+    TError,
+    { data: BodyType<CreateDelegatedTaskBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createDelegatedTask>>,
+  TError,
+  { data: BodyType<CreateDelegatedTaskBody> },
+  TContext
+> => {
+  const mutationKey = ["createDelegatedTask"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createDelegatedTask>>,
+    { data: BodyType<CreateDelegatedTaskBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createDelegatedTask(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDelegatedTaskMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createDelegatedTask>>
+>;
+export type CreateDelegatedTaskMutationBody = BodyType<CreateDelegatedTaskBody>;
+export type CreateDelegatedTaskMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a delegated task (admin)
+ */
+export const useCreateDelegatedTask = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDelegatedTask>>,
+    TError,
+    { data: BodyType<CreateDelegatedTaskBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createDelegatedTask>>,
+  TError,
+  { data: BodyType<CreateDelegatedTaskBody> },
+  TContext
+> => {
+  return useMutation(getCreateDelegatedTaskMutationOptions(options));
+};
+
+/**
+ * @summary Get active delegated tasks for current user
+ */
+export const getGetMyDelegatedTasksUrl = () => {
+  return `/api/delegated-tasks/mine`;
+};
+
+export const getMyDelegatedTasks = async (
+  options?: RequestInit,
+): Promise<DelegatedTask[]> => {
+  return customFetch<DelegatedTask[]>(getGetMyDelegatedTasksUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMyDelegatedTasksQueryKey = () => {
+  return [`/api/delegated-tasks/mine`] as const;
+};
+
+export const getGetMyDelegatedTasksQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyDelegatedTasks>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyDelegatedTasks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMyDelegatedTasksQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMyDelegatedTasks>>
+  > = ({ signal }) => getMyDelegatedTasks({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyDelegatedTasks>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMyDelegatedTasksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMyDelegatedTasks>>
+>;
+export type GetMyDelegatedTasksQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get active delegated tasks for current user
+ */
+
+export function useGetMyDelegatedTasks<
+  TData = Awaited<ReturnType<typeof getMyDelegatedTasks>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getMyDelegatedTasks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyDelegatedTasksQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Mark delegated task as complete
+ */
+export const getCompleteDelegatedTaskUrl = (id: number) => {
+  return `/api/delegated-tasks/${id}/complete`;
+};
+
+export const completeDelegatedTask = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DelegatedTask> => {
+  return customFetch<DelegatedTask>(getCompleteDelegatedTaskUrl(id), {
+    ...options,
+    method: "PATCH",
+  });
+};
+
+export const getCompleteDelegatedTaskMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeDelegatedTask>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof completeDelegatedTask>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["completeDelegatedTask"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof completeDelegatedTask>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return completeDelegatedTask(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CompleteDelegatedTaskMutationResult = NonNullable<
+  Awaited<ReturnType<typeof completeDelegatedTask>>
+>;
+
+export type CompleteDelegatedTaskMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark delegated task as complete
+ */
+export const useCompleteDelegatedTask = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeDelegatedTask>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof completeDelegatedTask>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getCompleteDelegatedTaskMutationOptions(options));
+};
+
+/**
+ * @summary Revoke a delegated task (admin)
+ */
+export const getRevokeDelegatedTaskUrl = (id: number) => {
+  return `/api/delegated-tasks/${id}/revoke`;
+};
+
+export const revokeDelegatedTask = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DelegatedTask> => {
+  return customFetch<DelegatedTask>(getRevokeDelegatedTaskUrl(id), {
+    ...options,
+    method: "PATCH",
+  });
+};
+
+export const getRevokeDelegatedTaskMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeDelegatedTask>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof revokeDelegatedTask>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["revokeDelegatedTask"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof revokeDelegatedTask>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return revokeDelegatedTask(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RevokeDelegatedTaskMutationResult = NonNullable<
+  Awaited<ReturnType<typeof revokeDelegatedTask>>
+>;
+
+export type RevokeDelegatedTaskMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Revoke a delegated task (admin)
+ */
+export const useRevokeDelegatedTask = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeDelegatedTask>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof revokeDelegatedTask>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getRevokeDelegatedTaskMutationOptions(options));
 };

@@ -19,3 +19,4 @@ export * from "./email-settings";
 export * from "./activity";
 export * from "./conversations";
 export * from "./messages";
+export * from "./delegated-tasks";

@@ -1945,6 +1945,34 @@ export type QuotationApproveResponse = Quotation & {
   warnings?: string[];
 };
 
+export interface DelegatedTask {
+  id: number;
+  companyId: number;
+  grantedByUserId: number;
+  grantedToUserId: number;
+  taskType: string;
+  taskLabel: string;
+  leadId?: number | null;
+  durationMinutes: number;
+  expiresAt: string;
+  status: string;
+  completedAt?: string | null;
+  revokedAt?: string | null;
+  createdAt: string;
+  grantedByName?: string;
+  grantedToName?: string;
+  leadName?: string | null;
+}
+
+export interface CreateDelegatedTaskBody {
+  companyId: number;
+  grantedToUserId: number;
+  taskType: string;
+  taskLabel: string;
+  leadId?: number | null;
+  durationMinutes: number;
+}
+
 export type ListUsersParams = {
   departmentId?: number;
   companyId?: number;

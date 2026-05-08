@@ -91,6 +91,8 @@ import { MyProfile } from "@/pages/profile/index";
 import NotFound from "@/pages/not-found";
 import { EmailComposeProvider } from "@/contexts/email-compose-context";
 import { EmailComposeModal } from "@/components/email-compose-modal";
+import { DelegatedTaskProvider } from "@/contexts/delegated-task-context";
+import { DelegatedTaskPopup } from "@/components/delegated-task-popup";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -420,15 +422,18 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <EmailComposeProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <AppLayout>
-              <Router />
-            </AppLayout>
-          </WouterRouter>
-          <Toaster />
-          <EmailComposeModal />
-        </TooltipProvider>
+        <DelegatedTaskProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <AppLayout>
+                <Router />
+              </AppLayout>
+            </WouterRouter>
+            <Toaster />
+            <EmailComposeModal />
+            <DelegatedTaskPopup />
+          </TooltipProvider>
+        </DelegatedTaskProvider>
       </EmailComposeProvider>
     </QueryClientProvider>
   );

@@ -28,6 +28,7 @@ import aiRouter from "./ai";
 import adminResetRouter from "./admin-reset";
 import activityRouter from "./activity";
 import deployRouter from "./deploy";
+import delegatedTasksRouter from "./delegated-tasks";
 
 const router: IRouter = Router();
 
@@ -64,5 +65,6 @@ router.use(aiRouter);
 router.use(adminResetRouter);
 router.use(activityRouter);
 router.use(deployRouter);
+router.use(delegatedTasksRouter);
 
 export default router;

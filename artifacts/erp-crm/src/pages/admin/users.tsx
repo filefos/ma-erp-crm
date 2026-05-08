@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Power, Pencil, ShieldCheck, Loader2, KeyRound, Trash2 } from "lucide-react";
+import { Search, Plus, Power, Pencil, ShieldCheck, Loader2, KeyRound, Trash2, ClipboardList } from "lucide-react";
+import { DelegateTaskDialog } from "@/components/delegate-task-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -365,6 +366,7 @@ export function UsersList() {
   const [permsFor, setPermsFor] = useState<{ id: number; name: string } | null>(null);
   const [pwdChangeFor, setPwdChangeFor] = useState<EditableUser | null>(null);
   const [deletingUser, setDeletingUser] = useState<{ id: number; name: string; email: string } | null>(null);
+  const [delegateFor, setDelegateFor] = useState<{ id: number; name: string } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", role: "user", departmentId: "none", companyId: "all", permissionLevel: "user" });
@@ -578,6 +580,15 @@ export function UsersList() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        title="Delegate a task"
+                        onClick={() => setDelegateFor({ id: u.id, name: u.name })}
+                        disabled={!u.isActive || (me as any)?.id === u.id}
+                      >
+                        <ClipboardList className="w-3.5 h-3.5 text-violet-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         title={u.isActive ? "Deactivate" : "Activate"}
                         data-testid={`toggle-user-${u.id}`}
                         onClick={() => update.mutate({ id: u.id, data: { isActive: !u.isActive } })}
@@ -627,6 +638,14 @@ export function UsersList() {
           user={pwdChangeFor}
           open={!!pwdChangeFor}
           onClose={() => setPwdChangeFor(null)}
+        />
+      )}
+
+      {delegateFor && (
+        <DelegateTaskDialog
+          open={!!delegateFor}
+          onClose={() => setDelegateFor(null)}
+          defaultUserId={delegateFor.id}
         />
       )}
 

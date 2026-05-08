@@ -111,7 +111,7 @@ export const GetMeResponse = zod.object({
 });
 
 /**
- * @summary Request OTP (sent to registered mobile via WhatsApp)
+ * @summary Request OTP (sent to registered mobile via SMS)
  */
 export const RequestOtpBody = zod.object({
   email: zod.string(),
@@ -6697,4 +6697,118 @@ export const ApproveJournalEntryResponse = zod.object({
     .optional(),
   createdAt: zod.string().optional(),
   updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary List all delegated tasks (admin)
+ */
+export const ListDelegatedTasksResponseItem = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  grantedByUserId: zod.number(),
+  grantedToUserId: zod.number(),
+  taskType: zod.string(),
+  taskLabel: zod.string(),
+  leadId: zod.number().nullish(),
+  durationMinutes: zod.number(),
+  expiresAt: zod.coerce.date(),
+  status: zod.string(),
+  completedAt: zod.coerce.date().nullish(),
+  revokedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  grantedByName: zod.string().optional(),
+  grantedToName: zod.string().optional(),
+  leadName: zod.string().nullish(),
+});
+export const ListDelegatedTasksResponse = zod.array(
+  ListDelegatedTasksResponseItem,
+);
+
+/**
+ * @summary Create a delegated task (admin)
+ */
+export const CreateDelegatedTaskBody = zod.object({
+  companyId: zod.number(),
+  grantedToUserId: zod.number(),
+  taskType: zod.string(),
+  taskLabel: zod.string(),
+  leadId: zod.number().nullish(),
+  durationMinutes: zod.number(),
+});
+
+/**
+ * @summary Get active delegated tasks for current user
+ */
+export const GetMyDelegatedTasksResponseItem = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  grantedByUserId: zod.number(),
+  grantedToUserId: zod.number(),
+  taskType: zod.string(),
+  taskLabel: zod.string(),
+  leadId: zod.number().nullish(),
+  durationMinutes: zod.number(),
+  expiresAt: zod.coerce.date(),
+  status: zod.string(),
+  completedAt: zod.coerce.date().nullish(),
+  revokedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  grantedByName: zod.string().optional(),
+  grantedToName: zod.string().optional(),
+  leadName: zod.string().nullish(),
+});
+export const GetMyDelegatedTasksResponse = zod.array(
+  GetMyDelegatedTasksResponseItem,
+);
+
+/**
+ * @summary Mark delegated task as complete
+ */
+export const CompleteDelegatedTaskParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CompleteDelegatedTaskResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  grantedByUserId: zod.number(),
+  grantedToUserId: zod.number(),
+  taskType: zod.string(),
+  taskLabel: zod.string(),
+  leadId: zod.number().nullish(),
+  durationMinutes: zod.number(),
+  expiresAt: zod.coerce.date(),
+  status: zod.string(),
+  completedAt: zod.coerce.date().nullish(),
+  revokedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  grantedByName: zod.string().optional(),
+  grantedToName: zod.string().optional(),
+  leadName: zod.string().nullish(),
+});
+
+/**
+ * @summary Revoke a delegated task (admin)
+ */
+export const RevokeDelegatedTaskParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const RevokeDelegatedTaskResponse = zod.object({
+  id: zod.number(),
+  companyId: zod.number(),
+  grantedByUserId: zod.number(),
+  grantedToUserId: zod.number(),
+  taskType: zod.string(),
+  taskLabel: zod.string(),
+  leadId: zod.number().nullish(),
+  durationMinutes: zod.number(),
+  expiresAt: zod.coerce.date(),
+  status: zod.string(),
+  completedAt: zod.coerce.date().nullish(),
+  revokedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  grantedByName: zod.string().optional(),
+  grantedToName: zod.string().optional(),
+  leadName: zod.string().nullish(),
 });
