@@ -106,7 +106,11 @@ function OutlookRibbon({
   const [folderPaneOpen, setFolderPaneOpen] = useState(false);
   const [readingPaneOpen, setReadingPaneOpen] = useState(false);
   const [densityOpen, setDensityOpen] = useState(false);
-  const [signatureOpen, setSignatureOpen] = useState(false);
+  const [convOpen, setConvOpen] = useState(false);
+  const [msgPreviewOpen, setMsgPreviewOpen] = useState(false);
+  // Separate open states for Signature dropdown in Message vs Insert tabs
+  const [sigMsgOpen, setSigMsgOpen] = useState(false);
+  const [sigInsertOpen, setSigInsertOpen] = useState(false);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const hasSelected = !!selectedEmail;
   const [, navigate] = useLocation();
@@ -117,13 +121,18 @@ function OutlookRibbon({
   const folderPaneTriggerRef  = useRef<HTMLDivElement>(null);
   const readingPaneTriggerRef = useRef<HTMLDivElement>(null);
   const densityTriggerRef     = useRef<HTMLDivElement>(null);
-  const signatureTriggerRef   = useRef<HTMLDivElement>(null);
+  const convTriggerRef        = useRef<HTMLDivElement>(null);
+  const msgPreviewTriggerRef  = useRef<HTMLDivElement>(null);
+  // Separate refs so each tab's Signature button anchors its own dropdown
+  const sigMsgRef             = useRef<HTMLDivElement>(null);
+  const sigInsertRef          = useRef<HTMLDivElement>(null);
   const fileTabRef            = useRef<HTMLDivElement>(null);
 
   const closeAll = () => {
     setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false);
     setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false);
-    setSignatureOpen(false); setFileMenuOpen(false);
+    setConvOpen(false); setMsgPreviewOpen(false);
+    setSigMsgOpen(false); setSigInsertOpen(false); setFileMenuOpen(false);
   };
 
   useEffect(() => { closeAll(); }, [activeTab]);
@@ -348,8 +357,40 @@ function OutlookRibbon({
         <Btn icon={<Settings className="w-5 h-5" />} label="View settings" caret />
       </Group>
       <Group label="Messages">
-        <Btn icon={<MessageSquare className="w-5 h-5" />} label="Conversations" />
-        <Btn icon={<LayoutGrid className="w-5 h-5" />} label="Message preview" caret />
+        <div ref={convTriggerRef}>
+          <Btn
+            icon={<MessageSquare className="w-5 h-5" />}
+            label="Conversations"
+            caret
+            onClick={() => { setConvOpen(s => !s); setMsgPreviewOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
+          />
+        </div>
+        <FixedDropdown triggerRef={convTriggerRef} open={convOpen} onClose={() => setConvOpen(false)} minWidth={230}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Conversations</div>
+          {["Show as conversations", "Newest on top", "Show sender above subject"].map(opt => (
+            <button key={opt} onClick={() => setConvOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+              <span className="w-2.5 h-2.5 flex-shrink-0" />
+              {opt}
+            </button>
+          ))}
+        </FixedDropdown>
+        <div ref={msgPreviewTriggerRef}>
+          <Btn
+            icon={<LayoutGrid className="w-5 h-5" />}
+            label="Message preview"
+            caret
+            onClick={() => { setMsgPreviewOpen(s => !s); setConvOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
+          />
+        </div>
+        <FixedDropdown triggerRef={msgPreviewTriggerRef} open={msgPreviewOpen} onClose={() => setMsgPreviewOpen(false)} minWidth={230}>
+          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Message Preview</div>
+          {[{ label: "1 line", key: "1" }, { label: "2 lines", key: "2" }, { label: "3 lines", key: "3" }, { label: "Off", key: "off" }].map(opt => (
+            <button key={opt.key} onClick={() => setMsgPreviewOpen(false)} className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+              <span className="w-2.5 h-2.5 flex-shrink-0" />
+              {opt.label}
+            </button>
+          ))}
+        </FixedDropdown>
         <Btn
           icon={<RotateCcw className={`w-5 h-5${syncing ? " animate-spin" : ""}`} />}
           label="Sync"
@@ -547,15 +588,15 @@ function OutlookRibbon({
         <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
         <Btn icon={<ImageIcon className="w-5 h-5" />} label="Pictures" />
         <Btn icon={<Smile className="w-5 h-5" />} label="Emoji" />
-        <div ref={signatureTriggerRef}>
-          <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
+        <div ref={sigMsgRef}>
+          <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSigMsgOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={220}>
+        <FixedDropdown triggerRef={sigMsgRef} open={sigMsgOpen} onClose={() => setSigMsgOpen(false)} minWidth={220}>
           {(signatures ?? []).length > 0 ? (
             (signatures ?? []).map(sig => (
               <button
                 key={sig.id}
-                onClick={() => { setSignatureOpen(false); onInsertSignatureById?.(sig.id); }}
+                onClick={() => { setSigMsgOpen(false); onInsertSignatureById?.(sig.id); }}
                 className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors text-left"
                 style={{ color: "#323130" }}
               >
@@ -566,7 +607,7 @@ function OutlookRibbon({
             <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signatures saved yet</div>
           )}
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+          <button onClick={() => { setSigMsgOpen(false); onManageSignatures?.(); }} className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
             Signatures…
           </button>
         </FixedDropdown>
@@ -644,15 +685,15 @@ function OutlookRibbon({
         <Btn icon={<AtSign className="w-5 h-5" />} label="Bookmark" />
       </Group>
       <Group label="Text">
-        <div ref={signatureTriggerRef}>
-          <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSignatureOpen(s => !s)} />
+        <div ref={sigInsertRef}>
+          <Btn icon={<FileText className="w-5 h-5" />} label="Signature" caret onClick={() => setSigInsertOpen(s => !s)} />
         </div>
-        <FixedDropdown triggerRef={signatureTriggerRef} open={signatureOpen} onClose={() => setSignatureOpen(false)} minWidth={220}>
+        <FixedDropdown triggerRef={sigInsertRef} open={sigInsertOpen} onClose={() => setSigInsertOpen(false)} minWidth={220}>
           {(signatures ?? []).length > 0 ? (
             (signatures ?? []).map(sig => (
               <button
                 key={sig.id}
-                onClick={() => { setSignatureOpen(false); onInsertSignatureById?.(sig.id); }}
+                onClick={() => { setSigInsertOpen(false); onInsertSignatureById?.(sig.id); }}
                 className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors text-left"
                 style={{ color: "#323130" }}
               >
@@ -663,7 +704,7 @@ function OutlookRibbon({
             <div className="px-4 py-2 text-[12px] italic" style={{ color: "#a19f9d" }}>No signatures saved yet</div>
           )}
           <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-          <button onClick={() => { setSignatureOpen(false); onManageSignatures?.(); }} className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
+          <button onClick={() => { setSigInsertOpen(false); onManageSignatures?.(); }} className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors" style={{ color: "#323130" }}>
             Signatures…
           </button>
         </FixedDropdown>
