@@ -420,21 +420,13 @@ export function CompanyDocuments() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1">
+          {/* Download is always visible */}
           <Button
-            variant="ghost"
-            size="icon"
-            title="View"
-            className="h-7 w-7 text-[#1e6ab0]"
-            onClick={() => setViewDoc(doc)}
-          >
-            <Eye className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
+            variant="outline"
+            size="sm"
             title="Download"
-            className="h-7 w-7 text-green-600"
+            className="h-7 px-2.5 text-xs text-green-700 border-green-300 hover:bg-green-50 flex-shrink-0"
             onClick={() => {
               const a = document.createElement("a");
               a.href = `${BASE}api/company-documents/${doc.id}/file?download=1`;
@@ -442,41 +434,54 @@ export function CompanyDocuments() {
               a.click();
             }}
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 mr-1" />
+            Download
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Edit remarks"
-            className="h-7 w-7 text-gray-500"
-            onClick={() => {
-              setEditRemarksDoc(doc);
-              setEditRemarksVal(doc.remarks ?? "");
-            }}
-          >
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Replace / add revision"
-            className="h-7 w-7 text-orange-500"
-            onClick={() => {
-              setReplaceDoc(doc);
-              replaceFileInputRef.current?.click();
-            }}
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            title="Delete"
-            className="h-7 w-7 text-red-500"
-            onClick={() => setDeleteDoc(doc)}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
+          {/* Other actions appear on hover */}
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              title="View"
+              className="h-7 w-7 text-[#1e6ab0]"
+              onClick={() => setViewDoc(doc)}
+            >
+              <Eye className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Edit remarks"
+              className="h-7 w-7 text-gray-500"
+              onClick={() => {
+                setEditRemarksDoc(doc);
+                setEditRemarksVal(doc.remarks ?? "");
+              }}
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Replace / add revision"
+              className="h-7 w-7 text-orange-500"
+              onClick={() => {
+                setReplaceDoc(doc);
+                replaceFileInputRef.current?.click();
+              }}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Delete"
+              className="h-7 w-7 text-red-500"
+              onClick={() => setDeleteDoc(doc)}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     );
