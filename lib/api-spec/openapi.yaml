@@ -4373,6 +4373,8 @@ components:
           type: number
         logo:
           type: string
+        stamp:
+          type: string
         bankDetails:
           type: string
         letterhead:
@@ -4405,6 +4407,8 @@ components:
         vatPercent:
           type: number
         logo:
+          type: string
+        stamp:
           type: string
         bankDetails:
           type: string
@@ -4467,6 +4471,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CompanyRef"
+        signatureUrl:
+          type: string
         isActive:
           type: boolean
         createdAt:

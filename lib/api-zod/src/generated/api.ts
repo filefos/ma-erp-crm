@@ -66,6 +66,7 @@ export const LoginResponse = zod.object({
         }),
       )
       .optional(),
+    signatureUrl: zod.string().optional(),
     isActive: zod.boolean(),
     createdAt: zod.string(),
   }),
@@ -106,6 +107,7 @@ export const GetMeResponse = zod.object({
       }),
     )
     .optional(),
+  signatureUrl: zod.string().optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -155,6 +157,7 @@ export const VerifyOtpResponse = zod.object({
         }),
       )
       .optional(),
+    signatureUrl: zod.string().optional(),
     isActive: zod.boolean(),
     createdAt: zod.string(),
   }),
@@ -189,6 +192,7 @@ export const ListCompaniesResponseItem = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  stamp: zod.string().optional(),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
   isActive: zod.boolean(),
@@ -210,6 +214,7 @@ export const CreateCompanyBody = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  stamp: zod.string().optional(),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
 });
@@ -233,6 +238,7 @@ export const GetCompanyResponse = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  stamp: zod.string().optional(),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
   isActive: zod.boolean(),
@@ -257,6 +263,7 @@ export const UpdateCompanyBody = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  stamp: zod.string().optional(),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
 });
@@ -273,6 +280,7 @@ export const UpdateCompanyResponse = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  stamp: zod.string().optional(),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
   isActive: zod.boolean(),
@@ -332,6 +340,7 @@ export const ListUsersResponseItem = zod.object({
       }),
     )
     .optional(),
+  signatureUrl: zod.string().optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -382,6 +391,7 @@ export const GetUserResponse = zod.object({
       }),
     )
     .optional(),
+  signatureUrl: zod.string().optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });
@@ -434,6 +444,7 @@ export const UpdateUserResponse = zod.object({
       }),
     )
     .optional(),
+  signatureUrl: zod.string().optional(),
   isActive: zod.boolean(),
   createdAt: zod.string(),
 });

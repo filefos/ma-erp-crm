@@ -61,7 +61,75 @@ function findLastContentY(canvas: HTMLCanvasElement): number {
   return canvas.height;
 }
 
-export async function captureElementToPdfBase64(el: HTMLElement, filename: string): Promise<{ base64: string; filename: string }> {
+// Load an image URL (data URL or http) into an HTMLImageElement.
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Stamp images onto a slice canvas at the bottom-centre with ~85% opacity.
+// `signatureUrl` appears slightly left of centre, `stampUrl` slightly right.
+// If only one is provided it is perfectly centred.
+async function stampImagesOnSlice(
+  sliceCanvas: HTMLCanvasElement,
+  signatureUrl: string | undefined,
+  stampUrl: string | undefined,
+): Promise<void> {
+  if (!signatureUrl && !stampUrl) return;
+  const ctx = sliceCanvas.getContext("2d");
+  if (!ctx) return;
+
+  const maxH = Math.floor(sliceCanvas.height * 0.14);
+  const maxW = Math.floor(sliceCanvas.width * 0.30);
+  const bottomMargin = Math.floor(sliceCanvas.height * 0.03);
+  const opacity = 0.85;
+
+  const drawImg = (img: HTMLImageElement, centreX: number) => {
+    const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+    const w = img.naturalWidth * scale;
+    const h = img.naturalHeight * scale;
+    const x = centreX - w / 2;
+    const y = sliceCanvas.height - h - bottomMargin;
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
+  };
+
+  const [sigImg, stpImg] = await Promise.all([
+    signatureUrl ? loadImage(signatureUrl).catch(() => null) : Promise.resolve(null),
+    stampUrl ? loadImage(stampUrl).catch(() => null) : Promise.resolve(null),
+  ]);
+
+  const both = sigImg && stpImg;
+  const singleCentreX = sliceCanvas.width / 2;
+
+  if (sigImg) {
+    drawImg(sigImg, both ? sliceCanvas.width * 0.35 : singleCentreX);
+  }
+  if (stpImg) {
+    drawImg(stpImg, both ? sliceCanvas.width * 0.65 : singleCentreX);
+  }
+}
+
+export interface PdfOptions {
+  signatureUrl?: string;
+  stampUrl?: string;
+}
+
+export async function captureElementToPdfBase64(
+  el: HTMLElement,
+  filename: string,
+  options?: PdfOptions,
+): Promise<{ base64: string; filename: string }> {
+  const signatureUrl = options?.signatureUrl || undefined;
+  const stampUrl = options?.stampUrl || undefined;
+  const hasOverlay = !!(signatureUrl || stampUrl);
+
   const rawCanvas = await html2canvas(el, {
     scale: 2,
     useCORS: true,
@@ -97,7 +165,17 @@ export async function captureElementToPdfBase64(el: HTMLElement, filename: strin
   // If content fits in a single page (with up to 2% slack), render it as one
   // page scaled exactly to its height — no slicing, no risk of blank pages.
   if (canvas.height <= sliceHeightPx * 1.02) {
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    const sliceCanvas = document.createElement("canvas");
+    sliceCanvas.width = canvas.width;
+    sliceCanvas.height = canvas.height;
+    const sctx = sliceCanvas.getContext("2d");
+    if (sctx) {
+      sctx.fillStyle = "#ffffff";
+      sctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+      sctx.drawImage(canvas, 0, 0);
+    }
+    if (hasOverlay) await stampImagesOnSlice(sliceCanvas, signatureUrl, stampUrl);
+    const dataUrl = sliceCanvas.toDataURL("image/jpeg", 0.92);
     const drawHeight = Math.min(pageHeight, canvas.height / ratio);
     pdf.addImage(dataUrl, "JPEG", 0, 0, imgWidth, drawHeight, undefined, "FAST");
     const dataUri = pdf.output("datauristring");
@@ -137,6 +215,7 @@ export async function captureElementToPdfBase64(el: HTMLElement, filename: strin
       0, y, sliceCanvas.width, sliceH,
       0, 0, sliceCanvas.width, sliceH,
     );
+    if (hasOverlay) await stampImagesOnSlice(sliceCanvas, signatureUrl, stampUrl);
     const dataUrl = sliceCanvas.toDataURL("image/jpeg", 0.92);
     if (pageIndex > 0) pdf.addPage();
     const sliceHeightPt = sliceH / ratio;

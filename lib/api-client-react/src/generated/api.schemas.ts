@@ -67,6 +67,7 @@ export interface User {
   status?: string;
   lastLoginAt?: string;
   accessibleCompanies?: CompanyRef[];
+  signatureUrl?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -155,6 +156,7 @@ export interface Company {
   trn?: string;
   vatPercent?: number;
   logo?: string;
+  stamp?: string;
   bankDetails?: string;
   letterhead?: string;
   isActive: boolean;
@@ -172,6 +174,7 @@ export interface CreateCompanyBody {
   trn?: string;
   vatPercent?: number;
   logo?: string;
+  stamp?: string;
   bankDetails?: string;
   letterhead?: string;
 }

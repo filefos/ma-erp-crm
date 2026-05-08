@@ -1,18 +1,18 @@
 import { useRef, useState } from "react";
-import { useListCompanies, useUpdateCompany, getListCompaniesQueryKey } from "@workspace/api-client-react";
+import { useListCompanies, useUpdateCompany, getListCompaniesQueryKey, type Company } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Building2, Pencil, Globe, Phone, Mail, Receipt, Upload, X } from "lucide-react";
+import { Building2, Pencil, Globe, Phone, Mail, Receipt, Upload, X, Stamp } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface FormState {
   name: string; shortName: string; prefix: string; trn: string;
   email: string; phone: string; website: string; address: string;
-  vatPercent: number; logo: string;
+  vatPercent: number; logo: string; stamp: string;
 }
 
 export function CompaniesAdmin() {
@@ -21,9 +21,10 @@ export function CompaniesAdmin() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>({
     name: "", shortName: "", prefix: "", trn: "",
-    email: "", phone: "", website: "", address: "", vatPercent: 5, logo: "",
+    email: "", phone: "", website: "", address: "", vatPercent: 5, logo: "", stamp: "",
   });
   const fileRef = useRef<HTMLInputElement>(null);
+  const stampRef = useRef<HTMLInputElement>(null);
 
   const update = useUpdateCompany({
     mutation: {
@@ -34,7 +35,7 @@ export function CompaniesAdmin() {
     },
   });
 
-  const openEdit = (c: typeof companies extends (infer T)[] | undefined ? T : never) => {
+  const openEdit = (c: Company) => {
     setForm({
       name: c.name ?? "",
       shortName: c.shortName ?? "",
@@ -45,7 +46,8 @@ export function CompaniesAdmin() {
       website: c.website ?? "",
       address: c.address ?? "",
       vatPercent: c.vatPercent ?? 5,
-      logo: (c as any).logo ?? "",
+      logo: c.logo ?? "",
+      stamp: c.stamp ?? "",
     });
     setEditId(c.id);
   };
@@ -56,6 +58,16 @@ export function CompaniesAdmin() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       setForm(p => ({ ...p, logo: (ev.target?.result as string) ?? "" }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleStampFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setForm(p => ({ ...p, stamp: (ev.target?.result as string) ?? "" }));
     };
     reader.readAsDataURL(file);
   };
@@ -78,9 +90,9 @@ export function CompaniesAdmin() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    {(c as any).logo ? (
+                    {c.logo ? (
                       <img
-                        src={(c as any).logo}
+                        src={c.logo}
                         alt={`${c.name} logo`}
                         className="w-12 h-12 rounded-lg object-contain border bg-white p-1"
                       />
@@ -113,11 +125,22 @@ export function CompaniesAdmin() {
                 {c.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="w-3.5 h-3.5" />{c.email}</div>}
                 {c.website && <div className="flex items-center gap-2 text-muted-foreground"><Globe className="w-3.5 h-3.5" />{c.website}</div>}
                 {c.address && <div className="text-xs text-muted-foreground pt-1 border-t mt-2">{c.address}</div>}
-                {!(c as any).logo && (
-                  <div className="flex items-center gap-1 text-xs text-orange-600 pt-1">
-                    <Upload className="w-3 h-3" />No logo uploaded — click Edit to add one
-                  </div>
-                )}
+                <div className="flex items-center gap-3 pt-1">
+                  {!c.logo && (
+                    <div className="flex items-center gap-1 text-xs text-orange-600">
+                      <Upload className="w-3 h-3" />No logo
+                    </div>
+                  )}
+                  {c.stamp ? (
+                    <div className="flex items-center gap-1 text-xs text-emerald-600">
+                      <Stamp className="w-3 h-3" />Stamp uploaded
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-xs text-orange-600">
+                      <Stamp className="w-3 h-3" />No stamp — click Edit to add
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -125,7 +148,7 @@ export function CompaniesAdmin() {
       )}
 
       <Dialog open={editId !== null} onOpenChange={(o) => !o && setEditId(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Company</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div className="col-span-2 space-y-1"><Label>Legal Name</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
@@ -181,12 +204,56 @@ export function CompaniesAdmin() {
                 </div>
               </div>
             </div>
+
+            {/* Stamp Upload */}
+            <div className="col-span-2 space-y-2">
+              <Label>Company Stamp</Label>
+              <div className="flex items-start gap-3">
+                {form.stamp ? (
+                  <div className="relative">
+                    <img src={form.stamp} alt="Stamp preview" className="w-20 h-20 object-contain border rounded-lg bg-white p-1" />
+                    <button
+                      onClick={() => setForm(p => ({ ...p, stamp: "" }))}
+                      className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center hover:opacity-90"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                    <Stamp className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-1 space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Upload the company stamp / seal image. It will be automatically overlaid on every page of LPO PDFs.
+                    Recommended: PNG with transparent background so the stamp blends naturally over the document.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => stampRef.current?.click()}
+                  >
+                    <Stamp className="w-3.5 h-3.5 mr-1.5" />
+                    {form.stamp ? "Change Stamp" : "Upload Stamp"}
+                  </Button>
+                  <input
+                    ref={stampRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleStampFile}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <Button
             className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0] text-white w-full"
             disabled={update.isPending || !editId}
-            onClick={() => editId && update.mutate({ id: editId, data: form as any })}
+            onClick={() => editId && update.mutate({ id: editId, data: form })}
           >
             {update.isPending ? "Saving..." : "Save Changes"}
           </Button>

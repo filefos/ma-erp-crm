@@ -14,6 +14,7 @@ export const companiesTable = pgTable("companies", {
   trn: text("trn"),
   vatPercent: doublePrecision("vat_percent").default(5),
   logo: text("logo"),
+  stamp: text("stamp"),
   bankDetails: text("bank_details"),
   letterhead: text("letterhead"),
   isActive: boolean("is_active").notNull().default(true),

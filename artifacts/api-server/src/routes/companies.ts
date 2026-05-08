@@ -11,8 +11,8 @@ router.use(requireAuth);
 
 // Field-level filtering: non-admins receive only id/name/shortName/prefix/vatPercent/logo/isActive.
 // Sensitive fields (trn, bankDetails, letterhead, address, phone, email) require admin.
-function publicCompanyFields<T extends { id: number; name: string; shortName: string | null; prefix: string | null; vatPercent: number | null; logo: string | null; isActive: boolean }>(c: T) {
-  return { id: c.id, name: c.name, shortName: c.shortName, prefix: c.prefix, vatPercent: c.vatPercent, logo: c.logo, isActive: c.isActive };
+function publicCompanyFields<T extends { id: number; name: string; shortName: string | null; prefix: string | null; vatPercent: number | null; logo: string | null; stamp: string | null; isActive: boolean }>(c: T) {
+  return { id: c.id, name: c.name, shortName: c.shortName, prefix: c.prefix, vatPercent: c.vatPercent, logo: c.logo, stamp: c.stamp, isActive: c.isActive };
 }
 
 router.get("/companies", async (req, res): Promise<void> => {
@@ -43,6 +43,7 @@ router.post("/companies", requirePermissionLevel("super_admin"), validateBody(Cr
     trn: data.trn,
     vatPercent: data.vatPercent ?? 5,
     logo: data.logo,
+    stamp: data.stamp,
     bankDetails: data.bankDetails,
     letterhead: data.letterhead,
   }).returning();

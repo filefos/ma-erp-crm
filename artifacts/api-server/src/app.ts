@@ -20,6 +20,7 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS automation_level TEXT NOT NULL DEFAULT 'suggest'`);
     await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS lpo_file_url TEXT`);
     await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS scope TEXT`);
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS stamp TEXT`);
     // Supplier enhancements
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS company_id INTEGER`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS whatsapp TEXT`);

@@ -3,6 +3,7 @@ import {
   useListLpos, useCreateLpo, useUpdateLpo, useListCompanies, useListQuotations,
 } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
+import { useAuth } from "@/hooks/useAuth";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -162,6 +163,7 @@ export function LposList() {
   const { data: companies = [] } = useListCompanies();
   const { data: quotations = [] } = useListQuotations();
   const { filterByCompany } = useActiveCompany();
+  const { user } = useAuth();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/lpos"] });
 
@@ -564,6 +566,8 @@ export function LposList() {
                     ? quotationById.get((selectedLpo as any).quotationId) ?? null
                     : null
                 }
+                signatureUrl={user?.signatureUrl ?? undefined}
+                stampUrl={companies.find(c => c.id === selectedLpo?.companyId)?.stamp ?? undefined}
               />
             )
           )}
@@ -749,7 +753,17 @@ function LpoFormFields({
   );
 }
 
-function LpoDetailView({ lpo, linkedQuotation }: { lpo: any; linkedQuotation: any | null }) {
+function LpoDetailView({
+  lpo,
+  linkedQuotation,
+  signatureUrl,
+  stampUrl,
+}: {
+  lpo: any;
+  linkedQuotation: any | null;
+  signatureUrl?: string;
+  stampUrl?: string;
+}) {
   const atts: AttachmentMeta[] = lpo.attachments ?? [];
   const BASE_URL = import.meta.env.BASE_URL;
   const [downloadingPdf, setDownloadingPdf] = useState(false);
@@ -760,7 +774,10 @@ function LpoDetailView({ lpo, linkedQuotation }: { lpo: any; linkedQuotation: an
       const el = document.getElementById(`lpo-detail-print-${lpo.id}`);
       if (!el) return;
       const filename = `LPO_${lpo.lpoNumber ?? lpo.id}.pdf`;
-      const { base64 } = await captureElementToPdfBase64(el, filename);
+      const { base64 } = await captureElementToPdfBase64(el, filename, {
+        signatureUrl: signatureUrl || undefined,
+        stampUrl: stampUrl || undefined,
+      });
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;
       link.download = filename;

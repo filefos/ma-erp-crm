@@ -18,6 +18,7 @@ export const usersTable = pgTable("users", {
   uniqueUserId: text("unique_user_id"),
   isActive: boolean("is_active").notNull().default(true),
   automationLevel: text("automation_level").notNull().default("suggest"),
+  signatureUrl: text("signature_url"),
   emailSignature: text("email_signature"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

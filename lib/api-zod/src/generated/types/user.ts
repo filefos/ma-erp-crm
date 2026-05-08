@@ -21,6 +21,7 @@ export interface User {
   status?: string;
   lastLoginAt?: string;
   accessibleCompanies?: CompanyRef[];
+  signatureUrl?: string;
   isActive: boolean;
   createdAt: string;
 }

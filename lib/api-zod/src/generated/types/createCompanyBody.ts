@@ -17,6 +17,7 @@ export interface CreateCompanyBody {
   trn?: string;
   vatPercent?: number;
   logo?: string;
+  stamp?: string;
   bankDetails?: string;
   letterhead?: string;
 }

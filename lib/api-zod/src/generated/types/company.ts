@@ -18,6 +18,7 @@ export interface Company {
   trn?: string;
   vatPercent?: number;
   logo?: string;
+  stamp?: string;
   bankDetails?: string;
   letterhead?: string;
   isActive: boolean;
