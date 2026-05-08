@@ -328,8 +328,70 @@ router.delete("/users/:id/permanent", requirePermissionLevel("super_admin"), asy
     res.status(404).json({ error: "User not found." });
     return;
   }
+
+  // Step 1: NULL out foreign-key columns in all tables that reference this user
+  // (columns that are nullable — safe to set to NULL)
+  const nullUpdates = [
+    // leads
+    `UPDATE leads SET assigned_to_id = NULL WHERE assigned_to_id = ${id}`,
+    `UPDATE leads SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // contacts
+    `UPDATE contacts SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // quotations
+    `UPDATE quotations SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // invoices and related
+    `UPDATE invoices SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE proforma_invoices SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE delivery_notes SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE tax_invoices SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // procurement
+    `UPDATE purchase_requests SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE purchase_orders SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE purchase_orders SET prepared_by_id = NULL WHERE prepared_by_id = ${id}`,
+    `UPDATE rfqs SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE supplier_quotations SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // inventory / assets / finance
+    `UPDATE inventory_items SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE assets SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE journal_entries SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE expenses SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    `UPDATE payments SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // projects
+    `UPDATE projects SET salesperson_id = NULL WHERE salesperson_id = ${id}`,
+    `UPDATE projects SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // HR
+    `UPDATE employees SET user_id = NULL WHERE user_id = ${id}`,
+    `UPDATE employee_attachments SET uploaded_by_id = NULL WHERE uploaded_by_id = ${id}`,
+    `UPDATE offer_letters SET created_by_id = NULL WHERE created_by_id = ${id}`,
+    // Supplier registrations
+    `UPDATE supplier_registrations SET reviewed_by_id = NULL WHERE reviewed_by_id = ${id}`,
+    // Emails
+    `UPDATE emails SET created_by_id = NULL WHERE created_by_id = ${id}`,
+  ];
+
+  for (const q of nullUpdates) {
+    await db.execute(sql.raw(q)).catch(() => {});
+  }
+
+  // Step 2: DELETE rows in tables where user_id is required (non-nullable)
+  const deleteUpdates = [
+    `DELETE FROM sales_targets WHERE user_id = ${id}`,
+    `DELETE FROM notifications WHERE user_id = ${id}`,
+    `DELETE FROM activity_log WHERE user_id = ${id}`,
+    `DELETE FROM device_tokens WHERE user_id = ${id}`,
+    `DELETE FROM attendance WHERE user_id = ${id}`,
+    `DELETE FROM push_tokens WHERE user_id = ${id}`,
+    `DELETE FROM audit_logs WHERE user_id = ${id}`,
+  ];
+
+  for (const q of deleteUpdates) {
+    await db.execute(sql.raw(q)).catch(() => {});
+  }
+
+  // Step 3: Delete company access and the user row itself
   await db.delete(userCompanyAccessTable).where(eq(userCompanyAccessTable.userId, id));
   await db.delete(usersTable).where(eq(usersTable.id, id));
+
   await audit(req, { action: "delete", entity: "user", entityId: id, details: `Permanently deleted user ${before.email}` });
   res.json({ success: true });
 });
