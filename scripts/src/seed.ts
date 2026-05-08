@@ -154,7 +154,7 @@ async function seed() {
 
   // ===== USERS (9 default accounts) =====
   const userSpecs = [
-    { name: "Super Administrator",          email: "admin@erp.com",             password: "Admin@2026",   phone: "+971-50-100-0001", role: "super_admin",   department: "Main Admin",  company: pm.id, permissionLevel: "super_admin",     companies: [pm.id, ep.id] },
+    { name: "Asif Latif",                   email: "admin@erp.com",             password: "Admin@2026",   phone: "+971-50-100-0001", role: "super_admin",   department: "Main Admin",  company: pm.id, permissionLevel: "super_admin",     companies: [pm.id, ep.id] },
     { name: "Hassan Al Mansoori (PM Admin)",email: "manager@primemax.ae",       password: "Manager@2026", phone: "+971-50-100-0002", role: "admin",         department: "Management",  company: pm.id, permissionLevel: "company_admin",   companies: [pm.id] },
     { name: "Ahmad Al-Rashidi (Sales)",     email: "sales@primemax.ae",         password: "Sales@2026",   phone: "+971-50-100-0003", role: "sales",         department: "Sales",       company: pm.id, permissionLevel: "user",            companies: [pm.id] },
     { name: "Sara Hassan (Accounts)",       email: "accounts@primemax.ae",      password: "Accounts@2026",phone: "+971-50-100-0004", role: "accounts",      department: "Accounts",    company: pm.id, permissionLevel: "manager",         companies: [pm.id] },
