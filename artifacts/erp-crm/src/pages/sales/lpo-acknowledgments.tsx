@@ -93,7 +93,13 @@ export function LpoAcknowledgments() {
     if (!viewRecord) { setBlobUrl(null); return; }
     let revoked = false;
     authedFetch(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file`)
-      .then(url => { if (!revoked) setBlobUrl(url); })
+      .then(url => {
+        if (revoked) {
+          URL.revokeObjectURL(url);
+        } else {
+          setBlobUrl(url);
+        }
+      })
       .catch(() => toast({ title: "Could not load preview", variant: "destructive" }));
     return () => {
       revoked = true;
