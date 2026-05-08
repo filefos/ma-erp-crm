@@ -367,8 +367,8 @@ export function LeadsList() {
               <TableHead className="w-10">
                 <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Select all" data-testid="checkbox-select-all" />
               </TableHead>
-              <TableHead>Client Code</TableHead>
               <TableHead>Lead Ref</TableHead>
+              <TableHead>Customer ID</TableHead>
               <TableHead>Name / Company</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Score</TableHead>
@@ -392,12 +392,12 @@ export function LeadsList() {
                   <TableCell>
                     <Checkbox checked={selected.has(lead.id)} onCheckedChange={() => toggleOne(lead.id)} aria-label={`Select ${lead.leadName}`} data-testid={`checkbox-lead-${lead.id}`} />
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{(lead as any).clientCode || "-"}</TableCell>
                   <TableCell className="font-medium">
                     <Link href={`/crm/leads/${lead.id}`} className="hover:underline text-primary font-mono text-sm">
                       {lead.leadNumber}
                     </Link>
                   </TableCell>
+                  <TableCell className="font-mono text-xs text-[#0f2d5a]">{(lead as any).clientCode || "-"}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar name={lead.leadName} size={32} />
