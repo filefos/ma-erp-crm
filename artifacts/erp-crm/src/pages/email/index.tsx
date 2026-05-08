@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
+import { useEmailCompose } from "@/contexts/email-compose-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -107,16 +108,15 @@ function FixedDropdown({ triggerRef, open, onClose, children, minWidth = 160 }: 
 }
 
 function OutlookRibbon({
-  activeTab, setActiveTab, composing, onNewMail, onSync, syncing,
+  activeTab, setActiveTab, onNewMail, onSync, syncing,
   selectedEmail, onDelete, onArchive, onReply, onForward,
   onMarkAllRead, onToggleStar, onMove, currentFolder,
-  sidebarVisible, onToggleSidebar, readingPaneLayout, onChangeReadingPane,
-  signatures, onInsertSignatureById, onManageSignatures,
-  onPrint, onSettings, onLogout, onAttachFile,
+  sidebarVisible, onToggleSidebar,
+  signatures, onManageSignatures,
+  onPrint, onSettings, onLogout,
 }: {
   activeTab: string;
   setActiveTab: (t: string) => void;
-  composing?: boolean;
   onNewMail: () => void;
   onSync: () => void;
   syncing: boolean;
@@ -131,21 +131,16 @@ function OutlookRibbon({
   currentFolder?: string;
   sidebarVisible?: boolean;
   onToggleSidebar?: () => void;
-  readingPaneLayout?: "right" | "bottom" | "off";
-  onChangeReadingPane?: (layout: "right" | "bottom" | "off") => void;
   signatures?: SigEntry[];
-  onInsertSignatureById?: (id: string) => void;
   onManageSignatures?: () => void;
   onPrint?: () => void;
   onSettings?: () => void;
   onLogout?: () => void;
-  onAttachFile?: () => void;
 }) {
   const [moveOpen, setMoveOpen] = useState(false);
   const [flagOpen, setFlagOpen] = useState(false);
   const [categorizeOpen, setCategorizeOpen] = useState(false);
   const [folderPaneOpen, setFolderPaneOpen] = useState(false);
-  const [readingPaneOpen, setReadingPaneOpen] = useState(false);
   const [densityOpen, setDensityOpen] = useState(false);
   const [convOpen, setConvOpen] = useState(false);
   const [msgPreviewOpen, setMsgPreviewOpen] = useState(false);
@@ -160,7 +155,6 @@ function OutlookRibbon({
   const flagTriggerRef        = useRef<HTMLDivElement>(null);
   const categorizeTriggerRef  = useRef<HTMLDivElement>(null);
   const folderPaneTriggerRef  = useRef<HTMLDivElement>(null);
-  const readingPaneTriggerRef = useRef<HTMLDivElement>(null);
   const densityTriggerRef     = useRef<HTMLDivElement>(null);
   const convTriggerRef        = useRef<HTMLDivElement>(null);
   const msgPreviewTriggerRef  = useRef<HTMLDivElement>(null);
@@ -171,14 +165,14 @@ function OutlookRibbon({
 
   const closeAll = () => {
     setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false);
-    setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false);
+    setFolderPaneOpen(false); setDensityOpen(false);
     setConvOpen(false); setMsgPreviewOpen(false);
     setSigMsgOpen(false); setSigInsertOpen(false); setFileMenuOpen(false);
   };
 
   useEffect(() => { closeAll(); }, [activeTab]);
 
-  const activeTabs = composing ? COMPOSE_TABS : READING_TABS;
+  const activeTabs = READING_TABS;
 
   const MOVE_FOLDERS = [
     { key: "inbox",   label: "Inbox" },
@@ -252,7 +246,7 @@ function OutlookRibbon({
             label="Move"
             caret
             disabled={!hasSelected}
-            onClick={() => { setMoveOpen(s => !s); setFlagOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
+            onClick={() => { setMoveOpen(s => !s); setFlagOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
         <FixedDropdown triggerRef={moveTriggerRef} open={moveOpen && hasSelected} onClose={() => setMoveOpen(false)} minWidth={220}>
@@ -282,7 +276,7 @@ function OutlookRibbon({
             icon={<Tag className="w-5 h-5" />}
             label="Categorize"
             caret
-            onClick={() => { setCategorizeOpen(s => !s); setMoveOpen(false); setFlagOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
+            onClick={() => { setCategorizeOpen(s => !s); setMoveOpen(false); setFlagOpen(false); setFolderPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
         <FixedDropdown triggerRef={categorizeTriggerRef} open={categorizeOpen} onClose={() => setCategorizeOpen(false)} minWidth={230}>
@@ -307,7 +301,7 @@ function OutlookRibbon({
             label={selectedEmail?.isStarred ? "Unflag" : "Flag"}
             caret
             disabled={!hasSelected}
-            onClick={() => { setFlagOpen(s => !s); setMoveOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
+            onClick={() => { setFlagOpen(s => !s); setMoveOpen(false); setCategorizeOpen(false); setFolderPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
         <FixedDropdown triggerRef={flagTriggerRef} open={flagOpen && hasSelected} onClose={() => setFlagOpen(false)} minWidth={220}>
@@ -368,7 +362,7 @@ function OutlookRibbon({
             icon={<MessageSquare className="w-5 h-5" />}
             label="Conversations"
             caret
-            onClick={() => { setConvOpen(s => !s); setMsgPreviewOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
+            onClick={() => { setConvOpen(s => !s); setMsgPreviewOpen(false); setFolderPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
         <FixedDropdown triggerRef={convTriggerRef} open={convOpen} onClose={() => setConvOpen(false)} minWidth={230}>
@@ -385,7 +379,7 @@ function OutlookRibbon({
             icon={<LayoutGrid className="w-5 h-5" />}
             label="Message preview"
             caret
-            onClick={() => { setMsgPreviewOpen(s => !s); setConvOpen(false); setFolderPaneOpen(false); setReadingPaneOpen(false); setDensityOpen(false); }}
+            onClick={() => { setMsgPreviewOpen(s => !s); setConvOpen(false); setFolderPaneOpen(false); setDensityOpen(false); }}
           />
         </div>
         <FixedDropdown triggerRef={msgPreviewTriggerRef} open={msgPreviewOpen} onClose={() => setMsgPreviewOpen(false)} minWidth={230}>
@@ -412,7 +406,7 @@ function OutlookRibbon({
             icon={<PanelRight className="w-5 h-5" />}
             label="Folder pane"
             caret
-            onClick={() => { setFolderPaneOpen(s => !s); setReadingPaneOpen(false); setDensityOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
+            onClick={() => { setFolderPaneOpen(s => !s); setDensityOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
           />
         </div>
         <FixedDropdown triggerRef={folderPaneTriggerRef} open={folderPaneOpen} onClose={() => setFolderPaneOpen(false)} minWidth={220}>
@@ -432,36 +426,6 @@ function OutlookRibbon({
           ))}
         </FixedDropdown>
 
-        {/* Reading pane dropdown */}
-        <div ref={readingPaneTriggerRef}>
-          <Btn
-            icon={<Columns2 className="w-5 h-5" />}
-            label="Reading pane"
-            caret
-            onClick={() => { setReadingPaneOpen(s => !s); setFolderPaneOpen(false); setDensityOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
-          />
-        </div>
-        <FixedDropdown triggerRef={readingPaneTriggerRef} open={readingPaneOpen} onClose={() => setReadingPaneOpen(false)} minWidth={220}>
-          <div className="px-4 py-2 text-[12px] font-semibold" style={{ color: "#605e5c", background: "#f3f2f1" }}>Reading Pane</div>
-          {([
-            { key: "right",  label: "Right" },
-            { key: "bottom", label: "Bottom" },
-            { key: "off",    label: "Off" },
-          ] as const).map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => { onChangeReadingPane?.(opt.key); setReadingPaneOpen(false); }}
-              className="flex items-center gap-3 w-full px-4 py-3 text-[14px] hover:bg-[#f3f2f1] transition-colors"
-              style={{ color: "#323130", fontWeight: readingPaneLayout === opt.key ? 600 : 400 }}
-            >
-              {readingPaneLayout === opt.key
-                ? <span className="w-2.5 h-2.5 rounded-full bg-[#0078d4] flex-shrink-0" />
-                : <span className="w-2.5 h-2.5 flex-shrink-0" />}
-              {opt.label}
-            </button>
-          ))}
-        </FixedDropdown>
-
         <Btn icon={<CalendarDays className="w-5 h-5" />} label="My Day" caret />
 
         {/* Density dropdown */}
@@ -470,7 +434,7 @@ function OutlookRibbon({
             icon={<SlidersHorizontal className="w-5 h-5" />}
             label="Density"
             caret
-            onClick={() => { setDensityOpen(s => !s); setFolderPaneOpen(false); setReadingPaneOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
+            onClick={() => { setDensityOpen(s => !s); setFolderPaneOpen(false); setMoveOpen(false); setFlagOpen(false); setCategorizeOpen(false); }}
           />
         </div>
         <FixedDropdown triggerRef={densityTriggerRef} open={densityOpen} onClose={() => setDensityOpen(false)} minWidth={220}>
@@ -591,7 +555,7 @@ function OutlookRibbon({
 
       {/* ── Insert ─────────────────────────────────────────────────────── */}
       <Group label="Insert">
-        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret onClick={() => onAttachFile?.()} />
+        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
         <Btn icon={<ImageIcon className="w-5 h-5" />} label="Pictures" />
         <Btn icon={<Smile className="w-5 h-5" />} label="Emoji" />
         <div ref={sigMsgRef}>
@@ -602,7 +566,7 @@ function OutlookRibbon({
             (signatures ?? []).map(sig => (
               <button
                 key={sig.id}
-                onClick={() => { setSigMsgOpen(false); onInsertSignatureById?.(sig.id); }}
+                onClick={() => { setSigMsgOpen(false); }}
                 className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors text-left"
                 style={{ color: "#323130" }}
               >
@@ -677,7 +641,7 @@ function OutlookRibbon({
   const insertRibbon = (
     <div className="flex items-stretch h-full">
       <Group label="Attachments">
-        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret onClick={() => onAttachFile?.()} />
+        <Btn icon={<Paperclip className="w-5 h-5" />} label="Attach file" caret />
       </Group>
       <Group label="Tables">
         <Btn icon={<Table className="w-5 h-5" />} label="Table" />
@@ -699,7 +663,7 @@ function OutlookRibbon({
             (signatures ?? []).map(sig => (
               <button
                 key={sig.id}
-                onClick={() => { setSigInsertOpen(false); onInsertSignatureById?.(sig.id); }}
+                onClick={() => { setSigInsertOpen(false); }}
                 className="flex items-center w-full px-4 py-2.5 text-[14px] hover:bg-[#f3f2f1] transition-colors text-left"
                 style={{ color: "#323130" }}
               >
@@ -1168,27 +1132,18 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
   const { toast } = useToast();
   const qc = useQueryClient();
   const companyId: number = companyIdProp ?? (user as any)?.companyId ?? 1;
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { openCompose: globalOpenCompose } = useEmailCompose();
 
   const [activeTab, setActiveTab] = useState("Home");
   const [folder, setFolder] = useState<Folder>("inbox");
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [composing, setComposing] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [readingPaneLayout, setReadingPaneLayout] = useState<"right" | "bottom" | "off">("right");
   const [search, setSearch] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [showCc, setShowCc] = useState(false);
-  const [showBcc, setShowBcc] = useState(false);
   const [accountExpanded, setAccountExpanded] = useState(true);
   const [favExpanded, setFavExpanded] = useState(true);
-  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
-  const [sendDropdown, setSendDropdown] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
-  const [compose, setCompose] = useState<ComposeData>({
-    toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "",
-  });
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signatures, setSignatures] = useState<SigEntry[]>([]);
   const [selectedSigId, setSelectedSigId] = useState<string | null>(null);
@@ -1360,26 +1315,6 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
     },
   });
 
-  const sendMutation = useMutation({
-    mutationFn: (data: any) => apiFetch("/emails", { method: "POST", body: JSON.stringify(data) }),
-    onSuccess: () => {
-      toast({ title: "Email sent!" });
-      setComposing(false);
-      setAttachments([]);
-      setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: "" });
-      qc.invalidateQueries({ queryKey: ["emails"] });
-    },
-    onError: (e: any) => toast({ title: e.message, variant: "destructive" }),
-  });
-
-  const saveDraftMutation = useMutation({
-    mutationFn: (data: any) => apiFetch("/emails", { method: "POST", body: JSON.stringify(data) }),
-    onSuccess: () => {
-      setDraftSavedAt(new Date());
-      qc.invalidateQueries({ queryKey: ["emails"] });
-    },
-  });
-
   const patchMutation = useMutation({
     mutationFn: ({ id, patch }: { id: number; patch: any }) =>
       apiFetch(`/emails/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
@@ -1400,43 +1335,28 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
 
   const handleSelect = (email: Email) => {
     setSelectedId(email.id);
-    setComposing(false);
+    setEmailModalOpen(true);
     if (!email.isRead && email.folder === "inbox") {
       patchMutation.mutate({ id: email.id, patch: { isRead: true } });
     }
   };
 
   const handleReply = (email: Email) => {
-    setCompose({
+    setEmailModalOpen(false);
+    globalOpenCompose({
       toAddress: email.fromAddress,
       toName: email.fromName ?? "",
-      ccAddress: "",
-      bccAddress: "",
       subject: email.subject.startsWith("Re:") ? email.subject : `Re: ${email.subject}`,
       body: `\n\n---\nOn ${formatDate(email.createdAt)}, ${email.fromName ?? email.fromAddress} wrote:\n${email.body.substring(0, 500)}`,
-      replyToId: email.id,
     });
-    setAttachments([]);
-    setShowCc(false);
-    setShowBcc(false);
-    setComposing(true);
-    setSelectedId(null);
   };
 
   const handleForward = (email: Email) => {
-    setCompose({
-      toAddress: "",
-      toName: "",
-      ccAddress: "",
-      bccAddress: "",
+    setEmailModalOpen(false);
+    globalOpenCompose({
       subject: email.subject.startsWith("Fwd:") ? email.subject : `Fwd: ${email.subject}`,
       body: `\n\n---\n---------- Forwarded message ----------\nFrom: ${email.fromName ?? email.fromAddress}\nDate: ${formatDate(email.createdAt)}\nSubject: ${email.subject}\n\n${email.body}`,
     });
-    setAttachments([]);
-    setShowCc(false);
-    setShowBcc(false);
-    setComposing(true);
-    setSelectedId(null);
   };
 
   const handleMarkAllRead = () => {
@@ -1471,37 +1391,6 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
     });
   };
 
-  const handleSend = () => {
-    if (!compose.toAddress || !compose.subject) {
-      toast({ title: "To and Subject are required.", variant: "destructive" });
-      return;
-    }
-    sendMutation.mutate({ ...compose, action: "send", companyId, attachments });
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
-    const newAttachments: Attachment[] = [];
-    for (const file of files) {
-      if (file.size > MAX_ATTACH_MB * 1024 * 1024) {
-        toast({ title: `${file.name} exceeds ${MAX_ATTACH_MB}MB limit.`, variant: "destructive" });
-        continue;
-      }
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(",")[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      newAttachments.push({ filename: file.name, content: base64, contentType: file.type || "application/octet-stream", size: file.size });
-    }
-    setAttachments(prev => [...prev, ...newAttachments]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const removeAttachment = (idx: number) => setAttachments(prev => prev.filter((_, i) => i !== idx));
-
   const buildSignatureBlock = (sigId?: string | null) => {
     const id = sigId ?? selectedSigId;
     const sig = signatures.find(s => s.id === id);
@@ -1511,21 +1400,11 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
     return `\n\n--\n${sig.html}`;
   };
 
-  // Auto-switch ribbon to the contextually correct tab when compose mode changes
-  useEffect(() => {
-    setActiveTab(composing ? "Message" : "Home");
-  }, [composing]);
-
   const openCompose = () => {
-    setComposing(true);
-    setSelectedId(null);
-    setAttachments([]);
-    setShowCc(false);
-    setShowBcc(false);
     const defSig = signatures.find(s => s.defaultNew) ?? signatures[0] ?? null;
     const sigBlock = defSig ? buildSignatureBlock(defSig.id) : "";
     setSelectedSigId(defSig?.id ?? null);
-    setCompose({ toAddress: "", toName: "", ccAddress: "", bccAddress: "", subject: "", body: sigBlock });
+    globalOpenCompose({ body: sigBlock });
   };
 
   const FOLDERS: { key: Folder; label: string; icon: React.ReactNode }[] = [
@@ -1564,10 +1443,8 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
         <OutlookRibbon
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          composing={composing}
           onNewMail={openCompose}
           onSync={() => syncMutation.mutate()}
-          onAttachFile={() => fileInputRef.current?.click()}
           syncing={syncMutation.isPending}
           selectedEmail={selectedEmail ?? null}
           onDelete={handleDelete}
@@ -1580,19 +1457,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           currentFolder={folder}
           sidebarVisible={sidebarVisible}
           onToggleSidebar={() => setSidebarVisible(v => !v)}
-          readingPaneLayout={readingPaneLayout}
-          onChangeReadingPane={setReadingPaneLayout}
           signatures={signatures}
-          onInsertSignatureById={(id) => {
-            const block = buildSignatureBlock(id);
-            setSelectedSigId(id);
-            setCompose(p => {
-              // Remove previous signature block if any, then append new one
-              const prev = buildSignatureBlock(selectedSigId);
-              const body = prev ? p.body.replace(prev, "") : p.body;
-              return { ...p, body: body + block };
-            });
-          }}
           onManageSignatures={() => setShowSignatureModal(true)}
           onPrint={() => window.print()}
           onSettings={() => setShowSettings(true)}
@@ -1624,8 +1489,8 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           </div>
         )}
 
-        {/* ── Three-pane layout ──────────────────────────────────────────── */}
-        <div className={`flex flex-1 overflow-hidden ${readingPaneLayout === "bottom" ? "flex-col" : "flex-row"}`}>
+        {/* ── Two-pane layout ──────────────────────────────────────────── */}
+        <div className="flex flex-1 overflow-hidden flex-row">
 
         {/* ════════════════════════════════════════════════════════════════════
             LEFT SIDEBAR — folder tree (Outlook style)
@@ -1682,7 +1547,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                     return (
                       <button
                         key={f.key}
-                        onClick={() => { setFolder(f.key); setSelectedId(null); setComposing(false); }}
+                        onClick={() => { setFolder(f.key); setSelectedId(null); }}
                         className="flex items-center w-full px-5 py-1.5 text-[13px] transition-colors"
                         style={{
                           background: active ? "#dce9f8" : "transparent",
@@ -1731,7 +1596,7 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
                       <div key={f.label} className="group relative">
                         <button
                           onClick={() => {
-                            if (f.key) { setFolder(f.key); setSelectedId(null); setComposing(false); }
+                            if (f.key) { setFolder(f.key); setSelectedId(null); }
                           }}
                           className="flex items-center gap-2 w-full px-6 py-1.5 text-[13px] transition-colors"
                           style={{
@@ -1966,354 +1831,121 @@ export function EmailPanel({ companyId: companyIdProp }: { companyId?: number } 
           </div>
         </div>
 
-        {/* ════════════════════════════════════════════════════════════════════
-            RIGHT PANE — compose / reading / empty
-        ════════════════════════════════════════════════════════════════════ */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-white" style={{ display: readingPaneLayout !== "off" ? undefined : "none" }}>
+        </div>{/* end two-pane layout */}
+      </div>
 
-          {composing ? (
-            /* ── Compose — full Outlook-style ─────────────────────────────── */
-            <div className="flex flex-col h-full">
-
-              {/* Send row */}
-              <div className="flex items-center px-4 py-2 border-b flex-shrink-0 gap-3" style={{ borderColor: "#e1dfdd" }}>
-                {/* Split Send button with working dropdown */}
-                <div className="relative flex-shrink-0">
-                  <div className="flex items-center rounded overflow-hidden" style={{ border: "1px solid #005a9e" }}>
-                    <button
-                      onClick={handleSend}
-                      disabled={sendMutation.isPending}
-                      className="flex items-center gap-1.5 px-3.5 py-1.5 text-[13px] font-semibold text-white focus:outline-none hover:bg-[#106ebe] active:bg-[#005a9e] transition-colors"
-                      style={{ background: "#0078d4" }}
-                    >
-                      {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2l14 6-14 6V9.5l10-1.5-10-1.5V2z"/></svg>}
-                      {sendMutation.isPending ? "Sending…" : "Send"}
-                    </button>
-                    <button
-                      onClick={() => setSendDropdown(s => !s)}
-                      className="px-2 py-1.5 text-white border-l focus:outline-none hover:bg-[#106ebe] active:bg-[#005a9e] transition-colors"
-                      style={{ background: "#0078d4", borderColor: "rgba(255,255,255,0.3)" }}
-                    >
-                      <ChevronDown className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  {/* Dropdown menu */}
-                  {sendDropdown && (
-                    <>
-                      {/* Click-away backdrop */}
-                      <div className="fixed inset-0 z-10" onClick={() => setSendDropdown(false)} />
-                      <div
-                        className="absolute left-0 top-full mt-1 z-20 rounded shadow-lg border overflow-hidden"
-                        style={{ background: "#ffffff", borderColor: "#e1dfdd", minWidth: 180 }}
-                      >
-                        <button
-                          onClick={() => { setSendDropdown(false); handleSend(); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
-                          style={{ color: "#323130" }}
-                        >
-                          <svg className="w-3.5 h-3.5 text-[#0078d4]" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2l14 6-14 6V9.5l10-1.5-10-1.5V2z"/></svg>
-                          Send
-                        </button>
-                        <button
-                          onClick={() => { setSendDropdown(false); saveDraftMutation.mutate({ ...compose, folder: "draft", companyId }); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
-                          style={{ color: "#323130" }}
-                        >
-                          <FileText className="w-3.5 h-3.5" style={{ color: "#605e5c" }} />
-                          Save draft
-                        </button>
-                        <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-                        <button
-                          onClick={() => { setSendDropdown(false); setShowSettings(true); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
-                          style={{ color: "#323130" }}
-                        >
-                          <Settings className="w-3.5 h-3.5" style={{ color: "#605e5c" }} />
-                          Manage account
-                        </button>
-                        <div className="border-t" style={{ borderColor: "#e1dfdd" }} />
-                        <button
-                          onClick={() => { setSendDropdown(false); setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] hover:bg-[#f3f2f1] transition-colors"
-                          style={{ color: "#a4262c" }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          Discard
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 text-[13px]" style={{ color: "#323130" }}>
-                  <span style={{ color: "#605e5c" }}>From:</span>
-                  <button className="flex items-center gap-1 font-medium hover:text-[#0078d4] transition-colors">
-                    {settings?.smtpUser || accountEmail}
-                    <ChevronDown className="w-3 h-3" style={{ color: "#605e5c" }} />
-                  </button>
-                </div>
-
-                <div className="ml-auto flex items-center gap-1">
-                  {/* Attach file */}
-                  <label className="cursor-pointer p-1.5 rounded transition-colors hover:bg-gray-100" title="Attach file">
-                    <input type="file" multiple className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
-                    <Paperclip className="w-4 h-4" style={{ color: "#605e5c" }} />
-                  </label>
-                  <button
-                    onClick={() => { setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
-                    className="p-1.5 rounded transition-colors hover:bg-gray-100"
-                    style={{ color: "#605e5c" }}
-                    title="Discard"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => { setComposing(false); setAttachments([]); setDraftSavedAt(null); }}
-                    className="p-1.5 rounded transition-colors hover:bg-gray-100"
-                    style={{ color: "#605e5c" }}
-                    title="Close"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* To */}
-              <div className="flex items-center px-4 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd", minHeight: 40 }}>
-                <button
-                  className="flex-shrink-0 text-[12px] font-medium border rounded px-2 py-0.5 mr-2 select-none"
-                  style={{ borderColor: "#8a8886", color: "#323130", background: "transparent" }}
-                >
-                  To
-                </button>
-                <input
-                  type="text"
-                  className="flex-1 text-[13px] py-2.5 outline-none bg-transparent"
-                  style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
-                  value={compose.toAddress}
-                  onChange={e => setCompose(p => ({ ...p, toAddress: e.target.value }))}
-                />
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  {!showCc && <button className="text-[13px] font-normal" style={{ color: "#605e5c" }} onClick={() => setShowCc(true)}>Cc</button>}
-                  {!showBcc && <button className="text-[13px] font-normal" style={{ color: "#605e5c" }} onClick={() => setShowBcc(true)}>Bcc</button>}
-                </div>
-              </div>
-
-              {showCc && (
-                <div className="flex items-center px-4 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd", minHeight: 40 }}>
-                  <span className="text-[13px] w-10 flex-shrink-0" style={{ color: "#605e5c" }}>Cc</span>
-                  <input type="text" className="flex-1 text-[13px] py-2.5 outline-none bg-transparent" style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
-                    value={compose.ccAddress} onChange={e => setCompose(p => ({ ...p, ccAddress: e.target.value }))} autoFocus />
-                  <button onClick={() => { setShowCc(false); setCompose(p => ({ ...p, ccAddress: "" })); }} style={{ color: "#605e5c" }}><X className="w-3.5 h-3.5" /></button>
-                </div>
-              )}
-              {showBcc && (
-                <div className="flex items-center px-4 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd", minHeight: 40 }}>
-                  <span className="text-[13px] w-10 flex-shrink-0" style={{ color: "#605e5c" }}>Bcc</span>
-                  <input type="text" className="flex-1 text-[13px] py-2.5 outline-none bg-transparent" style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
-                    value={compose.bccAddress} onChange={e => setCompose(p => ({ ...p, bccAddress: e.target.value }))} autoFocus />
-                  <button onClick={() => { setShowBcc(false); setCompose(p => ({ ...p, bccAddress: "" })); }} style={{ color: "#605e5c" }}><X className="w-3.5 h-3.5" /></button>
-                </div>
-              )}
-
-              {/* Subject */}
-              <div className="flex items-center px-4 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd", minHeight: 40 }}>
-                <input
-                  type="text"
-                  className="flex-1 text-[15px] py-2.5 outline-none bg-transparent"
-                  style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif" }}
-                  placeholder="Add a subject"
-                  value={compose.subject}
-                  onChange={e => { setCompose(p => ({ ...p, subject: e.target.value })); setDraftSavedAt(null); }}
-                />
-                {draftSavedAt && (
-                  <span className="flex-shrink-0 text-[12px] ml-3" style={{ color: "#605e5c" }}>
-                    Draft saved at {draftSavedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                  </span>
-                )}
-              </div>
-
-              {/* Body */}
-              <div className="flex-1 px-4 pt-3 overflow-hidden">
-                <textarea
-                  className="w-full h-full resize-none outline-none bg-transparent text-[13px]"
-                  style={{ color: "#323130", fontFamily: "'Segoe UI', system-ui, sans-serif", lineHeight: 1.6 }}
-                  placeholder=""
-                  value={compose.body}
-                  onChange={e => setCompose(p => ({ ...p, body: e.target.value }))}
-                />
-              </div>
-
-              {/* Attachment chips */}
-              {attachments.length > 0 && (
-                <div className="px-4 pb-2 flex flex-wrap gap-1.5 border-t flex-shrink-0" style={{ borderColor: "#e1dfdd" }}>
-                  {attachments.map((att, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5 rounded border px-2 py-1 text-[12px]"
-                      style={{ borderColor: "#e1dfdd", color: "#323130" }}>
-                      <FileIcon className="w-3.5 h-3.5" style={{ color: "#0078d4" }} />
-                      <span className="truncate max-w-[140px]">{att.filename}</span>
-                      <span style={{ color: "#605e5c" }}>{formatBytes(att.size)}</span>
-                      <button onClick={() => removeAttachment(idx)} style={{ color: "#605e5c" }}><X className="w-3 h-3" /></button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-          ) : selectedEmail ? (
-            /* ── Reading pane ──────────────────────────────────────────────── */
-            <div className="flex flex-col h-full">
-
-              {/* Reading pane toolbar */}
-              <div className="flex items-center gap-2 px-4 py-2 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd" }}>
-                {selectedEmail.folder !== "sent" && (
-                  <button
-                    onClick={() => handleReply(selectedEmail)}
-                    className="flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded border transition-colors hover:bg-gray-50"
-                    style={{ borderColor: "#e1dfdd", color: "#323130" }}
-                  >
-                    <Reply className="w-3.5 h-3.5" /> Reply
-                  </button>
-                )}
-                <button
-                  className="flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded border transition-colors hover:bg-gray-50"
-                  style={{ borderColor: "#e1dfdd", color: "#323130" }}
-                >
-                  <Forward className="w-3.5 h-3.5" /> Forward
-                </button>
-                <div className="flex-1" />
-                <button
-                  onClick={() => patchMutation.mutate({ id: selectedEmail.id, patch: { isStarred: !selectedEmail.isStarred } })}
-                  className="p-1.5 rounded hover:bg-gray-100 transition-colors"
-                  style={{ color: selectedEmail.isStarred ? "#f97316" : "#605e5c" }}
-                >
-                  <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-orange-400" : ""}`} />
-                </button>
-                <button
-                  onClick={() => patchMutation.mutate({ id: selectedEmail.id, patch: { isRead: !selectedEmail.isRead } })}
-                  className="p-1.5 rounded hover:bg-gray-100 transition-colors"
-                  style={{ color: "#605e5c" }}
-                  title={selectedEmail.isRead ? "Mark as unread" : "Mark as read"}
-                >
-                  {selectedEmail.isRead ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={() => deleteMutation.mutate(selectedEmail.id)}
-                  className="p-1.5 rounded hover:bg-gray-100 transition-colors"
-                  style={{ color: "#a4262c" }}
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Subject */}
-              <div className="px-5 pt-4 pb-2 flex-shrink-0">
-                <h2 className="text-[20px] font-semibold" style={{ color: "#323130" }}>
-                  {selectedEmail.subject || "(no subject)"}
-                </h2>
-              </div>
-
-              {/* Sender info */}
-              <div className="px-5 py-3 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd" }}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-[15px] flex-shrink-0"
-                      style={{ background: "#0078d4" }}
-                    >
-                      {avatarInitial(selectedEmail.fromName, selectedEmail.fromAddress)}
-                    </div>
-                    <div>
-                      <div className="text-[14px] font-semibold" style={{ color: "#323130" }}>
-                        {selectedEmail.fromName ?? selectedEmail.fromAddress}
-                      </div>
-                      <div className="text-[12px]" style={{ color: "#605e5c" }}>
-                        {selectedEmail.fromAddress}
-                      </div>
-                      <div className="text-[12px] mt-0.5" style={{ color: "#a19f9d" }}>
-                        To: {selectedEmail.toAddress}
-                        {selectedEmail.ccAddress && ` · Cc: ${selectedEmail.ccAddress}`}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-[12px]" style={{ color: "#605e5c" }}>
-                      {new Date(selectedEmail.createdAt).toLocaleString("en-AE", {
-                        day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Attachments on received email */}
-              {selectedEmail.attachments && (selectedEmail.attachments as any[]).length > 0 && (
-                <div className="px-5 py-2 border-b flex flex-wrap gap-2 flex-shrink-0" style={{ borderColor: "#e1dfdd", background: "#faf9f8" }}>
-                  {(selectedEmail.attachments as any[]).map((att, i) => (
-                    <a key={i}
-                      href={att.content
-                        ? `data:${att.contentType};base64,${att.content}`
-                        : `${BASE}api/emails/${selectedEmail.id}/attachments/${i}`}
-                      download={att.filename}
-                      className="flex items-center gap-1.5 rounded border px-2.5 py-1.5 text-[12px] transition-colors hover:bg-blue-50"
-                      style={{ borderColor: "#e1dfdd", color: "#323130", textDecoration: "none" }}
-                    >
-                      <Paperclip className="w-3 h-3" style={{ color: "#605e5c" }} />
-                      <span className="truncate max-w-[140px]">{att.filename}</span>
-                      <span style={{ color: "#a19f9d" }}>{formatBytes(att.size ?? 0)}</span>
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              {/* Body */}
-              <div className="flex-1 overflow-y-auto px-5 py-5">
-                <div className="text-[14px] whitespace-pre-line leading-relaxed" style={{ color: "#323130" }}>
-                  {selectedEmail.body}
-                </div>
-              </div>
-
-              {/* Quick reply */}
-              <div className="border-t px-5 py-3 flex-shrink-0" style={{ borderColor: "#e1dfdd", background: "#faf9f8" }}>
+      {/* ── Email reading modal ─────────────────────────────────────────── */}
+      {emailModalOpen && selectedEmail && createPortal(
+        <div
+          className="fixed inset-0 z-[9000] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={() => setEmailModalOpen(false)}
+        >
+          <div
+            className="bg-white shadow-2xl flex flex-col"
+            style={{ width: "min(96vw, 780px)", height: "min(90vh, 600px)", borderRadius: 4, border: "1px solid #c8c6c4" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Title bar */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b flex-shrink-0" style={{ borderColor: "#e1dfdd" }}>
+              {selectedEmail.folder !== "sent" && (
                 <button
                   onClick={() => handleReply(selectedEmail)}
-                  className="flex items-center gap-2 w-full text-[13px] rounded border px-3 py-2 text-left transition-colors hover:bg-white"
-                  style={{ borderColor: "#e1dfdd", color: "#605e5c" }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded border hover:bg-[#ebebeb] transition-colors"
+                  style={{ borderColor: "#c8c6c4", color: "#323130" }}
                 >
-                  <Reply className="w-3.5 h-3.5" />
-                  Reply to {selectedEmail.fromName ?? selectedEmail.fromAddress}…
+                  <Reply className="w-3.5 h-3.5" /> Reply
                 </button>
+              )}
+              <button
+                onClick={() => handleForward(selectedEmail)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded border hover:bg-[#ebebeb] transition-colors"
+                style={{ borderColor: "#c8c6c4", color: "#323130" }}
+              >
+                <Forward className="w-3.5 h-3.5" /> Forward
+              </button>
+              <div className="flex-1" />
+              <button
+                onClick={() => patchMutation.mutate({ id: selectedEmail.id, patch: { isStarred: !selectedEmail.isStarred } })}
+                className="p-1.5 rounded hover:bg-[#ebebeb] transition-colors"
+                title={selectedEmail.isStarred ? "Unstar" : "Star"}
+              >
+                <Star className={`w-4 h-4 ${selectedEmail.isStarred ? "fill-orange-400 text-orange-400" : "text-[#605e5c]"}`} />
+              </button>
+              <button
+                onClick={() => { deleteMutation.mutate(selectedEmail.id); setEmailModalOpen(false); }}
+                className="p-1.5 rounded hover:bg-red-50 transition-colors"
+                title="Delete"
+                style={{ color: "#c50f1f" }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setEmailModalOpen(false)}
+                className="p-1.5 rounded hover:bg-[#ebebeb] transition-colors"
+                style={{ color: "#605e5c" }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Subject */}
+            <div className="px-5 pt-4 pb-2 flex-shrink-0">
+              <h2 className="text-[18px] font-semibold leading-snug" style={{ color: "#323130" }}>
+                {selectedEmail.subject || "(no subject)"}
+              </h2>
+            </div>
+
+            {/* Sender info */}
+            <div className="flex items-start gap-3 px-5 pb-3 flex-shrink-0">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[15px] font-semibold flex-shrink-0"
+                style={{ background: "#0078d4" }}>
+                {avatarInitial(selectedEmail.fromName, selectedEmail.fromAddress)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[13px]" style={{ color: "#323130" }}>
+                    {selectedEmail.fromName ?? selectedEmail.fromAddress}
+                  </span>
+                  <span className="text-[12px]" style={{ color: "#8a8886" }}>&lt;{selectedEmail.fromAddress}&gt;</span>
+                </div>
+                <div className="text-[12px]" style={{ color: "#8a8886" }}>
+                  To: {selectedEmail.toAddress}
+                  {selectedEmail.ccAddress && ` · Cc: ${selectedEmail.ccAddress}`}
+                </div>
+              </div>
+              <div className="text-[12px] flex-shrink-0" style={{ color: "#8a8886" }}>
+                {new Date(selectedEmail.createdAt).toLocaleString("en-AE", { dateStyle: "medium", timeStyle: "short" })}
               </div>
             </div>
 
-          ) : (
-            /* ── Empty state — Outlook style ───────────────────────────────── */
-            <div className="flex flex-col items-center justify-center h-full gap-4">
-              <OutlookEnvelope />
-              <div className="text-center">
-                <p className="text-[16px] font-semibold" style={{ color: "#323130" }}>
-                  Select an item to read
-                </p>
-                <p className="text-[13px] mt-1" style={{ color: "#605e5c" }}>
-                  Nothing is selected
-                </p>
+            {/* Attachments */}
+            {selectedEmail.attachments && (selectedEmail.attachments as any[]).length > 0 && (
+              <div className="px-5 pb-2 flex flex-wrap gap-2 flex-shrink-0">
+                {(selectedEmail.attachments as any[]).map((att, i) => (
+                  <a key={i} href={att.content?.startsWith("data:") ? att.content
+                    : `${BASE}api/emails/${selectedEmail.id}/attachments/${i}`}
+                    download={att.filename}
+                    className="flex items-center gap-1.5 rounded border px-2 py-1 text-[12px] hover:bg-[#f3f2f1] transition-colors"
+                    style={{ borderColor: "#e1dfdd", color: "#323130" }}>
+                    <FileIcon className="w-3.5 h-3.5" style={{ color: "#0078d4" }} />
+                    <span className="truncate max-w-[140px]">{att.filename}</span>
+                    <span style={{ color: "#a19f9d" }}>{formatBytes(att.size ?? 0)}</span>
+                  </a>
+                ))}
               </div>
-              {!isConnected && (
-                <button
-                  onClick={() => setShowSettings(true)}
-                  className="mt-2 flex items-center gap-2 text-[13px] px-4 py-2 rounded text-white"
-                  style={{ background: "#0078d4" }}
-                >
-                  <Mail className="w-4 h-4" /> Connect Email Account
-                </button>
-              )}
+            )}
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-3 border-t" style={{ borderColor: "#e1dfdd" }}>
+              <div className="text-[14px] whitespace-pre-line leading-relaxed" style={{ color: "#323130" }}>
+                {selectedEmail.body}
+              </div>
             </div>
-          )}
-        </div>
-        </div>{/* end three-pane layout */}
-      </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       <EmailSettingsModal
         open={showSettings}
