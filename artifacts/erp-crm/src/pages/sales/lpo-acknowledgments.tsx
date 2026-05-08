@@ -331,7 +331,18 @@ export function LpoAcknowledgments() {
             <div className="space-y-1.5">
               <Label>Quotation Number</Label>
               <Select
-                onValueChange={v => setForm(f => ({ ...f, quotationNumber: v === "__none__" ? "" : v }))}
+                onValueChange={v => {
+                  if (v === "__none__") {
+                    setForm(f => ({ ...f, quotationNumber: "" }));
+                  } else {
+                    const q = quotationOptions.find(q => q.quotationNumber === v);
+                    setForm(f => ({
+                      ...f,
+                      quotationNumber: v,
+                      clientRef: q?.clientName ?? f.clientRef,
+                    }));
+                  }
+                }}
                 value={form.quotationNumber || "__none__"}
               >
                 <SelectTrigger>
