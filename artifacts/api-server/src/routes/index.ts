@@ -29,6 +29,7 @@ import adminResetRouter from "./admin-reset";
 import activityRouter from "./activity";
 import deployRouter from "./deploy";
 import delegatedTasksRouter from "./delegated-tasks";
+import lpoAcknowledgmentsRouter from "./lpo-acknowledgments";
 
 const router: IRouter = Router();
 
@@ -66,5 +67,6 @@ router.use(adminResetRouter);
 router.use(activityRouter);
 router.use(deployRouter);
 router.use(delegatedTasksRouter);
+router.use(lpoAcknowledgmentsRouter);
 
 export default router;

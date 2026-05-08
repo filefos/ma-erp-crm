@@ -1,0 +1,77 @@
+Create a new Sales menu category for LPO acknowledgment/acceptance.
+
+Requirement:
+
+In the Sales menu, after “Register LPO”, add a new menu item with the exact heading:
+
+“ACKNOWLEDGMENT OF LPO”
+
+Purpose:
+This section is only for keeping the client’s LPO acknowledgment/acceptance record for client reference.
+
+Important rules:
+- Do not create this document on our company letterhead.
+- Do not generate a new formatted acknowledgment letter.
+- Do not modify the client LPO file design or content.
+- Show the client LPO PDF exactly as uploaded.
+- The uploaded file should only contain the client LPO sheet with stamp and signature.
+- During upload, consider only the client LPO page/sheet.
+- Ignore and do not display any other documents/pages such as:
+  - Our quotation
+  - Company drawings
+  - Related documents
+  - Any extra pages from our company
+- Only the stamped and signed client LPO file should be saved and shown.
+
+Frontend requirements:
+- Add “ACKNOWLEDGMENT OF LPO” under Sales menu after “Register LPO”.
+- Create a page to upload client LPO acknowledgment/acceptance PDF.
+- Fields required:
+  - Customer name
+  - Customer ID
+  - Quotation number
+  - LPO number
+  - Upload date
+  - Uploaded PDF file
+  - Remarks / notes
+- Show uploaded client LPO PDF preview exactly as it is.
+- Add buttons:
+  - Upload PDF
+  - View PDF
+  - Download PDF
+  - Replace PDF
+  - Delete PDF
+- Do not show quotation, drawings, or company documents on this page.
+
+Backend requirements:
+- Create database storage for LPO acknowledgment files.
+- Store:
+  - Customer ID
+  - Customer name
+  - Quotation number
+  - LPO number
+  - File path
+  - Original file name
+  - Upload date
+  - Remarks
+- Create APIs for:
+  - Upload LPO acknowledgment PDF
+  - Fetch LPO acknowledgment by customer / quotation / LPO number
+  - View PDF
+  - Download PDF
+  - Replace PDF
+  - Delete PDF
+- Ensure the file is linked only with the selected customer and LPO number.
+
+Validation:
+- Allow PDF upload only.
+- Show warning before upload:
+  “Please upload only the client LPO sheet with stamp and signature. Do not upload quotation, drawing, or other documents.”
+- Do not automatically attach quotation, drawing, or any company-generated document.
+- Do not merge files.
+- Do not add company letterhead.
+- Do not generate a new PDF.
+- Save and display only the uploaded client LPO acknowledgment/acceptance PDF.
+
+Final result:
+The user should be able to open Sales → ACKNOWLEDGMENT OF LPO, select customer/LPO number, upload the signed and stamped client LPO PDF, and later view/download it exactly as uploaded.

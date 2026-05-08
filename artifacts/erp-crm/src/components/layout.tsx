@@ -56,6 +56,7 @@ const NAV: NavGroup[] = [
       { href: "/crm/follow-ups", label: "Follow-up Center", icon: Calendar },
       { href: "/sales/quotations", label: "Quotations", icon: FileText },
       { href: "/sales/lpos", label: "LPOs", icon: ClipboardList },
+      { href: "/sales/lpo-acknowledgments", label: "Acknowledgment of LPO", icon: FileCheck },
     ],
   },
   {

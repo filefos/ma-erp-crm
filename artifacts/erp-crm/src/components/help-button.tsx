@@ -5,6 +5,7 @@ import { HelpCircle, ChevronRight, Loader2, RotateCcw } from "lucide-react";
 import { authHeaders } from "@/lib/ai-client";
 
 type PageKey =
+  | "lpo-acknowledgments"
   | "lpos"
   | "quotations"
   | "proforma_invoices"
@@ -37,6 +38,33 @@ interface PageMeta {
 }
 
 const PAGE_META: Record<PageKey, PageMeta> = {
+  "lpo-acknowledgments": {
+    title: "Acknowledgment of LPO",
+    description: "This section stores the stamped and signed client LPO acknowledgment PDFs for your records. It is not a company document — it is purely the client's own LPO page with their stamp and signature, saved here for easy retrieval.",
+    module: "sales",
+    steps: [
+      "Click 'Upload LPO Acknowledgment' to add a new record",
+      "Select the client from the Contact dropdown — this auto-fills the customer name",
+      "Pick the matching Quotation Number and LPO Number from the dropdowns",
+      "Click the PDF upload area and select the client's stamped and signed LPO PDF",
+      "Confirm the warning: only the client LPO page should be in the file",
+      "Click 'Upload PDF' — the file is saved and linked to the customer and LPO",
+      "Use the Eye button to view the PDF inline; Download to save a copy",
+      "Use Replace to swap the PDF if a corrected version is received",
+    ],
+    tips: [
+      "Upload only the client LPO sheet — do not include quotations, drawings, or company documents",
+      "Do not merge files or add a company letterhead to the PDF",
+      "The PDF is stored exactly as uploaded and displayed exactly as-is",
+      "Use the search bar to find records by customer name, LPO number, or quotation number",
+    ],
+    questions: [
+      "What file type can I upload?",
+      "Can I replace an uploaded PDF?",
+      "How do I find a specific client's LPO acknowledgment?",
+      "Who can see the uploaded PDFs?",
+    ],
+  },
   lpos: {
     title: "LPO Register",
     description: "This page manages Local Purchase Orders (LPOs) received from your clients. An LPO is a formal purchase order document that your client sends to you, confirming they want to buy your goods/services.",

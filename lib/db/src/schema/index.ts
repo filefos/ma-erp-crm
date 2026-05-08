@@ -20,3 +20,4 @@ export * from "./activity";
 export * from "./conversations";
 export * from "./messages";
 export * from "./delegated-tasks";
+export * from "./lpo-acknowledgments";

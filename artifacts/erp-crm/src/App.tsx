@@ -22,6 +22,7 @@ import { ProformaInvoicesList } from "@/pages/sales/proforma-invoices";
 import { ProformaInvoiceDetail } from "@/pages/sales/proforma-invoice-detail";
 import { ProformaInvoiceEdit } from "@/pages/sales/proforma-invoice-edit";
 import { LposList } from "@/pages/sales/lpos";
+import { LpoAcknowledgments } from "@/pages/sales/lpo-acknowledgments";
 import { AccountsDashboard } from "@/pages/accounts/dashboard";
 import { TaxInvoicesList } from "@/pages/accounts/invoices";
 import { InvoiceDetail } from "@/pages/accounts/invoice-detail";
@@ -186,6 +187,9 @@ function Router() {
       </Route>
       <Route path="/sales/lpos">
         <ModuleGuard module="lpos"><LposList /></ModuleGuard>
+      </Route>
+      <Route path="/sales/lpo-acknowledgments">
+        <ModuleGuard module="lpos"><LpoAcknowledgments /></ModuleGuard>
       </Route>
 
       {/* Accounts */}
