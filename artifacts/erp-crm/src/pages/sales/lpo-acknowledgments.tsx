@@ -6,10 +6,7 @@ import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useListQuotations } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine } from "lucide-react";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 
@@ -63,6 +60,7 @@ export function LpoAcknowledgments() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [file, setFile] = useState<{ name: string; content: string; size: number; type: string } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadedRecord, setUploadedRecord] = useState<AckRecord | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
 
@@ -175,9 +173,9 @@ export function LpoAcknowledgments() {
         }),
       });
       if (!r.ok) throw new Error(await r.text());
-      toast({ title: "Uploaded successfully" });
+      const saved: AckRecord = await r.json();
       qc.invalidateQueries({ queryKey: ["lpo-acknowledgments"] });
-      setUploadOpen(false);
+      setUploadedRecord(saved);
       setForm({ ...EMPTY_FORM });
       setFile(null);
     } catch (e: any) {
@@ -358,99 +356,174 @@ export function LpoAcknowledgments() {
       </div>
 
       {/* ─── Upload Dialog ─── */}
-      <Dialog open={uploadOpen} onOpenChange={v => { if (!v) { setUploadOpen(false); setFile(null); } }}>
+      <Dialog open={uploadOpen} onOpenChange={v => {
+        if (!v) { setUploadOpen(false); setFile(null); setUploadedRecord(null); }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="uppercase tracking-wide">Upload LPO Acknowledgment</DialogTitle>
+            <DialogTitle className="uppercase tracking-wide">
+              {uploadedRecord ? "Upload Complete" : "Upload LPO Acknowledgment"}
+            </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-1">
-            {/* Quotation Number */}
-            <div className="space-y-1.5">
-              <Label>Quotation Number</Label>
-              <Select
-                onValueChange={v => {
-                  if (v === "__none__") {
-                    setForm(f => ({ ...f, quotationNumber: "" }));
-                  } else {
-                    const q = quotationOptions.find(q => q.quotationNumber === v);
-                    setForm(f => ({
-                      ...f,
-                      quotationNumber: v,
-                      clientRef: q?.clientCode || q?.clientName || f.clientRef,
-                    }));
-                  }
-                }}
-                value={form.quotationNumber || "__none__"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select quotation…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">— None —</SelectItem>
-                  {quotationOptions.map(q => (
-                    <SelectItem key={q.id} value={q.quotationNumber}>
-                      {q.quotationNumber} — {q.clientName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* File upload */}
-            <div className="space-y-2">
-              <Label>Client LPO PDF <span className="text-red-500">*</span></Label>
-              <div
-                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-                  file ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-[#1e6ab0] hover:bg-blue-50/30"
-                }`}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {file ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
-                    <div className="text-left">
-                      <div className="font-medium text-green-800 text-sm">{file.name}</div>
-                      <div className="text-xs text-green-600">{formatBytes(file.size)}</div>
-                    </div>
-                    <button
-                      className="ml-2 text-gray-400 hover:text-red-500 p-1"
-                      onClick={e => { e.stopPropagation(); setFile(null); }}
-                    ><X className="w-4 h-4" /></button>
-                  </div>
-                ) : (
-                  <>
-                    <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-700">Click to select PDF</p>
-                    <p className="text-xs text-muted-foreground mt-1">PDF only · Max {MAX_MB} MB</p>
-                  </>
-                )}
+          {/* ── Success screen ── */}
+          {uploadedRecord ? (
+            <div className="py-2 space-y-5">
+              {/* File confirm */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                <CheckCircle2 className="w-8 h-8 text-green-600 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-green-800 text-sm truncate">{uploadedRecord.fileName}</p>
+                  <p className="text-xs text-green-600 mt-0.5">
+                    {uploadedRecord.quotationNumber ? `Quotation: ${uploadedRecord.quotationNumber}` : "No quotation linked"}
+                    {uploadedRecord.fileSize ? ` · ${formatBytes(uploadedRecord.fileSize)}` : ""}
+                  </p>
+                </div>
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/pdf"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-1">
-              <Button variant="outline" onClick={() => { setUploadOpen(false); setFile(null); }}>
-                Cancel
-              </Button>
+              {/* Action buttons grid */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  className="flex flex-col h-16 gap-1 border-[#1e6ab0]/40 text-[#1e6ab0] hover:bg-blue-50"
+                  onClick={() => {
+                    setUploadOpen(false);
+                    setUploadedRecord(null);
+                    setViewRecord(uploadedRecord);
+                  }}
+                >
+                  <Eye className="w-5 h-5" />
+                  <span className="text-xs font-medium">Preview</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="flex flex-col h-16 gap-1 border-green-400/60 text-green-700 hover:bg-green-50"
+                  onClick={() => downloadAuthed(
+                    `${BASE}api/lpo-acknowledgments/${uploadedRecord.id}/file?download=1`,
+                    uploadedRecord.fileName
+                  )}
+                >
+                  <Download className="w-5 h-5" />
+                  <span className="text-xs font-medium">Download</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="flex flex-col h-16 gap-1 border-purple-400/60 text-purple-700 hover:bg-purple-50"
+                  onClick={() => toast({ title: "Stamp", description: "Company stamp will be applied once configured in Admin → Companies." })}
+                >
+                  <Stamp className="w-5 h-5" />
+                  <span className="text-xs font-medium">Stamp</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="flex flex-col h-16 gap-1 border-orange-400/60 text-orange-700 hover:bg-orange-50"
+                  onClick={() => toast({ title: "Signature", description: "Your signature will be applied once uploaded in your Profile settings." })}
+                >
+                  <PenLine className="w-5 h-5" />
+                  <span className="text-xs font-medium">Signature</span>
+                </Button>
+              </div>
+
               <Button
-                className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
-                disabled={uploading || !file}
-                onClick={handleUpload}
+                className="w-full bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                onClick={() => { setUploadOpen(false); setUploadedRecord(null); }}
               >
-                {uploading
-                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</>
-                  : <><Upload className="w-4 h-4 mr-2" />Upload</>}
+                Close
               </Button>
             </div>
-          </div>
+          ) : (
+            /* ── Upload form ── */
+            <div className="space-y-4 py-1">
+              {/* Quotation Number */}
+              <div className="space-y-1.5">
+                <Label>Quotation Number</Label>
+                <Select
+                  onValueChange={v => {
+                    if (v === "__none__") {
+                      setForm(f => ({ ...f, quotationNumber: "" }));
+                    } else {
+                      const q = quotationOptions.find(q => q.quotationNumber === v);
+                      setForm(f => ({
+                        ...f,
+                        quotationNumber: v,
+                        clientRef: q?.clientCode || q?.clientName || f.clientRef,
+                      }));
+                    }
+                  }}
+                  value={form.quotationNumber || "__none__"}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select quotation…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— None —</SelectItem>
+                    {quotationOptions.map(q => (
+                      <SelectItem key={q.id} value={q.quotationNumber}>
+                        {q.quotationNumber} — {q.clientName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* File upload */}
+              <div className="space-y-2">
+                <Label>Client LPO PDF <span className="text-red-500">*</span></Label>
+                <div
+                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                    file ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-[#1e6ab0] hover:bg-blue-50/30"
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {file ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+                      <div className="text-left">
+                        <div className="font-medium text-green-800 text-sm">{file.name}</div>
+                        <div className="text-xs text-green-600">{formatBytes(file.size)}</div>
+                      </div>
+                      <button
+                        className="ml-2 text-gray-400 hover:text-red-500 p-1"
+                        onClick={e => { e.stopPropagation(); setFile(null); }}
+                      ><X className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    <>
+                      <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-700">Click to select PDF</p>
+                      <p className="text-xs text-muted-foreground mt-1">PDF only · Max {MAX_MB} MB</p>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button variant="outline" onClick={() => { setUploadOpen(false); setFile(null); }}>
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                  disabled={uploading || !file}
+                  onClick={handleUpload}
+                >
+                  {uploading
+                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</>
+                    : <><Upload className="w-4 h-4 mr-2" />Upload</>}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
