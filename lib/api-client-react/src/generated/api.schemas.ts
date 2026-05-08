@@ -329,6 +329,7 @@ export interface QuotationItem {
   description: string;
   quantity: number;
   unit: string;
+  sizeStatus?: string;
   rate: number;
   amount: number;
   discount?: number;
@@ -374,6 +375,7 @@ export type CreateQuotationBodyItemsItem = {
   description: string;
   quantity: number;
   unit: string;
+  sizeStatus?: string;
   rate: number;
   discount?: number;
   sortOrder?: number;

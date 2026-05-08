@@ -4779,6 +4779,8 @@ components:
           type: number
         unit:
           type: string
+        sizeStatus:
+          type: string
         rate:
           type: number
         amount:
@@ -4911,6 +4913,8 @@ components:
               quantity:
                 type: number
               unit:
+                type: string
+              sizeStatus:
                 type: string
               rate:
                 type: number

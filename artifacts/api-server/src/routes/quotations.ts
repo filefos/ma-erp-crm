@@ -94,7 +94,8 @@ router.post("/quotations", requirePermission("quotations", "create"), requireBod
   if (items.length > 0) {
     await db.insert(quotationItemsTable).values(items.map((item: any, i: number) => ({
       quotationId: quotation.id, description: item.description, quantity: item.quantity ?? 1,
-      unit: item.unit ?? "nos", rate: item.rate ?? 0, amount: item.amount ?? 0,
+      unit: item.unit ?? "nos", sizeStatus: item.sizeStatus ?? null,
+      rate: item.rate ?? 0, amount: item.amount ?? 0,
       discount: item.discount ?? 0, sortOrder: item.sortOrder ?? i,
     })));
   }
@@ -146,7 +147,8 @@ router.put("/quotations/:id", requirePermission("quotations", "edit"), requireBo
     await db.delete(quotationItemsTable).where(eq(quotationItemsTable.quotationId, id));
     await db.insert(quotationItemsTable).values(items.map((item: any, i: number) => ({
       quotationId: id, description: item.description, quantity: item.quantity ?? 1,
-      unit: item.unit ?? "nos", rate: item.rate ?? 0, amount: item.amount ?? 0,
+      unit: item.unit ?? "nos", sizeStatus: item.sizeStatus ?? null,
+      rate: item.rate ?? 0, amount: item.amount ?? 0,
       discount: item.discount ?? 0, sortOrder: item.sortOrder ?? i,
     })));
   }

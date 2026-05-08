@@ -46,7 +46,7 @@ const BANK_DETAILS: Record<number, {
 interface Item {
   description: string;
   quantity: number;
-  unit: string;
+  sizeStatus: string;
   rate: number;
   amount: number;
   discount: number;
@@ -60,7 +60,7 @@ interface AdditionalItem {
   amount: number;
 }
 
-const emptyItem = (): Item => ({ description: "", quantity: 1, unit: "", rate: 0, amount: 0, discount: 0 });
+const emptyItem = (): Item => ({ description: "", quantity: 1, sizeStatus: "", rate: 0, amount: 0, discount: 0 });
 
 const DEFAULT_ADDITIONAL_ITEMS: AdditionalItem[] = [
   { description: "Transportation including RTA Permit", status: "Included", price: 0, quantity: 1, amount: 0 },
@@ -145,7 +145,7 @@ export function QuotationEdit({ id }: Props) {
     const loadedItems: Item[] = ((raw.items ?? []) as any[]).map((i: any) => ({
       description: i.description ?? "",
       quantity: Number(i.quantity ?? 1),
-      unit: i.unit ?? "",
+      sizeStatus: i.sizeStatus ?? i.unit ?? "",
       rate: Number(i.rate ?? 0),
       amount: Number(i.amount ?? 0),
       discount: Number(i.discount ?? 0),
@@ -383,8 +383,8 @@ export function QuotationEdit({ id }: Props) {
                     </td>
                     <td className="py-1 px-1">
                       <Input
-                        value={item.unit}
-                        onChange={e => updateItem(i, "unit", e.target.value)}
+                        value={item.sizeStatus}
+                        onChange={e => updateItem(i, "sizeStatus", e.target.value)}
                         className="h-8 text-sm"
                         placeholder="e.g. 12X6X2.4M"
                       />

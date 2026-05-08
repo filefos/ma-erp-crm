@@ -41,6 +41,7 @@ export const quotationItemsTable = pgTable("quotation_items", {
   description: text("description").notNull(),
   quantity: doublePrecision("quantity").notNull().default(1),
   unit: text("unit").notNull().default("nos"),
+  sizeStatus: text("size_status"),
   rate: doublePrecision("rate").notNull().default(0),
   amount: doublePrecision("amount").notNull().default(0),
   discount: doublePrecision("discount").default(0),
