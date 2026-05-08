@@ -451,14 +451,14 @@ export function LpoAcknowledgments() {
               <div className="space-y-1.5">
                 <Label>Quotation Number</Label>
                 <Select
-                  onValueChange={v => setForm(f => ({ ...f, quotationNumber: v }))}
-                  value={form.quotationNumber}
+                  onValueChange={v => setForm(f => ({ ...f, quotationNumber: v === "__none__" ? "" : v }))}
+                  value={form.quotationNumber || "__none__"}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select quotation…" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">— None —</SelectItem>
+                    <SelectItem value="__none__">— None —</SelectItem>
                     {quotationOptions.map(q => (
                       <SelectItem key={q.id} value={q.quotationNumber}>{q.quotationNumber} — {q.clientName}</SelectItem>
                     ))}
@@ -470,14 +470,18 @@ export function LpoAcknowledgments() {
               <div className="space-y-1.5">
                 <Label>LPO Number</Label>
                 <Select
-                  onValueChange={v => { setForm(f => ({ ...f, lpoNumber: v })); autofillFromLpo(String(lpoOptions.find(l => l.lpoNumber === v)?.id ?? "")); }}
-                  value={form.lpoNumber}
+                  onValueChange={v => {
+                    const val = v === "__none__" ? "" : v;
+                    setForm(f => ({ ...f, lpoNumber: val }));
+                    if (val) autofillFromLpo(String(lpoOptions.find(l => l.lpoNumber === val)?.id ?? ""));
+                  }}
+                  value={form.lpoNumber || "__none__"}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select LPO…" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">— None —</SelectItem>
+                    <SelectItem value="__none__">— None —</SelectItem>
                     {lpoOptions.map(l => (
                       <SelectItem key={l.id} value={l.lpoNumber ?? String(l.id)}>{l.lpoNumber} — {l.clientName}</SelectItem>
                     ))}
