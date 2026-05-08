@@ -76,6 +76,11 @@ export function DelegatedTaskProvider({ children }: { children: React.ReactNode 
     } catch { /* non-critical */ }
   }, [isAuthenticated]);
 
+  // Clear task immediately when user signs out so the popup resets on next sign-in
+  useEffect(() => {
+    if (!isAuthenticated) setActiveTask(null);
+  }, [isAuthenticated]);
+
   useEffect(() => {
     fetchMine();
     intervalRef.current = setInterval(fetchMine, 15000);
