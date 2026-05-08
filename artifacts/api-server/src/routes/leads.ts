@@ -196,71 +196,89 @@ router.post("/leads/follow-up-check", requirePermission("leads", "view"), async 
 
 router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
+
+  // companyId is mandatory — clientCode generation requires it.
+  if (!data.companyId) {
+    res.status(400).json({ error: "companyId is required to create a lead." });
+    return;
+  }
+
   const count = await db.select({ count: sql<number>`count(*)::int` }).from(leadsTable);
   const num = (count[0]?.count ?? 0) + 1;
   const year = new Date().getFullYear();
   const leadNumber = `LEAD-${year}-${String(num).padStart(4, "0")}`;
 
-  // Resolve Client Code: if a contactId is provided and that contact already has one,
-  // inherit it. Otherwise auto-generate per company. If no companyId, leave null.
+  // Resolve Client Code strictly — every lead must have one on creation.
+  // Priority: inherit from linked contact → auto-generate for this company.
   // SECURITY: only honor contactId if it belongs to a company the caller can access.
-  let clientCode: string | undefined = data.clientCode;
-  if (!clientCode && data.contactId) {
+  let clientCode: string | undefined;
+  if (data.contactId) {
     const scope = req.companyScope;
     const [linked] = await db.select().from(contactsTable).where(eq(contactsTable.id, data.contactId));
     const inScope = linked && linked.companyId && (scope === null || scope === undefined || scope.includes(linked.companyId));
     if (linked && inScope) {
-      if (linked.clientCode) clientCode = linked.clientCode;
-      if (!linked.clientCode && data.companyId === linked.companyId) {
+      if (linked.clientCode) {
+        clientCode = linked.clientCode;
+      } else if (data.companyId === linked.companyId) {
         clientCode = await genClientCode(data.companyId);
         await db.update(contactsTable).set({ clientCode, updatedAt: new Date() }).where(eq(contactsTable.id, linked.id));
       }
     }
   }
-  if (!clientCode && data.companyId) {
+  // Always generate if still unresolved — companyId guaranteed present above.
+  if (!clientCode) {
     clientCode = await genClientCode(data.companyId);
   }
 
-  const [lead] = await db.insert(leadsTable).values({
-    leadNumber,
-    clientCode,
-    leadName: data.leadName,
-    companyName: data.companyName,
-    contactPerson: data.contactPerson,
-    designation: data.designation,
-    phone: data.phone,
-    whatsapp: data.whatsapp,
-    email: data.email,
-    location: data.location,
-    source: data.source,
-    requirementType: data.requirementType,
-    quantity: data.quantity,
-    budget: data.budget,
-    status: data.status ?? "new",
-    assignedToId: data.assignedToId ?? req.user?.id,
-    notes: data.notes,
-    nextFollowUp: data.nextFollowUp,
-    leadScore: data.leadScore ?? "cold",
-    companyType: data.companyType,
-    website: data.website,
-    licenseNumber: data.licenseNumber,
-    trnNumber: data.trnNumber,
-    officeAddress: data.officeAddress,
-    companyId: data.companyId,
-    createdById: req.user?.id,
-  }).returning();
-  if (lead.assignedToId && lead.assignedToId !== req.user?.id) {
+  let lead: typeof leadsTable.$inferSelect;
+  try {
+    [lead] = await db.insert(leadsTable).values({
+      leadNumber,
+      clientCode,
+      leadName: data.leadName,
+      companyName: data.companyName,
+      contactPerson: data.contactPerson,
+      designation: data.designation,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+      email: data.email,
+      location: data.location,
+      source: data.source,
+      requirementType: data.requirementType,
+      quantity: data.quantity,
+      budget: data.budget,
+      status: data.status ?? "new",
+      assignedToId: data.assignedToId ?? req.user?.id,
+      notes: data.notes,
+      nextFollowUp: data.nextFollowUp,
+      leadScore: data.leadScore ?? "cold",
+      companyType: data.companyType,
+      website: data.website,
+      licenseNumber: data.licenseNumber,
+      trnNumber: data.trnNumber,
+      officeAddress: data.officeAddress,
+      companyId: data.companyId,
+      createdById: req.user?.id,
+    }).returning();
+  } catch (err: any) {
+    if (err?.code === "23505") {
+      res.status(409).json({ error: "A lead with this Customer ID already exists. Please try again." });
+      return;
+    }
+    throw err;
+  }
+  if (lead!.assignedToId && lead!.assignedToId !== req.user?.id) {
     void notifyUsers({
-      userIds: [lead.assignedToId],
+      userIds: [lead!.assignedToId],
       title: "New lead assigned",
-      message: `${lead.leadName}${lead.companyName ? ` — ${lead.companyName}` : ""}${lead.requirementType ? ` (${lead.requirementType})` : ""}`,
+      message: `${lead!.leadName}${lead!.companyName ? ` — ${lead!.companyName}` : ""}${lead!.requirementType ? ` (${lead!.requirementType})` : ""}`,
       type: "info",
       entityType: "lead",
-      entityId: lead.id,
-      data: { module: "leads", id: lead.id },
+      entityId: lead!.id,
+      data: { module: "leads", id: lead!.id },
     });
   }
-  res.status(201).json(await enrichLead(lead));
+  res.status(201).json(await enrichLead(lead!));
 });
 
 router.get("/leads/:id", requirePermission("leads", "view"), async (req, res): Promise<void> => {
