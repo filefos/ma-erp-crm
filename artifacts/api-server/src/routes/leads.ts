@@ -261,7 +261,11 @@ router.post("/leads", requirePermission("leads", "create"), requireBodyCompanyAc
       createdById: req.user?.id,
     }).returning();
   } catch (err: unknown) {
-    if (typeof err === "object" && err !== null && (err as Record<string, unknown>)["code"] === "23505") {
+    if (
+      typeof err === "object" && err !== null &&
+      (err as Record<string, unknown>)["code"] === "23505" &&
+      (err as Record<string, unknown>)["constraint"] === "leads_client_code_unique"
+    ) {
       res.status(409).json({ error: "A lead with this Customer ID already exists. Please try again." });
       return;
     }
