@@ -86,7 +86,7 @@ router.post(
   "/admin/users/:id/freeze",
   requirePermissionLevel("super_admin"),
   async (req, res): Promise<void> => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
     if (!Number.isFinite(id)) {
       res.status(400).json({ error: "Invalid user id" });
       return;
@@ -132,7 +132,7 @@ router.post(
   "/admin/users/:id/purge",
   requirePermissionLevel("super_admin"),
   async (req, res): Promise<void> => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
     if (!Number.isFinite(id)) {
       res.status(400).json({ error: "Invalid user id" });
       return;
@@ -213,7 +213,7 @@ router.post(
   "/admin/users/:id/reset-account",
   requirePermissionLevel("super_admin"),
   async (req, res): Promise<void> => {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
     if (!Number.isFinite(id)) {
       res.status(400).json({ error: "Invalid user id" });
       return;

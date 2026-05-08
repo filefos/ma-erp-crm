@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useListQuotations } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -55,9 +55,44 @@ export function LpoAcknowledgments() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [file, setFile] = useState<{ name: string; content: string; size: number; type: string } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Authenticated fetch → Blob URL (avoids 401 on plain href/iframe)
+  async function authedFetch(url: string): Promise<string> {
+    const r = await fetch(url, { headers: authHeaders() });
+    if (!r.ok) throw new Error(`Failed to fetch file: ${r.status}`);
+    const blob = await r.blob();
+    return URL.createObjectURL(blob);
+  }
+
+  async function downloadAuthed(url: string, filename: string) {
+    try {
+      const objectUrl = await authedFetch(url);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+    } catch {
+      toast({ title: "Download failed", variant: "destructive" });
+    }
+  }
+
+  // Fetch blob URL for the preview iframe whenever viewRecord changes
+  useEffect(() => {
+    if (!viewRecord) { setBlobUrl(null); return; }
+    let revoked = false;
+    authedFetch(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file`)
+      .then(url => { if (!revoked) setBlobUrl(url); })
+      .catch(() => toast({ title: "Could not load preview", variant: "destructive" }));
+    return () => {
+      revoked = true;
+      setBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    };
+  }, [viewRecord?.id]);
 
   const { data: records = [], isLoading } = useQuery<AckRecord[]>({
     queryKey: ["lpo-acknowledgments", activeCompanyId],
@@ -287,12 +322,7 @@ export function LpoAcknowledgments() {
                     <Button
                       variant="ghost" size="icon" title="Download PDF"
                       className="text-green-600 hover:text-green-800"
-                      onClick={() => {
-                        const a = document.createElement("a");
-                        a.href = `${BASE}api/lpo-acknowledgments/${rec.id}/file?download=1`;
-                        a.download = rec.fileName;
-                        a.click();
-                      }}
+                      onClick={() => downloadAuthed(`${BASE}api/lpo-acknowledgments/${rec.id}/file?download=1`, rec.fileName)}
                     >
                       <Download className="w-4 h-4" />
                     </Button>
@@ -424,22 +454,31 @@ export function LpoAcknowledgments() {
               <Button size="sm" variant="outline" className="text-green-700 border-green-300"
                 onClick={() => {
                   if (!viewRecord) return;
-                  const a = document.createElement("a");
-                  a.href = `${BASE}api/lpo-acknowledgments/${viewRecord.id}/file?download=1`;
-                  a.download = viewRecord.fileName;
-                  a.click();
+                  if (blobUrl) {
+                    const a = document.createElement("a");
+                    a.href = blobUrl;
+                    a.download = viewRecord.fileName;
+                    a.click();
+                  } else {
+                    downloadAuthed(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file?download=1`, viewRecord.fileName);
+                  }
                 }}>
                 <Download className="w-3.5 h-3.5 mr-1.5" />Download
               </Button>
             </div>
           </DialogHeader>
           <div className="flex-1 min-h-0">
-            {viewRecord && (
+            {viewRecord && blobUrl && (
               <iframe
-                src={`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file`}
+                src={blobUrl}
                 className="w-full h-full border-0"
                 title="LPO Acknowledgment"
               />
+            )}
+            {viewRecord && !blobUrl && (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />Loading preview…
+              </div>
             )}
           </div>
         </DialogContent>

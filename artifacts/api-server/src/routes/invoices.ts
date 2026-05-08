@@ -812,7 +812,7 @@ router.post("/undertaking-letters", requirePermission("lpos", "create"), require
 });
 
 router.get("/undertaking-letters/:id", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [ul] = await db.select().from(undertakingLettersTable).where(eq(undertakingLettersTable.id, id));
   if (!ul) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [ul]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -821,7 +821,7 @@ router.get("/undertaking-letters/:id", requirePermission("lpos", "view"), async 
 });
 
 router.put("/undertaking-letters/:id", requirePermission("lpos", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(undertakingLettersTable).where(eq(undertakingLettersTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -855,7 +855,7 @@ router.post("/handover-notes", requirePermission("lpos", "create"), requireBodyC
 });
 
 router.get("/handover-notes/:id", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [hon] = await db.select().from(handoverNotesTable).where(eq(handoverNotesTable.id, id));
   if (!hon) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [hon]).length) { res.status(403).json({ error: "Forbidden" }); return; }
@@ -864,7 +864,7 @@ router.get("/handover-notes/:id", requirePermission("lpos", "view"), async (req,
 });
 
 router.put("/handover-notes/:id", requirePermission("lpos", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(handoverNotesTable).where(eq(handoverNotesTable.id, id));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
   if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }

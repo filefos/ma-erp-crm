@@ -118,7 +118,7 @@ router.get("/leads", requirePermission("leads", "view"), async (req, res): Promi
   if (leadScore) rows = rows.filter(r => r.leadScore === leadScore);
   if (search) {
     const s = (search as string).toLowerCase();
-    rows = rows.filter(r => r.leadName.toLowerCase().includes(s) || r.companyName?.toLowerCase().includes(s) || r.email?.toLowerCase().includes(s));
+    rows = rows.filter(r => r.leadName.toLowerCase().includes(s) || r.companyName?.toLowerCase().includes(s) || r.email?.toLowerCase().includes(s) || r.clientCode?.toLowerCase().includes(s));
   }
   const enriched = await Promise.all(rows.map(enrichLead));
   res.json(enriched);

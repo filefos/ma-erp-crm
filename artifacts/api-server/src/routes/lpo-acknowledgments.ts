@@ -46,7 +46,7 @@ router.get("/lpo-acknowledgments", requirePermission("lpos", "view"), async (req
 
 // Get single acknowledgment (without file content — metadata only)
 router.get("/lpo-acknowledgments/:id", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [row] = await db
     .select({
       id: lpoAcknowledgmentsTable.id,
@@ -78,7 +78,7 @@ router.get("/lpo-acknowledgments/:id", requirePermission("lpos", "view"), async 
 
 // Serve the raw PDF file inline (for preview / download)
 router.get("/lpo-acknowledgments/:id/file", requirePermission("lpos", "view"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [row] = await db
     .select()
     .from(lpoAcknowledgmentsTable)
@@ -130,7 +130,7 @@ router.post("/lpo-acknowledgments", requirePermission("lpos", "create"), async (
 
 // Replace PDF + update fields
 router.put("/lpo-acknowledgments/:id", requirePermission("lpos", "edit"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select({ companyId: lpoAcknowledgmentsTable.companyId })
     .from(lpoAcknowledgmentsTable).where(eq(lpoAcknowledgmentsTable.id, id));
 
@@ -164,7 +164,7 @@ router.put("/lpo-acknowledgments/:id", requirePermission("lpos", "edit"), async 
 
 // Delete acknowledgment
 router.delete("/lpo-acknowledgments/:id", requirePermission("lpos", "delete"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select({ companyId: lpoAcknowledgmentsTable.companyId })
     .from(lpoAcknowledgmentsTable).where(eq(lpoAcknowledgmentsTable.id, id));
 

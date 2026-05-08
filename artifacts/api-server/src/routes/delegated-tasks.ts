@@ -127,7 +127,7 @@ router.patch("/delegated-tasks/:id/complete", async (req, res): Promise<void> =>
 });
 
 router.patch("/delegated-tasks/:id/revoke", requirePermissionLevel("company_admin"), async (req, res): Promise<void> => {
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const companyScope = req.companyScope ?? null;
   const [task] = await db.select().from(delegatedTasksTable).where(eq(delegatedTasksTable.id, id));
   if (!task) { res.status(404).json({ error: "Task not found" }); return; }
