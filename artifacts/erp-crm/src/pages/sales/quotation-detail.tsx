@@ -410,7 +410,9 @@ export function QuotationDetail({ id }: Props) {
                 setGeneratingPdf(true);
                 try {
                   const filename = `Quotation_${q.quotationNumber ?? q.id ?? "doc"}.pdf`;
-                  const { base64 } = await captureElementToPdfBase64(docEl, filename);
+                  const signatureUrl = user?.signatureUrl || undefined;
+                  const stampUrl = companies?.find(c => c.id === q.companyId)?.stamp || undefined;
+                  const { base64 } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
                   attachments = [{
                     filename,
                     content: base64,
@@ -439,7 +441,7 @@ export function QuotationDetail({ id }: Props) {
               ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</>
               : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
-          <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} recipientPhone={q.clientPhone ?? undefined} recipientEmail={q.clientEmail ?? undefined} companyId={q.companyId ?? undefined} docTypeLabel="Quotation" />
+          <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} recipientPhone={q.clientPhone ?? undefined} recipientEmail={q.clientEmail ?? undefined} companyId={q.companyId ?? undefined} docTypeLabel="Quotation" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === q.companyId)?.stamp ?? undefined} />
         </div>
       </div>
 

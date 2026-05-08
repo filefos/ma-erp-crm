@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import {
   useGetUndertakingLetter, getGetUndertakingLetterQueryKey,
-  useUpdateUndertakingLetter,
+  useUpdateUndertakingLetter, useListCompanies,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,9 @@ export function UndertakingLetterDetail({ id }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const { user } = useAuth();
+  const { data: companies } = useListCompanies();
 
   const { data: ul, isLoading } = useGetUndertakingLetter(ulId, {
     query: { queryKey: getGetUndertakingLetterQueryKey(ulId), enabled: !!ulId },
@@ -89,7 +93,9 @@ export function UndertakingLetterDetail({ id }: Props) {
     if (!printRef.current || !ul) return;
     setExporting(true);
     try {
-      const { base64, filename } = await captureElementToPdfBase64(printRef.current, `${ul.ulNumber}.pdf`);
+      const signatureUrl = user?.signatureUrl || undefined;
+      const stampUrl = companies?.find(c => c.id === (ul as any).companyId)?.stamp || undefined;
+      const { base64, filename } = await captureElementToPdfBase64(printRef.current, `${ul.ulNumber}.pdf`, { signatureUrl, stampUrl });
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;
       link.download = filename;
@@ -157,7 +163,9 @@ export function UndertakingLetterDetail({ id }: Props) {
                 setGeneratingPdf(true);
                 try {
                   const filename = `UndertakingLetter_${ul.ulNumber ?? ul.id ?? "doc"}.pdf`;
-                  const { base64 } = await captureElementToPdfBase64(el, filename);
+                  const signatureUrl = user?.signatureUrl || undefined;
+                  const stampUrl = companies?.find(c => c.id === (ul as any).companyId)?.stamp || undefined;
+                  const { base64 } = await captureElementToPdfBase64(el, filename, { signatureUrl, stampUrl });
                   attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
                 } catch { /* fall through */ } finally { setGeneratingPdf(false); }
               }
@@ -187,6 +195,8 @@ export function UndertakingLetterDetail({ id }: Props) {
             recipientEmail={undefined}
             companyId={(ul as any).companyId ?? undefined}
             docTypeLabel="Undertaking Letter"
+            signatureUrl={user?.signatureUrl ?? undefined}
+            stampUrl={companies?.find(c => c.id === (ul as any).companyId)?.stamp ?? undefined}
           />
         </div>
       </div>

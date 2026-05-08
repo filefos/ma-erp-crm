@@ -185,7 +185,9 @@ export function ProformaInvoiceDetail({ id }: Props) {
                 setGeneratingPdf(true);
                 try {
                   const filename = `ProformaInvoice_${pi.piNumber ?? pi.id ?? "doc"}.pdf`;
-                  const { base64 } = await captureElementToPdfBase64(docEl, filename);
+                  const signatureUrl = user?.signatureUrl || undefined;
+                  const stampUrl = companies?.find(c => c.id === pi.companyId)?.stamp || undefined;
+                  const { base64 } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
                   attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
                 } catch { /* fall through */ } finally { setGeneratingPdf(false); }
               }
@@ -203,7 +205,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
           >
             {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
-          <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} recipientPhone={(pi as any).clientPhone ?? undefined} recipientEmail={(pi as any).clientEmail ?? undefined} companyId={pi.companyId ?? undefined} docTypeLabel="Proforma Invoice" />
+          <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} recipientPhone={(pi as any).clientPhone ?? undefined} recipientEmail={(pi as any).clientEmail ?? undefined} companyId={pi.companyId ?? undefined} docTypeLabel="Proforma Invoice" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined} />
         </div>
       </div>
       <DocumentPrint data={docData} />

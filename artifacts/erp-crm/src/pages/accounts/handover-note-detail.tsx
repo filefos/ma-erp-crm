@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import {
   useGetHandoverNote, getGetHandoverNoteQueryKey,
-  useUpdateHandoverNote,
+  useUpdateHandoverNote, useListCompanies,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,9 @@ export function HandoverNoteDetail({ id }: Props) {
     receivedByDesignation: "", clientRepresentative: "",
     status: "draft", notes: "", items: [EMPTY_ITEM()] as HandoverItem[],
   });
+
+  const { user } = useAuth();
+  const { data: companies } = useListCompanies();
 
   const { data: hon, isLoading } = useGetHandoverNote(honId, {
     query: { queryKey: getGetHandoverNoteQueryKey(honId), enabled: !!honId },
@@ -105,7 +109,9 @@ export function HandoverNoteDetail({ id }: Props) {
     if (!printRef.current || !hon) return;
     setExporting(true);
     try {
-      const { base64, filename } = await captureElementToPdfBase64(printRef.current, `${hon.honNumber}.pdf`);
+      const signatureUrl = user?.signatureUrl || undefined;
+      const stampUrl = companies?.find(c => c.id === (hon as any).companyId)?.stamp || undefined;
+      const { base64, filename } = await captureElementToPdfBase64(printRef.current, `${hon.honNumber}.pdf`, { signatureUrl, stampUrl });
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;
       link.download = filename;
@@ -178,7 +184,9 @@ export function HandoverNoteDetail({ id }: Props) {
                 setGeneratingPdf(true);
                 try {
                   const filename = `HandoverNote_${hon.honNumber ?? hon.id ?? "doc"}.pdf`;
-                  const { base64 } = await captureElementToPdfBase64(el, filename);
+                  const signatureUrl = user?.signatureUrl || undefined;
+                  const stampUrl = companies?.find(c => c.id === (hon as any).companyId)?.stamp || undefined;
+                  const { base64 } = await captureElementToPdfBase64(el, filename, { signatureUrl, stampUrl });
                   attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
                 } catch { /* fall through */ } finally { setGeneratingPdf(false); }
               }
@@ -208,6 +216,8 @@ export function HandoverNoteDetail({ id }: Props) {
             recipientEmail={undefined}
             companyId={(hon as any).companyId ?? undefined}
             docTypeLabel="Handover Note"
+            signatureUrl={user?.signatureUrl ?? undefined}
+            stampUrl={companies?.find(c => c.id === (hon as any).companyId)?.stamp ?? undefined}
           />
         </div>
       </div>
