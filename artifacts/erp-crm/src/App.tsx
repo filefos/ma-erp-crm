@@ -13,6 +13,7 @@ import { CRMReports } from "@/pages/crm/reports";
 import { LeadsList } from "@/pages/crm/leads";
 import { LeadDetail } from "@/pages/crm/lead-detail";
 import { ContactsList } from "@/pages/crm/contacts";
+import { CustomerProfile } from "@/pages/crm/customer-profile";
 import { QuotationsList } from "@/pages/sales/quotations";
 import { QuotationDetail } from "@/pages/sales/quotation-detail";
 import { QuotationNew } from "@/pages/sales/quotation-new";
@@ -137,6 +138,11 @@ function Router() {
       </Route>
       <Route path="/crm/leads">
         <ModuleGuard module="leads"><LeadsList /></ModuleGuard>
+      </Route>
+      <Route path="/crm/contacts/:id">
+        {(params) => (
+          <ModuleGuard module="contacts"><CustomerProfile id={params.id} /></ModuleGuard>
+        )}
       </Route>
       <Route path="/crm/contacts">
         <ModuleGuard module="contacts"><ContactsList /></ModuleGuard>

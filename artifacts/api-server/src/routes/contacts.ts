@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, contactsTable } from "@workspace/db";
-import { eq, inArray } from "drizzle-orm";
+import { db, contactsTable, quotationsTable, lposTable, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable } from "@workspace/db";
+import { eq, inArray, or, ilike, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 import { genClientCode, findDuplicateContact } from "../lib/client-code";
 
@@ -103,6 +103,76 @@ router.delete("/contacts", requirePermission("contacts", "delete"), async (req, 
   if (allowed.length === 0) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.delete(contactsTable).where(inArray(contactsTable.id, allowed));
   res.json({ deleted: allowed.length });
+});
+
+// ── Customer 360 — all documents for a contact ────────────────────────────────
+router.get("/contacts/:id/documents", requirePermission("contacts", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [contact] = await db.select().from(contactsTable).where(eq(contactsTable.id, id));
+  if (!contact) { res.status(404).json({ error: "Not found" }); return; }
+  if (contact.companyId != null && !scopeFilter(req, [contact]).length) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+
+  const code = contact.clientCode;
+  const namePat = `%${contact.name}%`;
+
+  const codeOrName = <T extends { clientCode?: string | null; clientName: string }>(table: T) => {
+    void table;
+    return code
+      ? or(ilike(quotationsTable.clientCode, code), ilike(quotationsTable.clientName, namePat))
+      : ilike(quotationsTable.clientName, namePat);
+  };
+
+  const matchQ = (tbl: typeof quotationsTable) =>
+    code ? or(ilike(tbl.clientCode, code), ilike(tbl.clientName, namePat))! : ilike(tbl.clientName, namePat);
+  const matchL = (tbl: typeof lposTable) =>
+    code ? or(ilike(tbl.clientCode, code), ilike(tbl.clientName, namePat))! : ilike(tbl.clientName, namePat);
+  const matchP = (tbl: typeof proformaInvoicesTable) =>
+    code ? or(ilike(tbl.clientCode, code), ilike(tbl.clientName, namePat))! : ilike(tbl.clientName, namePat);
+  const matchI = (tbl: typeof taxInvoicesTable) =>
+    code ? or(ilike(tbl.clientCode, code), ilike(tbl.clientName, namePat))! : ilike(tbl.clientName, namePat);
+  const matchD = (tbl: typeof deliveryNotesTable) =>
+    ilike(tbl.clientName, namePat);
+
+  void codeOrName;
+
+  const [quotations, lpos, proformas, invoices, deliveryNotes] = await Promise.all([
+    db.select().from(quotationsTable).where(matchQ(quotationsTable)).orderBy(sql`${quotationsTable.createdAt} desc`).limit(100),
+    db.select().from(lposTable).where(matchL(lposTable)).orderBy(sql`${lposTable.createdAt} desc`).limit(100),
+    db.select().from(proformaInvoicesTable).where(matchP(proformaInvoicesTable)).orderBy(sql`${proformaInvoicesTable.createdAt} desc`).limit(100),
+    db.select().from(taxInvoicesTable).where(matchI(taxInvoicesTable)).orderBy(sql`${taxInvoicesTable.createdAt} desc`).limit(100),
+    db.select().from(deliveryNotesTable).where(matchD(deliveryNotesTable)).orderBy(sql`${deliveryNotesTable.createdAt} desc`).limit(100),
+  ]);
+
+  const scopedQuotations = scopeFilter(req, quotations);
+  const scopedLpos = scopeFilter(req, lpos);
+  const scopedProformas = scopeFilter(req, proformas);
+  const scopedInvoices = scopeFilter(req, invoices);
+  const scopedDns = scopeFilter(req, deliveryNotes);
+
+  const totalInvoiced = scopedInvoices.reduce((s, i) => s + Number((i as any).grandTotal ?? 0), 0);
+  const totalPaid = scopedInvoices
+    .filter((i: any) => i.status === "paid")
+    .reduce((s, i) => s + Number((i as any).grandTotal ?? 0), 0);
+  const outstandingBalance = totalInvoiced - totalPaid;
+
+  res.json({
+    contact,
+    quotations: scopedQuotations,
+    lpos: scopedLpos,
+    proformas: scopedProformas,
+    invoices: scopedInvoices,
+    deliveryNotes: scopedDns,
+    summary: {
+      quotationCount: scopedQuotations.length,
+      lpoCount: scopedLpos.length,
+      invoiceCount: scopedInvoices.length,
+      totalInvoiced,
+      totalPaid,
+      outstandingBalance,
+    },
+  });
 });
 
 export default router;

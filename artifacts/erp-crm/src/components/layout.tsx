@@ -41,7 +41,7 @@ const NAV: NavGroup[] = [
     icon: Users,
     items: [
       { href: "/crm", label: "CRM Dashboard", icon: LayoutDashboard },
-      { href: "/crm/contacts", label: "Contacts", icon: HardHat },
+      { href: "/crm/contacts", label: "Contacts & Profiles", icon: HardHat },
       { href: "/crm/leads", label: "Leads", icon: Users },
       { href: "/crm/reports", label: "CRM Reports", icon: BarChart },
     ],

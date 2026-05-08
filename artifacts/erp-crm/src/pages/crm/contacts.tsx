@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { Label } from "@/components/ui/label";
-import { Search, Plus, Trash2, ArrowLeft, ArrowRight, Pencil } from "lucide-react";
+import { Search, Plus, Trash2, ArrowLeft, ArrowRight, Pencil, User } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { BulkUploadDialog } from "@/components/BulkUploadDialog";
@@ -441,6 +441,16 @@ export function ContactsList() {
                         taskType="custom"
                         taskLabel={`Follow up with ${c.name}${c.companyName ? ` — ${c.companyName}` : ""}`}
                       />
+                      <Button
+                        variant="ghost" size="icon"
+                        className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+                        asChild
+                        title="View customer profile"
+                      >
+                        <Link href={`/crm/contacts/${c.id}`}>
+                          <User className="w-4 h-4" />
+                        </Link>
+                      </Button>
                       <Button
                         variant="ghost" size="icon"
                         className="text-[#1e6ab0] hover:text-[#0f2d5a]"

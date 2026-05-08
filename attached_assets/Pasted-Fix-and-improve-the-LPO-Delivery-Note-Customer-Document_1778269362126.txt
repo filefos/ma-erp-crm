@@ -1,0 +1,80 @@
+Fix and improve the LPO, Delivery Note, Customer Documents, and AI Help system.
+
+Requirements:
+
+1. LPO PDF Fetching Issue
+- Fix the issue where LPO is not fetching correctly in PDF format.
+- The system must allow viewing, downloading, and attaching the LPO PDF.
+- LPO PDF must be linked with the correct customer, quotation, and LPO number.
+- Ensure the PDF format opens correctly without broken links or missing data.
+
+2. Delivery Note Attachment System
+- In the Delivery Note section, add an attachment/upload place for every customer.
+- This attachment area will be used to upload and keep signed delivery notes.
+- Each customer must have their own signed delivery note records.
+- Uploaded signed delivery notes should be saved with:
+  - Customer name
+  - Customer ID
+  - Delivery Note number
+  - Date
+  - Related quotation/invoice/LPO number if available
+- User should be able to view, download, replace, or delete the uploaded signed delivery note.
+
+3. Customer One-Click Detail Center
+- Create one central place for every customer called “Customer Detail Center” or “Customer Profile”.
+- From this page, user should be able to see all customer details and documents with one click.
+- Customer page must include:
+  - Customer basic details
+  - Contact details
+  - Quotations
+  - LPO records
+  - Proforma invoices
+  - Tax invoices
+  - Delivery notes
+  - Signed delivery note attachments
+  - Payment terms
+  - Outstanding balance
+  - Project details
+  - Uploaded customer documents
+- Add search and filter options.
+- Add quick buttons for View, Download, Edit, and Upload Document.
+
+4. AI Help / User Manual System
+- Add AI help implementation in menu and category sections.
+- User should be able to click a help button from any page.
+- If user is stuck anywhere, AI help should explain:
+  - What this page is for
+  - How to use this menu/category
+  - What each field means
+  - What steps to follow
+  - Common mistakes and fixes
+- Add a “Help” or “AI Guide” button on each main page.
+- AI Help should provide simple step-by-step guidance.
+- AI Help should be connected with the user manual or system documentation.
+- User should get guidance with one click.
+
+5. Menu and Category Improvements
+- Organize menus and categories clearly.
+- Add proper labels and descriptions.
+- Add tooltips where needed.
+- Make sure user can easily find customer documents, delivery notes, LPO, quotations, and invoices.
+
+6. Database and Backend Requirements
+- Update database models/tables to store attachments and customer document links.
+- Store file path, upload date, document type, customer ID, and related transaction number.
+- Ensure all uploaded files are securely stored and connected to the correct customer.
+- Add backend APIs for upload, fetch, view, download, replace, and delete documents.
+
+7. Frontend Requirements
+- Update UI to show document upload sections.
+- Add one-click customer profile page.
+- Add PDF preview where possible.
+- Add AI Help button on each important page.
+- Ensure all data loads dynamically and correctly.
+
+Important:
+- Do not remove any existing working features.
+- Keep current quotation, LPO, invoice, and delivery note flow unchanged unless required for fixing the issue.
+- Make sure all customer documents are easy to find from one place.
+- Test that uploaded signed delivery notes remain attached to the correct customer.
+- Test that LPO PDF fetch works correctly.

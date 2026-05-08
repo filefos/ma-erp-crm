@@ -14,11 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Plus, Pencil, Paperclip, FileIcon, X, Download,
-  Building2, Calendar, DollarSign, FileText, ClipboardList, Sparkles, Upload, Link2,
+  Building2, Calendar, DollarSign, FileText, ClipboardList, Sparkles, Upload, Link2, Printer, Loader2 as Loader2Icon,
 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { extractLpoFields } from "@/lib/ai-client";
+import { HelpButton } from "@/components/help-button";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 
 const BASE = import.meta.env.BASE_URL;
 const MAX_MB = 20;
@@ -346,6 +348,7 @@ export function LposList() {
           <p className="text-muted-foreground">LPOs received from clients for confirmed orders.</p>
         </div>
         <div className="flex items-center gap-3">
+          <HelpButton pageKey="lpos" />
           <ExportMenu
             data={(lpos ?? [])}
             columns={[
@@ -749,6 +752,25 @@ function LpoFormFields({
 function LpoDetailView({ lpo, linkedQuotation }: { lpo: any; linkedQuotation: any | null }) {
   const atts: AttachmentMeta[] = lpo.attachments ?? [];
   const BASE_URL = import.meta.env.BASE_URL;
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const el = document.getElementById(`lpo-detail-print-${lpo.id}`);
+      if (!el) return;
+      const filename = `LPO_${lpo.lpoNumber ?? lpo.id}.pdf`;
+      const { base64 } = await captureElementToPdfBase64(el, filename);
+      const link = document.createElement("a");
+      link.href = `data:application/pdf;base64,${base64}`;
+      link.download = filename;
+      link.click();
+    } catch {
+      /* silently ignore */
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   const InfoRow = ({ icon: Icon, label, value }: { icon: any; label: string; value: string }) => (
     value ? (
@@ -766,6 +788,21 @@ function LpoDetailView({ lpo, linkedQuotation }: { lpo: any; linkedQuotation: an
 
   return (
     <div className="space-y-5 py-1">
+      {/* PDF Download button */}
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={downloadingPdf}
+          onClick={handleDownloadPdf}
+          className="border-[#1e6ab0] text-[#0f2d5a] hover:bg-[#e8f1fb]"
+        >
+          {downloadingPdf
+            ? <><Loader2Icon className="w-3.5 h-3.5 mr-1.5 animate-spin" />Generating PDF…</>
+            : <><Printer className="w-3.5 h-3.5 mr-1.5" />Download PDF</>}
+        </Button>
+      </div>
+      <div id={`lpo-detail-print-${lpo.id}`} className="space-y-5">
       {/* Linked quotation banner */}
       {linkedQuotation && (
         <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
@@ -866,6 +903,7 @@ function LpoDetailView({ lpo, linkedQuotation }: { lpo: any; linkedQuotation: an
           <span>Updated: {new Date(lpo.updatedAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" })}</span>
         )}
       </div>
+      </div>{/* end lpo-detail-print */}
     </div>
   );
 }
