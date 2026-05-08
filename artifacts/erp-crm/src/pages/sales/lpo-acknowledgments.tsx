@@ -39,7 +39,7 @@ function formatBytes(b: number) {
   return `${(b / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const EMPTY_FORM = { quotationNumber: "", clientRef: "" };
+const EMPTY_FORM = { quotationNumber: "", clientRef: "" }; // clientRef auto-filled from quotation
 
 export function LpoAcknowledgments() {
   const { activeCompanyId } = useActiveCompany();
@@ -111,7 +111,6 @@ export function LpoAcknowledgments() {
 
   async function handleUpload() {
     if (!file) { toast({ title: "No file selected", variant: "destructive" }); return; }
-    if (!form.clientRef.trim()) { toast({ title: "Client ID / REF is required", variant: "destructive" }); return; }
     const companyId = activeCompanyId;
     if (!companyId) { toast({ title: "No company selected", variant: "destructive" }); return; }
 
@@ -122,7 +121,7 @@ export function LpoAcknowledgments() {
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           companyId,
-          customerName: form.clientRef.trim(),
+          customerName: form.clientRef.trim() || form.quotationNumber || "N/A",
           quotationNumber: form.quotationNumber || null,
           fileName: file.name,
           contentType: file.type,
@@ -357,16 +356,6 @@ export function LpoAcknowledgments() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Client ID / REF */}
-            <div className="space-y-1.5">
-              <Label>Client ID / REF <span className="text-red-500">*</span></Label>
-              <Input
-                placeholder="e.g. CL-001 or client reference…"
-                value={form.clientRef}
-                onChange={e => setForm(f => ({ ...f, clientRef: e.target.value }))}
-              />
             </div>
 
             {/* File upload */}
