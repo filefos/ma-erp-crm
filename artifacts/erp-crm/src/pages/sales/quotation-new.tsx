@@ -316,63 +316,61 @@ export function QuotationNew() {
                     <td className="px-2 text-center font-semibold text-[#1a3d6e] border border-[#6fa3d8] border-t-0 border-l-0 align-middle">
                       {String(i + 1).padStart(2, "0")}
                     </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
-                      <div className="flex flex-col h-full">
-                        <Select
-                          value=""
-                          onValueChange={v => {
-                            const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
-                            if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
-                            else if (preset?.value === "custom") updateItem(i, "description", "");
-                          }}
-                        >
-                          <SelectTrigger className="h-7 text-xs mb-1 shrink-0 bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
-                            <SelectValue placeholder="▾ Select template..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {DESCRIPTION_PRESETS.map(p => (
-                              <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Textarea
-                          value={item.description}
-                          onChange={e => updateItem(i, "description", e.target.value)}
-                          className="text-sm flex-1 min-h-[52px] resize-none bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
-                          placeholder="Select a template above or type freely..."
-                        />
-                      </div>
+                    <td className="p-1 border border-[#6fa3d8] border-t-0 align-top">
+                      <Select
+                        value=""
+                        onValueChange={v => {
+                          const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
+                          if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
+                          else if (preset?.value === "custom") updateItem(i, "description", "");
+                        }}
+                      >
+                        <SelectTrigger className="h-7 text-xs mb-1 w-full bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
+                          <SelectValue placeholder="▾ Select template..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DESCRIPTION_PRESETS.map(p => (
+                            <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Textarea
+                        value={item.description}
+                        onChange={e => updateItem(i, "description", e.target.value)}
+                        className="text-sm w-full min-h-[56px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                        placeholder="Select a template above or type freely..."
+                      />
                     </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
+                    <td className="p-0 border border-[#6fa3d8] border-t-0">
                       <Input
                         value={item.unit}
                         onChange={e => updateItem(i, "unit", e.target.value)}
-                        className="h-full min-h-[72px] text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                        className="h-full w-full min-h-[88px] rounded-none text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 border-[#6fa3d8]"
                         placeholder="e.g. 12X6X2.4M"
                       />
                     </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
+                    <td className="p-0 border border-[#6fa3d8] border-t-0">
                       <Input
                         type="number"
                         value={item.rate}
                         onChange={e => updateItem(i, "rate", e.target.value)}
-                        className="h-full min-h-[72px] text-right w-full text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                        className="h-full w-full min-h-[88px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
+                    <td className="p-0 border border-[#6fa3d8] border-t-0">
                       <Input
                         type="number"
                         value={item.quantity}
                         onChange={e => updateItem(i, "quantity", e.target.value)}
-                        className="h-full min-h-[72px] text-right w-full text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                        className="h-full w-full min-h-[88px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
+                    <td className="p-0 border border-[#6fa3d8] border-t-0">
                       <Input
                         type="number"
                         value={item.discount}
                         onChange={e => updateItem(i, "discount", e.target.value)}
-                        className="h-full min-h-[72px] text-right w-full text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                        className="h-full w-full min-h-[88px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                         min={0} max={100}
                       />
                     </td>
