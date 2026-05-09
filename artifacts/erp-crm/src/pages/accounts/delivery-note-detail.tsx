@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useState, useRef } from "react";
 import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
-import { ArrowLeft, Receipt, Mail, Loader2, Upload, Download, Trash2, FileCheck, Paperclip, AlertCircle } from "lucide-react";
+import { ArrowLeft, Receipt, Mail, Loader2, Upload, Download, Trash2, FileCheck, Paperclip, AlertCircle, Stamp, PenLine } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
@@ -46,6 +46,8 @@ export function DeliveryNoteDetail({ id }: Props) {
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloadingAtt, setDownloadingAtt] = useState<string | null>(null);
+  const [showStamp, setShowStamp] = useState(true);
+  const [showSignature, setShowSignature] = useState(true);
   const signedInputRef = useRef<HTMLInputElement>(null);
 
   async function authedFetch(url: string): Promise<string> {
@@ -120,8 +122,8 @@ export function DeliveryNoteDetail({ id }: Props) {
     companyLogo: (companies?.find((c: any) => c.id === dn.companyId) as any)?.logo ?? undefined,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (dn as any).clientCode ?? undefined,
-    preparedBySignatureUrl: (user as any)?.signatureUrl ?? undefined,
-    stampUrl: companies?.find((c: any) => c.id === dn.companyId)?.stamp ?? undefined,
+    preparedBySignatureUrl: showSignature ? ((user as any)?.signatureUrl ?? undefined) : undefined,
+    stampUrl: showStamp ? (companies?.find((c: any) => c.id === dn.companyId)?.stamp ?? undefined) : undefined,
   };
 
   const invalidate = () => {
@@ -217,7 +219,35 @@ export function DeliveryNoteDetail({ id }: Props) {
             </Link>
           </Button>
         ) : null}
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2 items-center">
+          {/* P.STAMP toggle */}
+          <button
+            type="button"
+            title={showStamp ? "Hide stamp from document" : "Show stamp on document"}
+            onClick={() => setShowStamp(s => !s)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
+              showStamp
+                ? "border-violet-500 text-violet-600 bg-violet-50 hover:bg-violet-100"
+                : "border-gray-300 text-gray-400 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <Stamp className="w-3.5 h-3.5" />
+            P.STAMP
+          </button>
+          {/* P.SIGNATURE toggle */}
+          <button
+            type="button"
+            title={showSignature ? "Hide signature from document" : "Show signature on document"}
+            onClick={() => setShowSignature(s => !s)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
+              showSignature
+                ? "border-orange-400 text-orange-500 bg-orange-50 hover:bg-orange-100"
+                : "border-gray-300 text-gray-400 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <PenLine className="w-3.5 h-3.5" />
+            P.SIGNATURE
+          </button>
           <HelpButton pageKey="delivery_notes" />
           <Button
             size="sm" variant="outline"
@@ -228,9 +258,9 @@ export function DeliveryNoteDetail({ id }: Props) {
               setDownloadingPdf(true);
               try {
                 const filename = `DeliveryNote_${dn.dnNumber ?? dn.id ?? "doc"}.pdf`;
-                const signatureUrl = user?.signatureUrl || undefined;
+                const signatureUrl = showSignature ? (user?.signatureUrl || undefined) : undefined;
                 const co = companies?.find(c => c.id === dn.companyId);
-                const stampUrl = co?.stamp || undefined;
+                const stampUrl = showStamp ? (co?.stamp || undefined) : undefined;
                 const stampWidthPct = co?.stampWidthPct ?? undefined;
                 const stampMarginPct = co?.stampMarginPct ?? undefined;
                 const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
@@ -251,9 +281,9 @@ export function DeliveryNoteDetail({ id }: Props) {
                 setGeneratingPdf(true);
                 try {
                   const filename = `DeliveryNote_${dn.dnNumber ?? dn.id ?? "doc"}.pdf`;
-                  const signatureUrl = user?.signatureUrl || undefined;
+                  const signatureUrl = showSignature ? (user?.signatureUrl || undefined) : undefined;
                   const co = companies?.find(c => c.id === dn.companyId);
-                  const stampUrl = co?.stamp || undefined;
+                  const stampUrl = showStamp ? (co?.stamp || undefined) : undefined;
                   const stampWidthPct = co?.stampWidthPct ?? undefined;
                   const stampMarginPct = co?.stampMarginPct ?? undefined;
                   const { base64 } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
