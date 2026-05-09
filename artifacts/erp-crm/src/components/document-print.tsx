@@ -897,8 +897,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                         className="flex items-center gap-2 px-3 py-[5px]"
                         style={{ backgroundColor: "#1e3a6e", ...printStyle }}
                       >
-                        <span className="text-[11px] font-black text-white shrink-0">{sec.num}</span>
-                        <span className="text-[11px] font-black text-white uppercase tracking-widest">{sec.title}</span>
+                        <span className="text-[13px] font-black text-white shrink-0">{sec.num}</span>
+                        <span className="text-[13px] font-black text-white uppercase tracking-widest">{sec.title}</span>
                       </div>
                       {/* Items */}
                       <table className="w-full border-collapse">
@@ -908,13 +908,13 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                             return (
                               <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? "#f0f4f9" : "#ffffff", ...printStyle }}>
                                 <td
-                                  className="border border-gray-300 px-2 py-[4px] text-[10.5px] font-semibold text-gray-600 text-center align-top"
-                                  style={{ width: 28 }}
+                                  className="border border-gray-300 px-2 py-[5px] text-[12px] font-semibold text-gray-600 text-center align-top"
+                                  style={{ width: 30 }}
                                 >
                                   {item.num}
                                 </td>
                                 <td
-                                  className={`border border-gray-300 px-3 py-[4px] text-[10.5px] leading-snug align-top ${isCheque ? "font-bold text-[#0f2d5a]" : "text-gray-800"}`}
+                                  className={`border border-gray-300 px-3 py-[5px] text-[12px] leading-snug align-top ${isCheque ? "font-bold text-[#0f2d5a]" : "text-gray-800"}`}
                                 >
                                   {item.body}
                                 </td>
