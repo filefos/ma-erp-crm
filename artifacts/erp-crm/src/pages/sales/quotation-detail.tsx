@@ -4,6 +4,7 @@ import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf
 import {
   useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
   useCreateTaxInvoice, useCreateDeliveryNote,
+  useCreateUndertakingLetter, useCreateHandoverNote,
   getGetQuotationQueryKey, useListCompanies,
   getListProformaInvoicesQueryKey, getListTaxInvoicesQueryKey,
 } from "@workspace/api-client-react";
@@ -14,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2, Mail, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2, Mail, Loader2, Download, FileCheck, ClipboardCheck } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { DocumentPrint } from "@/components/document-print";
@@ -117,6 +118,28 @@ export function QuotationDetail({ id }: Props) {
     },
   });
 
+  const createUL = useCreateUndertakingLetter({
+    mutation: {
+      onSuccess: (ul: any) => {
+        toast({ title: "Undertaking Letter created!", description: ul.ulNumber });
+        navigate("/accounts/undertaking-letters/" + ul.id);
+      },
+      onError: () => toast({ title: "Failed to create Undertaking Letter.", variant: "destructive" }),
+      onSettled: () => setConverting(null),
+    },
+  });
+
+  const createHON = useCreateHandoverNote({
+    mutation: {
+      onSuccess: (hon: any) => {
+        toast({ title: "Handover Note created!", description: hon.honNumber });
+        navigate("/accounts/handover-notes/" + hon.id);
+      },
+      onError: () => toast({ title: "Failed to create Handover Note.", variant: "destructive" }),
+      onSettled: () => setConverting(null),
+    },
+  });
+
   // When opening the dialog, prime installments from quotation's payment terms
   useEffect(() => {
     if (!convertOpen || !q) return;
@@ -210,6 +233,36 @@ export function QuotationDetail({ id }: Props) {
     stampUrl: companies?.find(c => c.id === q.companyId)?.stamp ?? undefined,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (q as any).clientCode ?? undefined,
+  };
+
+  const handleConvertToUL = () => {
+    if (converting) return;
+    setConverting("ul");
+    createUL.mutate({ data: {
+      companyId: q.companyId,
+      clientName: q.clientName,
+      projectRef: q.projectName ?? undefined,
+      scope: q.projectName ?? undefined,
+      date: new Date().toISOString().split("T")[0],
+      status: "draft",
+      quotationId: q.id,
+      ...({ clientCode: (q as any).clientCode, clientPhone: q.clientPhone, clientEmail: q.clientEmail } as Record<string, unknown>),
+    } as any });
+  };
+
+  const handleConvertToHON = () => {
+    if (converting) return;
+    setConverting("hon");
+    createHON.mutate({ data: {
+      companyId: q.companyId,
+      clientName: q.clientName,
+      projectRef: q.projectName ?? undefined,
+      projectDescription: q.projectName ?? undefined,
+      handoverDate: new Date().toISOString().split("T")[0],
+      status: "draft",
+      quotationId: q.id,
+      ...({ clientCode: (q as any).clientCode, clientPhone: q.clientPhone, clientEmail: q.clientEmail } as Record<string, unknown>),
+    } as any });
   };
 
   const handleConvertToDN = () => {
@@ -458,6 +511,12 @@ export function QuotationDetail({ id }: Props) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleConvertToDN}>
                 <Package className="w-4 h-4 mr-2 text-purple-600" />Delivery Note
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConvertToUL}>
+                <FileCheck className="w-4 h-4 mr-2 text-violet-600" />Undertaking Letter
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleConvertToHON}>
+                <ClipboardCheck className="w-4 h-4 mr-2 text-orange-600" />Handover Note
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
