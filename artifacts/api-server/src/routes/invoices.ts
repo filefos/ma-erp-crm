@@ -176,11 +176,15 @@ router.post("/tax-invoices", requirePermission("tax_invoices", "create"), requir
   const data = req.body;
   const invoiceNumber = await genDocNumber(data.companyId, "INV", taxInvoicesTable);
 
-  // Inherit Client Code from quotation/lpo if not provided.
+  // Inherit Client Code + additional_items base from quotation/lpo if not provided.
   let clientCode: string | undefined = data.clientCode;
-  if (!clientCode && data.quotationId) {
-    const [q] = await db.select({ clientCode: quotationsTable.clientCode }).from(quotationsTable).where(eq(quotationsTable.id, data.quotationId));
-    if (q?.clientCode) clientCode = q.clientCode;
+  let linkedQuotation: typeof quotationsTable.$inferSelect | undefined;
+  if (data.quotationId) {
+    const [q] = await db.select().from(quotationsTable).where(eq(quotationsTable.id, data.quotationId));
+    if (q) {
+      linkedQuotation = q;
+      if (!clientCode && q.clientCode) clientCode = q.clientCode;
+    }
   }
   if (!clientCode && data.lpoId) {
     const [l] = await db.select({ clientCode: lposTable.clientCode }).from(lposTable).where(eq(lposTable.id, data.lpoId));
@@ -195,15 +199,33 @@ router.post("/tax-invoices", requirePermission("tax_invoices", "create"), requir
   let vatAmount = data.vatAmount ?? 0;
   let grandTotal = data.grandTotal ?? 0;
   if (items.length > 0 && items.some(i => typeof i.amount === "number" || typeof i.rate === "number")) {
-    subtotal = 0; vatAmount = 0;
+    let projectSubtotal = 0;
     for (const it of items) {
       const lineAmount = typeof it.amount === "number" ? it.amount : (it.quantity ?? 1) * (it.rate ?? 0);
-      const lineVat = typeof it.vatPercent === "number" ? it.vatPercent : docVat;
-      subtotal += lineAmount;
-      vatAmount += lineAmount * lineVat / 100;
+      projectSubtotal += lineAmount;
     }
-    subtotal = +subtotal.toFixed(2);
-    vatAmount = +vatAmount.toFixed(2);
+    projectSubtotal = +projectSubtotal.toFixed(2);
+
+    // Add included additional commercial items (scaled to the installment fraction)
+    // so that inv.subtotal = combined base × fraction — matching how PIs are stored.
+    // e.g. 70% TI from QTN (project 24,700 + additional 5,200 = 29,900):
+    //   projectSubtotal=17,290 → fraction=70% → additionalScaled=3,640 → combined=20,930
+    let additionalIncluded = 0;
+    if (linkedQuotation) {
+      const qProjectSubtotal = Number(linkedQuotation.subtotal ?? 0);
+      let qAdditionalRaw: any[] = [];
+      try { qAdditionalRaw = JSON.parse(linkedQuotation.additionalItems ?? "[]"); } catch { /**/ }
+      const qAdditionalIncluded = qAdditionalRaw.reduce(
+        (s: number, ai: any) => s + (ai.status === "Included" ? ((ai.price ?? 0) * (ai.quantity ?? 1)) : 0), 0
+      );
+      if (qProjectSubtotal > 0 && qAdditionalIncluded > 0) {
+        const fraction = projectSubtotal / qProjectSubtotal;
+        additionalIncluded = +(qAdditionalIncluded * fraction).toFixed(2);
+      }
+    }
+
+    subtotal = +(projectSubtotal + additionalIncluded).toFixed(2);
+    vatAmount = +(subtotal * docVat / 100).toFixed(2);
     grandTotal = +(subtotal + vatAmount).toFixed(2);
   }
   const balance = grandTotal - (data.amountPaid ?? 0);
