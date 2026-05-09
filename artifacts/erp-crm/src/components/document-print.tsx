@@ -686,36 +686,36 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {!isQuotation && (
           <div className="mt-auto" style={{ paddingBottom: "50px" }}>
             {data.type === "delivery_note" ? (
-              /* Delivery note: stamp above our company, signature above client company */
-              <div className="flex items-end justify-between text-xs pt-3 pb-3 px-4">
-                {/* Left — signature + stamp together, then For & on behalf of our company */}
+              /* Delivery note: left = Prepared by + signature; right = For & on behalf of + coName + stamp */
+              <div className="flex items-start justify-between text-xs pt-3 pb-3 px-4">
+                {/* Left — Prepared by: name + signature below */}
                 <div>
-                  <div data-html2canvas-ignore="true" style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 8 }}>
-                    {data.preparedBySignatureUrl && (
+                  <div className="font-bold mb-0.5">Prepared by:</div>
+                  <div className="text-gray-700 mb-3">{data.preparedByName ?? co.contact}</div>
+                  {data.preparedBySignatureUrl && (
+                    <div data-html2canvas-ignore="true">
                       <img
                         src={data.preparedBySignatureUrl}
                         alt="Signature"
                         style={{ maxHeight: 56, maxWidth: 140, objectFit: "contain", opacity: 0.85 }}
                       />
-                    )}
-                    {data.stampUrl && (
+                    </div>
+                  )}
+                </div>
+                {/* Right — For & on behalf of + coName + stamp below */}
+                <div className="text-right">
+                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                  <div className="font-bold text-[13px] mb-2">{coName}</div>
+                  {data.stampUrl && (
+                    <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end" }}>
                       <img
                         src={data.stampUrl}
                         alt="Stamp"
                         style={{ maxHeight: 150, maxWidth: 150, objectFit: "contain", opacity: 0.85 }}
                       />
-                    )}
-                  </div>
-                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                  <div className="font-bold text-[13px]">{coName}</div>
+                    </div>
+                  )}
                 </div>
-                {/* Right — For & on behalf of client (no image) */}
-                {data.clientName && (
-                  <div className="text-right">
-                    <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                    <div className="font-bold text-[13px]">{data.clientName}</div>
-                  </div>
-                )}
               </div>
             ) : (
               /* All other documents: Prepared by on left, For & on behalf on right */
