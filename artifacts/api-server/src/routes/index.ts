@@ -31,6 +31,8 @@ import deployRouter from "./deploy";
 import delegatedTasksRouter from "./delegated-tasks";
 import lpoAcknowledgmentsRouter from "./lpo-acknowledgments";
 import companyDocumentsRouter from "./company-documents";
+import dealsRouter from "./deals";
+import crmActivitiesRouter from "./crm-activities";
 
 const router: IRouter = Router();
 
@@ -70,5 +72,7 @@ router.use(deployRouter);
 router.use(delegatedTasksRouter);
 router.use(lpoAcknowledgmentsRouter);
 router.use(companyDocumentsRouter);
+router.use(dealsRouter);
+router.use(crmActivitiesRouter);
 
 export default router;

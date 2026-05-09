@@ -5083,6 +5083,8 @@ components:
           type: integer
         contactId:
           type: integer
+        companyId:
+          type: integer
         isDone:
           type: boolean
       required: [type, subject]

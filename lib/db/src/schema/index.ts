@@ -22,3 +22,5 @@ export * from "./messages";
 export * from "./delegated-tasks";
 export * from "./lpo-acknowledgments";
 export * from "./company-documents";
+export * from "./deals";
+export * from "./crm-activities";

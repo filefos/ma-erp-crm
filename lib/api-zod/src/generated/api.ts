@@ -1313,6 +1313,7 @@ export const CreateActivityBody = zod.object({
   leadId: zod.number().optional(),
   dealId: zod.number().optional(),
   contactId: zod.number().optional(),
+  companyId: zod.number().optional(),
   isDone: zod.boolean().optional(),
 });
 
@@ -1331,6 +1332,7 @@ export const UpdateActivityBody = zod.object({
   leadId: zod.number().optional(),
   dealId: zod.number().optional(),
   contactId: zod.number().optional(),
+  companyId: zod.number().optional(),
   isDone: zod.boolean().optional(),
 });
 

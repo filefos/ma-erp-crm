@@ -14,5 +14,6 @@ export interface CreateActivityBody {
   leadId?: number;
   dealId?: number;
   contactId?: number;
+  companyId?: number;
   isDone?: boolean;
 }
