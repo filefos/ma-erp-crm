@@ -126,6 +126,8 @@ export function InvoiceDetail({ id }: Props) {
     companyLogo: (companies?.find((c: any) => c.id === inv.companyId) as any)?.logo ?? undefined,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (inv as any).clientCode ?? undefined,
+    preparedBySignatureUrl: (user as any)?.signatureUrl ?? undefined,
+    stampUrl: companies?.find((c: any) => c.id === inv.companyId)?.stamp ?? undefined,
   };
 
   const handleCreateDN = () => {

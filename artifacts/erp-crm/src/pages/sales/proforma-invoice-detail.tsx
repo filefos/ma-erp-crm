@@ -107,6 +107,8 @@ export function ProformaInvoiceDetail({ id }: Props) {
     preparedByName: (pi as any).preparedByName,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (pi as any).clientCode ?? undefined,
+    preparedBySignatureUrl: (user as any)?.signatureUrl ?? undefined,
+    stampUrl: companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined,
   };
 
   const handleConvertToTax = () => {

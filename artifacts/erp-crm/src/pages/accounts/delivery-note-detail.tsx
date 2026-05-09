@@ -120,6 +120,8 @@ export function DeliveryNoteDetail({ id }: Props) {
     companyLogo: (companies?.find((c: any) => c.id === dn.companyId) as any)?.logo ?? undefined,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (dn as any).clientCode ?? undefined,
+    preparedBySignatureUrl: (user as any)?.signatureUrl ?? undefined,
+    stampUrl: companies?.find((c: any) => c.id === dn.companyId)?.stamp ?? undefined,
   };
 
   const invalidate = () => {

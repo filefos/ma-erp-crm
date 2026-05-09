@@ -572,7 +572,7 @@ export function LposList() {
                 stampUrl={companies.find(c => c.id === selectedLpo?.companyId)?.stamp ?? undefined}
                 stampWidthPct={companies.find(c => c.id === selectedLpo?.companyId)?.stampWidthPct ?? undefined}
                 stampMarginPct={companies.find(c => c.id === selectedLpo?.companyId)?.stampMarginPct ?? undefined}
-                canSign={canSignDocuments((user as any)?.permissionLevel)}
+                canSign={true}
               />
             )
           )}
