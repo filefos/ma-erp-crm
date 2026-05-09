@@ -21,4 +21,10 @@ export const STANDARD_TC = `1. COMMERCIAL BASIS
 4. TECHNICAL & GENERAL NOTES
 1. All drawings and designs remain subject to client approval. The attached technical specification shall be considered the governing reference for manufacturing and installation.
 2. As part of our quality-control procedures, we reserve the right to introduce, upgrade, or modify materials with equivalent or better performance where required.
-3. For any queries or clarifications, please contact our sales team. We shall be pleased to assist you.`;
+3. For any queries or clarifications, please contact our sales team. We shall be pleased to assist you.
+
+5. WARRANTY
+1. Steel Structure; 05 years steel structure warranty.
+2. Roof Leakage; 01 Year Roof leakage warranty.
+3. Sanitary Items; for sanitary items no warranty from the supplier.
+4. Damage; Any damage and breaking no warranty.`;
