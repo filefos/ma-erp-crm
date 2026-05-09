@@ -188,6 +188,8 @@ export function QuotationDetail({ id }: Props) {
       total: i.amount,
     })),
     preparedByName: (q as any).preparedByName,
+    preparedBySignatureUrl: (user as any)?.signatureUrl ?? undefined,
+    stampUrl: companies?.find(c => c.id === q.companyId)?.stamp ?? undefined,
     printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
     clientCode: (q as any).clientCode ?? undefined,
   };

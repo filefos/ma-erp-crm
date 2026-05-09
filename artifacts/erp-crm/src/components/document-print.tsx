@@ -58,6 +58,7 @@ export interface DocumentData {
   items: DocumentItem[];
   preparedByName?: string;
   preparedBySignatureUrl?: string;
+  stampUrl?: string;
   approvedByName?: string;
   vehicleNumber?: string;
   driverName?: string;
@@ -675,10 +676,28 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <div>
                 <div className="font-bold mb-1">Prepared by:</div>
                 <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+                {data.preparedBySignatureUrl && (
+                  <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                    <img
+                      src={data.preparedBySignatureUrl}
+                      alt="Signature"
+                      style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85, display: "block" }}
+                    />
+                  </div>
+                )}
               </div>
               <div>
                 <div className="font-bold mb-1">For &amp; on behalf of</div>
                 <div className="font-bold text-[13px]">{coName}</div>
+                {data.stampUrl && (
+                  <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                    <img
+                      src={data.stampUrl}
+                      alt="Stamp"
+                      style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85, display: "block" }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <PageFooter
