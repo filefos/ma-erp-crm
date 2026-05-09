@@ -128,6 +128,7 @@ router.post("/users", requirePermissionLevel("company_admin"), validateBody(Crea
     name, email: email.toLowerCase(), passwordHash: await hashPassword(password),
     phone, role: role ?? "user", departmentId, companyId, permissionLevel: permissionLevel ?? "user",
     userCode,
+    uniqueUserId: userCode,
   }).returning();
 
   // Maintain user_company_access rows

@@ -536,6 +536,13 @@ export function UsersList() {
           <DialogContent>
             <DialogHeader><DialogTitle>New User</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="space-y-1 col-span-2">
+                <Label>User ID</Label>
+                <div className="flex items-center gap-2 h-9 px-3 rounded-md border bg-muted/50">
+                  <span className="font-mono text-[11px] font-bold bg-[#0f2d5a] text-white px-2 py-0.5 rounded tracking-wide">Auto-generated</span>
+                  <span className="text-xs text-muted-foreground">e.g. USR-0001 — assigned on save</span>
+                </div>
+              </div>
               <div className="space-y-1 col-span-2"><Label>Full Name *</Label><Input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} /></div>
               <div className="space-y-1"><Label>Email *</Label><Input type="email" value={form.email} onChange={e => setForm(p => ({...p, email: e.target.value}))} /></div>
               <div className="space-y-1"><Label>Password *</Label><Input type="password" value={form.password} onChange={e => setForm(p => ({...p, password: e.target.value}))} /></div>
@@ -609,7 +616,7 @@ export function UsersList() {
               const departmentId = (u as { departmentId?: number | null }).departmentId ?? null;
               const companyId = (u as { companyId?: number | null }).companyId ?? null;
               const phone = (u as { phone?: string | null }).phone ?? null;
-              const uniqueUserId = (u as any).uniqueUserId as string | null | undefined;
+              const uniqueUserId = ((u as any).uniqueUserId ?? (u as any).userCode) as string | null | undefined;
               const createdAt = (u as any).createdAt as string | null | undefined;
               return (
                 <TableRow key={u.id} data-testid={`user-row-${u.id}`}>
