@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { CompanyField } from "@/components/CompanyField";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Pencil, Trash2, CheckCircle, BookOpen, X } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, CheckCircle, BookOpen, X, RotateCcw } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { AccountsPageHeader } from "@/components/accounts-page-header";
@@ -52,7 +52,20 @@ export function JournalEntriesList() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["/journal-entries"] });
   const createMutation = useCreateJournalEntry({ mutation: { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Journal entry created." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
-  const updateMutation = useUpdateJournalEntry({ mutation: { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Updated." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
+  const updateMutation = useUpdateJournalEntry({
+    mutation: {
+      onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Updated." }); },
+      onError: (e: any) => {
+        const msg: string = e?.message ?? "Failed";
+        if (msg.toLowerCase().includes("approved")) {
+          invalidate();
+          toast({ title: "Cannot edit an approved entry", description: "The list has been refreshed. Use 'Create Reversal' to correct it.", variant: "destructive" });
+        } else {
+          toast({ title: msg, variant: "destructive" });
+        }
+      },
+    },
+  });
   const deleteMutation = useDeleteJournalEntry({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Deleted." }); } } });
   const approveMutation = useApproveJournalEntry({ mutation: { onSuccess: () => { invalidate(); toast({ title: "Journal entry approved." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
 
@@ -64,6 +77,28 @@ export function JournalEntriesList() {
   const selectedEntry = entries.find(e => e.id === detailId);
 
   const openCreate = () => { setEditId(null); setForm({ ...EMPTY, lines: [{ ...EMPTY_LINE }, { ...EMPTY_LINE }] }); setOpen(true); };
+
+  const openReversal = (entry: any) => {
+    const today = new Date().toISOString().split("T")[0];
+    setEditId(null);
+    setForm({
+      companyId: String(entry.companyId),
+      entryDate: today,
+      description: `Reversal of ${entry.journalNumber} — ${entry.description}`,
+      reference: `REV-${entry.reference ?? entry.journalNumber}`,
+      status: "draft",
+      lines: (entry.lines ?? []).map((l: any) => ({
+        accountName: l.accountName,
+        accountId: l.accountId,
+        description: l.description ?? "",
+        debit: String(l.credit ?? 0),
+        credit: String(l.debit ?? 0),
+      })),
+    });
+    setDetailId(null);
+    setOpen(true);
+  };
+
   const openEdit = (e: any) => {
     if (e.status === "approved") { toast({ title: "Cannot edit approved entries.", variant: "destructive" }); return; }
     setEditId(e.id);
@@ -232,16 +267,22 @@ export function JournalEntriesList() {
                   </TableBody>
                 </Table>
               </div>
-              {selectedEntry.status === "draft" && (
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => openEdit(selectedEntry)}>
-                    <Pencil className="w-4 h-4 mr-2" />Edit
+              <div className="flex gap-2 justify-end">
+                {selectedEntry.status === "draft" ? (
+                  <>
+                    <Button variant="outline" onClick={() => openEdit(selectedEntry)}>
+                      <Pencil className="w-4 h-4 mr-2" />Edit
+                    </Button>
+                    <Button className="bg-green-700 hover:bg-green-800" onClick={() => { if (confirm("Approve this journal entry?")) { approveMutation.mutate({ id: selectedEntry.id }); setDetailId(null); } }}>
+                      <CheckCircle className="w-4 h-4 mr-2" />Approve
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline" onClick={() => openReversal(selectedEntry)} title="Create a new draft entry with all debits and credits reversed">
+                    <RotateCcw className="w-4 h-4 mr-2" />Create Reversal Entry
                   </Button>
-                  <Button className="bg-green-700 hover:bg-green-800" onClick={() => { if (confirm("Approve this journal entry?")) { approveMutation.mutate({ id: selectedEntry.id }); setDetailId(null); } }}>
-                    <CheckCircle className="w-4 h-4 mr-2" />Approve
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
