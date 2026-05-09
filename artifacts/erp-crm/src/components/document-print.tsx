@@ -703,7 +703,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   </div>
                 )}
               </div>
-              <div className="text-right">
+              <div className={data.type === "delivery_note" ? "text-left" : "text-right"}>
                 <div className="font-bold mb-0.5">For &amp; on behalf of</div>
                 <div className="font-bold text-[13px]">{coName}</div>
                 {data.stampUrl && (
@@ -711,7 +711,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                     <img
                       src={data.stampUrl}
                       alt="Stamp"
-                      style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: "auto" }}
+                      style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: data.type === "delivery_note" ? 0 : "auto" }}
                     />
                   </div>
                 )}
