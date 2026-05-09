@@ -1308,7 +1308,7 @@ export function LpoAcknowledgments() {
                 <div
                   ref={acLetterRef}
                   className="bg-white mx-auto shadow-2xl font-sans text-black"
-                  style={{ maxWidth: 850, minHeight: 1123 }}
+                  style={{ maxWidth: 850, minHeight: 1123, display: "flex", flexDirection: "column" }}
                 >
                   {/* ══ LETTERHEAD — exact match to document-print.tsx ══ */}
                   <div className="overflow-hidden mb-[2px]">
@@ -1365,7 +1365,7 @@ export function LpoAcknowledgments() {
                   </div>
 
                   {/* ══ LETTER BODY ══ */}
-                  <div style={{ padding: "20px 24px 0" }}>
+                  <div style={{ padding: "20px 24px 0", flex: 1 }}>
                     <div style={{ fontSize: 11, color: "#333", marginBottom: 14 }}>Dear Sir/Madam,</div>
 
                     {paras.map((p, i) => (
@@ -1412,7 +1412,7 @@ export function LpoAcknowledgments() {
                   </div>
 
                   {/* ══ FOOTER — exact match to PageFooter in document-print.tsx ══ */}
-                  <div style={{ padding: "0 24px 12px", marginTop: "auto" }}>
+                  <div style={{ padding: "0 24px 12px" }}>
                     <div style={{ textAlign: "center", fontSize: 10, fontStyle: "italic", color: "#0f2d5a", marginBottom: 4 }}>
                       This is a computer generated document.
                     </div>
