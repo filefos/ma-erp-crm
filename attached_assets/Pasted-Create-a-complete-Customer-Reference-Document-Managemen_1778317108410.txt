@@ -1,0 +1,131 @@
+Create a complete Customer Reference & Document Management System.
+
+Purpose:
+Every customer should have one centralized record where all related documents, references, payment records, and attachments are stored and easily accessible.
+
+Required customer document references:
+
+1. Quotation
+2. Client LPO
+3. Proforma Invoice
+4. Tax Invoice
+5. Delivery Note
+6. Undertaking Letter
+7. Handing Over Note
+8. Cheque / Payment Receipts
+9. Cheque Record
+10. Online Transfer Receipt Record
+
+Important Requirement:
+Every customer must have cheque copy records and payment attachment records.
+
+Frontend Requirements:
+Create a “Customer Reference Documents” section inside customer profile.
+
+For each customer, show:
+- Customer details
+- Project details
+- Document list
+- Payment history
+- Attachment history PROJECT WISE MEAN PROJECT UNIQUE ID
+
+Each document type should support:
+- Multiple attachments
+- Upload attachment
+- View attachment
+- Download attachment
+- Replace/update attachment
+- Delete attachment
+- PDF preview
+- Image preview
+
+For payment records:
+- Upload cheque copy
+- Upload online transfer receipt
+- Upload payment receipt
+- Add payment remarks
+- Add cheque details:
+  - Cheque number
+  - Bank name
+  - Amount
+  - Date
+  - Status
+- Add online transfer details:
+  - Transfer reference number
+  - Bank name
+  - Amount
+  - Date
+  - Screenshot/PDF attachment
+
+Customer Reference Page:
+Create one-click customer reference page/dashboard showing:
+- Quotation history
+- LPO history
+- Invoice history
+- Delivery records
+- Undertaking letters
+- Handing over notes
+- Payment history
+- Cheque copies
+- Transfer receipts
+- Outstanding balance
+- Uploaded documents
+
+Backend Requirements:
+Create database structure to store:
+- Customer ID
+- Customer Name
+- Document Type
+- Reference Number
+- File Name
+- File Path
+- Upload Date
+- Uploaded By
+- Remarks
+- Revision Number
+- Payment Status
+- Cheque Details
+- Transfer Details
+
+Create APIs for:
+- Upload document
+- Fetch customer documents
+- View/download attachments
+- Replace/update attachments
+- Delete/archive attachments
+- Search documents by customer/reference number
+
+Attachment Rules:
+- Allow multiple attachments for each document type.
+- Preserve old attachments if required.
+- Support revision tracking (R1, R2, R3).
+- Show attachment history.
+
+Payment Record Requirements:
+- Every customer must have payment attachment records.
+- Every customer must have cheque copy records.
+- Every cheque/payment attachment must be linked with:
+  - Customer
+  - Invoice
+  - LPO
+  - Quotation if available
+
+UI Requirements:
+- Modern document management UI
+- Search and filter options
+- Tabs for:
+  - Quotations
+  - LPO
+  - Invoices
+  - Delivery Notes
+  - Payments
+  - Attachments
+- Quick preview without download
+- Mobile responsive
+
+Important:
+- Do not remove existing working features.
+- Keep all references linked together.
+- Ensure all attachments are securely stored.
+- Ensure every customer can access complete reference history from one page.
+- Ensure payment attachments and cheque copies are mandatory records.

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, contactsTable, quotationsTable, lposTable, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable } from "@workspace/db";
+import { db, contactsTable, quotationsTable, lposTable, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, undertakingLettersTable, handoverNotesTable, paymentsReceivedTable } from "@workspace/db";
 import { eq, inArray, or, ilike, sql } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 import { genClientCode, findDuplicateContact } from "../lib/client-code";
@@ -117,13 +117,6 @@ router.get("/contacts/:id/documents", requirePermission("contacts", "view"), asy
   const code = contact.clientCode;
   const namePat = `%${contact.name}%`;
 
-  const codeOrName = <T extends { clientCode?: string | null; clientName: string }>(table: T) => {
-    void table;
-    return code
-      ? or(ilike(quotationsTable.clientCode, code), ilike(quotationsTable.clientName, namePat))
-      : ilike(quotationsTable.clientName, namePat);
-  };
-
   const matchQ = (tbl: typeof quotationsTable) =>
     code ? or(ilike(tbl.clientCode, code), ilike(tbl.clientName, namePat))! : ilike(tbl.clientName, namePat);
   const matchL = (tbl: typeof lposTable) =>
@@ -134,15 +127,22 @@ router.get("/contacts/:id/documents", requirePermission("contacts", "view"), asy
     code ? or(ilike(tbl.clientCode, code), ilike(tbl.clientName, namePat))! : ilike(tbl.clientName, namePat);
   const matchD = (tbl: typeof deliveryNotesTable) =>
     ilike(tbl.clientName, namePat);
+  const matchUL = (tbl: typeof undertakingLettersTable) =>
+    ilike(tbl.clientName, namePat);
+  const matchHON = (tbl: typeof handoverNotesTable) =>
+    ilike(tbl.clientName, namePat);
+  const matchPmt = (tbl: typeof paymentsReceivedTable) =>
+    ilike(tbl.customerName, namePat);
 
-  void codeOrName;
-
-  const [quotations, lpos, proformas, invoices, deliveryNotes] = await Promise.all([
+  const [quotations, lpos, proformas, invoices, deliveryNotes, undertakingLetters, handoverNotes, payments] = await Promise.all([
     db.select().from(quotationsTable).where(matchQ(quotationsTable)).orderBy(sql`${quotationsTable.createdAt} desc`).limit(100),
     db.select().from(lposTable).where(matchL(lposTable)).orderBy(sql`${lposTable.createdAt} desc`).limit(100),
     db.select().from(proformaInvoicesTable).where(matchP(proformaInvoicesTable)).orderBy(sql`${proformaInvoicesTable.createdAt} desc`).limit(100),
     db.select().from(taxInvoicesTable).where(matchI(taxInvoicesTable)).orderBy(sql`${taxInvoicesTable.createdAt} desc`).limit(100),
     db.select().from(deliveryNotesTable).where(matchD(deliveryNotesTable)).orderBy(sql`${deliveryNotesTable.createdAt} desc`).limit(100),
+    db.select().from(undertakingLettersTable).where(matchUL(undertakingLettersTable)).orderBy(sql`${undertakingLettersTable.createdAt} desc`).limit(100),
+    db.select().from(handoverNotesTable).where(matchHON(handoverNotesTable)).orderBy(sql`${handoverNotesTable.createdAt} desc`).limit(100),
+    db.select().from(paymentsReceivedTable).where(matchPmt(paymentsReceivedTable)).orderBy(sql`${paymentsReceivedTable.createdAt} desc`).limit(100),
   ]);
 
   const scopedQuotations = scopeFilter(req, quotations);
@@ -150,12 +150,13 @@ router.get("/contacts/:id/documents", requirePermission("contacts", "view"), asy
   const scopedProformas = scopeFilter(req, proformas);
   const scopedInvoices = scopeFilter(req, invoices);
   const scopedDns = scopeFilter(req, deliveryNotes);
+  const scopedUls = scopeFilter(req, undertakingLetters);
+  const scopedHons = scopeFilter(req, handoverNotes);
+  const scopedPayments = scopeFilter(req, payments);
 
   const totalInvoiced = scopedInvoices.reduce((s, i) => s + Number((i as any).grandTotal ?? 0), 0);
-  const totalPaid = scopedInvoices
-    .filter((i: any) => i.status === "paid")
-    .reduce((s, i) => s + Number((i as any).grandTotal ?? 0), 0);
-  const outstandingBalance = totalInvoiced - totalPaid;
+  const totalPaid = scopedPayments.reduce((s, p) => s + Number(p.amount ?? 0), 0);
+  const outstandingBalance = Math.max(0, totalInvoiced - totalPaid);
 
   res.json({
     contact,
@@ -164,10 +165,17 @@ router.get("/contacts/:id/documents", requirePermission("contacts", "view"), asy
     proformas: scopedProformas,
     invoices: scopedInvoices,
     deliveryNotes: scopedDns,
+    undertakingLetters: scopedUls,
+    handoverNotes: scopedHons,
+    payments: scopedPayments,
     summary: {
       quotationCount: scopedQuotations.length,
       lpoCount: scopedLpos.length,
       invoiceCount: scopedInvoices.length,
+      deliveryCount: scopedDns.length,
+      undertakingCount: scopedUls.length,
+      handoverCount: scopedHons.length,
+      paymentCount: scopedPayments.length,
       totalInvoiced,
       totalPaid,
       outstandingBalance,
