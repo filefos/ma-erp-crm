@@ -686,8 +686,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {!isQuotation && (
           <div className="mt-auto" style={{ paddingBottom: "50px" }}>
             {data.type === "delivery_note" ? (
-              /* Delivery note: For & on behalf spans from left edge; signature floats right */
-              <div className="flex items-start justify-between text-xs border-t border-gray-400 pt-3 pb-3 px-4">
+              /* Delivery note: For & on behalf spans from left edge; client name + signature on far right */
+              <div className="flex items-start justify-between text-xs pt-3 pb-3 px-4">
                 <div>
                   <div className="font-bold mb-0.5">For &amp; on behalf of</div>
                   <div className="font-bold text-[13px]">{coName}</div>
@@ -701,15 +701,20 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                     </div>
                   )}
                 </div>
-                {data.preparedBySignatureUrl && (
-                  <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end", paddingTop: 46 }}>
-                    <img
-                      src={data.preparedBySignatureUrl}
-                      alt="Signature"
-                      style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
-                    />
-                  </div>
-                )}
+                <div className="text-right">
+                  {data.clientName && (
+                    <div className="font-bold text-[13px] mb-0.5">{data.clientName}</div>
+                  )}
+                  {data.preparedBySignatureUrl && (
+                    <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end", paddingTop: 46 }}>
+                      <img
+                        src={data.preparedBySignatureUrl}
+                        alt="Signature"
+                        style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               /* All other documents: Prepared by on left, For & on behalf on right */
