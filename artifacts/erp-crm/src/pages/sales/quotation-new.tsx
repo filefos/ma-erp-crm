@@ -169,6 +169,16 @@ export function QuotationNew() {
     });
   };
 
+  const handleDescriptionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, i: number) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const ta = e.currentTarget;
+    const pos = ta.selectionStart;
+    const newVal = ta.value.slice(0, pos) + "\n• " + ta.value.slice(ta.selectionEnd);
+    updateItem(i, "description", newVal);
+    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = pos + 3; });
+  };
+
   const updateAdditionalItem = (i: number, field: keyof AdditionalItem, val: string | number) => {
     setAdditionalItems(prev => {
       const next = [...prev];
@@ -337,6 +347,7 @@ export function QuotationNew() {
                       <Textarea
                         value={item.description}
                         onChange={e => updateItem(i, "description", e.target.value)}
+                        onKeyDown={e => handleDescriptionKeyDown(e, i)}
                         className="text-sm w-full min-h-[56px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
                         placeholder="Select a template above or type freely..."
                       />
