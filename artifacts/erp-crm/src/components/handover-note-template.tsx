@@ -94,16 +94,24 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
       >
         <style>{`
           @media print {
-            @page { size: A4 portrait; margin: 4px 3px; }
+            @page { size: A4 portrait; margin: 0; }
             html, body { background: white !important; }
             body * { visibility: hidden; }
             .print-doc, .print-doc * { visibility: visible; }
             .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
               box-shadow: none !important; border: none !important; padding: 0 !important;
-              margin: 0 !important; border-radius: 0 !important; }
+              margin: 0 !important; border-radius: 0 !important;
+              min-height: 0 !important; height: auto !important; overflow: visible !important; }
+            .hon-page-footer {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              background: white;
+            }
             .print-sig-block {
               position: fixed;
-              bottom: 32px;
+              bottom: 28px;
               left: 0;
               right: 0;
               background: white;
@@ -315,9 +323,9 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           This is a computer generated document. No signature or stamp required.
         </div>
 
-        {/* ── FOOTER ── */}
+        {/* ── FOOTER — fixed to bottom in print ── */}
         <div
-          className="border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
+          className="hon-page-footer border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
           style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
           <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
