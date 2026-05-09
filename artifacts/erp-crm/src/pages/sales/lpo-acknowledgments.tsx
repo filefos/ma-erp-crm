@@ -80,6 +80,8 @@ export function LpoAcknowledgments() {
   const [acLetterRecord, setAcLetterRecord] = useState<AckRecord | null>(null);
   const [acPreviewOpen, setAcPreviewOpen] = useState(false);
   const [acPdfGenerating, setAcPdfGenerating] = useState(false);
+  const [acStampOn, setAcStampOn] = useState(false);
+  const [acSigOn, setAcSigOn] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -1100,6 +1102,43 @@ export function LpoAcknowledgments() {
 
             {/* Row 2: action buttons */}
             <div className="flex items-center gap-2 px-4 py-2">
+              {/* P.STAMP toggle */}
+              <Button size="sm"
+                variant={acStampOn ? "default" : "outline"}
+                className={acStampOn
+                  ? "bg-purple-700 text-white hover:bg-purple-800"
+                  : "text-purple-700 border-purple-300 hover:bg-purple-50"}
+                onClick={() => {
+                  if (!acStampOn) {
+                    const co = (companies ?? []).find(c => c.id === (acLetterRecord?.companyId ?? activeCompanyId));
+                    if (!(co as any)?.stamp) {
+                      toast({ title: "No stamp configured", description: "Go to Admin → Companies and upload a company stamp.", variant: "destructive" });
+                      return;
+                    }
+                  }
+                  setAcStampOn(v => !v);
+                }}>
+                <Stamp className="w-3.5 h-3.5 mr-1" />P.STAMP
+              </Button>
+
+              {/* P.SIGNATURE toggle */}
+              <Button size="sm"
+                variant={acSigOn ? "default" : "outline"}
+                className={acSigOn
+                  ? "bg-orange-600 text-white hover:bg-orange-700"
+                  : "text-orange-700 border-orange-300 hover:bg-orange-50"}
+                onClick={() => {
+                  if (!acSigOn && !(user as any)?.signatureUrl) {
+                    toast({ title: "No signature uploaded", description: "Go to your Profile settings and upload a signature.", variant: "destructive" });
+                    return;
+                  }
+                  setAcSigOn(v => !v);
+                }}>
+                <PenLine className="w-3.5 h-3.5 mr-1" />P.SIGNATURE
+              </Button>
+
+              <div className="h-4 w-px bg-slate-200" />
+
               <Button size="sm" variant="outline" disabled={acPdfGenerating} onClick={downloadAckLetterPdf}
                 className="border-slate-300 text-slate-700 hover:bg-slate-50">
                 {acPdfGenerating
@@ -1336,20 +1375,40 @@ export function LpoAcknowledgments() {
                     <div style={{ fontSize: 11, color: "#333", marginTop: 26, marginBottom: 56 }}>Yours faithfully,</div>
 
                     {/* Dual signature blocks */}
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
-                      <div style={{ width: "44%" }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {co.name}</div>
-                        <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6 }} />
-                        <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
-                        <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{co.name}</div>
-                      </div>
-                      <div style={{ width: "44%", textAlign: "right" as const }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {clientName}</div>
-                        <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6, marginLeft: "auto" }} />
-                        <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
-                        <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
-                      </div>
-                    </div>
+                    {(() => {
+                      const coApi = (companies ?? []).find(c => c.id === companyId) as any;
+                      const stampUrl = coApi?.stamp ?? null;
+                      const sigUrl   = (user as any)?.signatureUrl ?? null;
+                      return (
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+                          {/* Our company sig block */}
+                          <div style={{ width: "44%", position: "relative" as const }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 4 }}>For {co.name}</div>
+                            {/* Stamp / signature overlay inside the space above the line */}
+                            <div style={{ height: 56, position: "relative" as const, display: "flex", alignItems: "flex-end", gap: 6, paddingBottom: 4 }}>
+                              {acSigOn && sigUrl && (
+                                <img src={sigUrl} alt="Signature"
+                                  style={{ maxHeight: 40, maxWidth: 90, objectFit: "contain", opacity: 0.88 }} />
+                              )}
+                              {acStampOn && stampUrl && (
+                                <img src={stampUrl} alt="Stamp"
+                                  style={{ maxHeight: 56, maxWidth: 110, objectFit: "contain", opacity: 0.88 }} />
+                              )}
+                            </div>
+                            <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6 }} />
+                            <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
+                            <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{co.name}</div>
+                          </div>
+                          {/* Client sig block */}
+                          <div style={{ width: "44%", textAlign: "right" as const }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {clientName}</div>
+                            <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6, marginLeft: "auto" }} />
+                            <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
+                            <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* ══ FOOTER — exact match to PageFooter in document-print.tsx ══ */}
