@@ -779,7 +779,49 @@ function LpoDetailView({
   const BASE_URL = import.meta.env.BASE_URL;
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [downloadingAtt, setDownloadingAtt] = useState<number | null>(null);
+  const [quickAttaching, setQuickAttaching] = useState(false);
+  const quickAttachRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const updateMutation = useUpdateLpo();
+  const queryClient = useQueryClient();
+
+  const handleQuickAttach = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (quickAttachRef.current) quickAttachRef.current.value = "";
+    if (!files.length) return;
+    setQuickAttaching(true);
+    try {
+      const newAtts: AttachmentMeta[] = [];
+      for (const file of files) {
+        if (file.size > MAX_MB * 1024 * 1024) {
+          toast({ title: `${file.name} exceeds ${MAX_MB}MB limit.`, variant: "destructive" });
+          continue;
+        }
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve((r.result as string).split(",")[1]);
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+        newAtts.push({ filename: file.name, content: base64, contentType: file.type || "application/octet-stream", size: file.size });
+      }
+      if (!newAtts.length) return;
+      await new Promise<void>((resolve, reject) => {
+        updateMutation.mutate(
+          { id: lpo.id, data: { attachments: [...atts, ...newAtts] as any } as any },
+          {
+            onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/lpos"] }); resolve(); },
+            onError: reject,
+          }
+        );
+      });
+      toast({ title: `${newAtts.length} file${newAtts.length > 1 ? "s" : ""} attached successfully.` });
+    } catch {
+      toast({ title: "Failed to attach file.", variant: "destructive" });
+    } finally {
+      setQuickAttaching(false);
+    }
+  };
 
   async function authedFetch(url: string): Promise<string> {
     const r = await fetch(url, { headers: authHeaders() });
@@ -922,9 +964,20 @@ function LpoDetailView({
           <Paperclip className="w-4 h-4 text-[#1e6ab0]" />
           <span className="text-sm font-semibold text-gray-700">Attachments</span>
           <Badge variant="secondary" className="text-xs">{atts.length}</Badge>
+          <button
+            type="button"
+            disabled={quickAttaching}
+            onClick={() => quickAttachRef.current?.click()}
+            className="ml-auto flex items-center gap-1.5 text-xs text-[#1e6ab0] hover:text-[#0f2d5a] font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {quickAttaching
+              ? <><Loader2Icon className="w-3.5 h-3.5 animate-spin" />Attaching…</>
+              : <><Paperclip className="w-3.5 h-3.5" />Attach File</>}
+          </button>
+          <input ref={quickAttachRef} type="file" multiple accept="*/*" className="hidden" onChange={handleQuickAttach} />
         </div>
         {atts.length === 0 ? (
-          <p className="text-sm text-muted-foreground pl-6">No attachments. Click Edit to add files.</p>
+          <p className="text-sm text-muted-foreground pl-6">No attachments yet. Click "Attach File" to add PDFs or other documents.</p>
         ) : (
           <div className="flex flex-wrap gap-2 pl-6">
             {atts.map((att, i) => (
