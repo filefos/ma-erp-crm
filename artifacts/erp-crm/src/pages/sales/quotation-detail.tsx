@@ -337,6 +337,7 @@ export function QuotationDetail({ id }: Props) {
               clientContactPerson: (q as any).clientContactPerson,
               customerTrn: (q as any).customerTrn,
               projectLocation: q.projectLocation,
+              projectRef: (q as any).projectRef ?? q.projectName ?? undefined,
               notes: piNote,
             } as Record<string, unknown>),
           } });
@@ -361,6 +362,7 @@ export function QuotationDetail({ id }: Props) {
               clientPhone: q.clientPhone,
               projectName: q.projectName,
               projectLocation: q.projectLocation,
+              projectRef: (q as any).projectRef ?? q.projectName ?? undefined,
               notes: taxNote,
             } as Record<string, unknown>),
           } });
@@ -394,6 +396,7 @@ export function QuotationDetail({ id }: Props) {
             clientPhone: q.clientPhone,
             projectName: q.projectName,
             projectLocation: q.projectLocation,
+            projectRef: (q as any).projectRef ?? q.projectName ?? undefined,
           } as Record<string, unknown>),
         } });
         created.push({ name: res.invoiceNumber, id: res.id });
