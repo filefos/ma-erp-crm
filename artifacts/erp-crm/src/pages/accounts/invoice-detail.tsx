@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2, Mail, Loader2, Download } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
-import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
 import { useAuth } from "@/hooks/useAuth";
 import { authHeaders } from "@/lib/ai-client";
 
@@ -35,6 +35,7 @@ export function InvoiceDetail({ id }: Props) {
   const [converting, setConverting] = useState(false);
   const [creatingJournal, setCreatingJournal] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const handleAutoJournal = async () => {
     if (creatingJournal) return;
@@ -198,6 +199,25 @@ export function InvoiceDetail({ id }: Props) {
           >
             <Package className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Create Delivery Note"}
           </Button>
+          <Button
+            size="sm" variant="outline"
+            disabled={downloadingPdf}
+            onClick={async () => {
+              const docEl = document.querySelector<HTMLElement>(".print-doc");
+              if (!docEl) return;
+              setDownloadingPdf(true);
+              try {
+                const filename = `TaxInvoice_${inv.invoiceNumber ?? inv.id ?? "doc"}.pdf`;
+                const signatureUrl = user?.signatureUrl || undefined;
+                const stampUrl = companies?.find(c => c.id === inv.companyId)?.stamp || undefined;
+                const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
+                downloadBase64Pdf(base64, fname);
+              } catch { /* silent */ } finally { setDownloadingPdf(false); }
+            }}
+          >
+            {downloadingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Generating…</> : <><Download className="w-4 h-4 mr-1" />Download PDF</>}
+          </Button>
+
           <Button
             size="sm" variant="outline"
             disabled={generatingPdf}

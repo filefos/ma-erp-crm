@@ -314,3 +314,22 @@ export async function captureElementToPdfBase64(
   const base64 = dataUri.split(",")[1] ?? "";
   return { base64, filename: filename.endsWith(".pdf") ? filename : `${filename}.pdf` };
 }
+
+/**
+ * Convert a base64-encoded PDF string to a Blob and trigger a browser file
+ * download.  The object URL is revoked after a short delay to maximise
+ * compatibility across browsers (immediate revocation can race the download
+ * on some browsers).
+ */
+export function downloadBase64Pdf(base64: string, filename: string): void {
+  const bytes = atob(base64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  const blob = new Blob([arr], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}

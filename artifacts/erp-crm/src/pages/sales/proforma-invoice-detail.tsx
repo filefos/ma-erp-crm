@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Receipt, Pencil, FileText, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Receipt, Pencil, FileText, Mail, Loader2, Download } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Props { id: string }
@@ -33,6 +33,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const { openCompose } = useEmailCompose();
   const [converting, setConverting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const { data: pi, isLoading } = useGetProformaInvoice(pid, {
     query: { queryKey: getGetProformaInvoiceQueryKey(pid), enabled: !!pid },
@@ -175,6 +176,25 @@ export function ProformaInvoiceDetail({ id }: Props) {
           >
             <Receipt className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Convert to Tax Invoice"}
           </Button>
+          <Button
+            size="sm" variant="outline"
+            disabled={downloadingPdf}
+            onClick={async () => {
+              const docEl = document.querySelector<HTMLElement>(".print-doc");
+              if (!docEl) return;
+              setDownloadingPdf(true);
+              try {
+                const filename = `ProformaInvoice_${pi.piNumber ?? pi.id ?? "doc"}.pdf`;
+                const signatureUrl = user?.signatureUrl || undefined;
+                const stampUrl = companies?.find(c => c.id === pi.companyId)?.stamp || undefined;
+                const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
+                downloadBase64Pdf(base64, fname);
+              } catch { /* silent */ } finally { setDownloadingPdf(false); }
+            }}
+          >
+            {downloadingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Generating…</> : <><Download className="w-4 h-4 mr-1" />Download PDF</>}
+          </Button>
+
           <Button
             size="sm" variant="outline"
             disabled={generatingPdf}

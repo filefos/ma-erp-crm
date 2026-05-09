@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { useState, useRef } from "react";
-import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
 import { ArrowLeft, Receipt, Mail, Loader2, Upload, Download, Trash2, FileCheck, Paperclip, AlertCircle } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
@@ -43,6 +43,7 @@ export function DeliveryNoteDetail({ id }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloadingAtt, setDownloadingAtt] = useState<string | null>(null);
   const signedInputRef = useRef<HTMLInputElement>(null);
@@ -216,6 +217,25 @@ export function DeliveryNoteDetail({ id }: Props) {
         ) : null}
         <div className="ml-auto flex gap-2">
           <HelpButton pageKey="delivery_notes" />
+          <Button
+            size="sm" variant="outline"
+            disabled={downloadingPdf}
+            onClick={async () => {
+              const docEl = document.querySelector<HTMLElement>(".print-doc");
+              if (!docEl) return;
+              setDownloadingPdf(true);
+              try {
+                const filename = `DeliveryNote_${dn.dnNumber ?? dn.id ?? "doc"}.pdf`;
+                const signatureUrl = user?.signatureUrl || undefined;
+                const stampUrl = companies?.find(c => c.id === dn.companyId)?.stamp || undefined;
+                const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
+                downloadBase64Pdf(base64, fname);
+              } catch { /* silent */ } finally { setDownloadingPdf(false); }
+            }}
+          >
+            {downloadingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Generating…</> : <><Download className="w-4 h-4 mr-1" />Download PDF</>}
+          </Button>
+
           <Button
             size="sm" variant="outline"
             disabled={generatingPdf}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
 import {
   useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
   useCreateTaxInvoice, useCreateDeliveryNote,
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, FileText, Receipt, Package, ChevronDown, Pencil, Plus, Trash2, Mail, Loader2, Download } from "lucide-react";
 import { ExportButtons } from "@/components/export-buttons";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { DocumentPrint } from "@/components/document-print";
@@ -55,6 +55,7 @@ export function QuotationDetail({ id }: Props) {
   const { openCompose } = useEmailCompose();
   const [converting, setConverting] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [convertOpen, setConvertOpen] = useState<ConvertTarget | null>(null);
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [selected, setSelected] = useState<boolean[]>([]);
@@ -399,6 +400,25 @@ export function QuotationDetail({ id }: Props) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Button
+            size="sm" variant="outline"
+            disabled={downloadingPdf}
+            onClick={async () => {
+              const docEl = document.querySelector<HTMLElement>(".print-doc");
+              if (!docEl) return;
+              setDownloadingPdf(true);
+              try {
+                const filename = `Quotation_${q.quotationNumber ?? q.id ?? "doc"}.pdf`;
+                const signatureUrl = user?.signatureUrl || undefined;
+                const stampUrl = companies?.find(c => c.id === q.companyId)?.stamp || undefined;
+                const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
+                downloadBase64Pdf(base64, fname);
+              } catch { /* silent */ } finally { setDownloadingPdf(false); }
+            }}
+          >
+            {downloadingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Generating…</> : <><Download className="w-4 h-4 mr-1" />Download PDF</>}
+          </Button>
 
           <Button
             size="sm" variant="outline"
