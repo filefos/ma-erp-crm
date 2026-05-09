@@ -137,35 +137,44 @@ export function LpoAcknowledgments() {
       const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer());
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const pages = pdfDoc.getPages();
-      const lastPage = pages[pages.length - 1];
-      const { width, height } = lastPage.getSize();
       const margin = 36;
-      const imgH = 60;
+      const stampH = 120;
+      const sigH = 60;
+
+      let stampImg = null as Awaited<ReturnType<typeof pdfDoc.embedPng>> | null;
+      let sigImg = null as Awaited<ReturnType<typeof pdfDoc.embedPng>> | null;
 
       if ((mode === "stamp" || mode === "both") && stampUrl) {
         const { bytes, isPng } = await fetchImageBytes(stampUrl);
-        const img = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
-        const scaled = img.scaleToFit(140, imgH);
-        lastPage.drawImage(img, {
-          x: width - margin - scaled.width,
-          y: margin,
-          width: scaled.width,
-          height: scaled.height,
-          opacity: 0.85,
-        });
+        stampImg = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
       }
-
       if ((mode === "signature" || mode === "both") && sigUrl) {
         const { bytes, isPng } = await fetchImageBytes(sigUrl);
-        const img = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
-        const scaled = img.scaleToFit(120, imgH);
-        lastPage.drawImage(img, {
-          x: margin,
-          y: margin,
-          width: scaled.width,
-          height: scaled.height,
-          opacity: 0.85,
-        });
+        sigImg = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+      }
+
+      for (const page of pages) {
+        const { width } = page.getSize();
+        if (stampImg) {
+          const scaled = stampImg.scaleToFit(220, stampH);
+          page.drawImage(stampImg, {
+            x: width - margin - scaled.width,
+            y: margin,
+            width: scaled.width,
+            height: scaled.height,
+            opacity: 0.85,
+          });
+        }
+        if (sigImg) {
+          const scaled = sigImg.scaleToFit(140, sigH);
+          page.drawImage(sigImg, {
+            x: margin,
+            y: margin,
+            width: scaled.width,
+            height: scaled.height,
+            opacity: 0.85,
+          });
+        }
       }
 
       const stamped = await pdfDoc.save();
@@ -752,21 +761,18 @@ export function LpoAcknowledgments() {
                   </div>
                 }
               >
-                {Array.from({ length: numPages }, (_, i) => {
-                  const isLast = i === numPages - 1;
+                {(() => {
                   const company = (companies ?? []).find(c => c.id === viewRecord?.companyId);
                   const stampUrl = (company as any)?.stamp ?? null;
                   const sigUrl = user?.signatureUrl ?? null;
-                  const showStamp = isLast && previewStampOn && stampUrl;
-                  const showSig = isLast && previewSigOn && sigUrl;
-                  return (
+                  return Array.from({ length: numPages }, (_, i) => (
                     <div key={i + 1} className="relative shadow-md mb-2">
                       <Page
                         pageNumber={i + 1}
                         renderTextLayer={true}
                         renderAnnotationLayer={false}
                       />
-                      {showSig && (
+                      {previewSigOn && sigUrl && (
                         <img
                           src={sigUrl}
                           alt="Signature"
@@ -782,16 +788,16 @@ export function LpoAcknowledgments() {
                           }}
                         />
                       )}
-                      {showStamp && (
+                      {previewStampOn && stampUrl && (
                         <img
                           src={stampUrl}
                           alt="Stamp"
                           style={{
                             position: "absolute",
-                            bottom: 24,
+                            bottom: 20,
                             right: 36,
-                            maxHeight: 90,
-                            maxWidth: 180,
+                            maxHeight: 140,
+                            maxWidth: 240,
                             objectFit: "contain",
                             opacity: 0.85,
                             pointerEvents: "none",
@@ -799,8 +805,8 @@ export function LpoAcknowledgments() {
                         />
                       )}
                     </div>
-                  );
-                })}
+                  ));
+                })()}
               </Document>
             )}
           </div>
