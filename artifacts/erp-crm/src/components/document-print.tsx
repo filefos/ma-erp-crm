@@ -823,10 +823,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                               ))}
                             </td>
                           )}
-                          <td style={{ border: "1px solid #bbb", textAlign: "center", fontSize: "10pt", fontWeight: 600, padding: "3px 2px", verticalAlign: "top", color: "#333", width: 30 }}>
+                          <td style={{ border: "1px solid #bbb", textAlign: "center", fontSize: "10pt", fontWeight: 600, padding: "6px 2px", verticalAlign: "top", color: "#333", width: 30 }}>
                             {String.fromCharCode(97 + pi)}
                           </td>
-                          <td style={{ border: "1px solid #bbb", fontSize: "10pt", padding: "3px 8px", verticalAlign: "top", lineHeight: 1.5 }}>
+                          <td style={{ border: "1px solid #bbb", fontSize: "10pt", padding: "6px 8px", verticalAlign: "top", lineHeight: 1.5 }}>
                             {pt.split("\n").map((line, li) => (
                               <React.Fragment key={li}>
                                 {line}
