@@ -896,8 +896,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                       <div
                         style={{ backgroundColor: "#1e3a6e", display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", ...printStyle }}
                       >
-                        <span style={{ fontSize: "13px", fontWeight: 900, color: "white", flexShrink: 0 }}>{sec.num}</span>
-                        <span style={{ fontSize: "13px", fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>{sec.title}</span>
+                        <span style={{ fontSize: "11px", fontWeight: 900, color: "white", flexShrink: 0 }}>{sec.num}</span>
+                        <span style={{ fontSize: "11px", fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>{sec.title}</span>
                       </div>
                       {/* Items */}
                       <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -907,12 +907,12 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                             return (
                               <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? "#f0f4f9" : "#ffffff", ...printStyle }}>
                                 <td
-                                  style={{ border: "1px solid #d1d5db", padding: "5px 8px", fontSize: "12px", fontWeight: 600, color: "#4b5563", textAlign: "center", verticalAlign: "top", width: 30 }}
+                                  style={{ border: "1px solid #d1d5db", padding: "4px 8px", fontSize: "10.5px", fontWeight: 600, color: "#4b5563", textAlign: "center", verticalAlign: "top", width: 28 }}
                                 >
                                   {item.num}
                                 </td>
                                 <td
-                                  style={{ border: "1px solid #d1d5db", padding: "5px 12px", fontSize: "12px", lineHeight: 1.5, verticalAlign: "top", fontWeight: isCheque ? 700 : 400, color: isCheque ? "#0f2d5a" : "#1f2937" }}
+                                  style={{ border: "1px solid #d1d5db", padding: "4px 12px", fontSize: "10.5px", lineHeight: 1.4, verticalAlign: "top", fontWeight: isCheque ? 700 : 400, color: isCheque ? "#0f2d5a" : "#1f2937" }}
                                 >
                                   {item.body}
                                 </td>
