@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListQuotationsQueryKey } from "@workspace/api-client-react";
 import {
@@ -169,6 +169,22 @@ export function QuotationNew() {
     });
   };
 
+  const [previewItems, setPreviewItems] = useState<Set<number>>(new Set());
+
+  const renderDescriptionPreview = (text: string) =>
+    text.split("\n").map((line, idx) =>
+      line.startsWith("• ") ? (
+        <div key={idx} className="flex gap-2 items-start text-sm text-[#1a3d6e]">
+          <span className="mt-0.5 shrink-0 font-bold">•</span>
+          <span>{line.slice(2)}</span>
+        </div>
+      ) : line ? (
+        <div key={idx} className="text-sm text-[#1a3d6e]">{line}</div>
+      ) : (
+        <div key={idx} className="h-2" />
+      )
+    );
+
   const handleDescriptionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, i: number) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
@@ -327,36 +343,58 @@ export function QuotationNew() {
                       {String(i + 1).padStart(2, "0")}
                     </td>
                     <td className="p-1 border border-[#6fa3d8] border-t-0 align-top">
-                      <Select
-                        value=""
-                        onValueChange={v => {
-                          const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
-                          if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
-                          else if (preset?.value === "custom") updateItem(i, "description", "");
-                        }}
-                      >
-                        <SelectTrigger className="h-7 text-xs mb-1 w-full bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
-                          <SelectValue placeholder="▾ Select template..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DESCRIPTION_PRESETS.map(p => (
-                            <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Textarea
-                        value={item.description}
-                        onChange={e => updateItem(i, "description", e.target.value)}
-                        onKeyDown={e => handleDescriptionKeyDown(e, i)}
-                        className="text-sm w-full min-h-[56px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
-                        placeholder="Select a template above or type freely..."
-                      />
+                      <div className="flex gap-1 mb-1">
+                        <Select
+                          value=""
+                          onValueChange={v => {
+                            const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
+                            if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
+                            else if (preset?.value === "custom") updateItem(i, "description", "");
+                          }}
+                        >
+                          <SelectTrigger className="h-7 text-xs flex-1 bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
+                            <SelectValue placeholder="▾ Select template..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DESCRIPTION_PRESETS.map(p => (
+                              <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <button
+                          type="button"
+                          title={previewItems.has(i) ? "Edit" : "Preview"}
+                          onClick={() => setPreviewItems(prev => {
+                            const next = new Set(prev);
+                            next.has(i) ? next.delete(i) : next.add(i);
+                            return next;
+                          })}
+                          className="h-7 w-7 shrink-0 flex items-center justify-center rounded border border-[#6fa3d8] bg-white hover:bg-[#e8f1fb] text-[#1a3d6e]"
+                        >
+                          {previewItems.has(i) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                      {previewItems.has(i) ? (
+                        <div className="min-h-[120px] w-full rounded border border-[#6fa3d8] bg-[#eaf3fb] p-2 space-y-0.5">
+                          {item.description ? renderDescriptionPreview(item.description) : (
+                            <span className="text-xs text-muted-foreground italic">No content yet…</span>
+                          )}
+                        </div>
+                      ) : (
+                        <Textarea
+                          value={item.description}
+                          onChange={e => updateItem(i, "description", e.target.value)}
+                          onKeyDown={e => handleDescriptionKeyDown(e, i)}
+                          className="text-sm w-full min-h-[120px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                          placeholder="Select a template above or type freely..."
+                        />
+                      )}
                     </td>
                     <td className="p-0 border border-[#6fa3d8] border-t-0">
                       <Input
                         value={item.unit}
                         onChange={e => updateItem(i, "unit", e.target.value)}
-                        className="h-full w-full min-h-[88px] rounded-none text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 border-[#6fa3d8]"
+                        className="h-full w-full min-h-[156px] rounded-none text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                         placeholder="e.g. 12X6X2.4M"
                       />
                     </td>
@@ -365,7 +403,7 @@ export function QuotationNew() {
                         type="number"
                         value={item.rate}
                         onChange={e => updateItem(i, "rate", e.target.value)}
-                        className="h-full w-full min-h-[88px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        className="h-full w-full min-h-[156px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </td>
                     <td className="p-0 border border-[#6fa3d8] border-t-0">
@@ -373,7 +411,7 @@ export function QuotationNew() {
                         type="number"
                         value={item.quantity}
                         onChange={e => updateItem(i, "quantity", e.target.value)}
-                        className="h-full w-full min-h-[88px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        className="h-full w-full min-h-[156px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
                     </td>
                     <td className="p-0 border border-[#6fa3d8] border-t-0">
@@ -381,7 +419,7 @@ export function QuotationNew() {
                         type="number"
                         value={item.discount}
                         onChange={e => updateItem(i, "discount", e.target.value)}
-                        className="h-full w-full min-h-[88px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        className="h-full w-full min-h-[156px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                         min={0} max={100}
                       />
                     </td>
