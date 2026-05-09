@@ -290,7 +290,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     <>
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 0 14mm; }
+          @page { size: A4 portrait; margin: 0 6mm; }
           html, body { background: white !important; }
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
