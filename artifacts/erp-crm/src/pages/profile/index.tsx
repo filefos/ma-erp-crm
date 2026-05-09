@@ -40,8 +40,19 @@ export function MyProfile() {
   const [sigClearing, setSigClearing] = useState(false);
   const [sigCleared, setSigCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Stamp state
+  const [stampPreview, setStampPreview] = useState<string | null>(null);
+  const [stampSavedUrl, setStampSavedUrl] = useState<string | null>(null);
+  const [stampSaving, setStampSaving] = useState(false);
+  const [stampSaved, setStampSaved] = useState(false);
+  const [stampClearing, setStampClearing] = useState(false);
+  const [stampCleared, setStampCleared] = useState(false);
+  const stampFileInputRef = useRef<HTMLInputElement>(null);
+
   const token = localStorage.getItem("erp_token");
   const sigDirty = sigPreview !== sigSavedUrl;
+  const stampDirty = stampPreview !== stampSavedUrl;
 
   // AI automation level
   const [autoLevel, setAutoLevel] = useState<AutomationLevel>("suggest");
@@ -88,6 +99,16 @@ export function MyProfile() {
     }
   }, [u?.id, u?.signatureUrl]);
 
+  // Sync stamp from company data
+  useEffect(() => {
+    if (u?.companyId && companies) {
+      const co = companies.find(c => c.id === u.companyId);
+      const saved = co?.stamp ?? null;
+      setStampPreview(saved);
+      setStampSavedUrl(saved);
+    }
+  }, [u?.companyId, companies]);
+
   const update = useUpdateUser({
     mutation: {
       onSuccess: () => {
@@ -112,6 +133,76 @@ export function MyProfile() {
   const handleCancel = () => {
     setForm({ name: u.name ?? "", email: u.email ?? "", phone: u.phone ?? "" });
     setEditing(false);
+  };
+
+  const handleStampFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => { setStampPreview(ev.target?.result as string); };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveStamp = async () => {
+    if (!u.companyId) return;
+    const co = companies?.find(c => c.id === u.companyId);
+    if (!co) return;
+    setStampSaving(true);
+    try {
+      const res = await fetch(`/api/companies/${u.companyId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: co.name,
+          shortName: co.shortName ?? "",
+          prefix: co.prefix ?? "",
+          stamp: stampPreview,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert((err as { error?: string }).error ?? "Failed to save stamp. Please try again.");
+        return;
+      }
+      setStampSavedUrl(stampPreview);
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      setStampSaved(true);
+      setTimeout(() => setStampSaved(false), 3000);
+    } finally {
+      setStampSaving(false);
+    }
+  };
+
+  const handleClearStamp = async () => {
+    if (!u.companyId) return;
+    const co = companies?.find(c => c.id === u.companyId);
+    if (!co) return;
+    setStampClearing(true);
+    try {
+      const res = await fetch(`/api/companies/${u.companyId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: co.name,
+          shortName: co.shortName ?? "",
+          prefix: co.prefix ?? "",
+          stamp: null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert((err as { error?: string }).error ?? "Failed to clear stamp. Please try again.");
+        return;
+      }
+      setStampPreview(null);
+      setStampSavedUrl(null);
+      if (stampFileInputRef.current) stampFileInputRef.current.value = "";
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      setStampCleared(true);
+      setTimeout(() => setStampCleared(false), 3000);
+    } finally {
+      setStampClearing(false);
+    }
   };
 
   const handleSignatureFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,11 +409,71 @@ export function MyProfile() {
 
           <SignatureStampPreview
             signatureUrl={sigPreview ?? undefined}
-            stampUrl={companies?.find(c => c.id === u.companyId)?.stamp ?? undefined}
-            stampWidthPct={companies?.find(c => c.id === u.companyId)?.stampWidthPct ?? undefined}
+            stampUrl={stampPreview ?? undefined}
           />
         </CardContent>
       </Card>}
+
+      {/* Company Stamp */}
+      {(level === "super_admin" || level === "company_admin") && u.companyId && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Company Stamp</CardTitle>
+            <CardDescription>Upload the company stamp / seal image. It will appear on printed documents (quotations, invoices, POs, etc.).</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {stampPreview ? (
+              <div className="border rounded-lg p-4 bg-muted/30 flex items-center gap-4">
+                <img src={stampPreview} alt="Stamp" className="h-16 object-contain rounded border bg-white p-1" style={{ maxWidth: 220 }} />
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" size="sm" onClick={() => stampFileInputRef.current?.click()}>
+                    <Upload className="w-3.5 h-3.5 mr-1.5" />Change
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={handleClearStamp}
+                    disabled={stampClearing}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    {stampClearing ? "Clearing…" : "Clear"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center cursor-pointer hover:border-[#1e6ab0]/50 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-colors"
+                onClick={() => stampFileInputRef.current?.click()}
+              >
+                <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Click to upload stamp image</p>
+                <p className="text-xs text-muted-foreground mt-1">PNG with transparent background recommended</p>
+              </div>
+            )}
+            <input
+              ref={stampFileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg"
+              className="hidden"
+              onChange={handleStampFile}
+            />
+            <div className="flex items-center gap-3">
+              <Button
+                size="sm"
+                className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                onClick={handleSaveStamp}
+                disabled={!stampPreview || !stampDirty || stampSaving}
+              >
+                <Check className="w-3.5 h-3.5 mr-1.5" />
+                {stampSaving ? "Saving..." : "Save Stamp"}
+              </Button>
+              {stampSaved && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Stamp saved!</span>}
+              {stampCleared && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Stamp cleared.</span>}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* AI Automation */}
       <Card>
