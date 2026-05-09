@@ -227,9 +227,7 @@ function PageFooter({ left, page, hideDisclaimer }: { left: React.ReactNode; pag
       )}
       <div className="flex items-center justify-between text-[10px] text-[#0f2d5a] border-t border-[#0f2d5a] pt-1">
         <span className="font-mono tracking-wide">{left}</span>
-        {/* On-screen: show hardcoded label. During print: hide it, show CSS counter instead. */}
-        <span className="font-semibold page-num-label">{page}</span>
-        <span className="font-semibold page-num-auto" aria-hidden="true" />
+        <span className="font-semibold">{page}</span>
       </div>
     </div>
   );
@@ -332,11 +330,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             padding-left: 3px;
             padding-right: 3px;
           }
-          /* Auto page numbering: hide hardcoded label, show CSS counter */
-          .page-num-label { display: none !important; }
-          .page-num-auto::after {
-            content: counter(page) "-" counter(pages);
-          }
+          /* Page number label visible on print */
+          .page-num-label { display: inline !important; }
         }
       `}</style>
 
