@@ -1386,14 +1386,14 @@ export function LpoAcknowledgments() {
                         <div style={{ width: "44%", position: "relative" as const }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 4 }}>For {co.name}</div>
                           {/* Stamp / signature overlay inside the space above the line */}
-                          <div style={{ height: 100, display: "flex", alignItems: "flex-end", gap: 8, paddingBottom: 4 }}>
+                          <div style={{ height: 130, display: "flex", alignItems: "flex-end", gap: 8, paddingBottom: 4 }}>
                             {acSigOn && sigUrl && (
                               <img src={sigUrl} alt="Signature"
-                                style={{ maxHeight: 44, maxWidth: 100, objectFit: "contain", opacity: 0.88 }} />
+                                style={{ maxHeight: 50, maxWidth: 110, objectFit: "contain", opacity: 0.88 }} />
                             )}
                             {acStampOn && stampUrl && (
                               <img src={stampUrl} alt="Stamp"
-                                style={{ maxHeight: 100, maxWidth: 180, objectFit: "contain", opacity: 0.88 }} />
+                                style={{ maxHeight: 130, maxWidth: 220, objectFit: "contain", opacity: 0.88 }} />
                             )}
                           </div>
                           <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6 }} />
@@ -1402,7 +1402,7 @@ export function LpoAcknowledgments() {
                         </div>
                         {/* Client sig block */}
                         <div style={{ width: "44%", textAlign: "right" as const }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 100 }}>For {clientName}</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 130 }}>For {clientName}</div>
                           <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6, marginLeft: "auto" }} />
                           <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
                           <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
