@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { ArrowLeft, Pencil, CheckCircle, Download, Printer, Plus, Trash2, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, CheckCircle, Download, Printer, Plus, Trash2, Mail, Loader2, Stamp, PenLine } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { HandoverNoteTemplate } from "@/components/handover-note-template";
@@ -41,6 +41,8 @@ export function HandoverNoteDetail({ id }: Props) {
   const [exporting, setExporting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [stampVisible, setStampVisible] = useState(true);
+  const [signatureVisible, setSignatureVisible] = useState(true);
   const [form, setForm] = useState({
     handoverDate: "", projectDescription: "", receivedByName: "",
     receivedByDesignation: "", clientRepresentative: "",
@@ -154,8 +156,8 @@ export function HandoverNoteDetail({ id }: Props) {
     clientRepresentative: (hon as any).clientRepresentative ?? null,
     notes: (hon as any).notes ?? null,
     companyId: (hon as any).companyId ?? 1,
-    signatureUrl: user?.signatureUrl ?? null,
-    stampUrl: companies?.find(c => c.id === ((hon as any).companyId ?? 1))?.stamp ?? null,
+    signatureUrl: signatureVisible ? (user?.signatureUrl ?? null) : null,
+    stampUrl: stampVisible ? (companies?.find(c => c.id === ((hon as any).companyId ?? 1))?.stamp ?? null) : null,
   };
 
   return (
@@ -186,7 +188,26 @@ export function HandoverNoteDetail({ id }: Props) {
           </Button>
         )}
 
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex items-center gap-2">
+          {/* P.STAMP / P.SIGNATURE toggles */}
+          <Button
+            size="sm"
+            variant={stampVisible ? "default" : "outline"}
+            className={stampVisible ? "bg-violet-600 hover:bg-violet-700 text-white" : "text-violet-600 border-violet-400"}
+            onClick={() => setStampVisible(v => !v)}
+            title="Toggle stamp visibility"
+          >
+            <Stamp className="w-3.5 h-3.5 mr-1" />P.STAMP
+          </Button>
+          <Button
+            size="sm"
+            variant={signatureVisible ? "default" : "outline"}
+            className={signatureVisible ? "bg-orange-500 hover:bg-orange-600 text-white" : "text-orange-500 border-orange-400"}
+            onClick={() => setSignatureVisible(v => !v)}
+            title="Toggle signature visibility"
+          >
+            <PenLine className="w-3.5 h-3.5 mr-1" />P.SIGNATURE
+          </Button>
           <Button
             size="sm" variant="outline"
             disabled={generatingPdf}

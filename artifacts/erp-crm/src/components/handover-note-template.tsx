@@ -101,6 +101,13 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
               box-shadow: none !important; border: none !important; padding: 0 !important;
               margin: 0 !important; border-radius: 0 !important; }
+            .print-sig-block {
+              position: fixed;
+              bottom: 32px;
+              left: 0;
+              right: 0;
+              background: white;
+            }
           }
         `}</style>
 
@@ -271,34 +278,35 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             </div>
           </div>
 
-          {/* ── PREPARED BY / FOR & ON BEHALF ── */}
-          <div className="flex justify-between items-end">
-            <div>
-              <div className="text-[10px] font-semibold">Prepared by:</div>
-              <div className="text-[11px]">{co.contact}</div>
+        </div>
+
+        {/* ── FOR & ON BEHALF — signature + stamp left, client right (matches delivery note layout) ── */}
+        <div className="print-sig-block flex items-end justify-between text-xs pt-3 pb-3 px-4">
+          {/* Left — signature + stamp together above our company */}
+          <div>
+            <div data-html2canvas-ignore="true" style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 8 }}>
               {doc.signatureUrl && (
-                <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "center" }}>
-                  <img
-                    src={doc.signatureUrl}
-                    alt="Signature"
-                    style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
-                  />
-                </div>
+                <img
+                  src={doc.signatureUrl}
+                  alt="Signature"
+                  style={{ maxHeight: 56, maxWidth: 140, objectFit: "contain", opacity: 0.85 }}
+                />
               )}
-            </div>
-            <div className="text-right">
-              <div className="text-[10px]">For &amp; on behalf of</div>
-              <div className="text-[11px] font-black uppercase">{co.name}</div>
               {doc.stampUrl && (
-                <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
-                  <img
-                    src={doc.stampUrl}
-                    alt="Stamp"
-                    style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: "auto" }}
-                  />
-                </div>
+                <img
+                  src={doc.stampUrl}
+                  alt="Stamp"
+                  style={{ maxHeight: 150, maxWidth: 150, objectFit: "contain", opacity: 0.85 }}
+                />
               )}
             </div>
+            <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+            <div className="font-bold text-[13px]">{co.name}</div>
+          </div>
+          {/* Right — client For & on behalf of */}
+          <div className="text-right">
+            <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+            <div className="font-bold text-[13px]">{doc.clientName}</div>
           </div>
         </div>
 
