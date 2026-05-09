@@ -112,7 +112,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
     vatPercent,
     vatAmount,
     grandTotal: pi.total,
-    paymentTerms: pi.paymentTerms,
+    paymentTerms: (quotation as any)?.paymentTerms ?? pi.paymentTerms,
     notes: (pi as any).notes,
     additionalItems,
     items: sourceItems.map((i: any) => ({

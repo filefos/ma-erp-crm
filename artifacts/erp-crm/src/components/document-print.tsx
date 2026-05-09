@@ -266,8 +266,15 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     (s, ai) => s + (ai.status === "Included" ? ((ai.price ?? 0) * (ai.quantity ?? 1)) : 0), 0
   );
   const combinedSubtotalExclVat = projectItemsSubtotal + additionalTotal;
-  const vatAmt = data.vatAmount ?? +(combinedSubtotalExclVat * vat / 100).toFixed(2);
-  const grand = data.grandTotal;
+  // Always recalculate VAT from the live combined subtotal so it is consistent
+  // with the displayed additional-items table (especially for proformas created
+  // before additional items were carried over from the quotation).
+  const vatAmt = +(combinedSubtotalExclVat * vat / 100).toFixed(2);
+  // For quotations and proformas derive the grand total from the live numbers so
+  // the document is always self-consistent regardless of any stale stored value.
+  const grand = (data.type === "quotation" || data.type === "proforma")
+    ? +(combinedSubtotalExclVat + vatAmt).toFixed(2)
+    : data.grandTotal;
   // Keep 'subtotal' as project-items-only alias for BAR 1
   const subtotal = projectItemsSubtotal;
   const docDate = data.invoiceDate ?? data.date ?? new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
