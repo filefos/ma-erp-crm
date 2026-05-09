@@ -75,6 +75,22 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const vatPercent = (pi as any).vatPercent ?? 5;
   const vatAmount = (pi as any).vatAmount ?? (subtotal * vatPercent / 100);
 
+  // Inherit additional commercial items from the source quotation so the
+  // proforma matches the quotation exactly (prices, included/excluded status).
+  let additionalItems: import("@/components/document-print").AdditionalCommercialItem[] | undefined;
+  try {
+    const raw = (quotation as any)?.additionalItems;
+    if (raw) additionalItems = JSON.parse(raw);
+  } catch { /* fall back to document-print defaults */ }
+
+  // Format raw ISO validity date (e.g. "2026-05-09") to "09 May 2026"
+  const rawValidity = (pi as any).validityDate as string | null | undefined;
+  const validity = rawValidity
+    ? /^\d{4}-\d{2}-\d{2}$/.test(rawValidity)
+      ? new Date(rawValidity + "T00:00:00").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      : rawValidity
+    : undefined;
+
   const docData: DocumentData = {
     type: "proforma",
     docNumber: pi.piNumber,
@@ -82,6 +98,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
     companyRef: (pi as any).companyRef,
     companyLogo: (companies?.find(c => c.id === pi.companyId) as any)?.logo ?? undefined,
     clientName: pi.clientName,
+    clientContactPerson: (pi as any).clientContactPerson ?? (quotation as any)?.clientContactPerson ?? undefined,
     clientEmail: (pi as any).clientEmail,
     clientPhone: (pi as any).clientPhone,
     clientTrn: (pi as any).clientTrn ?? undefined,
@@ -90,13 +107,14 @@ export function ProformaInvoiceDetail({ id }: Props) {
     projectRef: (pi as any).projectRef ?? undefined,
     projectLocation: (pi as any).projectLocation,
     date: pi.createdAt ? new Date(pi.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
-    validity: pi.validityDate,
+    validity,
     subtotal,
     vatPercent,
     vatAmount,
     grandTotal: pi.total,
     paymentTerms: pi.paymentTerms,
     notes: (pi as any).notes,
+    additionalItems,
     items: sourceItems.map((i: any) => ({
       description: i.description,
       sizeStatus: i.unit,
