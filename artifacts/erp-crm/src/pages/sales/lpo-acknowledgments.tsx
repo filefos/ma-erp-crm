@@ -272,10 +272,12 @@ export function LpoAcknowledgments() {
 
       for (const page of pages) {
         const { width } = page.getSize();
+        let stampX = width - margin;
         if (stampImg) {
           const scaled = stampImg.scaleToFit(170, stampH);
+          stampX = width - margin - scaled.width;
           page.drawImage(stampImg, {
-            x: width - margin - scaled.width,
+            x: stampX,
             y: margin,
             width: scaled.width,
             height: scaled.height,
@@ -283,9 +285,10 @@ export function LpoAcknowledgments() {
           });
         }
         if (sigImg) {
-          const scaled = sigImg.scaleToFit(140, sigH);
+          const scaled = sigImg.scaleToFit(80, 40);
+          const sigX = stampImg ? stampX - scaled.width - 8 : width - margin - scaled.width;
           page.drawImage(sigImg, {
-            x: margin,
+            x: sigX,
             y: margin,
             width: scaled.width,
             height: scaled.height,
@@ -909,37 +912,32 @@ export function LpoAcknowledgments() {
                         renderTextLayer={true}
                         renderAnnotationLayer={false}
                       />
-                      {previewSigOn && sigUrl && (
-                        <img
-                          src={sigUrl}
-                          alt="Signature"
-                          style={{
-                            position: "absolute",
-                            bottom: 36,
-                            left: 36,
-                            maxHeight: 56,
-                            maxWidth: 150,
-                            objectFit: "contain",
-                            opacity: 0.85,
-                            pointerEvents: "none",
-                          }}
-                        />
-                      )}
-                      {previewStampOn && stampUrl && (
-                        <img
-                          src={stampUrl}
-                          alt="Stamp"
-                          style={{
-                            position: "absolute",
-                            bottom: 20,
-                            right: 36,
-                            maxHeight: 100,
-                            maxWidth: 190,
-                            objectFit: "contain",
-                            opacity: 0.85,
-                            pointerEvents: "none",
-                          }}
-                        />
+                      {((previewStampOn && stampUrl) || (previewSigOn && sigUrl)) && (
+                        <div style={{
+                          position: "absolute",
+                          bottom: 20,
+                          right: 36,
+                          display: "flex",
+                          flexDirection: "row",
+                          alignItems: "flex-end",
+                          gap: 8,
+                          pointerEvents: "none",
+                        }}>
+                          {previewSigOn && sigUrl && (
+                            <img
+                              src={sigUrl}
+                              alt="Signature"
+                              style={{ maxHeight: 40, maxWidth: 90, objectFit: "contain", opacity: 0.85 }}
+                            />
+                          )}
+                          {previewStampOn && stampUrl && (
+                            <img
+                              src={stampUrl}
+                              alt="Stamp"
+                              style={{ maxHeight: 100, maxWidth: 190, objectFit: "contain", opacity: 0.85 }}
+                            />
+                          )}
+                        </div>
                       )}
                     </div>
                   ));
