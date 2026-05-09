@@ -197,7 +197,9 @@ export function DeliveryNoteDetail({ id }: Props) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <div className="no-print flex items-center gap-2 flex-wrap">
+      <div className="no-print flex flex-col gap-2">
+        {/* Row 1 — navigation, badges, action buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/accounts/delivery-notes"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
@@ -220,34 +222,6 @@ export function DeliveryNoteDetail({ id }: Props) {
           </Button>
         ) : null}
         <div className="ml-auto flex gap-2 items-center">
-          {/* P.STAMP toggle */}
-          <button
-            type="button"
-            title={showStamp ? "Hide stamp from document" : "Show stamp on document"}
-            onClick={() => setShowStamp(s => !s)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
-              showStamp
-                ? "border-violet-500 text-violet-600 bg-violet-50 hover:bg-violet-100"
-                : "border-gray-300 text-gray-400 bg-white hover:bg-gray-50"
-            }`}
-          >
-            <Stamp className="w-3.5 h-3.5" />
-            P.STAMP
-          </button>
-          {/* P.SIGNATURE toggle */}
-          <button
-            type="button"
-            title={showSignature ? "Hide signature from document" : "Show signature on document"}
-            onClick={() => setShowSignature(s => !s)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
-              showSignature
-                ? "border-orange-400 text-orange-500 bg-orange-50 hover:bg-orange-100"
-                : "border-gray-300 text-gray-400 bg-white hover:bg-gray-50"
-            }`}
-          >
-            <PenLine className="w-3.5 h-3.5" />
-            P.SIGNATURE
-          </button>
           <HelpButton pageKey="delivery_notes" />
           <Button
             size="sm" variant="outline"
@@ -305,6 +279,36 @@ export function DeliveryNoteDetail({ id }: Props) {
             {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
           <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} recipientEmail={(dn as any).clientEmail ?? undefined} companyId={dn.companyId ?? undefined} docTypeLabel="Delivery Note" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === dn.companyId)?.stamp ?? undefined} stampWidthPct={companies?.find(c => c.id === dn.companyId)?.stampWidthPct ?? undefined} stampMarginPct={companies?.find(c => c.id === dn.companyId)?.stampMarginPct ?? undefined} />
+        </div>
+        </div>
+        {/* Row 2 — print controls */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            title={showStamp ? "Hide stamp from document" : "Show stamp on document"}
+            onClick={() => setShowStamp(s => !s)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
+              showStamp
+                ? "border-violet-500 text-violet-600 bg-violet-50 hover:bg-violet-100"
+                : "border-gray-300 text-gray-400 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <Stamp className="w-3.5 h-3.5" />
+            P.STAMP
+          </button>
+          <button
+            type="button"
+            title={showSignature ? "Hide signature from document" : "Show signature on document"}
+            onClick={() => setShowSignature(s => !s)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
+              showSignature
+                ? "border-orange-400 text-orange-500 bg-orange-50 hover:bg-orange-100"
+                : "border-gray-300 text-gray-400 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <PenLine className="w-3.5 h-3.5" />
+            P.SIGNATURE
+          </button>
         </div>
       </div>
 
