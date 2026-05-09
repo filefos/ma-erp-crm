@@ -78,6 +78,7 @@
     "exceljs": "^4.4.0",
     "html2canvas-pro": "^2.0.2",
     "jspdf": "^4.2.1",
+    "pdf-lib": "^1.17.1",
     "react-pdf": "^10.4.1"
   }
 }

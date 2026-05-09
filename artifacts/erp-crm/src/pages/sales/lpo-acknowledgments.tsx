@@ -3,8 +3,10 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
-import { useListQuotations } from "@workspace/api-client-react";
+import { useListQuotations, useListCompanies } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { PDFDocument } from "pdf-lib";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -49,6 +51,8 @@ const EMPTY_FORM = { quotationNumber: "", clientRef: "" }; // clientRef auto-fil
 export function LpoAcknowledgments() {
   const { activeCompanyId } = useActiveCompany();
   const { data: quotations } = useListQuotations();
+  const { data: companies } = useListCompanies();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
 
@@ -64,6 +68,7 @@ export function LpoAcknowledgments() {
   const [previewBackRecord, setPreviewBackRecord] = useState<AckRecord | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
+  const [stampingId, setStampingId] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -86,6 +91,95 @@ export function LpoAcknowledgments() {
       setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
     } catch {
       toast({ title: "Download failed", variant: "destructive" });
+    }
+  }
+
+  async function fetchImageBytes(src: string): Promise<{ bytes: Uint8Array; isPng: boolean }> {
+    if (src.startsWith("data:")) {
+      const [header, b64] = src.split(",");
+      const isPng = header.includes("png");
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return { bytes, isPng };
+    }
+    const r = await fetch(src, { headers: authHeaders() });
+    if (!r.ok) throw new Error("Failed to fetch image");
+    const ab = await r.arrayBuffer();
+    const isPng = src.toLowerCase().includes(".png") || r.headers.get("content-type")?.includes("png") || false;
+    return { bytes: new Uint8Array(ab), isPng };
+  }
+
+  async function handleStampSign(record: AckRecord, mode: "stamp" | "signature" | "both") {
+    const sigUrl = user?.signatureUrl ?? null;
+    const company = (companies ?? []).find(c => c.id === (record.companyId ?? activeCompanyId));
+    const stampUrl = (company as any)?.stamp ?? null;
+
+    if (mode === "stamp" && !stampUrl) {
+      toast({ title: "No stamp configured", description: "Go to Admin → Companies and upload a company stamp.", variant: "destructive" });
+      return;
+    }
+    if (mode === "signature" && !sigUrl) {
+      toast({ title: "No signature uploaded", description: "Go to your Profile settings and upload a signature.", variant: "destructive" });
+      return;
+    }
+    if (mode === "both" && !sigUrl && !stampUrl) {
+      toast({ title: "Nothing to apply", description: "Upload a signature in Profile and a stamp in Admin → Companies.", variant: "destructive" });
+      return;
+    }
+
+    setStampingId(record.id);
+    try {
+      const pdfRes = await fetch(`${BASE}api/lpo-acknowledgments/${record.id}/file`, { headers: authHeaders() });
+      if (!pdfRes.ok) throw new Error("Could not fetch PDF");
+      const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer());
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const pages = pdfDoc.getPages();
+      const lastPage = pages[pages.length - 1];
+      const { width, height } = lastPage.getSize();
+      const margin = 36;
+      const imgH = 60;
+
+      if ((mode === "stamp" || mode === "both") && stampUrl) {
+        const { bytes, isPng } = await fetchImageBytes(stampUrl);
+        const img = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+        const scaled = img.scaleToFit(140, imgH);
+        lastPage.drawImage(img, {
+          x: width - margin - scaled.width,
+          y: margin,
+          width: scaled.width,
+          height: scaled.height,
+          opacity: 0.85,
+        });
+      }
+
+      if ((mode === "signature" || mode === "both") && sigUrl) {
+        const { bytes, isPng } = await fetchImageBytes(sigUrl);
+        const img = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+        const scaled = img.scaleToFit(120, imgH);
+        lastPage.drawImage(img, {
+          x: margin,
+          y: margin,
+          width: scaled.width,
+          height: scaled.height,
+          opacity: 0.85,
+        });
+      }
+
+      const stamped = await pdfDoc.save();
+      const blob = new Blob([stamped], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const suffix = mode === "both" ? "_stamped_signed" : mode === "stamp" ? "_stamped" : "_signed";
+      a.href = url;
+      a.download = record.fileName.replace(/\.pdf$/i, "") + suffix + ".pdf";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast({ title: "Done", description: "Stamped PDF downloaded successfully." });
+    } catch (e: any) {
+      toast({ title: "Failed to stamp PDF", description: e.message, variant: "destructive" });
+    } finally {
+      setStampingId(null);
     }
   }
 
@@ -417,20 +511,26 @@ export function LpoAcknowledgments() {
 
                 <Button
                   variant="outline"
-                  className="flex flex-col h-16 gap-1 border-purple-400/60 text-purple-700 hover:bg-purple-50"
-                  onClick={() => toast({ title: "Stamp", description: "Company stamp will be applied once configured in Admin → Companies." })}
+                  className="flex flex-col h-16 gap-1 border-purple-400/60 text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+                  disabled={stampingId === uploadedRecord.id}
+                  onClick={() => handleStampSign(uploadedRecord, "stamp")}
                 >
-                  <Stamp className="w-5 h-5" />
-                  <span className="text-xs font-medium">Stamp</span>
+                  {stampingId === uploadedRecord.id
+                    ? <Loader2 className="w-5 h-5 animate-spin" />
+                    : <Stamp className="w-5 h-5" />}
+                  <span className="text-xs font-medium">Download Stamped</span>
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="flex flex-col h-16 gap-1 border-orange-400/60 text-orange-700 hover:bg-orange-50"
-                  onClick={() => toast({ title: "Signature", description: "Your signature will be applied once uploaded in your Profile settings." })}
+                  className="flex flex-col h-16 gap-1 border-orange-400/60 text-orange-700 hover:bg-orange-50 disabled:opacity-60"
+                  disabled={stampingId === uploadedRecord.id}
+                  onClick={() => handleStampSign(uploadedRecord, "signature")}
                 >
-                  <PenLine className="w-5 h-5" />
-                  <span className="text-xs font-medium">Signature</span>
+                  {stampingId === uploadedRecord.id
+                    ? <Loader2 className="w-5 h-5 animate-spin" />
+                    : <PenLine className="w-5 h-5" />}
+                  <span className="text-xs font-medium">Download Signed</span>
                 </Button>
               </div>
 
