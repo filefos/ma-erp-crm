@@ -694,7 +694,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                     <img
                       src={data.stampUrl}
                       alt="Stamp"
-                      style={{ maxHeight: 100, maxWidth: 260, objectFit: "contain", opacity: 0.85, display: "block" }}
+                      style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block" }}
                     />
                   </div>
                 )}
