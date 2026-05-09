@@ -344,7 +344,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           /* Signature block pinned just above the footer in print */
           .print-sig-block {
             position: fixed;
-            bottom: 44px;
+            bottom: 15px;
             left: 0;
             right: 0;
             background: white;
