@@ -1,10 +1,11 @@
 import {
   useGetProformaInvoice, useGetQuotation,
   getGetProformaInvoiceQueryKey, getGetQuotationQueryKey,
-  useCreateTaxInvoice, useListCompanies,
+  useCreateTaxInvoice, useListCompanies, useUpdateProformaInvoice,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Receipt, Pencil, FileText, Mail, Loader2, Download } from "lucide-react";
@@ -33,6 +34,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { openCompose } = useEmailCompose();
+  const queryClient = useQueryClient();
   const [converting, setConverting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
@@ -46,6 +48,21 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const { data: quotation } = useGetQuotation(qid!, {
     query: { queryKey: getGetQuotationQueryKey(qid!), enabled: !!qid },
   });
+
+  const updatePi = useUpdateProformaInvoice({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetProformaInvoiceQueryKey(pid) });
+        toast({ title: "Status updated." });
+      },
+      onError: () => toast({ title: "Failed to update status.", variant: "destructive" }),
+    },
+  });
+
+  const handleStatusChange = (newStatus: string) => {
+    if (!pi) return;
+    updatePi.mutate({ id: pid, data: { companyId: pi.companyId, status: newStatus } as any });
+  };
 
   const createTax = useCreateTaxInvoice({
     mutation: {
@@ -201,7 +218,16 @@ export function ProformaInvoiceDetail({ id }: Props) {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/sales/proforma-invoices"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
-        <Badge className={`capitalize ${STATUS_COLORS[pi.status] ?? "bg-gray-100"}`}>{pi.status}</Badge>
+        <Select value={pi.status} onValueChange={handleStatusChange} disabled={updatePi.isPending}>
+          <SelectTrigger className={`h-7 w-32 text-xs font-medium capitalize border-0 ${STATUS_COLORS[pi.status] ?? "bg-gray-100 text-gray-700"}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+          </SelectContent>
+        </Select>
         {(pi as any)?.projectRef && (
           <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
             PROJECT ID: {(pi as any).projectRef}

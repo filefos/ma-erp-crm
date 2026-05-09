@@ -2,10 +2,11 @@ import {
   useGetTaxInvoice, useGetQuotation,
   getGetTaxInvoiceQueryKey, getGetQuotationQueryKey,
   useCreateDeliveryNote, useListCompanies,
-  useDeleteTaxInvoice, getListTaxInvoicesQueryKey,
+  useDeleteTaxInvoice, getListTaxInvoicesQueryKey, useUpdateTaxInvoice,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
@@ -54,6 +55,21 @@ export function InvoiceDetail({ id }: Props) {
       onError: () => toast({ title: "Failed to delete.", variant: "destructive" }),
     },
   });
+
+  const updateInv = useUpdateTaxInvoice({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetTaxInvoiceQueryKey(invId) });
+        toast({ title: "Payment status updated." });
+      },
+      onError: () => toast({ title: "Failed to update payment status.", variant: "destructive" }),
+    },
+  });
+
+  const handlePaymentStatusChange = (newStatus: string) => {
+    if (!inv) return;
+    updateInv.mutate({ id: invId, data: { companyId: inv.companyId, paymentStatus: newStatus } as any });
+  };
 
   const handleAutoJournal = async () => {
     if (creatingJournal) return;
@@ -206,9 +222,16 @@ export function InvoiceDetail({ id }: Props) {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/accounts/invoices"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
-        <Badge className={`capitalize ${PAYMENT_COLORS[inv.paymentStatus] ?? "bg-gray-100"}`}>
-          {inv.paymentStatus}
-        </Badge>
+        <Select value={inv.paymentStatus} onValueChange={handlePaymentStatusChange} disabled={updateInv.isPending}>
+          <SelectTrigger className={`h-7 w-32 text-xs font-medium capitalize border-0 ${PAYMENT_COLORS[inv.paymentStatus] ?? "bg-gray-100 text-gray-700"}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unpaid">Unpaid</SelectItem>
+            <SelectItem value="partial">Partial</SelectItem>
+            <SelectItem value="paid">Paid</SelectItem>
+          </SelectContent>
+        </Select>
         {(inv as any)?.projectRef && (
           <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
             PROJECT ID: {(inv as any).projectRef}
