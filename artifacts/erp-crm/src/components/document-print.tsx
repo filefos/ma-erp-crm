@@ -521,25 +521,31 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             {(isQuotation || data.type === "proforma" || isTax) && (
               <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
                 <tbody>
-                  {additionalItems.map((row, idx) => (
-                    <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#eaf0f8" : "#ffffff", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                      <td className="border border-gray-400 px-2 py-[2px] text-xs">{row.description}</td>
-                      <td
-                        className="border border-gray-400 px-2 py-[2px] text-xs text-center font-semibold whitespace-nowrap"
-                        style={{ width: 90 }}
-                      >
-                        <span className={row.status === "Included" ? "text-green-700" : "text-red-600"}>
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="border border-gray-400 px-2 py-[2px] text-xs text-right whitespace-nowrap" style={{ width: 100 }}>
-                        {row.status === "Included" && (row.price ?? 0) > 0 ? formatAED(row.price!) : ""}
-                      </td>
-                      <td className="border border-gray-400 px-2 py-[2px] text-xs text-right whitespace-nowrap" style={{ width: 80 }}>
-                        {row.status === "Included" ? (row.quantity ?? 1) : ""}
-                      </td>
-                    </tr>
-                  ))}
+                  {additionalItems.map((row, idx) => {
+                    const rowTotal = (row.price ?? 0) * (row.quantity ?? 1);
+                    return (
+                      <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#eaf0f8" : "#ffffff", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                        <td className="border border-gray-400 px-2 py-[2px] text-xs">{row.description}</td>
+                        <td
+                          className="border border-gray-400 px-2 py-[2px] text-xs text-center font-semibold whitespace-nowrap"
+                          style={{ width: 90 }}
+                        >
+                          <span className={row.status === "Included" ? "text-green-700" : "text-red-600"}>
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="border border-gray-400 px-2 py-[2px] text-xs text-right whitespace-nowrap" style={{ width: 100 }}>
+                          {row.status === "Included" && (row.price ?? 0) > 0 ? formatAED(row.price!) : ""}
+                        </td>
+                        <td className="border border-gray-400 px-2 py-[2px] text-xs text-right whitespace-nowrap" style={{ width: 80 }}>
+                          {row.status === "Included" ? (row.quantity ?? 1) : ""}
+                        </td>
+                        <td className="border border-gray-400 px-2 py-[2px] text-xs text-right font-semibold whitespace-nowrap" style={{ width: 110 }}>
+                          {row.status === "Included" && rowTotal > 0 ? formatAED(rowTotal) : ""}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
