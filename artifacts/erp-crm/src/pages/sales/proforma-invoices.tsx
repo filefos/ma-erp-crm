@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { useListProformaInvoices, useCreateProformaInvoice, useListCompanies } from "@workspace/api-client-react";
+import { useListProformaInvoices, useCreateProformaInvoice, useDeleteProformaInvoice, useListCompanies, getListProformaInvoicesQueryKey } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CompanyField } from "@/components/CompanyField";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Plus, Trash2 } from "lucide-react";
+import { Search, Plus, Trash2, Eye, Pencil } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { DelegateTaskButton } from "@/components/delegate-task-button";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<string, string> = {
   draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -38,9 +39,23 @@ export function ProformaInvoicesList() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [items, setItems] = useState<Item[]>([emptyItem()]);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
   const { data: invoices, isLoading } = useListProformaInvoices();
   const { data: companies } = useListCompanies();
+
+  const deleteMutation = useDeleteProformaInvoice({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListProformaInvoicesQueryKey() });
+        setDeleteId(null);
+        toast({ title: "Proforma Invoice deleted." });
+      },
+      onError: () => toast({ title: "Failed to delete.", variant: "destructive" }),
+    },
+  });
 
   const updateItem = (i: number, field: keyof Item, val: string | number) => {
     setItems(prev => {
@@ -261,16 +276,61 @@ export function ProformaInvoicesList() {
                 <TableCell>{inv.validityDate || "-"}</TableCell>
                 <TableCell><Badge variant="secondary" className={statusColors[inv.status] ?? ""}>{inv.status}</Badge></TableCell>
                 <TableCell>
-                  <DelegateTaskButton
-                    taskType="proforma_invoice"
-                    taskLabel={`Follow up Proforma ${inv.piNumber} — ${inv.clientName}`}
-                  />
+                  <div className="flex items-center gap-1 justify-end">
+                    <Button
+                      size="sm" variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => navigate(`/sales/proforma-invoices/${inv.id}`)}
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" />View
+                    </Button>
+                    <Button
+                      size="sm" variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => navigate(`/sales/proforma-invoices/${inv.id}/edit`)}
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1" />Edit
+                    </Button>
+                    <Button
+                      size="sm" variant="outline"
+                      className="h-7 px-2 text-xs text-destructive border-destructive/40 hover:bg-destructive hover:text-white"
+                      onClick={() => setDeleteId(inv.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" />Delete
+                    </Button>
+                    <DelegateTaskButton
+                      taskType="proforma_invoice"
+                      taskLabel={`Follow up Proforma ${inv.piNumber} — ${inv.clientName}`}
+                    />
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Confirmation */}
+      <Dialog open={deleteId !== null} onOpenChange={o => { if (!o) setDeleteId(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Proforma Invoice</DialogTitle>
+            <DialogDescription>
+              This will permanently delete the proforma invoice. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => { if (deleteId) deleteMutation.mutate({ id: deleteId }); }}
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

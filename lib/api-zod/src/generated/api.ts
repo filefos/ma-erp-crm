@@ -1816,6 +1816,13 @@ export const UpdateProformaInvoiceResponse = zod.object({
 });
 
 /**
+ * @summary Delete proforma invoice
+ */
+export const DeleteProformaInvoiceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary List tax invoices
  */
 export const ListTaxInvoicesQueryParams = zod.object({

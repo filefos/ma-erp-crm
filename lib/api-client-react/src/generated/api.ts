@@ -4305,6 +4305,90 @@ export const useUpdateProformaInvoice = <
 };
 
 /**
+ * @summary Delete proforma invoice
+ */
+export const getDeleteProformaInvoiceUrl = (id: number) => {
+  return `/api/proforma-invoices/${id}`;
+};
+
+export const deleteProformaInvoice = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteProformaInvoiceUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteProformaInvoiceMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProformaInvoice>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteProformaInvoice>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteProformaInvoice"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteProformaInvoice>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteProformaInvoice(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteProformaInvoiceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteProformaInvoice>>
+>;
+
+export type DeleteProformaInvoiceMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete proforma invoice
+ */
+export const useDeleteProformaInvoice = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteProformaInvoice>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteProformaInvoice>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteProformaInvoiceMutationOptions(options));
+};
+
+/**
  * @summary List tax invoices
  */
 export const getListTaxInvoicesUrl = (params?: ListTaxInvoicesParams) => {

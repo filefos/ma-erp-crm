@@ -1051,6 +1051,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProformaInvoice"
+    delete:
+      operationId: deleteProformaInvoice
+      tags: [proforma-invoices]
+      summary: Delete proforma invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
   # TAX INVOICES
   /tax-invoices:
