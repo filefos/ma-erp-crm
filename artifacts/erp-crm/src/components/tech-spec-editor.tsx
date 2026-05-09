@@ -39,20 +39,20 @@ export function TechSpecEditor({ sections, onChange }: Props) {
   };
 
   return (
-    <div className="border border-gray-300 rounded overflow-hidden text-xs">
+    <div className="border border-gray-300 rounded overflow-hidden text-sm">
       <table className="w-full border-collapse">
         <thead>
           <tr style={{ backgroundColor: "#0f2d5a" } as React.CSSProperties}>
-            <th className="border border-gray-500 px-1 py-2 text-white text-[11px] font-bold text-center" style={{ width: 90 }}>
+            <th className="border border-gray-500 px-1 py-2 text-white text-sm font-bold text-center" style={{ width: 100 }}>
               Section
             </th>
-            <th className="border border-gray-500 px-1 py-2 text-white text-[11px] font-bold text-center" style={{ width: 28 }}>
+            <th className="border border-gray-500 px-1 py-2 text-white text-sm font-bold text-center" style={{ width: 32 }}>
               Pt.
             </th>
-            <th className="border border-gray-500 px-2 py-2 text-white text-[11px] font-bold text-left">
+            <th className="border border-gray-500 px-2 py-2 text-white text-sm font-bold text-left">
               Description
             </th>
-            <th className="border border-gray-500 px-1 py-2 text-white text-[11px] font-bold text-center" style={{ width: 72 }}>
+            <th className="border border-gray-500 px-1 py-2 text-white text-sm font-bold text-center" style={{ width: 72 }}>
               Actions
             </th>
           </tr>
@@ -67,7 +67,7 @@ export function TechSpecEditor({ sections, onChange }: Props) {
                   style={{ backgroundColor: "#1e3a6e" } as React.CSSProperties}
                 >
                   <input
-                    className="w-full text-center text-white text-[10px] font-bold uppercase bg-transparent border-0 outline-none placeholder-white/40"
+                    className="w-full text-center text-white text-sm font-bold uppercase bg-transparent border-0 outline-none placeholder-white/40"
                     value={section.title}
                     placeholder="SECTION NAME"
                     onChange={e => updateTitle(si, e.target.value)}
@@ -81,11 +81,11 @@ export function TechSpecEditor({ sections, onChange }: Props) {
                 <td className="border border-gray-400 px-2 text-gray-400 italic">No points — add one</td>
                 <td className="border border-gray-400 p-1 text-center">
                   <div className="flex gap-0.5 justify-center">
-                    <Button type="button" size="sm" variant="ghost" className="h-5 w-5 p-0" onClick={() => addPoint(si)} title="Add point">
-                      <Plus className="w-3 h-3 text-blue-600" />
+                    <Button type="button" size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => addPoint(si)} title="Add point">
+                      <Plus className="w-3.5 h-3.5 text-blue-600" />
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" className="h-5 w-5 p-0" onClick={() => removeSection(si)} title="Delete section">
-                      <Trash2 className="w-3 h-3 text-red-500" />
+                    <Button type="button" size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => removeSection(si)} title="Delete section">
+                      <Trash2 className="w-3.5 h-3.5 text-red-500" />
                     </Button>
                   </div>
                 </td>
@@ -97,10 +97,10 @@ export function TechSpecEditor({ sections, onChange }: Props) {
                     <td
                       rowSpan={rowCount}
                       className="border border-gray-400 p-1 text-center align-middle"
-                      style={{ backgroundColor: "#1e3a6e", width: 90, verticalAlign: "middle" } as React.CSSProperties}
+                      style={{ backgroundColor: "#1e3a6e", width: 100, verticalAlign: "middle" } as React.CSSProperties}
                     >
                       <input
-                        className="w-full text-center text-white text-[10px] font-bold uppercase bg-transparent border-0 outline-none placeholder-white/40 leading-tight"
+                        className="w-full text-center text-white text-sm font-bold uppercase bg-transparent border-0 outline-none placeholder-white/40 leading-tight"
                         value={section.title}
                         placeholder="SECTION"
                         onChange={e => updateTitle(si, e.target.value)}
@@ -123,14 +123,14 @@ export function TechSpecEditor({ sections, onChange }: Props) {
                       </div>
                     </td>
                   )}
-                  <td className="border border-gray-400 px-1 py-1 text-center font-semibold text-gray-600 align-top">
+                  <td className="border border-gray-400 px-1 py-1 text-center font-semibold text-gray-600 align-top text-sm">
                     {String.fromCharCode(97 + pi)}
                   </td>
                   <td className="border border-gray-400 px-1 py-0.5 align-top">
                     <textarea
-                      className="w-full resize-none text-xs border-0 outline-none bg-transparent leading-snug py-0.5"
+                      className="w-full resize-none text-sm border-0 outline-none bg-transparent leading-snug py-0.5"
                       value={point}
-                      rows={Math.max(1, Math.ceil((point.length || 1) / 90))}
+                      rows={Math.max(1, Math.ceil((point.length || 1) / 80))}
                       placeholder={point === "" ? "(empty row — leave blank for print spacing)" : ""}
                       onChange={e => updatePoint(si, pi, e.target.value)}
                     />
@@ -140,11 +140,11 @@ export function TechSpecEditor({ sections, onChange }: Props) {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="h-5 w-5 p-0"
+                      className="h-6 w-6 p-0"
                       onClick={() => removePoint(si, pi)}
                       title="Remove this point"
                     >
-                      <Trash2 className="w-3 h-3 text-red-400" />
+                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
                     </Button>
                   </td>
                 </tr>
@@ -157,7 +157,7 @@ export function TechSpecEditor({ sections, onChange }: Props) {
         <Button type="button" size="sm" variant="outline" onClick={addSection}>
           <Plus className="w-3.5 h-3.5 mr-1" /> Add Section
         </Button>
-        <span className="text-[11px] text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           Blank point rows print as empty lines for handwritten additions.
         </span>
       </div>
