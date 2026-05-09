@@ -264,21 +264,21 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
           <div className="flex items-end justify-between">
             {/* LEFT: signature + stamp + "For & on behalf of [our company]" */}
             <div>
-              {doc.signatureUrl && (
-                <div data-html2canvas-ignore="true" style={{ marginBottom: 4 }}>
-                  <img
-                    src={doc.signatureUrl}
-                    alt="Signature"
-                    style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
-                  />
-                </div>
-              )}
               {doc.stampUrl && (
                 <div data-html2canvas-ignore="true" style={{ marginBottom: 4 }}>
                   <img
                     src={doc.stampUrl}
                     alt="Stamp"
                     style={{ maxHeight: 150, maxWidth: 150, objectFit: "contain", opacity: 0.85 }}
+                  />
+                </div>
+              )}
+              {doc.signatureUrl && (
+                <div data-html2canvas-ignore="true" style={{ marginBottom: 4 }}>
+                  <img
+                    src={doc.signatureUrl}
+                    alt="Signature"
+                    style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
                   />
                 </div>
               )}
