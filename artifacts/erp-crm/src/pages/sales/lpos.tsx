@@ -973,16 +973,29 @@ function LpoDetailView({
           <span>Updated: {new Date(lpo.updatedAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" })}</span>
         )}
       </div>
-      </div>{/* end lpo-detail-print */}
 
-      {/* Signature & Stamp Preview — only for users authorised to sign */}
-      {canSign && (
-        <SignatureStampPreview
-          signatureUrl={signatureUrl}
-          stampUrl={stampUrl}
-          stampWidthPct={stampWidthPct}
-        />
+      {/* Signature & Stamp — inside print area so they appear on document */}
+      {(signatureUrl || stampUrl) && (
+        <div className="grid grid-cols-2 gap-8 text-xs border-t border-gray-300 pt-3 mt-2">
+          <div>
+            <div className="font-semibold mb-0.5 text-[#0f2d5a]">Prepared by:</div>
+            {signatureUrl && (
+              <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "center" }}>
+                <img src={signatureUrl} alt="Signature" style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }} />
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="font-semibold mb-0.5 text-[#0f2d5a]">For &amp; on behalf of</div>
+            {stampUrl && (
+              <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                <img src={stampUrl} alt="Stamp" style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: "auto" }} />
+              </div>
+            )}
+          </div>
+        </div>
       )}
+      </div>{/* end lpo-detail-print */}
     </div>
   );
 }

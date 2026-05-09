@@ -12,6 +12,8 @@ export interface UndertakingLetterDoc {
   signedDate?: string | null;
   notes?: string | null;
   companyId: number;
+  signatureUrl?: string | null;
+  stampUrl?: string | null;
 }
 
 const COMPANIES: Record<number, {
@@ -245,10 +247,28 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
             <div>
               <div className="text-[10px] font-semibold">Prepared by:</div>
               <div className="text-[11px]">{doc.signedByName || co.contact}</div>
+              {doc.signatureUrl && (
+                <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "center" }}>
+                  <img
+                    src={doc.signatureUrl}
+                    alt="Signature"
+                    style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
+                  />
+                </div>
+              )}
             </div>
             <div className="text-right">
               <div className="text-[10px]">For &amp; on behalf of</div>
               <div className="text-[11px] font-black uppercase">{co.name}</div>
+              {doc.stampUrl && (
+                <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                  <img
+                    src={doc.stampUrl}
+                    alt="Stamp"
+                    style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: "auto" }}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

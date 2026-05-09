@@ -154,6 +154,8 @@ export function HandoverNoteDetail({ id }: Props) {
     clientRepresentative: (hon as any).clientRepresentative ?? null,
     notes: (hon as any).notes ?? null,
     companyId: (hon as any).companyId ?? 1,
+    signatureUrl: user?.signatureUrl ?? null,
+    stampUrl: companies?.find(c => c.id === ((hon as any).companyId ?? 1))?.stamp ?? null,
   };
 
   return (

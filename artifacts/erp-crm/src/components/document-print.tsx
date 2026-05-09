@@ -664,10 +664,28 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <div>
                 <div className="font-bold mb-0.5">Prepared by:</div>
                 <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+                {data.preparedBySignatureUrl && (
+                  <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "center" }}>
+                    <img
+                      src={data.preparedBySignatureUrl}
+                      alt="Signature"
+                      style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
+                    />
+                  </div>
+                )}
               </div>
               <div className="text-right">
                 <div className="font-bold mb-0.5">For &amp; on behalf of</div>
                 <div className="font-bold text-[13px]">{coName}</div>
+                {data.stampUrl && (
+                  <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                    <img
+                      src={data.stampUrl}
+                      alt="Stamp"
+                      style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: "auto" }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <PageFooter

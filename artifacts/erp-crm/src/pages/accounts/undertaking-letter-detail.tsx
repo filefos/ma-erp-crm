@@ -133,6 +133,8 @@ export function UndertakingLetterDetail({ id }: Props) {
     signedDate: (ul as any).signedDate ?? null,
     notes: (ul as any).notes ?? null,
     companyId: (ul as any).companyId ?? 1,
+    signatureUrl: user?.signatureUrl ?? null,
+    stampUrl: companies?.find(c => c.id === ((ul as any).companyId ?? 1))?.stamp ?? null,
   };
 
   return (
