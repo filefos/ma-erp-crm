@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Building2, Pencil, Globe, Phone, Mail, Receipt, Upload, X, Stamp } from "lucide-react";
+import { Building2, Pencil, Globe, Phone, Mail, Receipt, Upload, X, Stamp, FileText } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface FormState {
@@ -14,6 +14,74 @@ interface FormState {
   email: string; phone: string; website: string; address: string;
   vatPercent: number; logo: string; stamp: string;
   stampWidthPct: number; stampMarginPct: number;
+}
+
+// A4 aspect ratio preview that mirrors stampImagesOnSlice placement logic.
+// Stamp is bottom-centred at stampMarginPct% from the bottom, sized to
+// stampWidthPct% of the preview width and capped at 14% of preview height.
+function StampPlacementPreview({
+  stampUrl,
+  stampWidthPct,
+  stampMarginPct,
+}: {
+  stampUrl: string;
+  stampWidthPct: number;
+  stampMarginPct: number;
+}) {
+  const W = 168;
+  const H = Math.round(W * Math.SQRT2); // ≈ 238 px — A4 portrait ratio
+
+  const maxW = W * Math.max(5, Math.min(80, stampWidthPct)) / 100;
+  const maxH = H * 0.14;
+  const bottomMargin = H * Math.max(0, Math.min(30, stampMarginPct)) / 100;
+
+  return (
+    <div
+      className="relative border border-gray-200 bg-white rounded shadow-sm overflow-hidden flex-shrink-0"
+      style={{ width: W, height: H }}
+      title="Live stamp placement preview"
+    >
+      {/* Simulated document lines */}
+      <div className="absolute inset-x-3 top-3 space-y-[5px]">
+        {[100, 100, 75, 100, 100, 60, 100, 100, 80, 100, 55].map((w, i) => (
+          <div key={i} className="h-[5px] rounded bg-gray-100" style={{ width: `${w}%` }} />
+        ))}
+      </div>
+      {/* Page label */}
+      <div className="absolute top-1.5 right-2 flex items-center gap-0.5 text-[7px] text-gray-300 select-none">
+        <FileText className="w-2.5 h-2.5" />
+        A4
+      </div>
+
+      {/* Stamp placement zone */}
+      {stampUrl ? (
+        <img
+          src={stampUrl}
+          alt="Stamp position preview"
+          style={{
+            position: "absolute",
+            bottom: bottomMargin,
+            left: "50%",
+            transform: "translateX(-50%)",
+            maxWidth: maxW,
+            maxHeight: maxH,
+            objectFit: "contain",
+            opacity: 0.85,
+          }}
+        />
+      ) : (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center border border-dashed border-gray-300 rounded"
+          style={{ bottom: bottomMargin, width: maxW, height: maxH }}
+        >
+          <Stamp className="text-gray-300" style={{ width: maxH * 0.5, height: maxH * 0.5 }} />
+        </div>
+      )}
+
+      {/* Bottom edge indicator */}
+      <div className="absolute bottom-0 inset-x-0 h-px bg-gray-200" />
+    </div>
+  );
 }
 
 export function CompaniesAdmin() {
@@ -253,30 +321,74 @@ export function CompaniesAdmin() {
               </div>
             </div>
 
-            {/* Stamp placement */}
-            <div className="space-y-1">
-              <Label>Stamp width %</Label>
-              <Input
-                type="number"
-                min={5}
-                max={80}
-                step={1}
-                value={form.stampWidthPct}
-                onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampWidthPct: Number.isNaN(v) ? 30 : v })); }}
-              />
-              <p className="text-[11px] text-muted-foreground">Width of stamp relative to page width (default 30).</p>
-            </div>
-            <div className="space-y-1">
-              <Label>Stamp bottom margin %</Label>
-              <Input
-                type="number"
-                min={0}
-                max={30}
-                step={0.5}
-                value={form.stampMarginPct}
-                onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampMarginPct: Number.isNaN(v) ? 3 : v })); }}
-              />
-              <p className="text-[11px] text-muted-foreground">Gap from page bottom as % of page height (default 3).</p>
+            {/* Stamp placement controls + live preview */}
+            <div className="col-span-2 space-y-3">
+              <Label>Stamp Placement</Label>
+              <div className="flex gap-4 items-start">
+                {/* Controls */}
+                <div className="flex-1 space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-normal text-muted-foreground">Width %</Label>
+                      <span className="text-xs font-mono text-foreground">{form.stampWidthPct}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={5}
+                      max={80}
+                      step={1}
+                      value={form.stampWidthPct}
+                      onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampWidthPct: Number.isNaN(v) ? 30 : Math.min(80, Math.max(5, v)) })); }}
+                      className="w-full accent-[#1e6ab0]"
+                    />
+                    <Input
+                      type="number"
+                      min={5}
+                      max={80}
+                      step={1}
+                      value={form.stampWidthPct}
+                      onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampWidthPct: Number.isNaN(v) ? 30 : Math.min(80, Math.max(5, v)) })); }}
+                      className="h-7 text-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground">Width of stamp relative to page width (default 30, range 5–80).</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-normal text-muted-foreground">Bottom margin %</Label>
+                      <span className="text-xs font-mono text-foreground">{form.stampMarginPct}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={30}
+                      step={0.5}
+                      value={form.stampMarginPct}
+                      onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampMarginPct: Number.isNaN(v) ? 3 : Math.min(30, Math.max(0, v)) })); }}
+                      className="w-full accent-[#1e6ab0]"
+                    />
+                    <Input
+                      type="number"
+                      min={0}
+                      max={30}
+                      step={0.5}
+                      value={form.stampMarginPct}
+                      onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampMarginPct: Number.isNaN(v) ? 3 : Math.min(30, Math.max(0, v)) })); }}
+                      className="h-7 text-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground">Gap from page bottom as % of page height (default 3, range 0–30).</p>
+                  </div>
+                </div>
+
+                {/* Live A4 preview */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <StampPlacementPreview
+                    stampUrl={form.stamp}
+                    stampWidthPct={form.stampWidthPct}
+                    stampMarginPct={form.stampMarginPct}
+                  />
+                  <p className="text-[10px] text-muted-foreground">Live preview</p>
+                </div>
+              </div>
             </div>
           </div>
 
