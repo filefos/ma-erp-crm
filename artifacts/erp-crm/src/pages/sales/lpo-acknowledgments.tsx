@@ -71,6 +71,11 @@ export function LpoAcknowledgments() {
   const [stampingId, setStampingId] = useState<number | null>(null);
   const [previewStampOn, setPreviewStampOn] = useState(false);
   const [previewSigOn, setPreviewSigOn] = useState(false);
+  const [acPickOpen, setAcPickOpen] = useState(false);
+  const [acPickId, setAcPickId] = useState<number | null>(null);
+  const [acPreviewUrl, setAcPreviewUrl] = useState<string | null>(null);
+  const [acPreviewOpen, setAcPreviewOpen] = useState(false);
+  const [acGenerating, setAcGenerating] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -227,6 +232,25 @@ export function LpoAcknowledgments() {
     y -= 12;
     page.drawText(ourName, { x: c1, y, font: fReg, size: 8, color: grey });
     page.drawText(clientName, { x: c2, y, font: fReg, size: 8, color: grey });
+  }
+
+  async function generateStandaloneAckLetter(record: AckRecord) {
+    setAcGenerating(true);
+    try {
+      const pdfDoc = await PDFDocument.create();
+      await appendAckLetter(pdfDoc, record);
+      const bytes = await pdfDoc.save();
+      const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      if (acPreviewUrl) URL.revokeObjectURL(acPreviewUrl);
+      const url = URL.createObjectURL(blob);
+      setAcPreviewUrl(url);
+      setAcPickOpen(false);
+      setAcPreviewOpen(true);
+    } catch (e: any) {
+      toast({ title: "Failed to generate letter", description: e.message, variant: "destructive" });
+    } finally {
+      setAcGenerating(false);
+    }
   }
 
   async function handleStampSign(record: AckRecord, mode: "stamp" | "signature" | "both") {
@@ -488,6 +512,14 @@ export function LpoAcknowledgments() {
         </div>
         <div className="flex items-center gap-3">
           <HelpButton pageKey="lpo-acknowledgments" />
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-amber-500 text-amber-700 hover:bg-amber-50 font-semibold"
+            onClick={() => { setAcPickId(null); setAcPickOpen(true); }}
+          >
+            <FileText className="w-3.5 h-3.5 mr-1.5" /> AC LETTER
+          </Button>
           <Button
             className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
             onClick={() => { setForm({ ...EMPTY_FORM }); setFile(null); setUploadOpen(true); }}
@@ -974,6 +1006,105 @@ export function LpoAcknowledgments() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── AC LETTER: record picker ─── */}
+      <Dialog open={acPickOpen} onOpenChange={v => { setAcPickOpen(v); if (!v) setAcPickId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-amber-600" />
+              Generate Acknowledgement Letter
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide mb-2 block">Select acknowledgment record</Label>
+              <Select value={acPickId ? String(acPickId) : ""} onValueChange={v => setAcPickId(Number(v))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a record…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(records ?? []).map(r => (
+                    <SelectItem key={r.id} value={String(r.id)}>
+                      <span className="font-mono text-xs font-semibold text-blue-900 mr-2">{r.lpoNumber ?? "—"}</span>
+                      <span className="text-sm">{r.customerName}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {acPickId && (() => {
+              const r = (records ?? []).find(x => x.id === acPickId);
+              return r ? (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm space-y-1">
+                  <div><span className="text-muted-foreground text-xs uppercase tracking-wide">Client:</span> <strong>{r.customerName}</strong></div>
+                  {r.lpoNumber && <div><span className="text-muted-foreground text-xs uppercase tracking-wide">LPO No:</span> {r.lpoNumber}</div>}
+                  {r.quotationNumber && <div><span className="text-muted-foreground text-xs uppercase tracking-wide">Quotation No:</span> {r.quotationNumber}</div>}
+                </div>
+              ) : null;
+            })()}
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="outline" size="sm" onClick={() => setAcPickOpen(false)}>Cancel</Button>
+              <Button
+                size="sm"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+                disabled={!acPickId || acGenerating}
+                onClick={() => {
+                  const rec = (records ?? []).find(r => r.id === acPickId);
+                  if (rec) generateStandaloneAckLetter(rec);
+                }}
+              >
+                {acGenerating
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Generating…</>
+                  : <><FileText className="w-3.5 h-3.5 mr-1.5" />Open Letter</>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── AC LETTER: PDF preview ─── */}
+      <Dialog
+        open={acPreviewOpen}
+        onOpenChange={v => {
+          setAcPreviewOpen(v);
+          if (!v && acPreviewUrl) { URL.revokeObjectURL(acPreviewUrl); setAcPreviewUrl(null); }
+        }}
+      >
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col gap-0 p-0">
+          <DialogHeader className="px-5 pt-4 pb-3 border-b shrink-0">
+            <div className="flex items-center justify-between pr-6">
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-600" />
+                Acknowledgement Letter
+              </DialogTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-green-700 border-green-300 hover:bg-green-50"
+                onClick={() => {
+                  if (!acPreviewUrl) return;
+                  const a = document.createElement("a");
+                  a.href = acPreviewUrl;
+                  a.download = "acknowledgement_letter.pdf";
+                  a.click();
+                }}
+              >
+                <Download className="w-3.5 h-3.5 mr-1.5" />Download
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            {acPreviewUrl && (
+              <iframe
+                src={acPreviewUrl}
+                className="w-full h-full border-0"
+                title="Acknowledgement Letter Preview"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
