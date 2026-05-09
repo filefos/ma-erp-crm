@@ -115,6 +115,33 @@ export function InvoiceDetail({ id }: Props) {
   })();
   const sourceItems = invItemsRaw.length > 0 ? invItemsRaw : qItems;
 
+  // Inherit additional commercial items from the quotation, scaled to the
+  // installment fraction — same logic as proforma-invoice-detail.
+  // e.g. 70% Tax Invoice: fraction = inv.subtotal / (q.subtotal + qAdditional)
+  //                      = 20,930 / 29,900 = 0.70
+  //   → Transportation 2,100, AC Unit 1,540 shown between BAR 1 and BAR 2
+  let additionalItems: import("@/components/document-print").AdditionalCommercialItem[] | undefined;
+  try {
+    const raw = (quotation as any)?.additionalItems;
+    if (raw) additionalItems = JSON.parse(raw);
+  } catch { /* fall back to document-print defaults */ }
+
+  const qSubtotal = (quotation as any)?.subtotal as number | undefined ?? 0;
+  const qAdditionalIncluded = (additionalItems ?? []).reduce(
+    (s, ai) => s + (ai.status === "Included" ? ((ai.price ?? 0) * (ai.quantity ?? 1)) : 0), 0
+  );
+  const qCombinedBase = qSubtotal + qAdditionalIncluded;
+  const invSubtotal = inv.subtotal ?? 0;
+  const fraction = qCombinedBase > 0 ? invSubtotal / qCombinedBase : 1;
+  const isInstallment = fraction < 0.9999 && qCombinedBase > 0;
+
+  // Project-items-only portion for BAR 1 of the tax invoice
+  const docSubtotal = isInstallment ? +(qSubtotal * fraction).toFixed(2) : invSubtotal;
+  // Scale additional item prices to the installment percentage
+  const docAdditionalItems = isInstallment && additionalItems
+    ? additionalItems.map(ai => ({ ...ai, price: +((ai.price ?? 0) * fraction).toFixed(2) }))
+    : additionalItems;
+
   const docData: DocumentData = {
     type: "tax_invoice",
     docNumber: inv.invoiceNumber,
@@ -126,12 +153,13 @@ export function InvoiceDetail({ id }: Props) {
     projectRef: (inv as any).projectRef ?? undefined,
     invoiceDate: inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
     supplyDate: inv.supplyDate ? new Date(inv.supplyDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
-    subtotal: inv.subtotal,
+    subtotal: docSubtotal,
     vatPercent: inv.vatPercent ?? 5,
     vatAmount: inv.vatAmount,
     grandTotal: inv.grandTotal,
     paymentTerms: (inv as any).paymentTerms ?? undefined,
     notes: (inv as any).notes ?? undefined,
+    additionalItems: docAdditionalItems,
     items: sourceItems.map((i: any) => ({
       description: i.description,
       sizeStatus: i.unit ?? i.sizeStatus,

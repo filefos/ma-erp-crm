@@ -517,7 +517,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </table>
 
             {/* ── ADDITIONAL COMMERCIAL ITEMS ─────────────────────────────── */}
-            {(isQuotation || data.type === "proforma") && (
+            {(isQuotation || data.type === "proforma" || isTax) && (
               <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
                 <tbody>
                   {additionalItems.map((row, idx) => (
