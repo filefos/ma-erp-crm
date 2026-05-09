@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
-import { extractLpoFields } from "@/lib/ai-client";
+import { extractLpoFields, authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 
@@ -773,6 +773,28 @@ function LpoDetailView({
   const atts: AttachmentMeta[] = lpo.attachments ?? [];
   const BASE_URL = import.meta.env.BASE_URL;
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [downloadingAtt, setDownloadingAtt] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  async function authedFetch(url: string): Promise<string> {
+    const r = await fetch(url, { headers: authHeaders() });
+    if (!r.ok) throw new Error(`Failed to fetch file: ${r.status}`);
+    const blob = await r.blob();
+    return URL.createObjectURL(blob);
+  }
+
+  async function downloadAuthed(url: string, filename: string) {
+    try {
+      const objectUrl = await authedFetch(url);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+    } catch {
+      toast({ title: "Download failed", variant: "destructive" });
+    }
+  }
 
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true);
@@ -901,21 +923,39 @@ function LpoDetailView({
         ) : (
           <div className="flex flex-wrap gap-2 pl-6">
             {atts.map((att, i) => (
-              <a
+              <button
                 key={i}
-                href={att.content
-                  ? `data:${att.contentType};base64,${att.content}`
-                  : `${BASE_URL}api/lpos/${lpo.id}/attachments/${i}`}
-                download={att.filename}
-                className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-blue-50 hover:border-[#1e6ab0] transition-colors group"
+                type="button"
+                disabled={downloadingAtt === i}
+                onClick={async () => {
+                  if (att.content) {
+                    const a = document.createElement("a");
+                    a.href = `data:${att.contentType};base64,${att.content}`;
+                    a.download = att.filename;
+                    a.click();
+                  } else {
+                    setDownloadingAtt(i);
+                    try {
+                      await downloadAuthed(
+                        `${BASE_URL}api/lpos/${lpo.id}/attachments/${i}`,
+                        att.filename,
+                      );
+                    } finally {
+                      setDownloadingAtt(null);
+                    }
+                  }
+                }}
+                className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-blue-50 hover:border-[#1e6ab0] transition-colors group disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <FileIcon className="w-4 h-4 text-[#1e6ab0] flex-shrink-0" />
                 <div className="min-w-0">
                   <div className="text-xs font-medium text-gray-800 truncate max-w-[150px] group-hover:text-[#1e6ab0]">{att.filename}</div>
                   <div className="text-[10px] text-gray-400">{formatBytes(att.size ?? 0)}</div>
                 </div>
-                <Download className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#1e6ab0] ml-1 flex-shrink-0" />
-              </a>
+                {downloadingAtt === i
+                  ? <Loader2Icon className="w-3.5 h-3.5 text-[#1e6ab0] ml-1 flex-shrink-0 animate-spin" />
+                  : <Download className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#1e6ab0] ml-1 flex-shrink-0" />}
+              </button>
             ))}
           </div>
         )}

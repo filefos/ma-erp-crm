@@ -44,7 +44,39 @@ export function DeliveryNoteDetail({ id }: Props) {
   const queryClient = useQueryClient();
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [downloadingAtt, setDownloadingAtt] = useState<string | null>(null);
   const signedInputRef = useRef<HTMLInputElement>(null);
+
+  async function authedFetch(url: string): Promise<string> {
+    const r = await fetch(url, { headers: authHeaders() });
+    if (!r.ok) throw new Error(`Failed to fetch file: ${r.status}`);
+    const blob = await r.blob();
+    return URL.createObjectURL(blob);
+  }
+
+  async function downloadAuthed(content: string | undefined, contentType: string, filename: string, apiUrl?: string) {
+    if (content) {
+      const a = document.createElement("a");
+      a.href = `data:${contentType};base64,${content}`;
+      a.download = filename;
+      a.click();
+      return;
+    }
+    if (!apiUrl) {
+      toast({ title: "File content unavailable", variant: "destructive" });
+      return;
+    }
+    try {
+      const objectUrl = await authedFetch(apiUrl);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+    } catch {
+      toast({ title: "Download failed", variant: "destructive" });
+    }
+  }
 
   const { data: dn, isLoading } = useGetDeliveryNote(dnId, {
     query: { queryKey: getGetDeliveryNoteQueryKey(dnId), enabled: !!dnId },
@@ -259,7 +291,11 @@ export function DeliveryNoteDetail({ id }: Props) {
           </div>
         ) : (
           <div className="space-y-2">
-            {signedAtts.map((att: any, i: number) => (
+            {signedAtts.map((att: any, i: number) => {
+              const globalIdx = allAttachments.indexOf(att);
+              const attKey = `signed-${i}`;
+              const apiUrl = `${BASE}api/delivery-notes/${dnId}/attachments/${globalIdx}`;
+              return (
               <div key={i} className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
                 <FileCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -270,13 +306,24 @@ export function DeliveryNoteDetail({ id }: Props) {
                     {att.uploadedBy && ` by ${att.uploadedBy}`}
                   </div>
                 </div>
-                <a
-                  href={`data:${att.contentType};base64,${att.content}`}
-                  download={att.filename}
-                  className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 border border-emerald-300 rounded-md px-2 py-1 hover:bg-emerald-100 transition-colors"
+                <button
+                  type="button"
+                  disabled={downloadingAtt === attKey}
+                  onClick={async () => {
+                    setDownloadingAtt(attKey);
+                    try {
+                      await downloadAuthed(att.content, att.contentType, att.filename, apiUrl);
+                    } finally {
+                      setDownloadingAtt(null);
+                    }
+                  }}
+                  className="flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 border border-emerald-300 rounded-md px-2 py-1 hover:bg-emerald-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Download className="w-3.5 h-3.5" />Download
-                </a>
+                  {downloadingAtt === attKey
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <Download className="w-3.5 h-3.5" />}
+                  Download
+                </button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -288,7 +335,8 @@ export function DeliveryNoteDetail({ id }: Props) {
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
 
@@ -300,18 +348,33 @@ export function DeliveryNoteDetail({ id }: Props) {
               <span>Other attachments ({otherAtts.length})</span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {otherAtts.map((att: any, i: number) => (
-                <a
+              {otherAtts.map((att: any, i: number) => {
+                const globalIdx = allAttachments.indexOf(att);
+                const attKey = `other-${i}`;
+                const apiUrl = `${BASE}api/delivery-notes/${dnId}/attachments/${globalIdx}`;
+                return (
+                <button
                   key={i}
-                  href={`data:${att.contentType};base64,${att.content}`}
-                  download={att.filename}
-                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-blue-50 hover:border-[#1e6ab0] transition-colors text-xs"
+                  type="button"
+                  disabled={downloadingAtt === attKey}
+                  onClick={async () => {
+                    setDownloadingAtt(attKey);
+                    try {
+                      await downloadAuthed(att.content, att.contentType, att.filename, apiUrl);
+                    } finally {
+                      setDownloadingAtt(null);
+                    }
+                  }}
+                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-blue-50 hover:border-[#1e6ab0] transition-colors text-xs disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Download className="w-3.5 h-3.5 text-[#1e6ab0]" />
+                  {downloadingAtt === attKey
+                    ? <Loader2 className="w-3.5 h-3.5 text-[#1e6ab0] animate-spin" />
+                    : <Download className="w-3.5 h-3.5 text-[#1e6ab0]" />}
                   <span className="truncate max-w-[140px]">{att.filename}</span>
                   <span className="text-muted-foreground">{formatBytes(att.size ?? 0)}</span>
-                </a>
-              ))}
+                </button>
+                );
+              })}
             </div>
           </div>
         )}

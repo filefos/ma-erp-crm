@@ -328,6 +328,27 @@ router.get("/delivery-notes/:id", requirePermission("delivery_notes", "view"), a
   res.json({ ...dn, items });
 });
 
+router.get("/delivery-notes/:id/attachments/:idx", requirePermission("delivery_notes", "view"), async (req, res): Promise<void> => {
+  const id = parseInt(String(req.params.id), 10);
+  const idx = parseInt(String(req.params.idx), 10);
+  const [dn] = await db.select().from(deliveryNotesTable).where(eq(deliveryNotesTable.id, id));
+  if (!dn) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [dn]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  const ownerScope = await getOwnerScope(req);
+  if (!inOwnerScope(ownerScope, dn.createdById)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const atts = (() => {
+    try { return JSON.parse((dn as any).attachments ?? "[]"); } catch { return (dn as any).attachments ?? []; }
+  })() as Array<{ filename: string; contentType: string; size: number; content?: string }>;
+  const att = atts[idx];
+  if (!att) { res.status(404).json({ error: "Attachment not found" }); return; }
+  if (!att.content) { res.status(404).json({ error: "Attachment content not stored" }); return; }
+  const buf = Buffer.from(att.content, "base64");
+  res.setHeader("Content-Type", att.contentType || "application/octet-stream");
+  res.setHeader("Content-Disposition", `attachment; filename="${att.filename}"`);
+  res.setHeader("Content-Length", buf.length);
+  res.send(buf);
+});
+
 router.put("/delivery-notes/:id", requirePermission("delivery_notes", "edit"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
   const [existing] = await db.select().from(deliveryNotesTable).where(eq(deliveryNotesTable.id, id));
