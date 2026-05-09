@@ -15,10 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer, Mail, ChevronDown, Sheet } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer, Mail, ChevronDown, Sheet, MessageCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
@@ -82,6 +83,10 @@ export function LpoAcknowledgments() {
   const [acPdfGenerating, setAcPdfGenerating] = useState(false);
   const [acStampOn, setAcStampOn] = useState(false);
   const [acSigOn, setAcSigOn] = useState(false);
+  const [acWaOpen, setAcWaOpen] = useState(false);
+  const [acWaPhone, setAcWaPhone] = useState("");
+  const [acWaMessage, setAcWaMessage] = useState("");
+  const [acWaSending, setAcWaSending] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -261,6 +266,52 @@ export function LpoAcknowledgments() {
       toast({ title: "PDF generation failed", variant: "destructive" });
     } finally {
       setAcPdfGenerating(false);
+    }
+  }
+
+  async function handleAcWhatsAppSend() {
+    const digits = acWaPhone.replace(/[^0-9]/g, "");
+    if (!digits) {
+      toast({ title: "Phone number required", description: "Enter the recipient's WhatsApp number with country code.", variant: "destructive" });
+      return;
+    }
+    if (!acLetterRef.current || !acLetterRecord) return;
+    setAcWaSending(true);
+    try {
+      toast({ title: "Preparing PDF…", description: "Building Acknowledgement Letter" });
+      const filename = `Acknowledgement_Letter_${acLetterRecord.lpoNumber ?? acLetterRecord.id}.pdf`;
+      const { base64 } = await captureElementToPdfBase64(acLetterRef.current, filename);
+      const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const file = new File([bytes], filename, { type: "application/pdf" });
+
+      // Mobile: Web Share API with PDF attached
+      const shareData: ShareData = { files: [file], title: filename, text: acWaMessage };
+      const canShare = typeof navigator !== "undefined" && typeof navigator.canShare === "function" && navigator.canShare(shareData);
+      if (canShare && typeof navigator.share === "function") {
+        try {
+          await navigator.share(shareData);
+          toast({ title: "Shared ✓", description: `Pick WhatsApp from the share sheet to send to +${digits}.` });
+          setAcWaOpen(false);
+          return;
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+        }
+      }
+
+      // Desktop fallback: download PDF + open wa.me
+      const url = URL.createObjectURL(file);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      window.open(`https://wa.me/${digits}?text=${encodeURIComponent(acWaMessage)}`, "_blank", "noopener,noreferrer");
+      toast({ title: "WhatsApp opened ✓", description: `PDF saved as ${filename} — drag it into the WhatsApp chat.` });
+      setAcWaOpen(false);
+    } catch (err) {
+      toast({ title: "Send failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+    } finally {
+      setAcWaSending(false);
     }
   }
 
@@ -1159,6 +1210,19 @@ export function LpoAcknowledgments() {
                 <Mail className="w-3.5 h-3.5 mr-1.5" />Send Email
               </Button>
 
+              {/* WhatsApp button */}
+              <Button size="sm"
+                className="bg-[#25D366] hover:bg-[#1ea952] text-white border-0"
+                onClick={() => {
+                  if (!acLetterRecord) return;
+                  const lpoNo = acLetterRecord.lpoNumber ?? "";
+                  setAcWaPhone("");
+                  setAcWaMessage(`Dear Sir/Madam,\n\nPlease find attached our Acknowledgement Letter${lpoNo ? ` for LPO No. ${lpoNo}` : ""}.\n\nKindly review and confirm receipt.\n\nBest regards.`);
+                  setAcWaOpen(true);
+                }}>
+                <MessageCircle className="w-3.5 h-3.5 mr-1.5" />WhatsApp
+              </Button>
+
               <Button size="sm" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50"
                 onClick={() => {
                   const el = acLetterRef.current;
@@ -1425,6 +1489,57 @@ export function LpoAcknowledgments() {
               );
             })()}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── AC Letter WhatsApp dialog ── */}
+      <Dialog open={acWaOpen} onOpenChange={o => { if (!acWaSending) setAcWaOpen(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#0f2d5a]">
+              <MessageCircle className="w-5 h-5 text-[#25D366]" />
+              Send Acknowledgement Letter via WhatsApp
+            </DialogTitle>
+            <DialogDescription>
+              The PDF will be downloaded and WhatsApp will open with the recipient and message ready. Attach the downloaded PDF in the WhatsApp chat and tap Send.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1">
+              <Label htmlFor="ac-wa-phone">WhatsApp Number *</Label>
+              <Input
+                id="ac-wa-phone"
+                value={acWaPhone}
+                onChange={e => setAcWaPhone(e.target.value)}
+                placeholder="971501234567"
+                inputMode="tel"
+                autoFocus
+                disabled={acWaSending}
+              />
+              <p className="text-[11px] text-gray-500">Country code required. Spaces and symbols are ignored.</p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="ac-wa-message">Pre-filled message</Label>
+              <Textarea
+                id="ac-wa-message"
+                value={acWaMessage}
+                onChange={e => setAcWaMessage(e.target.value)}
+                rows={5}
+                disabled={acWaSending}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => void handleAcWhatsAppSend()}
+              disabled={acWaSending || !acWaPhone.replace(/[^0-9]/g, "")}
+              className="bg-[#25D366] hover:bg-[#1ea952] text-white w-full sm:w-auto"
+            >
+              {acWaSending
+                ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing…</>
+                : <><MessageCircle className="w-4 h-4 mr-1" />Download PDF & Open WhatsApp</>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
