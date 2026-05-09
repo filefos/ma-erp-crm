@@ -1228,115 +1228,139 @@ export function LpoAcknowledgments() {
           </div>
 
           {/* ── Document area ── */}
-          <div className="flex-1 overflow-y-auto bg-[#e5e7eb] p-8">
+          <div className="flex-1 overflow-y-auto bg-[#e5e7eb] p-6">
             {acLetterRecord && (() => {
-              const co = (companies ?? []).find(c => c.id === (acLetterRecord.companyId ?? activeCompanyId)) as any;
-              const ourName  = co?.name || "Our Company";
-              const clientName = acLetterRecord.customerName || "Client";
+              const companyId = acLetterRecord.companyId ?? activeCompanyId ?? 1;
+              // Hardcoded company info matching document-print.tsx exactly
+              const CO_INFO: Record<number, { name: string; address: string; phone: string; email: string; contact: string; website?: string }> = {
+                1: { name: "PRIME MAX PREFAB HOUSES IND. LLC. SP.", address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE", phone: "056 616 3555", email: "sales@primemaxprefab.com", contact: "ASIF LATIF", website: "www.primemaxprefab.com" },
+                2: { name: "ELITE PREFAB INDUSTRIES LLC", address: "Industrial Area, Dubai, UAE", phone: "+971 55 100 2000", email: "info@eliteprefab.ae", contact: "Sales Team" },
+              };
+              const co = CO_INFO[companyId] ?? CO_INFO[1];
+              const logoSrc = companyId === 2 ? `${BASE}elite-prefab-logo.svg` : `${BASE}prime-max-logo.png`;
+
+              // Pull client contact fields from the linked quotation
+              const linkedQt = (quotations ?? []).find((q: any) =>
+                acLetterRecord.quotationNumber && q.quotationNumber === acLetterRecord.quotationNumber
+              ) as any;
+              const clientName      = linkedQt?.clientName ?? acLetterRecord.customerName ?? "Client";
+              const clientContact   = linkedQt?.clientContactPerson ?? "—";
+              const clientPhone     = linkedQt?.clientPhone ?? "—";
+              const clientEmail     = linkedQt?.clientEmail ?? "—";
+
               const lpoRef = acLetterRecord.lpoNumber ? `LPO No. ${acLetterRecord.lpoNumber}` : "the above-referenced LPO";
               const qtRef  = acLetterRecord.quotationNumber ? ` (Quotation No. ${acLetterRecord.quotationNumber})` : "";
               const today  = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
-              const paras  = [
+
+              const paras = [
                 `We are pleased to acknowledge receipt of your Local Purchase Order ${lpoRef} and confirm our formal acceptance of the order as detailed therein.`,
-                `${ourName} hereby accepts the terms and conditions set forth in the above LPO and commits to fulfilling the supply of goods and/or services as specified, in accordance with the agreed delivery schedule, payment terms, and quality standards${qtRef}.`,
-                `${clientName}, by issuing the above LPO, acknowledges and agrees to the terms and conditions of ${ourName}, including the pricing, scope of work, payment terms, and delivery timelines as confirmed in the referenced quotation and the LPO.`,
-                `Both parties mutually agree that this acknowledgement serves as a binding confirmation of the transaction, and both ${ourName} and ${clientName} are committed to fulfilling their respective obligations as outlined in the referenced documents.`,
+                `${co.name} hereby accepts the terms and conditions set forth in the above LPO and commits to fulfilling the supply of goods and/or services as specified, in accordance with the agreed delivery schedule, payment terms, and quality standards${qtRef}.`,
+                `${clientName}, by issuing the above LPO, acknowledges and agrees to the terms and conditions of ${co.name}, including the pricing, scope of work, payment terms, and delivery timelines as confirmed in the referenced quotation and the LPO.`,
+                `Both parties mutually agree that this acknowledgement serves as a binding confirmation of the transaction, and both ${co.name} and ${clientName} are committed to fulfilling their respective obligations as outlined in the referenced documents.`,
                 `We look forward to a successful business relationship and the timely execution of this order. Should you require any further clarification, please do not hesitate to contact us.`,
               ];
+
+              // Shared inline print styles for table cells
+              const navyHdr: React.CSSProperties = { backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact" as any, printColorAdjust: "exact" as any };
+              const labelCell: React.CSSProperties = { backgroundColor: "#1e3a6e", WebkitPrintColorAdjust: "exact" as any, printColorAdjust: "exact" as any, color: "#fff", fontWeight: 600, fontSize: 11, padding: "2px 8px", width: "38%", whiteSpace: "nowrap" as const };
+              const valCell: React.CSSProperties  = { border: "1px solid #9ca3af", fontSize: 11, padding: "2px 8px" };
+
               return (
                 <div
                   ref={acLetterRef}
-                  className="bg-white mx-auto shadow-2xl"
-                  style={{ maxWidth: 794, minHeight: 1123, padding: "48px 60px", fontFamily: "Helvetica, Arial, sans-serif" }}
+                  className="bg-white mx-auto shadow-2xl font-sans text-black"
+                  style={{ maxWidth: 850, minHeight: 1123 }}
                 >
-                  {/* ══ LETTERHEAD ══ */}
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 0 }}>
-                    {/* Logo left */}
-                    <div style={{ flexShrink: 0 }}>
-                      {co?.logo
-                        ? <img src={co.logo} alt="Logo" style={{ maxHeight: 80, maxWidth: 180, objectFit: "contain" }} />
-                        : <div style={{ width: 100, height: 60, background: "#0f2d5a", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ color: "#fff", fontWeight: 700, fontSize: 11, textAlign: "center", padding: "0 6px" }}>{ourName}</span>
-                          </div>
-                      }
+                  {/* ══ LETTERHEAD — exact match to document-print.tsx ══ */}
+                  <div className="overflow-hidden mb-[2px]">
+                    <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <img src={logoSrc} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
+                      <div className="leading-tight flex-1">
+                        <div className="text-[22px] font-black tracking-wider uppercase leading-none">{co.name}</div>
+                        <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
+                        <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+                      </div>
                     </div>
-                    {/* Company details right */}
-                    <div style={{ textAlign: "right", maxWidth: 280 }}>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "#0f2d5a", letterSpacing: 0.2, textTransform: "uppercase" }}>{ourName}</div>
-                      {co?.address  && <div style={{ fontSize: 9.5, color: "#444", marginTop: 5, lineHeight: 1.5 }}>{co.address}</div>}
-                      {co?.phone    && <div style={{ fontSize: 9.5, color: "#444" }}>Tel: {co.phone}</div>}
-                      {co?.email    && <div style={{ fontSize: 9.5, color: "#444" }}>{co.email}</div>}
-                      {co?.website  && <div style={{ fontSize: 9.5, color: "#0f2d5a" }}>{co.website}</div>}
-                      {co?.trn      && <div style={{ fontSize: 9.5, color: "#444", marginTop: 3 }}>TRN: {co.trn}</div>}
+                    <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <span className="text-[15px] font-black tracking-widest uppercase">ACKNOWLEDGEMENT OF LOCAL PURCHASE ORDER</span>
                     </div>
                   </div>
 
-                  {/* Navy divider */}
-                  <div style={{ borderTop: "3px solid #0f2d5a", margin: "14px 0 0" }} />
-                  <div style={{ borderTop: "1px solid #b0bec5", marginBottom: 20 }} />
+                  {/* ══ COMPANY DETAIL + CLIENT DETAIL — two-column tables ══ */}
+                  <div className="flex gap-[2px] mb-[2px]">
+                    {/* Company Detail (left) */}
+                    <table className="flex-1 border-collapse border border-gray-400" style={{ fontSize: 11 }}>
+                      <thead>
+                        <tr>
+                          <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={navyHdr}>Company Detail</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td style={labelCell}>Company</td><td style={valCell}>{co.name}</td></tr>
+                        <tr><td style={labelCell}>Contact Person</td><td style={valCell}>{co.contact}</td></tr>
+                        <tr><td style={labelCell}>Contact #</td><td style={valCell}>{co.phone}</td></tr>
+                        <tr><td style={labelCell}>Email</td><td style={valCell}>{co.email}</td></tr>
+                        <tr><td style={labelCell}>LPO No.</td><td style={{ ...valCell, fontWeight: 700, fontFamily: "monospace" }}>{acLetterRecord.lpoNumber ?? "—"}</td></tr>
+                        <tr><td style={labelCell}>Quotation Ref.</td><td style={valCell}>{acLetterRecord.quotationNumber ?? "—"}</td></tr>
+                        <tr><td style={labelCell}>Date</td><td style={valCell}>{today}</td></tr>
+                      </tbody>
+                    </table>
 
-                  {/* ══ FROM / TO two-column block ══ */}
-                  <div style={{ display: "flex", gap: 24, marginBottom: 22 }}>
-                    {/* FROM — our company */}
-                    <div style={{ flex: 1, padding: "12px 14px", background: "#f0f4fa", borderLeft: "3px solid #0f2d5a", borderRadius: "0 4px 4px 0" }}>
-                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "#0f2d5a", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>From</div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a" }}>{ourName}</div>
-                      {co?.address && <div style={{ fontSize: 9.5, color: "#555", marginTop: 3, lineHeight: 1.5 }}>{co.address}</div>}
-                      {co?.phone   && <div style={{ fontSize: 9.5, color: "#555" }}>Tel: {co.phone}</div>}
-                      {co?.email   && <div style={{ fontSize: 9.5, color: "#555" }}>{co.email}</div>}
-                      {co?.trn     && <div style={{ fontSize: 9.5, color: "#555", marginTop: 2 }}>TRN: {co.trn}</div>}
-                    </div>
+                    {/* Client DETAIL (right) */}
+                    <table className="flex-1 border-collapse border border-gray-400" style={{ fontSize: 11 }}>
+                      <thead>
+                        <tr>
+                          <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={navyHdr}>Client DETAIL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td style={labelCell}>Company</td><td style={valCell}>{clientName}</td></tr>
+                        <tr><td style={labelCell}>Contact Person</td><td style={valCell}>{clientContact !== "—" ? clientContact : ""}</td></tr>
+                        <tr><td style={labelCell}>Contact #</td><td style={valCell}>{clientPhone !== "—" ? clientPhone : ""}</td></tr>
+                        <tr><td style={labelCell}>Email</td><td style={valCell}>{clientEmail !== "—" ? clientEmail : ""}</td></tr>
+                        <tr><td style={labelCell}>LPO No.</td><td style={{ ...valCell, fontWeight: 700, fontFamily: "monospace" }}>{acLetterRecord.lpoNumber ?? "—"}</td></tr>
+                        <tr><td style={labelCell}>Quotation Ref.</td><td style={valCell}>{acLetterRecord.quotationNumber ?? "—"}</td></tr>
+                        <tr><td style={labelCell}>Date</td><td style={valCell}>{today}</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
 
-                    {/* TO — client */}
-                    <div style={{ flex: 1, padding: "12px 14px", background: "#fff8f0", borderLeft: "3px solid #b45309", borderRadius: "0 4px 4px 0" }}>
-                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>To</div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#111" }}>{clientName}</div>
-                      {acLetterRecord.lpoNumber && (
-                        <div style={{ fontSize: 9.5, color: "#555", marginTop: 3 }}>LPO Reference: <strong>{acLetterRecord.lpoNumber}</strong></div>
-                      )}
-                      {acLetterRecord.quotationNumber && (
-                        <div style={{ fontSize: 9.5, color: "#555" }}>Quotation No: {acLetterRecord.quotationNumber}</div>
-                      )}
-                      <div style={{ fontSize: 9.5, color: "#555", marginTop: 3 }}>Date: {today}</div>
+                  {/* ══ LETTER BODY ══ */}
+                  <div style={{ padding: "20px 24px 0" }}>
+                    <div style={{ fontSize: 11, color: "#333", marginBottom: 14 }}>Dear Sir/Madam,</div>
+
+                    {paras.map((p, i) => (
+                      <div key={i} style={{ fontSize: 11, color: "#222", lineHeight: 1.85, textAlign: "justify" as const, marginBottom: 13 }}>{p}</div>
+                    ))}
+
+                    <div style={{ fontSize: 11, color: "#333", marginTop: 26, marginBottom: 56 }}>Yours faithfully,</div>
+
+                    {/* Dual signature blocks */}
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+                      <div style={{ width: "44%" }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {co.name}</div>
+                        <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6 }} />
+                        <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
+                        <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{co.name}</div>
+                      </div>
+                      <div style={{ width: "44%", textAlign: "right" as const }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {clientName}</div>
+                        <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6, marginLeft: "auto" }} />
+                        <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
+                        <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Greeting */}
-                  <div style={{ fontSize: 11, color: "#333", marginBottom: 18 }}>Dear Sir/Madam,</div>
-
-                  {/* Subject */}
-                  <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: "#0f2d5a", textDecoration: "underline", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 22 }}>
-                    Acknowledgement of Local Purchase Order
-                  </div>
-
-                  {/* Body */}
-                  {paras.map((p, i) => (
-                    <div key={i} style={{ fontSize: 11, color: "#222", lineHeight: 1.85, textAlign: "justify", marginBottom: 15 }}>{p}</div>
-                  ))}
-
-                  {/* Closing */}
-                  <div style={{ fontSize: 11, color: "#333", marginTop: 30, marginBottom: 60 }}>Yours faithfully,</div>
-
-                  {/* Dual signature blocks */}
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <div style={{ width: "44%" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 56 }}>For {ourName}</div>
-                      <div style={{ borderTop: "1.5px solid #333", width: 210, marginBottom: 7 }} />
-                      <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
-                      <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{ourName}</div>
+                  {/* ══ FOOTER — exact match to PageFooter in document-print.tsx ══ */}
+                  <div style={{ padding: "0 24px 12px", marginTop: "auto" }}>
+                    <div style={{ textAlign: "center", fontSize: 10, fontStyle: "italic", color: "#0f2d5a", marginBottom: 4 }}>
+                      This is a computer generated document.
                     </div>
-                    <div style={{ width: "44%", textAlign: "right" }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 56 }}>For {clientName}</div>
-                      <div style={{ borderTop: "1.5px solid #333", width: 210, marginBottom: 7, marginLeft: "auto" }} />
-                      <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
-                      <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 10, color: "#0f2d5a", borderTop: "1px solid #0f2d5a", paddingTop: 4 }}>
+                      <span style={{ fontFamily: "monospace", letterSpacing: "0.05em" }}>PRIME ERP SYSTEM</span>
+                      <span style={{ fontWeight: 600 }}>1-1</span>
                     </div>
-                  </div>
-
-                  {/* Footer stripe */}
-                  <div style={{ marginTop: 48, borderTop: "2px solid #0f2d5a", paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontSize: 8.5, color: "#888" }}>{ourName}{co?.address ? ` · ${co.address}` : ""}</div>
-                    {co?.trn && <div style={{ fontSize: 8.5, color: "#888" }}>TRN: {co.trn}</div>}
                   </div>
                 </div>
               );
