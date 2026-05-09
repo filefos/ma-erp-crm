@@ -13,6 +13,7 @@ import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { SignatureStampPreview } from "@/components/signature-stamp-preview";
+import { canSignDocuments } from "@/lib/permissions";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
@@ -229,10 +230,12 @@ export function ProformaInvoiceDetail({ id }: Props) {
           <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} recipientPhone={(pi as any).clientPhone ?? undefined} recipientEmail={(pi as any).clientEmail ?? undefined} companyId={pi.companyId ?? undefined} docTypeLabel="Proforma Invoice" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined} />
         </div>
       </div>
-      <SignatureStampPreview
-        signatureUrl={user?.signatureUrl ?? undefined}
-        stampUrl={companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined}
-      />
+      {canSignDocuments((user as any)?.permissionLevel) && (
+        <SignatureStampPreview
+          signatureUrl={user?.signatureUrl ?? undefined}
+          stampUrl={companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined}
+        />
+      )}
       <DocumentPrint data={docData} />
     </div>
   );

@@ -20,6 +20,7 @@ import { useEmailCompose } from "@/contexts/email-compose-context";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { SignatureStampPreview } from "@/components/signature-stamp-preview";
+import { canSignDocuments } from "@/lib/permissions";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -466,11 +467,13 @@ export function QuotationDetail({ id }: Props) {
         </div>
       </div>
 
-      {/* Signature & Stamp Preview */}
-      <SignatureStampPreview
-        signatureUrl={user?.signatureUrl ?? undefined}
-        stampUrl={companies?.find(c => c.id === q.companyId)?.stamp ?? undefined}
-      />
+      {/* Signature & Stamp Preview — only for users authorised to sign */}
+      {canSignDocuments((user as any)?.permissionLevel) && (
+        <SignatureStampPreview
+          signatureUrl={user?.signatureUrl ?? undefined}
+          stampUrl={companies?.find(c => c.id === q.companyId)?.stamp ?? undefined}
+        />
+      )}
 
       {/* Document */}
       <DocumentPrint data={docData} />

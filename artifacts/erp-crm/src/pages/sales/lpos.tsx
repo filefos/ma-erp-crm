@@ -23,6 +23,7 @@ import { extractLpoFields, authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 import { SignatureStampPreview } from "@/components/signature-stamp-preview";
+import { canSignDocuments } from "@/lib/permissions";
 
 const BASE = import.meta.env.BASE_URL;
 const MAX_MB = 20;
@@ -571,6 +572,7 @@ export function LposList() {
                 stampUrl={companies.find(c => c.id === selectedLpo?.companyId)?.stamp ?? undefined}
                 stampWidthPct={companies.find(c => c.id === selectedLpo?.companyId)?.stampWidthPct ?? undefined}
                 stampMarginPct={companies.find(c => c.id === selectedLpo?.companyId)?.stampMarginPct ?? undefined}
+                canSign={canSignDocuments((user as any)?.permissionLevel)}
               />
             )
           )}
@@ -763,6 +765,7 @@ function LpoDetailView({
   stampUrl,
   stampWidthPct,
   stampMarginPct,
+  canSign,
 }: {
   lpo: any;
   linkedQuotation: any | null;
@@ -770,6 +773,7 @@ function LpoDetailView({
   stampUrl?: string;
   stampWidthPct?: number | null;
   stampMarginPct?: number | null;
+  canSign?: boolean;
 }) {
   const atts: AttachmentMeta[] = lpo.attachments ?? [];
   const BASE_URL = import.meta.env.BASE_URL;
@@ -971,12 +975,14 @@ function LpoDetailView({
       </div>
       </div>{/* end lpo-detail-print */}
 
-      {/* Signature & Stamp Preview */}
-      <SignatureStampPreview
-        signatureUrl={signatureUrl}
-        stampUrl={stampUrl}
-        stampWidthPct={stampWidthPct}
-      />
+      {/* Signature & Stamp Preview — only for users authorised to sign */}
+      {canSign && (
+        <SignatureStampPreview
+          signatureUrl={signatureUrl}
+          stampUrl={stampUrl}
+          stampWidthPct={stampWidthPct}
+        />
+      )}
     </div>
   );
 }

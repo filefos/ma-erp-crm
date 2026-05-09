@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Phone, Shield, Building2, Pencil, Check, X, Upload, Trash2, Sparkles } from "lucide-react";
 import { getAutomationLevel, setAutomationLevel, type AutomationLevel } from "@/lib/ai-client";
+import { canSignDocuments } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -257,7 +258,7 @@ export function MyProfile() {
       </Card>
 
       {/* Signature */}
-      <Card id="signature">
+      {canSignDocuments(level) && <Card id="signature">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">My Signature</CardTitle>
           <CardDescription>Upload your signature image. It will appear on printed documents (quotations, invoices, POs, etc.).</CardDescription>
@@ -313,7 +314,7 @@ export function MyProfile() {
             {sigCleared && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Signature cleared.</span>}
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* AI Automation */}
       <Card>
