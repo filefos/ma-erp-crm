@@ -663,20 +663,44 @@ export function LpoAcknowledgments() {
               <DialogTitle className="text-sm flex-1 truncate min-w-0">
                 {viewRecord?.customerName} — {viewRecord?.fileName}
               </DialogTitle>
-              <Button size="sm" variant="outline" className="text-green-700 border-green-300 flex-shrink-0"
-                onClick={() => {
-                  if (!viewRecord) return;
-                  if (blobUrl) {
-                    const a = document.createElement("a");
-                    a.href = blobUrl;
-                    a.download = viewRecord.fileName;
-                    a.click();
-                  } else {
-                    downloadAuthed(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file?download=1`, viewRecord.fileName);
-                  }
-                }}>
-                <Download className="w-3.5 h-3.5 mr-1.5" />Download
-              </Button>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  size="sm" variant="outline"
+                  className="text-purple-700 border-purple-300 hover:bg-purple-50 disabled:opacity-60"
+                  disabled={!!stampingId}
+                  onClick={() => viewRecord && handleStampSign(viewRecord, "stamp")}
+                >
+                  {stampingId === viewRecord?.id
+                    ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    : <Stamp className="w-3.5 h-3.5 mr-1" />}
+                  P.STAMP
+                </Button>
+                <Button
+                  size="sm" variant="outline"
+                  className="text-orange-700 border-orange-300 hover:bg-orange-50 disabled:opacity-60"
+                  disabled={!!stampingId}
+                  onClick={() => viewRecord && handleStampSign(viewRecord, "signature")}
+                >
+                  {stampingId === viewRecord?.id
+                    ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    : <PenLine className="w-3.5 h-3.5 mr-1" />}
+                  P.SIGNATURE
+                </Button>
+                <Button size="sm" variant="outline" className="text-green-700 border-green-300"
+                  onClick={() => {
+                    if (!viewRecord) return;
+                    if (blobUrl) {
+                      const a = document.createElement("a");
+                      a.href = blobUrl;
+                      a.download = viewRecord.fileName;
+                      a.click();
+                    } else {
+                      downloadAuthed(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file?download=1`, viewRecord.fileName);
+                    }
+                  }}>
+                  <Download className="w-3.5 h-3.5 mr-1.5" />Download
+                </Button>
+              </div>
             </div>
           </DialogHeader>
           <div className="flex-1 min-h-0 overflow-y-auto bg-gray-100 flex flex-col items-center py-4 gap-3">
