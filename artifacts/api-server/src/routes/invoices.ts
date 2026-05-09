@@ -57,12 +57,25 @@ async function resolveProjectRef(projectId: number | undefined | null): Promise<
   return proj?.projectNumber ?? undefined;
 }
 
-async function genDocNumber(companyId: number, type: string, table: any) {
+async function genDocNumber(companyId: number, type: string, table: any, numberCol?: any) {
   const [co] = await db.select({ prefix: companiesTable.prefix }).from(companiesTable).where(eq(companiesTable.id, companyId));
   const prefix = co?.prefix ?? "PM";
-  const count = await db.select({ count: sql<number>`count(*)::int` }).from(table);
-  const num = (count[0]?.count ?? 0) + 1;
   const year = new Date().getFullYear();
+  let num: number;
+  if (numberCol) {
+    // Use MAX of the 4-digit numeric suffix for the prefix+year pattern.
+    // This is collision-safe even when rows have been deleted or created
+    // out of order (unlike COUNT(*) + 1 which can re-use existing numbers).
+    const pattern = `${prefix}-${type}-${year}-%`;
+    const [maxRow] = await db
+      .select({ maxNum: sql<number>`COALESCE(MAX(CAST(RIGHT(${numberCol}::text, 4) AS INTEGER)), 0)` })
+      .from(table)
+      .where(sql`${numberCol}::text LIKE ${pattern}`);
+    num = (maxRow?.maxNum ?? 0) + 1;
+  } else {
+    const [countRow] = await db.select({ count: sql<number>`count(*)::int` }).from(table);
+    num = (countRow?.count ?? 0) + 1;
+  }
   return `${prefix}-${type}-${year}-${String(num).padStart(4, "0")}`;
 }
 
@@ -170,7 +183,7 @@ router.get("/proforma-invoices", requirePermission("proforma_invoices", "view"),
 
 router.post("/proforma-invoices", requirePermission("proforma_invoices", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
-  const piNumber = await genDocNumber(data.companyId, "PI", proformaInvoicesTable);
+  const piNumber = await genDocNumber(data.companyId, "PI", proformaInvoicesTable, proformaInvoicesTable.piNumber);
   const itemsStr = JSON.stringify(data.items ?? []);
   const { items: _items, ...rest } = data;
 
@@ -254,7 +267,7 @@ router.get("/tax-invoices", requirePermission("tax_invoices", "view"), async (re
 
 router.post("/tax-invoices", requirePermission("tax_invoices", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
-  const invoiceNumber = await genDocNumber(data.companyId, "INV", taxInvoicesTable);
+  const invoiceNumber = await genDocNumber(data.companyId, "INV", taxInvoicesTable, taxInvoicesTable.invoiceNumber);
 
   // Inherit Client Code + additional_items base from quotation/lpo if not provided.
   let clientCode: string | undefined = data.clientCode;
@@ -382,7 +395,7 @@ router.get("/delivery-notes", requirePermission("delivery_notes", "view"), async
 
 router.post("/delivery-notes", requirePermission("delivery_notes", "create"), requireBodyCompanyAccess(), async (req, res): Promise<void> => {
   const data = req.body;
-  const dnNumber = await genDocNumber(data.companyId, "DN", deliveryNotesTable);
+  const dnNumber = await genDocNumber(data.companyId, "DN", deliveryNotesTable, deliveryNotesTable.dnNumber);
 
   // Inherit Client Code from quotation/lpo/tax-invoice if not provided.
   let clientCode: string | undefined = data.clientCode;
@@ -716,7 +729,7 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
       ? `Installment ${i + 1} of ${totalInstallments}: ${inst.percent}% – ${inst.label}`
       : inst.label;
     try {
-      const piNumber = await genDocNumber(lpo.companyId, "PI", proformaInvoicesTable);
+      const piNumber = await genDocNumber(lpo.companyId, "PI", proformaInvoicesTable, proformaInvoicesTable.piNumber);
       const [pi] = await db.insert(proformaInvoicesTable).values({
         piNumber,
         companyId: lpo.companyId,
