@@ -254,7 +254,12 @@ export function OfferLetterDetail({ id }: Props) {
     if (!previewRef.current) return;
     setDownloading(true);
     try {
-      const { base64, filename } = await captureElementToPdfBase64(previewRef.current, `${offer.letterNumber}-${offer.candidateName.replace(/\s+/g, "_")}`);
+      const co = (companies as any[] | undefined)?.find((x: any) => x.id === offer.companyId);
+      const signatureUrl = (authUser as any)?.signatureUrl || undefined;
+      const stampUrl = co?.stamp || undefined;
+      const stampWidthPct = co?.stampWidthPct ?? undefined;
+      const stampMarginPct = co?.stampMarginPct ?? undefined;
+      const { base64, filename } = await captureElementToPdfBase64(previewRef.current, `${offer.letterNumber}-${offer.candidateName.replace(/\s+/g, "_")}`, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;
       link.download = filename;

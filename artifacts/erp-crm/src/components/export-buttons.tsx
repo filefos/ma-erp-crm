@@ -39,6 +39,8 @@ interface ExportButtonsProps {
   companyId?: number;
   signatureUrl?: string;
   stampUrl?: string;
+  stampWidthPct?: number | null;
+  stampMarginPct?: number | null;
 }
 
 function normalizePhone(raw: string): string {
@@ -89,7 +91,7 @@ function extractTableRows(table: HTMLTableElement): (string | number)[][] {
   return rows;
 }
 
-export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId, signatureUrl, stampUrl }: ExportButtonsProps) {
+export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTypeLabel, companyId, signatureUrl, stampUrl, stampWidthPct, stampMarginPct }: ExportButtonsProps) {
   const { toast } = useToast();
   const label = docTypeLabel ?? "document";
 
@@ -120,7 +122,7 @@ export function ExportButtons({ docNumber, recipientPhone, recipientEmail, docTy
   const generatePdf = async () => {
     const el = getPrintEl();
     if (!el) throw new Error("Could not find the printable document on this page.");
-    return captureElementToPdfBase64(el, `${docNumber}.pdf`, { signatureUrl, stampUrl });
+    return captureElementToPdfBase64(el, `${docNumber}.pdf`, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
   };
 
   const base64ToPdfFile = (base64: string, filename: string): File => {

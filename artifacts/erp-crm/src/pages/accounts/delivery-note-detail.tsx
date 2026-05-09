@@ -227,8 +227,11 @@ export function DeliveryNoteDetail({ id }: Props) {
               try {
                 const filename = `DeliveryNote_${dn.dnNumber ?? dn.id ?? "doc"}.pdf`;
                 const signatureUrl = user?.signatureUrl || undefined;
-                const stampUrl = companies?.find(c => c.id === dn.companyId)?.stamp || undefined;
-                const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
+                const co = companies?.find(c => c.id === dn.companyId);
+                const stampUrl = co?.stamp || undefined;
+                const stampWidthPct = co?.stampWidthPct ?? undefined;
+                const stampMarginPct = co?.stampMarginPct ?? undefined;
+                const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
                 downloadBase64Pdf(base64, fname);
               } catch { /* silent */ } finally { setDownloadingPdf(false); }
             }}
@@ -247,8 +250,11 @@ export function DeliveryNoteDetail({ id }: Props) {
                 try {
                   const filename = `DeliveryNote_${dn.dnNumber ?? dn.id ?? "doc"}.pdf`;
                   const signatureUrl = user?.signatureUrl || undefined;
-                  const stampUrl = companies?.find(c => c.id === dn.companyId)?.stamp || undefined;
-                  const { base64 } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl });
+                  const co = companies?.find(c => c.id === dn.companyId);
+                  const stampUrl = co?.stamp || undefined;
+                  const stampWidthPct = co?.stampWidthPct ?? undefined;
+                  const stampMarginPct = co?.stampMarginPct ?? undefined;
+                  const { base64 } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
                   attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
                 } catch { /* fall through */ } finally { setGeneratingPdf(false); }
               }
@@ -266,7 +272,7 @@ export function DeliveryNoteDetail({ id }: Props) {
           >
             {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
-          <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} recipientEmail={(dn as any).clientEmail ?? undefined} companyId={dn.companyId ?? undefined} docTypeLabel="Delivery Note" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === dn.companyId)?.stamp ?? undefined} />
+          <ExportButtons docNumber={dn.dnNumber ?? dn.id?.toString() ?? "DN"} recipientPhone={(dn as any).clientPhone ?? undefined} recipientEmail={(dn as any).clientEmail ?? undefined} companyId={dn.companyId ?? undefined} docTypeLabel="Delivery Note" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === dn.companyId)?.stamp ?? undefined} stampWidthPct={companies?.find(c => c.id === dn.companyId)?.stampWidthPct ?? undefined} stampMarginPct={companies?.find(c => c.id === dn.companyId)?.stampMarginPct ?? undefined} />
         </div>
       </div>
 

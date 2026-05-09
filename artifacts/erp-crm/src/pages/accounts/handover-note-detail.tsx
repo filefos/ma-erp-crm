@@ -118,8 +118,11 @@ export function HandoverNoteDetail({ id }: Props) {
     setExporting(true);
     try {
       const signatureUrl = user?.signatureUrl || undefined;
-      const stampUrl = companies?.find(c => c.id === (hon as any).companyId)?.stamp || undefined;
-      const { base64, filename } = await captureElementToPdfBase64(printRef.current, `${hon.honNumber}.pdf`, { signatureUrl, stampUrl });
+      const co = companies?.find(c => c.id === (hon as any).companyId);
+      const stampUrl = co?.stamp || undefined;
+      const stampWidthPct = co?.stampWidthPct ?? undefined;
+      const stampMarginPct = co?.stampMarginPct ?? undefined;
+      const { base64, filename } = await captureElementToPdfBase64(printRef.current, `${hon.honNumber}.pdf`, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;
       link.download = filename;
@@ -193,8 +196,11 @@ export function HandoverNoteDetail({ id }: Props) {
                 try {
                   const filename = `HandoverNote_${hon.honNumber ?? hon.id ?? "doc"}.pdf`;
                   const signatureUrl = user?.signatureUrl || undefined;
-                  const stampUrl = companies?.find(c => c.id === (hon as any).companyId)?.stamp || undefined;
-                  const { base64 } = await captureElementToPdfBase64(el, filename, { signatureUrl, stampUrl });
+                  const co = companies?.find(c => c.id === (hon as any).companyId);
+                  const stampUrl = co?.stamp || undefined;
+                  const stampWidthPct = co?.stampWidthPct ?? undefined;
+                  const stampMarginPct = co?.stampMarginPct ?? undefined;
+                  const { base64 } = await captureElementToPdfBase64(el, filename, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
                   attachments = [{ filename, content: base64, contentType: "application/pdf", size: Math.round(base64.length * 0.75) }];
                 } catch { /* fall through */ } finally { setGeneratingPdf(false); }
               }
@@ -226,6 +232,8 @@ export function HandoverNoteDetail({ id }: Props) {
             docTypeLabel="Handover Note"
             signatureUrl={user?.signatureUrl ?? undefined}
             stampUrl={companies?.find(c => c.id === (hon as any).companyId)?.stamp ?? undefined}
+            stampWidthPct={companies?.find(c => c.id === (hon as any).companyId)?.stampWidthPct ?? undefined}
+            stampMarginPct={companies?.find(c => c.id === (hon as any).companyId)?.stampMarginPct ?? undefined}
           />
         </div>
       </div>
