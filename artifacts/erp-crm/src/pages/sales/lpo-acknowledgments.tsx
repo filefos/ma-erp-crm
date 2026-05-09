@@ -50,7 +50,7 @@ function formatBytes(b: number) {
   return `${(b / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const EMPTY_FORM = { quotationNumber: "", clientRef: "" }; // clientRef auto-filled from quotation
+const EMPTY_FORM = { quotationNumber: "", clientRef: "", lpoNumber: "" }; // clientRef auto-filled from quotation
 
 export function LpoAcknowledgments() {
   const { activeCompanyId } = useActiveCompany();
@@ -87,6 +87,8 @@ export function LpoAcknowledgments() {
   const [acWaPhone, setAcWaPhone] = useState("");
   const [acWaMessage, setAcWaMessage] = useState("");
   const [acWaSending, setAcWaSending] = useState(false);
+  const [editLpoId, setEditLpoId] = useState<number | null>(null);
+  const [editLpoVal, setEditLpoVal] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -266,6 +268,23 @@ export function LpoAcknowledgments() {
       toast({ title: "PDF generation failed", variant: "destructive" });
     } finally {
       setAcPdfGenerating(false);
+    }
+  }
+
+  async function saveLpoNumber(id: number, value: string) {
+    try {
+      const r = await fetch(`${BASE}api/lpo-acknowledgments/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ lpoNumber: value.trim() || null }),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      qc.invalidateQueries({ queryKey: ["lpo-acknowledgments"] });
+      toast({ title: "LPO number saved" });
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e.message, variant: "destructive" });
+    } finally {
+      setEditLpoId(null);
     }
   }
 
@@ -485,6 +504,7 @@ export function LpoAcknowledgments() {
           companyId,
           customerName: form.clientRef.trim() || form.quotationNumber || "N/A",
           quotationNumber: form.quotationNumber || null,
+          lpoNumber: form.lpoNumber.trim() || null,
           fileName: file.name,
           contentType: file.type,
           fileContent: file.content,
@@ -608,6 +628,7 @@ export function LpoAcknowledgments() {
           <TableHeader>
             <TableRow>
               <TableHead>Client ID / REF</TableHead>
+              <TableHead>LPO No.</TableHead>
               <TableHead>Quotation No.</TableHead>
               <TableHead>File</TableHead>
               <TableHead>Uploaded By</TableHead>
@@ -617,19 +638,43 @@ export function LpoAcknowledgments() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin inline mr-2" />Loading…
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                   {search ? "No records match your search." : "No LPO acknowledgments uploaded yet."}
                 </TableCell>
               </TableRow>
             ) : filtered.map(rec => (
               <TableRow key={rec.id} className="hover:bg-muted/40">
                 <TableCell className="font-medium">{rec.customerName}</TableCell>
+                {/* LPO No. — inline editable */}
+                <TableCell>
+                  {editLpoId === rec.id ? (
+                    <Input
+                      autoFocus
+                      className="h-6 text-xs font-mono w-32 px-1"
+                      value={editLpoVal}
+                      onChange={e => setEditLpoVal(e.target.value)}
+                      onBlur={() => saveLpoNumber(rec.id, editLpoVal)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") saveLpoNumber(rec.id, editLpoVal);
+                        if (e.key === "Escape") setEditLpoId(null);
+                      }}
+                    />
+                  ) : (
+                    <button
+                      className="text-xs font-mono text-blue-700 hover:underline cursor-pointer"
+                      title="Click to edit LPO number"
+                      onClick={() => { setEditLpoId(rec.id); setEditLpoVal(rec.lpoNumber ?? ""); }}
+                    >
+                      {rec.lpoNumber ?? <span className="text-muted-foreground italic">+ add</span>}
+                    </button>
+                  )}
+                </TableCell>
                 <TableCell className="text-xs font-mono text-muted-foreground">
                   {rec.quotationNumber
                     ? <Badge variant="outline" className="font-mono text-xs">{rec.quotationNumber}</Badge>
@@ -801,6 +846,17 @@ export function LpoAcknowledgments() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* LPO Number */}
+              <div className="space-y-1.5">
+                <Label>LPO Number</Label>
+                <Input
+                  placeholder="e.g. LPO-2026-0042"
+                  value={form.lpoNumber}
+                  onChange={e => setForm(f => ({ ...f, lpoNumber: e.target.value }))}
+                />
+                <p className="text-[11px] text-muted-foreground">The client's LPO reference number — appears automatically in the letter.</p>
               </div>
 
               {/* File upload */}
