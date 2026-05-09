@@ -6,7 +6,7 @@ import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useListQuotations, useListCompanies } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -112,8 +112,125 @@ export function LpoAcknowledgments() {
     return { bytes: new Uint8Array(ab), isPng };
   }
 
+  async function appendAckLetter(pdfDoc: PDFDocument, record: AckRecord) {
+    const company = (companies ?? []).find(c => c.id === (record.companyId ?? activeCompanyId));
+    const ourName = (company as any)?.name || "Our Company";
+    const clientName = record.customerName || "Client";
+    const lpoRef = record.lpoNumber ? `LPO No. ${record.lpoNumber}` : "the above-referenced LPO";
+    const qtRef = record.quotationNumber ? ` (Quotation No. ${record.quotationNumber})` : "";
+    const today = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+
+    const page = pdfDoc.addPage([595, 842]);
+    const { width, height } = page.getSize();
+    const mx = 50;
+    const cw = width - mx * 2;
+
+    const fReg = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const navy = rgb(0.07, 0.17, 0.35);
+    const dark = rgb(0.1, 0.1, 0.1);
+    const grey = rgb(0.4, 0.4, 0.4);
+
+    const wrap = (text: string, font: typeof fReg, size: number, maxW: number): string[] => {
+      const words = text.split(" ");
+      const lines: string[] = [];
+      let line = "";
+      for (const word of words) {
+        const test = line ? `${line} ${word}` : word;
+        if (font.widthOfTextAtSize(test, size) > maxW && line) { lines.push(line); line = word; }
+        else { line = test; }
+      }
+      if (line) lines.push(line);
+      return lines;
+    };
+
+    let y = height - 50;
+
+    // Logo (top-left)
+    const logoSrc = (company as any)?.logo ?? null;
+    if (logoSrc) {
+      try {
+        const { bytes, isPng } = await fetchImageBytes(logoSrc);
+        const logoImg = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+        const s = logoImg.scaleToFit(130, 60);
+        page.drawImage(logoImg, { x: mx, y: y - s.height + 10, width: s.width, height: s.height });
+      } catch { /* logo unavailable */ }
+    }
+
+    // Company info (right-aligned)
+    page.drawText(ourName, { x: width - mx - fBold.widthOfTextAtSize(ourName, 13), y, font: fBold, size: 13, color: navy });
+    y -= 16;
+    const details = [
+      (company as any)?.address,
+      (company as any)?.phone ? `Tel: ${(company as any).phone}` : null,
+      (company as any)?.email,
+      (company as any)?.trn ? `TRN: ${(company as any).trn}` : null,
+    ].filter(Boolean) as string[];
+    for (const d of details) {
+      page.drawText(d, { x: width - mx - fReg.widthOfTextAtSize(d, 8), y, font: fReg, size: 8, color: grey });
+      y -= 11;
+    }
+    y -= 10;
+
+    // Divider
+    page.drawLine({ start: { x: mx, y }, end: { x: width - mx, y }, thickness: 0.8, color: navy });
+    y -= 18;
+
+    // Date & refs
+    page.drawText(`Date: ${today}`, { x: mx, y, font: fReg, size: 9, color: dark }); y -= 13;
+    const refs = [record.lpoNumber && `LPO No: ${record.lpoNumber}`, record.quotationNumber && `Quotation No: ${record.quotationNumber}`].filter(Boolean).join("   |   ");
+    if (refs) { page.drawText(`Ref: ${refs}`, { x: mx, y, font: fReg, size: 9, color: dark }); y -= 13; }
+    y -= 8;
+
+    // Addressee
+    page.drawText("To,", { x: mx, y, font: fReg, size: 9, color: dark }); y -= 13;
+    page.drawText(clientName, { x: mx, y, font: fBold, size: 10, color: dark }); y -= 18;
+
+    page.drawText("Dear Sir/Madam,", { x: mx, y, font: fReg, size: 10, color: dark }); y -= 16;
+
+    // Subject (centred)
+    const subj = "ACKNOWLEDGEMENT OF LOCAL PURCHASE ORDER";
+    page.drawText(subj, { x: (width - fBold.widthOfTextAtSize(subj, 11)) / 2, y, font: fBold, size: 11, color: navy });
+    y -= 22;
+
+    // Body paragraphs
+    const paras = [
+      `We are pleased to acknowledge receipt of your Local Purchase Order ${lpoRef} and confirm our formal acceptance of the order as detailed therein.`,
+      `${ourName} hereby accepts the terms and conditions set forth in the above LPO and commits to fulfilling the supply of goods and/or services as specified, in accordance with the agreed delivery schedule, payment terms, and quality standards${qtRef}.`,
+      `${clientName}, by issuing the above LPO, acknowledges and agrees to the terms and conditions of ${ourName}, including the pricing, scope of work, payment terms, and delivery timelines as confirmed in the referenced quotation and the LPO.`,
+      `Both parties mutually agree that this acknowledgement serves as a binding confirmation of the transaction, and both ${ourName} and ${clientName} are committed to fulfilling their respective obligations as outlined in the referenced documents.`,
+      `We look forward to a successful business relationship and the timely execution of this order. Should you require any further clarification, please do not hesitate to contact us.`,
+    ];
+    for (const para of paras) {
+      for (const line of wrap(para, fReg, 9.5, cw)) {
+        if (y < 160) break;
+        page.drawText(line, { x: mx, y, font: fReg, size: 9.5, color: dark });
+        y -= 14;
+      }
+      y -= 8;
+    }
+
+    y -= 14;
+    page.drawText("Yours faithfully,", { x: mx, y, font: fReg, size: 9.5, color: dark }); y -= 40;
+
+    // Dual signature blocks
+    const c1 = mx;
+    const c2 = mx + cw / 2;
+    page.drawText(`For ${ourName}`, { x: c1, y, font: fBold, size: 9.5, color: dark });
+    page.drawText(`For ${clientName}`, { x: c2, y, font: fBold, size: 9.5, color: dark });
+    y -= 50;
+    page.drawLine({ start: { x: c1, y }, end: { x: c1 + 180, y }, thickness: 0.5, color: dark });
+    page.drawLine({ start: { x: c2, y }, end: { x: c2 + 180, y }, thickness: 0.5, color: dark });
+    y -= 12;
+    page.drawText("Authorized Signatory", { x: c1, y, font: fReg, size: 8, color: grey });
+    page.drawText("Authorized Signatory", { x: c2, y, font: fReg, size: 8, color: grey });
+    y -= 12;
+    page.drawText(ourName, { x: c1, y, font: fReg, size: 8, color: grey });
+    page.drawText(clientName, { x: c2, y, font: fReg, size: 8, color: grey });
+  }
+
   async function handleStampSign(record: AckRecord, mode: "stamp" | "signature" | "both") {
-    const sigUrl = user?.signatureUrl ?? null;
+    const sigUrl = (user as any)?.signatureUrl ?? null;
     const company = (companies ?? []).find(c => c.id === (record.companyId ?? activeCompanyId));
     const stampUrl = (company as any)?.stamp ?? null;
 
@@ -177,8 +294,10 @@ export function LpoAcknowledgments() {
         }
       }
 
+      await appendAckLetter(pdfDoc, record);
+
       const stamped = await pdfDoc.save();
-      const blob = new Blob([stamped], { type: "application/pdf" });
+      const blob = new Blob([stamped.buffer as ArrayBuffer], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       const suffix = mode === "both" ? "_stamped_signed" : mode === "stamp" ? "_stamped" : "_signed";
@@ -186,7 +305,7 @@ export function LpoAcknowledgments() {
       a.download = record.fileName.replace(/\.pdf$/i, "") + suffix + ".pdf";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-      toast({ title: "Done", description: "Stamped PDF downloaded successfully." });
+      toast({ title: "Done", description: "PDF downloaded with acknowledgement letter." });
     } catch (e: any) {
       toast({ title: "Failed to stamp PDF", description: e.message, variant: "destructive" });
     } finally {
@@ -704,7 +823,7 @@ export function LpoAcknowledgments() {
                     ? "bg-orange-600 text-white hover:bg-orange-700"
                     : "text-orange-700 border-orange-300 hover:bg-orange-50"}
                   onClick={() => {
-                    if (!previewSigOn && !user?.signatureUrl) {
+                    if (!previewSigOn && !(user as any)?.signatureUrl) {
                       toast({ title: "No signature uploaded", description: "Go to your Profile settings and upload a signature.", variant: "destructive" });
                       return;
                     }
@@ -722,13 +841,31 @@ export function LpoAcknowledgments() {
                     if (previewStampOn || previewSigOn) {
                       const mode = previewStampOn && previewSigOn ? "both" : previewStampOn ? "stamp" : "signature";
                       handleStampSign(viewRecord, mode);
-                    } else if (blobUrl) {
-                      const a = document.createElement("a");
-                      a.href = blobUrl;
-                      a.download = viewRecord.fileName;
-                      a.click();
                     } else {
-                      downloadAuthed(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file?download=1`, viewRecord.fileName);
+                      // Always append the ack letter even for plain download
+                      setStampingId(viewRecord.id);
+                      (async () => {
+                        try {
+                          const pdfRes = await fetch(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file`, { headers: authHeaders() });
+                          if (!pdfRes.ok) throw new Error("Could not fetch PDF");
+                          const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer());
+                          const pdfDoc = await PDFDocument.load(pdfBytes);
+                          await appendAckLetter(pdfDoc, viewRecord);
+                          const out = await pdfDoc.save();
+                          const blob = new Blob([out.buffer as ArrayBuffer], { type: "application/pdf" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = viewRecord.fileName.replace(/\.pdf$/i, "") + "_with_ack.pdf";
+                          a.click();
+                          setTimeout(() => URL.revokeObjectURL(url), 5000);
+                          toast({ title: "Done", description: "PDF downloaded with acknowledgement letter." });
+                        } catch (e: any) {
+                          toast({ title: "Download failed", description: e.message, variant: "destructive" });
+                        } finally {
+                          setStampingId(null);
+                        }
+                      })();
                     }
                   }}>
                   {stampingId === viewRecord?.id
@@ -764,7 +901,7 @@ export function LpoAcknowledgments() {
                 {(() => {
                   const company = (companies ?? []).find(c => c.id === viewRecord?.companyId);
                   const stampUrl = (company as any)?.stamp ?? null;
-                  const sigUrl = user?.signatureUrl ?? null;
+                  const sigUrl = (user as any)?.signatureUrl ?? null;
                   return Array.from({ length: numPages }, (_, i) => (
                     <div key={i + 1} className="relative shadow-md mb-2">
                       <Page
