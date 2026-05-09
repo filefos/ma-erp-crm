@@ -1,0 +1,178 @@
+I have one very important system-level requirement. Please fix this in a systematic and professional way.
+
+Requirement:
+Once a client/customer record is saved in the system, that client information must automatically reflect and be available across all related pages and modules.
+
+The client should be saved only once in the system as a master client record. After that, the same client data should be used everywhere without entering the same information again.
+
+Affected pages/modules:
+1. Proforma Invoice
+2. Tax Invoice
+3. Delivery Note
+4. Undertaking Letter
+5. Handover Note
+6. Journal Entries
+7. Receivables
+8. Cheque Receipt
+9. Payment Receipt
+10. Any other accounting, sales, or project-related document where client information is required
+
+Main objective:
+Create a centralized client master data system.
+
+Expected behavior:
+When I create or save a client record, the following details should be stored in one main client database/table:
+
+- Client company name
+- Contact person name
+- Mobile number
+- Email address
+- TRN number, if available
+- Address
+- Project reference, if applicable
+- Client code / customer ID
+- Payment terms, if applicable
+- Any other existing client-related information already used in the system
+
+After saving the client, the same client should be selectable and auto-filled in all related forms.
+
+Example:
+If I save a client named “METAL PARK LOGISTIC LTD”, then when I create:
+- Proforma Invoice
+- Tax Invoice
+- Delivery Note
+- Handover Note
+- Undertaking Letter
+- Cheque Receipt
+- Payment Receipt
+- Receivable entry
+- Journal entry
+
+The system should allow me to select the same client from a dropdown/search field, and all client information should automatically fill in the document.
+
+Important rules:
+1. Do not create duplicate client records for each module.
+2. Do not require manual typing of the same client details again and again.
+3. All modules must fetch client details from the same centralized client master record.
+4. If client details are updated in the master client record, the updated information should reflect in future documents.
+5. Existing saved documents should keep their original issued details unless the system already has a safe update method.
+6. Every document should be linked with the correct client ID / client code.
+7. The client ID should be used internally as the main reference, not just the client name.
+8. Avoid mismatch between client name, TRN, address, invoice, receipt, and accounting entries.
+9. The system should support search by client name, client code, mobile number, or email.
+10. This change should not break any existing saved records.
+
+Required implementation:
+Please inspect the current database structure and check how client data is currently saved in each module.
+
+If client information is currently duplicated in different tables, create or improve a proper centralized client master table.
+
+Suggested structure:
+Create/use a table like:
+
+clients:
+- id
+- client_code
+- company_name
+- contact_person
+- mobile
+- email
+- trn_number
+- address
+- payment_terms
+- status
+- created_at
+- updated_at
+
+Then all documents should reference this client using client_id.
+
+Document tables should store:
+- client_id
+- project_id, if applicable
+- quotation_id, if applicable
+- lpo_id, if applicable
+- document number
+- document date
+- document-specific details
+
+Apply this to:
+- proforma_invoices
+- tax_invoices
+- delivery_notes
+- undertaking_letters
+- handover_notes
+- journal_entries
+- receivables
+- cheque_receipts
+- payment_receipts
+
+Form behavior:
+In every document creation page, add a client search/dropdown field.
+
+When a client is selected:
+- Auto-fill company name
+- Auto-fill contact person
+- Auto-fill mobile
+- Auto-fill email
+- Auto-fill TRN
+- Auto-fill address
+- Auto-fill payment terms, if required
+- Link the document with client_id
+
+Accounting behavior:
+For journal entries, receivables, cheque receipts, and payment receipts, the selected client must be linked to the accounting transaction using client_id.
+
+This will help to track:
+- Client balance
+- Pending receivables
+- Paid amount
+- Cheque receipts
+- Payment receipts
+- Invoice history
+- Project history
+- Statement of account
+
+Validation:
+Before saving a new client, check if the same client already exists using:
+- Company name
+- Mobile number
+- Email
+- TRN number
+
+If a similar client already exists, show warning:
+“Client already exists. Please select existing client instead of creating duplicate.”
+
+Acceptance criteria:
+1. Saving one client record makes it available in all related modules.
+2. Proforma Invoice can fetch saved client details automatically.
+3. Tax Invoice can fetch saved client details automatically.
+4. Delivery Note can fetch saved client details automatically.
+5. Undertaking Letter can fetch saved client details automatically.
+6. Handover Note can fetch saved client details automatically.
+7. Journal Entries can link to saved client records.
+8. Receivables can link to saved client records.
+9. Cheque Receipt can link to saved client records.
+10. Payment Receipt can link to saved client records.
+11. No duplicate client entry is required in different modules.
+12. Client details remain consistent across documents.
+13. Existing records should not be damaged.
+14. The system should remain clean, professional, and scalable.
+
+Very important:
+Please do not randomly change the UI or unrelated modules. Only improve the client master data connection and make sure all related documents and accounting pages fetch client data from one centralized record.
+
+Final workflow should be:
+
+Create Client Once
+↓
+Save in Client Master
+↓
+Client becomes available system-wide
+↓
+Select Client in any module
+↓
+System auto-fills client details
+↓
+Document/entry is saved with client_id reference
+
+Please implement this carefully with clean database relations, safe migration, proper validation, and professional code.

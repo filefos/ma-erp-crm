@@ -39,7 +39,14 @@ router.get("/contacts", requirePermission("contacts", "view"), async (req, res):
   if (companyId) rows = rows.filter(r => r.companyId === parseInt(companyId as string, 10));
   if (search) {
     const s = (search as string).toLowerCase();
-    rows = rows.filter(r => r.name.toLowerCase().includes(s) || r.email?.toLowerCase().includes(s) || r.companyName?.toLowerCase().includes(s));
+    rows = rows.filter(r =>
+      r.name.toLowerCase().includes(s) ||
+      r.email?.toLowerCase().includes(s) ||
+      r.companyName?.toLowerCase().includes(s) ||
+      r.phone?.toLowerCase().includes(s) ||
+      r.clientCode?.toLowerCase().includes(s) ||
+      (r as any).trnNumber?.toLowerCase().includes(s)
+    );
   }
   res.json(rows);
 });

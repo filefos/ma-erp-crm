@@ -10,6 +10,7 @@ export interface TaxInvoice {
   id: number;
   invoiceNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   companyTrn?: string;
   clientName: string;

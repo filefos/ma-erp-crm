@@ -1085,6 +1085,10 @@ export const ListContactsResponseItem = zod.object({
   location: zod.string().optional(),
   companyId: zod.number().optional(),
   clientCode: zod.string().optional(),
+  trnNumber: zod.string().optional(),
+  address: zod.string().optional(),
+  paymentTerms: zod.string().optional(),
+  status: zod.string().optional(),
   createdById: zod.number().optional(),
   notes: zod.string().optional(),
   createdAt: zod.string(),
@@ -1103,6 +1107,10 @@ export const CreateContactBody = zod.object({
   designation: zod.string().optional(),
   location: zod.string().optional(),
   companyId: zod.number().optional(),
+  trnNumber: zod.string().optional(),
+  address: zod.string().optional(),
+  paymentTerms: zod.string().optional(),
+  status: zod.string().optional(),
   notes: zod.string().optional(),
 });
 
@@ -1124,6 +1132,10 @@ export const GetContactResponse = zod.object({
   location: zod.string().optional(),
   companyId: zod.number().optional(),
   clientCode: zod.string().optional(),
+  trnNumber: zod.string().optional(),
+  address: zod.string().optional(),
+  paymentTerms: zod.string().optional(),
+  status: zod.string().optional(),
   createdById: zod.number().optional(),
   notes: zod.string().optional(),
   createdAt: zod.string(),
@@ -1145,6 +1157,10 @@ export const UpdateContactBody = zod.object({
   designation: zod.string().optional(),
   location: zod.string().optional(),
   companyId: zod.number().optional(),
+  trnNumber: zod.string().optional(),
+  address: zod.string().optional(),
+  paymentTerms: zod.string().optional(),
+  status: zod.string().optional(),
   notes: zod.string().optional(),
 });
 
@@ -1159,6 +1175,10 @@ export const UpdateContactResponse = zod.object({
   location: zod.string().optional(),
   companyId: zod.number().optional(),
   clientCode: zod.string().optional(),
+  trnNumber: zod.string().optional(),
+  address: zod.string().optional(),
+  paymentTerms: zod.string().optional(),
+  status: zod.string().optional(),
   createdById: zod.number().optional(),
   notes: zod.string().optional(),
   createdAt: zod.string(),
@@ -1703,6 +1723,7 @@ export const ListProformaInvoicesResponseItem = zod.object({
   id: zod.number(),
   piNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
@@ -1730,6 +1751,7 @@ export const ListProformaInvoicesResponse = zod.array(
  */
 export const CreateProformaInvoiceBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
   projectId: zod.number().optional(),
@@ -1755,6 +1777,7 @@ export const GetProformaInvoiceResponse = zod.object({
   id: zod.number(),
   piNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
@@ -1783,6 +1806,7 @@ export const UpdateProformaInvoiceParams = zod.object({
 
 export const UpdateProformaInvoiceBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
   projectId: zod.number().optional(),
@@ -1801,6 +1825,7 @@ export const UpdateProformaInvoiceResponse = zod.object({
   id: zod.number(),
   piNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
@@ -1840,6 +1865,7 @@ export const ListTaxInvoicesResponseItem = zod.object({
   id: zod.number(),
   invoiceNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   companyTrn: zod.string().optional(),
   clientName: zod.string(),
@@ -1870,6 +1896,7 @@ export const ListTaxInvoicesResponse = zod.array(ListTaxInvoicesResponseItem);
  */
 export const CreateTaxInvoiceBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   clientTrn: zod.string().optional(),
   invoiceDate: zod.string().optional(),
@@ -1898,6 +1925,7 @@ export const GetTaxInvoiceResponse = zod.object({
   id: zod.number(),
   invoiceNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   companyTrn: zod.string().optional(),
   clientName: zod.string(),
@@ -1931,6 +1959,7 @@ export const UpdateTaxInvoiceParams = zod.object({
 
 export const UpdateTaxInvoiceBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   clientTrn: zod.string().optional(),
   invoiceDate: zod.string().optional(),
@@ -1952,6 +1981,7 @@ export const UpdateTaxInvoiceResponse = zod.object({
   id: zod.number(),
   invoiceNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   companyTrn: zod.string().optional(),
   clientName: zod.string(),
@@ -1995,6 +2025,7 @@ export const ListDeliveryNotesResponseItem = zod.object({
   id: zod.number(),
   dnNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
@@ -2027,6 +2058,7 @@ export const ListDeliveryNotesResponse = zod.array(
  */
 export const CreateDeliveryNoteBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
   deliveryLocation: zod.string().optional(),
@@ -2059,6 +2091,7 @@ export const GetDeliveryNoteResponse = zod.object({
   id: zod.number(),
   dnNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
@@ -2092,6 +2125,7 @@ export const UpdateDeliveryNoteParams = zod.object({
 
 export const UpdateDeliveryNoteBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
   deliveryLocation: zod.string().optional(),
@@ -2117,6 +2151,7 @@ export const UpdateDeliveryNoteResponse = zod.object({
   id: zod.number(),
   dnNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectName: zod.string().optional(),
@@ -2153,6 +2188,7 @@ export const ListLposResponseItem = zod.object({
   id: zod.number(),
   lpoNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectRef: zod.string().optional(),
@@ -2190,6 +2226,7 @@ export const ListLposResponse = zod.array(ListLposResponseItem);
  */
 export const CreateLpoBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   projectRef: zod.string().optional(),
   projectId: zod.number().optional(),
@@ -2229,6 +2266,7 @@ export const GetLpoResponse = zod.object({
   id: zod.number(),
   lpoNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectRef: zod.string().optional(),
@@ -2269,6 +2307,7 @@ export const UpdateLpoParams = zod.object({
 
 export const UpdateLpoBody = zod.object({
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   projectRef: zod.string().optional(),
   projectId: zod.number().optional(),
@@ -2301,6 +2340,7 @@ export const UpdateLpoResponse = zod.object({
   id: zod.number(),
   lpoNumber: zod.string(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   projectRef: zod.string().optional(),
@@ -2345,6 +2385,7 @@ export const ListUndertakingLettersResponseItem = zod.object({
   ulNumber: zod.string(),
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
@@ -2369,6 +2410,7 @@ export const ListUndertakingLettersResponse = zod.array(
 export const CreateUndertakingLetterBody = zod.object({
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
   projectRef: zod.string().optional(),
@@ -2394,6 +2436,7 @@ export const GetUndertakingLetterResponse = zod.object({
   ulNumber: zod.string(),
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
@@ -2419,6 +2462,7 @@ export const UpdateUndertakingLetterParams = zod.object({
 export const UpdateUndertakingLetterBody = zod.object({
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
   projectRef: zod.string().optional(),
@@ -2437,6 +2481,7 @@ export const UpdateUndertakingLetterResponse = zod.object({
   ulNumber: zod.string(),
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
@@ -2465,6 +2510,7 @@ export const ListHandoverNotesResponseItem = zod.object({
   honNumber: zod.string(),
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
@@ -2498,6 +2544,7 @@ export const ListHandoverNotesResponse = zod.array(
 export const CreateHandoverNoteBody = zod.object({
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
   projectRef: zod.string().optional(),
@@ -2532,6 +2579,7 @@ export const GetHandoverNoteResponse = zod.object({
   honNumber: zod.string(),
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
@@ -2566,6 +2614,7 @@ export const UpdateHandoverNoteParams = zod.object({
 export const UpdateHandoverNoteBody = zod.object({
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),
   projectRef: zod.string().optional(),
@@ -2593,6 +2642,7 @@ export const UpdateHandoverNoteResponse = zod.object({
   honNumber: zod.string(),
   lpoId: zod.number().optional(),
   companyId: zod.number(),
+  contactId: zod.number().optional(),
   companyRef: zod.string().optional(),
   clientName: zod.string(),
   lpoNumber: zod.string().optional(),

@@ -317,6 +317,10 @@ export interface Contact {
   location?: string;
   companyId?: number;
   clientCode?: string;
+  trnNumber?: string;
+  address?: string;
+  paymentTerms?: string;
+  status?: string;
   createdById?: number;
   notes?: string;
   createdAt: string;
@@ -331,6 +335,10 @@ export interface CreateContactBody {
   designation?: string;
   location?: string;
   companyId?: number;
+  trnNumber?: string;
+  address?: string;
+  paymentTerms?: string;
+  status?: string;
   notes?: string;
 }
 
@@ -481,6 +489,7 @@ export interface ProformaInvoice {
   id: number;
   piNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   projectName?: string;
@@ -502,6 +511,7 @@ export interface ProformaInvoice {
 
 export interface CreateProformaInvoiceBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   projectName?: string;
   projectId?: number;
@@ -520,6 +530,7 @@ export interface TaxInvoice {
   id: number;
   invoiceNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   companyTrn?: string;
   clientName: string;
@@ -546,6 +557,7 @@ export interface TaxInvoice {
 
 export interface CreateTaxInvoiceBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   clientTrn?: string;
   invoiceDate?: string;
@@ -573,6 +585,7 @@ export interface DeliveryNote {
   id: number;
   dnNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   projectName?: string;
@@ -597,6 +610,7 @@ export type CreateDeliveryNoteBodyItemsItem = {
 
 export interface CreateDeliveryNoteBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   projectName?: string;
   deliveryLocation?: string;
@@ -622,6 +636,7 @@ export interface Lpo {
   id: number;
   lpoNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   projectRef?: string;
@@ -641,6 +656,7 @@ export interface Lpo {
 
 export interface CreateLpoBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   projectRef?: string;
   projectId?: number;
@@ -1941,6 +1957,7 @@ export interface UndertakingLetter {
   ulNumber: string;
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   lpoNumber?: string;
@@ -1959,6 +1976,7 @@ export interface UndertakingLetter {
 export interface CreateUndertakingLetterBody {
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   clientName: string;
   lpoNumber?: string;
   projectRef?: string;
@@ -1983,6 +2001,7 @@ export interface HandoverNote {
   honNumber: string;
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   lpoNumber?: string;
@@ -2008,6 +2027,7 @@ export type CreateHandoverNoteBodyItemsHandedOverItem = {
 export interface CreateHandoverNoteBody {
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   clientName: string;
   lpoNumber?: string;
   projectRef?: string;

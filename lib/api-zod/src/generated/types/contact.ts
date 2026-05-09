@@ -17,6 +17,10 @@ export interface Contact {
   location?: string;
   companyId?: number;
   clientCode?: string;
+  trnNumber?: string;
+  address?: string;
+  paymentTerms?: string;
+  status?: string;
   createdById?: number;
   notes?: string;
   createdAt: string;

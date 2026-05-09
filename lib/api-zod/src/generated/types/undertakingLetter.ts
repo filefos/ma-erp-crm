@@ -11,6 +11,7 @@ export interface UndertakingLetter {
   ulNumber: string;
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   lpoNumber?: string;

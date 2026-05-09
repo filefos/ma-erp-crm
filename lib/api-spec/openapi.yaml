@@ -4968,6 +4968,14 @@ components:
           type: integer
         clientCode:
           type: string
+        trnNumber:
+          type: string
+        address:
+          type: string
+        paymentTerms:
+          type: string
+        status:
+          type: string
         createdById:
           type: integer
         notes:
@@ -4995,6 +5003,14 @@ components:
           type: string
         companyId:
           type: integer
+        trnNumber:
+          type: string
+        address:
+          type: string
+        paymentTerms:
+          type: string
+        status:
+          type: string
         notes:
           type: string
       required: [name]
@@ -5287,6 +5303,8 @@ components:
           type: string
         companyId:
           type: integer
+        contactId:
+          type: integer
         companyRef:
           type: string
         clientName:
@@ -5328,6 +5346,8 @@ components:
       properties:
         companyId:
           type: integer
+        contactId:
+          type: integer
         clientName:
           type: string
         projectName:
@@ -5362,6 +5382,8 @@ components:
         invoiceNumber:
           type: string
         companyId:
+          type: integer
+        contactId:
           type: integer
         companyRef:
           type: string
@@ -5414,6 +5436,8 @@ components:
       properties:
         companyId:
           type: integer
+        contactId:
+          type: integer
         clientName:
           type: string
         clientTrn:
@@ -5454,6 +5478,8 @@ components:
         dnNumber:
           type: string
         companyId:
+          type: integer
+        contactId:
           type: integer
         companyRef:
           type: string
@@ -5499,6 +5525,8 @@ components:
       type: object
       properties:
         companyId:
+          type: integer
+        contactId:
           type: integer
         clientName:
           type: string
@@ -5556,6 +5584,8 @@ components:
           type: string
         companyId:
           type: integer
+        contactId:
+          type: integer
         companyRef:
           type: string
         clientName:
@@ -5594,6 +5624,8 @@ components:
       type: object
       properties:
         companyId:
+          type: integer
+        contactId:
           type: integer
         clientName:
           type: string
@@ -7741,6 +7773,8 @@ components:
           type: integer
         companyId:
           type: integer
+        contactId:
+          type: integer
         companyRef:
           type: string
         clientName:
@@ -7776,6 +7810,8 @@ components:
           type: integer
         companyId:
           type: integer
+        contactId:
+          type: integer
         clientName:
           type: string
         lpoNumber:
@@ -7810,6 +7846,8 @@ components:
         lpoId:
           type: integer
         companyId:
+          type: integer
+        contactId:
           type: integer
         companyRef:
           type: string
@@ -7856,6 +7894,8 @@ components:
         lpoId:
           type: integer
         companyId:
+          type: integer
+        contactId:
           type: integer
         clientName:
           type: string

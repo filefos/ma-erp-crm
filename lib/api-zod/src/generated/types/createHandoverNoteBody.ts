@@ -10,6 +10,7 @@ import type { CreateHandoverNoteBodyItemsHandedOverItem } from "./createHandover
 export interface CreateHandoverNoteBody {
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   clientName: string;
   lpoNumber?: string;
   projectRef?: string;

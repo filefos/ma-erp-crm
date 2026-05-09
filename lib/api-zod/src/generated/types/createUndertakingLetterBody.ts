@@ -9,6 +9,7 @@
 export interface CreateUndertakingLetterBody {
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   clientName: string;
   lpoNumber?: string;
   projectRef?: string;

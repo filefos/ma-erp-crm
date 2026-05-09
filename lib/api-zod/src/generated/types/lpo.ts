@@ -11,6 +11,7 @@ export interface Lpo {
   id: number;
   lpoNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   projectRef?: string;

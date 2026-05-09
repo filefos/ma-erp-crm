@@ -8,6 +8,7 @@
 
 export interface CreateProformaInvoiceBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   projectName?: string;
   projectId?: number;

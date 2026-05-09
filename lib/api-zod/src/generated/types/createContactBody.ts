@@ -15,5 +15,9 @@ export interface CreateContactBody {
   designation?: string;
   location?: string;
   companyId?: number;
+  trnNumber?: string;
+  address?: string;
+  paymentTerms?: string;
+  status?: string;
   notes?: string;
 }

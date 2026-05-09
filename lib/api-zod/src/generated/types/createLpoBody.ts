@@ -9,6 +9,7 @@ import type { LpoAttachment } from "./lpoAttachment";
 
 export interface CreateLpoBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   projectRef?: string;
   projectId?: number;

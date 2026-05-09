@@ -8,6 +8,7 @@
 
 export interface CreateTaxInvoiceBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   clientTrn?: string;
   invoiceDate?: string;

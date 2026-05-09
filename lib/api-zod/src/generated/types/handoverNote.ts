@@ -12,6 +12,7 @@ export interface HandoverNote {
   honNumber: string;
   lpoId?: number;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   lpoNumber?: string;

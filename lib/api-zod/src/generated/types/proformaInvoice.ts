@@ -10,6 +10,7 @@ export interface ProformaInvoice {
   id: number;
   piNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   projectName?: string;

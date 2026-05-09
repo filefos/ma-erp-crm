@@ -9,6 +9,7 @@ import type { CreateDeliveryNoteBodyItemsItem } from "./createDeliveryNoteBodyIt
 
 export interface CreateDeliveryNoteBody {
   companyId: number;
+  contactId?: number;
   clientName: string;
   projectName?: string;
   deliveryLocation?: string;

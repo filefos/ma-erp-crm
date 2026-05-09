@@ -11,6 +11,7 @@ export interface DeliveryNote {
   id: number;
   dnNumber: string;
   companyId: number;
+  contactId?: number;
   companyRef?: string;
   clientName: string;
   projectName?: string;
