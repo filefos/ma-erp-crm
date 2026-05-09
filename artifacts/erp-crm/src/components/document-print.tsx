@@ -688,14 +688,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             {data.type === "delivery_note" ? (
               /* Delivery note: stamp above our company, signature above client company */
               <div className="flex items-end justify-between text-xs pt-3 pb-3 px-4">
-                {/* Left — signature + stamp together, then For & on behalf of our company */}
-                <div>
-                  <div data-html2canvas-ignore="true" style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 8 }}>
+                {/* Left — images on the left, text on the right of images */}
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div data-html2canvas-ignore="true" style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                     {data.preparedBySignatureUrl && (
                       <img
                         src={data.preparedBySignatureUrl}
                         alt="Signature"
-                        style={{ maxHeight: 56, maxWidth: 140, objectFit: "contain", opacity: 0.85 }}
+                        style={{ maxHeight: 56, maxWidth: 120, objectFit: "contain", opacity: 0.85 }}
                       />
                     )}
                     {data.stampUrl && (
@@ -706,8 +706,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                       />
                     )}
                   </div>
-                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                  <div className="font-bold text-[13px]">{coName}</div>
+                  <div>
+                    <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                    <div className="font-bold text-[13px]">{coName}</div>
+                  </div>
                 </div>
                 {/* Right — For & on behalf of client (no image) */}
                 {data.clientName && (
