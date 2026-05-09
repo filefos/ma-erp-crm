@@ -1386,14 +1386,14 @@ export function LpoAcknowledgments() {
                         <div style={{ width: "44%", position: "relative" as const }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 4 }}>For {co.name}</div>
                           {/* Stamp / signature overlay inside the space above the line */}
-                          <div style={{ height: 56, display: "flex", alignItems: "flex-end", gap: 6, paddingBottom: 4 }}>
+                          <div style={{ height: 100, display: "flex", alignItems: "flex-end", gap: 8, paddingBottom: 4 }}>
                             {acSigOn && sigUrl && (
                               <img src={sigUrl} alt="Signature"
-                                style={{ maxHeight: 40, maxWidth: 90, objectFit: "contain", opacity: 0.88 }} />
+                                style={{ maxHeight: 44, maxWidth: 100, objectFit: "contain", opacity: 0.88 }} />
                             )}
                             {acStampOn && stampUrl && (
                               <img src={stampUrl} alt="Stamp"
-                                style={{ maxHeight: 56, maxWidth: 110, objectFit: "contain", opacity: 0.88 }} />
+                                style={{ maxHeight: 100, maxWidth: 180, objectFit: "contain", opacity: 0.88 }} />
                             )}
                           </div>
                           <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6 }} />
