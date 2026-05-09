@@ -5,10 +5,14 @@ import {
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Receipt, Pencil, FileText, Mail, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Receipt, Pencil, FileText, Mail, Loader2, Download, Truck } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
@@ -38,6 +42,10 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const [converting, setConverting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false);
+  const [convertPaymentTerms, setConvertPaymentTerms] = useState("");
+  const [convertNotes, setConvertNotes] = useState("");
+  const [convertSupplyDate, setConvertSupplyDate] = useState("");
 
   const { data: pi, isLoading } = useGetProformaInvoice(pid, {
     query: { queryKey: getGetProformaInvoiceQueryKey(pid), enabled: !!pid },
@@ -67,7 +75,21 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const createTax = useCreateTaxInvoice({
     mutation: {
       onSuccess: (inv) => {
-        toast({ title: "Tax Invoice created!", description: inv.invoiceNumber });
+        const dnNum = (inv as any).autoDeliveryNoteNumber;
+        const dnId = (inv as any).autoDeliveryNoteId;
+        toast({
+          title: "Tax Invoice created!",
+          description: dnNum
+            ? `${inv.invoiceNumber} · Delivery Note ${dnNum} (draft) also created`
+            : inv.invoiceNumber,
+          ...(dnId ? {
+            action: (
+              <a href={`/accounts/delivery-notes/${dnId}`} className="underline text-xs whitespace-nowrap">
+                View DN
+              </a>
+            ) as any,
+          } : {}),
+        });
         navigate("/accounts/invoices/" + inv.id);
       },
       onError: () => toast({ title: "Failed to create Tax Invoice.", variant: "destructive" }),
@@ -186,8 +208,16 @@ export function ProformaInvoiceDetail({ id }: Props) {
 
   const handleConvertToTax = () => {
     if (converting) return;
+    setConvertPaymentTerms(pi.paymentTerms ?? "");
+    setConvertNotes("");
+    setConvertSupplyDate(new Date().toISOString().split("T")[0]);
+    setConvertDialogOpen(true);
+  };
+
+  const handleConfirmConvertToTax = () => {
+    setConvertDialogOpen(false);
     setConverting(true);
-    const today = new Date().toISOString().split("T")[0];
+    const today = convertSupplyDate || new Date().toISOString().split("T")[0];
     createTax.mutate({ data: {
       companyId: pi.companyId,
       clientName: pi.clientName,
@@ -201,18 +231,21 @@ export function ProformaInvoiceDetail({ id }: Props) {
       grandTotal: pi.total,
       paymentStatus: "unpaid",
       ...({
-        paymentTerms: pi.paymentTerms,
+        paymentTerms: convertPaymentTerms || pi.paymentTerms,
+        notes: convertNotes || undefined,
         clientCode: (pi as any).clientCode,
         clientTrn: (pi as any).clientTrn ?? (pi as any).customerTrn,
         companyTrn: (pi as any).companyTrn,
         clientEmail: (pi as any).clientEmail,
         clientPhone: (pi as any).clientPhone,
         projectLocation: (pi as any).projectLocation,
+        projectRef: (pi as any).projectRef,
       } as Record<string, unknown>),
     } });
   };
 
   return (
+    <>
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="no-print flex items-center gap-2 flex-wrap">
         <Button variant="ghost" size="sm" asChild>
@@ -328,5 +361,77 @@ export function ProformaInvoiceDetail({ id }: Props) {
       )}
       <DocumentPrint data={docData} />
     </div>
+
+    {/* ── Convert to Tax Invoice Dialog ── */}
+    <Dialog open={convertDialogOpen} onOpenChange={(o) => { if (!o) setConvertDialogOpen(false); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Convert to Tax Invoice</DialogTitle>
+          <DialogDescription>
+            Review and confirm the details below. A Delivery Note (draft) will be
+            automatically created and linked to this Tax Invoice.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Summary card */}
+          <div className="rounded-md border bg-muted/40 p-3 text-sm grid grid-cols-2 gap-x-4 gap-y-1">
+            <span className="text-muted-foreground">Proforma Invoice</span>
+            <span className="font-mono font-semibold">{pi?.piNumber}</span>
+            <span className="text-muted-foreground">Client</span>
+            <span className="font-medium">{pi?.clientName}</span>
+            <span className="text-muted-foreground">Subtotal (excl. VAT)</span>
+            <span className="tabular-nums">AED {subtotal.toLocaleString()}</span>
+            <span className="text-muted-foreground">VAT ({vatPercent}%)</span>
+            <span className="tabular-nums">AED {vatAmount.toLocaleString()}</span>
+            <span className="text-muted-foreground font-semibold">Grand Total</span>
+            <span className="font-bold text-[#0f2d5a] tabular-nums">AED {Number(pi?.total ?? 0).toLocaleString()}</span>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Invoice / Supply Date</Label>
+            <Input
+              type="date"
+              value={convertSupplyDate}
+              onChange={e => setConvertSupplyDate(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Payment Terms</Label>
+            <Input
+              value={convertPaymentTerms}
+              onChange={e => setConvertPaymentTerms(e.target.value)}
+              className="h-8 text-sm"
+              placeholder="e.g. Full Contract Value"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Notes (optional)</Label>
+            <Textarea
+              value={convertNotes}
+              onChange={e => setConvertNotes(e.target.value)}
+              className="text-sm min-h-[60px] resize-none"
+              placeholder="Any notes for this invoice…"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 rounded-md bg-blue-50 border border-blue-200 px-3 py-2 text-xs text-blue-800">
+            <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>A Delivery Note (draft) will be automatically created and linked to this Tax Invoice.</span>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setConvertDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmConvertToTax} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+            <Receipt className="w-4 h-4 mr-1" />Create Tax Invoice
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

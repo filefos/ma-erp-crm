@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, usersTable, notificationsTable, departmentsTable, projectsTable, undertakingLettersTable, handoverNotesTable } from "@workspace/db";
+import { db, proformaInvoicesTable, taxInvoicesTable, deliveryNotesTable, lposTable, companiesTable, quotationsTable, quotationItemsTable, usersTable, notificationsTable, departmentsTable, projectsTable, undertakingLettersTable, handoverNotesTable } from "@workspace/db";
 import { and, eq, or, sql, inArray } from "drizzle-orm";
 import { requireAuth, requirePermission, scopeFilter, requireBodyCompanyAccess, getOwnerScope, inOwnerScope, ownerScopeFilter } from "../middlewares/auth";
 import { aiAvailable, chatWithVision } from "../lib/ai";
@@ -336,7 +336,50 @@ router.post("/tax-invoices", requirePermission("tax_invoices", "create"), requir
     subtotal, vatPercent: docVat, vatAmount, grandTotal, balance,
     createdById: req.user?.id,
   } as any).returning();
-  res.status(201).json(inv);
+
+  // ── Auto-create a draft Delivery Note linked to this Tax Invoice ──
+  let autoDeliveryNoteId: number | undefined;
+  let autoDeliveryNoteNumber: string | undefined;
+  try {
+    const dnNumber = await genDocNumber(inv.companyId, "DN", deliveryNotesTable, deliveryNotesTable.dnNumber);
+    // Use TI items if present; otherwise pull from quotation_items
+    let dnItemsArr: { description: string; quantity: number; unit: string }[] = [];
+    if (items.length > 0) {
+      dnItemsArr = items.map((it: any) => ({
+        description: it.description ?? "",
+        quantity: it.quantity ?? 1,
+        unit: it.unit ?? "No.",
+      }));
+    } else if (inv.quotationId) {
+      const qItems = await db.select().from(quotationItemsTable)
+        .where(eq(quotationItemsTable.quotationId, inv.quotationId));
+      dnItemsArr = qItems
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+        .map(qi => ({ description: qi.description, quantity: qi.quantity, unit: qi.unit ?? "No." }));
+    }
+    const [dn] = await db.insert(deliveryNotesTable).values({
+      dnNumber,
+      companyId: inv.companyId,
+      clientCode: clientCode ?? undefined,
+      clientName: inv.clientName,
+      projectName: (data.projectName as string | undefined) ?? linkedQuotation?.projectName ?? undefined,
+      projectRef: inv.projectRef ?? undefined,
+      projectId: inv.projectId ?? undefined,
+      quotationId: inv.quotationId ?? undefined,
+      lpoId: inv.lpoId ?? undefined,
+      taxInvoiceId: inv.id,
+      deliveryDate: new Date().toISOString().split("T")[0],
+      status: "draft",
+      createdById: req.user?.id,
+      items: JSON.stringify(dnItemsArr),
+    } as any).returning({ id: deliveryNotesTable.id, dnNumber: deliveryNotesTable.dnNumber });
+    autoDeliveryNoteId = dn.id;
+    autoDeliveryNoteNumber = dn.dnNumber;
+  } catch (err) {
+    req.log.warn({ err }, "auto-DN creation failed for tax invoice %d", inv.id);
+  }
+
+  res.status(201).json({ ...inv, autoDeliveryNoteId, autoDeliveryNoteNumber });
 });
 
 router.get("/tax-invoices/:id", requirePermission("tax_invoices", "view"), async (req, res): Promise<void> => {

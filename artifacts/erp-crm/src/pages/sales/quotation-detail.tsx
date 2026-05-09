@@ -304,7 +304,7 @@ export function QuotationDetail({ id }: Props) {
     const computed = calculateInstallments(installments, baseSubtotal, vatPercent);
     const today = new Date().toISOString().split("T")[0];
 
-    const created: { name: string; id: number }[] = [];
+    const created: { name: string; id: number; dnId?: number; dnNumber?: string }[] = [];
     let failures = 0;
 
     for (const { i } of chosen) {
@@ -366,7 +366,7 @@ export function QuotationDetail({ id }: Props) {
               notes: taxNote,
             } as Record<string, unknown>),
           } });
-          created.push({ name: res.invoiceNumber, id: res.id });
+          created.push({ name: res.invoiceNumber, id: res.id, dnId: (res as any).autoDeliveryNoteId, dnNumber: (res as any).autoDeliveryNoteNumber });
         }
       } catch {
         failures += 1;
@@ -399,7 +399,7 @@ export function QuotationDetail({ id }: Props) {
             projectRef: (q as any).projectRef ?? q.projectName ?? undefined,
           } as Record<string, unknown>),
         } });
-        created.push({ name: res.invoiceNumber, id: res.id });
+        created.push({ name: res.invoiceNumber, id: res.id, dnId: (res as any).autoDeliveryNoteId, dnNumber: (res as any).autoDeliveryNoteNumber });
       } catch {
         failures += 1;
       }
@@ -420,9 +420,12 @@ export function QuotationDetail({ id }: Props) {
       return;
     }
 
+    const dnNumbers = created.filter(c => c.dnNumber).map(c => c.dnNumber);
     toast({
       title: `${created.length} ${target === "pi" ? "Proforma Invoice" : "Tax Invoice"}${created.length > 1 ? "s" : ""} created`,
-      description: created.map(c => c.name).join(", "),
+      description: target === "tax" && dnNumbers.length > 0
+        ? `${created.map(c => c.name).join(", ")} · Delivery Note${dnNumbers.length > 1 ? "s" : ""} ${dnNumbers.join(", ")} (draft) also created`
+        : created.map(c => c.name).join(", "),
     });
 
     if (failures > 0) {
