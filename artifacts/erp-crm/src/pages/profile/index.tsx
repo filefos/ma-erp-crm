@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useUpdateUser, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useUpdateUser, getGetMeQueryKey, useListCompanies } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { User, Mail, Phone, Shield, Building2, Pencil, Check, X, Upload, Trash2,
 import { getAutomationLevel, setAutomationLevel, type AutomationLevel } from "@/lib/ai-client";
 import { canSignDocuments } from "@/lib/permissions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SignatureStampPreview } from "@/components/signature-stamp-preview";
 
 const LEVEL_COLORS: Record<string, string> = {
   super_admin: "bg-red-100 text-red-800",
@@ -26,6 +27,7 @@ const LEVEL_COLORS: Record<string, string> = {
 export function MyProfile() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: companies } = useListCompanies();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [saved, setSaved] = useState(false);
@@ -313,6 +315,12 @@ export function MyProfile() {
             {sigSaved && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Signature saved!</span>}
             {sigCleared && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Signature cleared.</span>}
           </div>
+
+          <SignatureStampPreview
+            signatureUrl={sigPreview ?? undefined}
+            stampUrl={companies?.find(c => c.id === u.companyId)?.stamp ?? undefined}
+            stampWidthPct={companies?.find(c => c.id === u.companyId)?.stampWidthPct ?? undefined}
+          />
         </CardContent>
       </Card>}
 
