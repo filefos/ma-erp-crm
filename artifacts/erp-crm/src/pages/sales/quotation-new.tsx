@@ -316,30 +316,32 @@ export function QuotationNew() {
                     <td className="px-2 text-center font-semibold text-[#1a3d6e] border border-[#6fa3d8] border-t-0 border-l-0 align-middle">
                       {String(i + 1).padStart(2, "0")}
                     </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0 align-top">
-                      <Select
-                        value=""
-                        onValueChange={v => {
-                          const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
-                          if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
-                          else if (preset?.value === "custom") updateItem(i, "description", "");
-                        }}
-                      >
-                        <SelectTrigger className="h-7 text-xs mb-1 bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
-                          <SelectValue placeholder="▾ Select template..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DESCRIPTION_PRESETS.map(p => (
-                            <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Textarea
-                        value={item.description}
-                        onChange={e => updateItem(i, "description", e.target.value)}
-                        className="text-sm min-h-[60px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
-                        placeholder="Select a template above or type freely..."
-                      />
+                    <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
+                      <div className="flex flex-col h-full">
+                        <Select
+                          value=""
+                          onValueChange={v => {
+                            const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
+                            if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
+                            else if (preset?.value === "custom") updateItem(i, "description", "");
+                          }}
+                        >
+                          <SelectTrigger className="h-7 text-xs mb-1 shrink-0 bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
+                            <SelectValue placeholder="▾ Select template..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DESCRIPTION_PRESETS.map(p => (
+                              <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Textarea
+                          value={item.description}
+                          onChange={e => updateItem(i, "description", e.target.value)}
+                          className="text-sm flex-1 min-h-[52px] resize-none bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                          placeholder="Select a template above or type freely..."
+                        />
+                      </div>
                     </td>
                     <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
                       <Input
