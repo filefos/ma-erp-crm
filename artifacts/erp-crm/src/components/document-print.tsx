@@ -688,38 +688,34 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             {data.type === "delivery_note" ? (
               /* Delivery note: stamp above our company, signature above client company */
               <div className="flex items-end justify-between text-xs pt-3 pb-3 px-4">
-                {/* Left — stamp (top) then For & on behalf of our company */}
+                {/* Left — signature + stamp together, then For & on behalf of our company */}
                 <div>
-                  {data.stampUrl && (
-                    <div data-html2canvas-ignore="true" style={{ marginBottom: 8 }}>
-                      <img
-                        src={data.stampUrl}
-                        alt="Stamp"
-                        style={{ maxHeight: 120, maxWidth: 200, objectFit: "contain", opacity: 0.85, display: "block" }}
-                      />
-                    </div>
-                  )}
-                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                  <div className="font-bold text-[13px]">{coName}</div>
-                </div>
-                {/* Right — signature (top) then For & on behalf of client */}
-                <div className="text-right">
-                  {data.preparedBySignatureUrl && (
-                    <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+                  <div data-html2canvas-ignore="true" style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 8 }}>
+                    {data.preparedBySignatureUrl && (
                       <img
                         src={data.preparedBySignatureUrl}
                         alt="Signature"
-                        style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
+                        style={{ maxHeight: 56, maxWidth: 140, objectFit: "contain", opacity: 0.85 }}
                       />
-                    </div>
-                  )}
-                  {data.clientName && (
-                    <>
-                      <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                      <div className="font-bold text-[13px]">{data.clientName}</div>
-                    </>
-                  )}
+                    )}
+                    {data.stampUrl && (
+                      <img
+                        src={data.stampUrl}
+                        alt="Stamp"
+                        style={{ maxHeight: 110, maxWidth: 110, objectFit: "contain", opacity: 0.85 }}
+                      />
+                    )}
+                  </div>
+                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                  <div className="font-bold text-[13px]">{coName}</div>
                 </div>
+                {/* Right — For & on behalf of client (no image) */}
+                {data.clientName && (
+                  <div className="text-right">
+                    <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                    <div className="font-bold text-[13px]">{data.clientName}</div>
+                  </div>
+                )}
               </div>
             ) : (
               /* All other documents: Prepared by on left, For & on behalf on right */
