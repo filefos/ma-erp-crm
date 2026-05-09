@@ -17,13 +17,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft, Pencil, Save, X, Send, FileDown, Printer, RefreshCcw, UserPlus, CheckCircle2, XCircle,
-  Paperclip, Upload, Trash2, Download,
+  Paperclip, Upload, Trash2, Download, Loader2,
 } from "lucide-react";
 import { OfferLetterTemplate } from "@/components/hr/offer-letter-template";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 import { useToast } from "@/hooks/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/hooks/useAuth";
+import { authHeaders } from "@/lib/ai-client";
 
 const COMMISSION_DEFAULTS = {
   commissionTargetAmount: 200000,
@@ -53,6 +54,28 @@ export function OfferLetterDetail({ id }: Props) {
   const { toast } = useToast();
   const { can, isSuperAdmin } = usePermissions();
   const { user: authUser } = useAuth();
+  const [downloadingAtt, setDownloadingAtt] = useState<number | null>(null);
+
+  async function authedFetch(url: string): Promise<string> {
+    const r = await fetch(url, { headers: authHeaders() });
+    if (!r.ok) throw new Error(`Failed to fetch file: ${r.status}`);
+    const blob = await r.blob();
+    return URL.createObjectURL(blob);
+  }
+
+  async function downloadAuthed(url: string, filename: string) {
+    try {
+      const objectUrl = await authedFetch(url);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+    } catch {
+      toast({ title: "Download failed", description: "Could not download the file. Please try again.", variant: "destructive" });
+    }
+  }
+
   // Mirrors the server-side isHrOrAdmin() check: shows upload/delete controls
   // only to users who will actually be authorized server-side, preventing
   // confusing 403s for users who have offer_letters:edit but are not HR/admin.
@@ -554,10 +577,23 @@ export function OfferLetterDetail({ id }: Props) {
                     </div>
                   </div>
                   {a.signedUrl && (
-                    <Button size="sm" variant="ghost" asChild data-testid={`button-download-attachment-${a.id}`}>
-                      <a href={a.signedUrl} target="_blank" rel="noopener noreferrer" download={a.fileName}>
-                        <Download className="w-4 h-4" />
-                      </a>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={downloadingAtt === a.id}
+                      data-testid={`button-download-attachment-${a.id}`}
+                      onClick={async () => {
+                        setDownloadingAtt(a.id);
+                        try {
+                          await downloadAuthed(a.signedUrl!, a.fileName);
+                        } finally {
+                          setDownloadingAtt(null);
+                        }
+                      }}
+                    >
+                      {downloadingAtt === a.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Download className="w-4 h-4" />}
                     </Button>
                   )}
                   {(canEdit && can("offer_letters", "edit") && isHrOrAdmin) && (
