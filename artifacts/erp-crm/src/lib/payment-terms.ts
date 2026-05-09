@@ -99,10 +99,35 @@ export function parsePaymentTerms(raw: string | null | undefined): Installment[]
   if (!raw || !raw.trim()) return [];
 
   const text = raw.replace(/\s+/g, " ").trim();
-  const fragments = text
+
+  // Coarse split on commas, semicolons, newlines, or " and "
+  const coarseFragments = text
     .split(/[,;\n]| and /i)
     .map((s) => s.trim())
     .filter(Boolean);
+
+  // Sub-split any fragment that contains more than one percentage value,
+  // e.g. "30% ADVANCE 70% UPON DELIVERY" → ["30% ADVANCE", "70% UPON DELIVERY"]
+  const fragments: string[] = [];
+  for (const frag of coarseFragments) {
+    const pctRegex = /\d+(?:\.\d+)?\s*%/g;
+    const positions: number[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = pctRegex.exec(frag)) !== null) {
+      positions.push(m.index);
+    }
+    if (positions.length <= 1) {
+      fragments.push(frag);
+    } else {
+      // Split at every percentage boundary after the first
+      let prev = 0;
+      for (let i = 1; i < positions.length; i++) {
+        fragments.push(frag.slice(prev, positions[i]).trim());
+        prev = positions[i];
+      }
+      fragments.push(frag.slice(prev).trim());
+    }
+  }
 
   const installments: Installment[] = [];
 

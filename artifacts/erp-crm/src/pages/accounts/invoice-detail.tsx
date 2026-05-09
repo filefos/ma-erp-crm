@@ -2,12 +2,14 @@ import {
   useGetTaxInvoice, useGetQuotation,
   getGetTaxInvoiceQueryKey, getGetQuotationQueryKey,
   useCreateDeliveryNote, useListCompanies,
+  useDeleteTaxInvoice, getListTaxInvoicesQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2, Mail, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Package, Pencil, FileText, BookOpen, BarChart2, Mail, Loader2, Download, Trash2 } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
@@ -19,6 +21,7 @@ import { useState, useEffect } from "react";
 import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
 import { useAuth } from "@/hooks/useAuth";
 import { authHeaders } from "@/lib/ai-client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Props { id: string }
 
@@ -34,10 +37,23 @@ export function InvoiceDetail({ id }: Props) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { openCompose } = useEmailCompose();
+  const queryClient = useQueryClient();
   const [converting, setConverting] = useState(false);
   const [creatingJournal, setCreatingJournal] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const deleteMutation = useDeleteTaxInvoice({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListTaxInvoicesQueryKey() });
+        toast({ title: "Tax Invoice deleted." });
+        navigate("/accounts/invoices");
+      },
+      onError: () => toast({ title: "Failed to delete.", variant: "destructive" }),
+    },
+  });
 
   const handleAutoJournal = async () => {
     if (creatingJournal) return;
@@ -184,11 +200,18 @@ export function InvoiceDetail({ id }: Props) {
             </Link>
           </Button>
         ) : null}
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2 flex-wrap">
           <Button size="sm" variant="outline" asChild>
             <Link href={`/accounts/invoices/${invId}/edit`}>
               <Pencil className="w-4 h-4 mr-1" />Edit
             </Link>
+          </Button>
+          <Button
+            size="sm" variant="outline"
+            className="text-destructive border-destructive/40 hover:bg-destructive hover:text-white"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-1" />Delete
           </Button>
           <Button
             size="sm" variant="outline"
@@ -271,6 +294,28 @@ export function InvoiceDetail({ id }: Props) {
       {(inv as any)?.projectId && (
         <InvoiceProjectCost projectId={(inv as any).projectId} invoiceId={invId} />
       )}
+
+      {/* Delete Confirmation */}
+      <Dialog open={confirmDelete} onOpenChange={o => { if (!o) setConfirmDelete(false); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Tax Invoice</DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{inv.invoiceNumber}</strong>. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDelete(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate({ id: invId })}
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
