@@ -761,19 +761,19 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {isQuotation && (
           <div className="print-page-break mt-8">
             {/* Page 2 Letterhead */}
-            <div className="overflow-hidden mb-[2px]">
-              <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <div style={{ overflow: "hidden", marginBottom: 2 }}>
+              <div style={{ backgroundColor: "#0f2d5a", color: "white", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
-                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
+                  <img src={companyLogo} alt="Logo" style={{ maxHeight: 60, maxWidth: 130, height: "auto", objectFit: "contain", borderRadius: 4, background: "white", padding: 4, flexShrink: 0 }} />
                 )}
-                <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
-                  <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
-                  <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
-                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+                <div style={{ lineHeight: 1.2, flex: 1, textAlign: companyLogo ? "left" : "center" }}>
+                  <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", lineHeight: 1 }}>{coName}</div>
+                  <div style={{ fontSize: 11, marginTop: 3, opacity: 0.9 }}>{co.address}</div>
+                  <div style={{ fontSize: 11, opacity: 0.9 }}>Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                <span className="text-[15px] font-black tracking-widest uppercase">TECHNICAL SPECIFICATION</span>
+              <div style={{ backgroundColor: "#1e6ab0", color: "white", textAlign: "center", padding: "4px 0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: 3, textTransform: "uppercase" }}>TECHNICAL SPECIFICATION</span>
               </div>
             </div>
 
@@ -855,19 +855,19 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {isQuotation && (
           <div className="print-page-break mt-8">
             {/* Page 3 Letterhead */}
-            <div className="overflow-hidden mb-[2px]">
-              <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <div style={{ overflow: "hidden", marginBottom: 2 }}>
+              <div style={{ backgroundColor: "#0f2d5a", color: "white", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
-                  <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
+                  <img src={companyLogo} alt="Logo" style={{ maxHeight: 60, maxWidth: 130, height: "auto", objectFit: "contain", borderRadius: 4, background: "white", padding: 4, flexShrink: 0 }} />
                 )}
-                <div className={`leading-tight ${companyLogo ? "flex-1" : "flex-1 text-center"}`}>
-                  <div className="text-[22px] font-black tracking-wider uppercase leading-none">{coName}</div>
-                  <div className="text-[11px] mt-[3px] opacity-90">{co.address}</div>
-                  <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
+                <div style={{ lineHeight: 1.2, flex: 1, textAlign: companyLogo ? "left" : "center" }}>
+                  <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", lineHeight: 1 }}>{coName}</div>
+                  <div style={{ fontSize: 11, marginTop: 3, opacity: 0.9 }}>{co.address}</div>
+                  <div style={{ fontSize: 11, opacity: 0.9 }}>Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
-                <span className="text-[15px] font-black tracking-widest uppercase">TERMS &amp; CONDITIONS</span>
+              <div style={{ backgroundColor: "#1e6ab0", color: "white", textAlign: "center", padding: "4px 0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: 3, textTransform: "uppercase" }}>TERMS &amp; CONDITIONS</span>
               </div>
             </div>
 
@@ -889,32 +889,30 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               }
               if (current) sections.push(current);
               return (
-                <div className="mb-4">
+                <div style={{ marginBottom: 16 }}>
                   {sections.map((sec, si) => (
-                    <div key={si} className="mb-[5px]">
+                    <div key={si} style={{ marginBottom: 5 }}>
                       {/* Section header */}
                       <div
-                        className="flex items-center gap-2 px-3 py-[5px]"
-                        style={{ backgroundColor: "#1e3a6e", ...printStyle }}
+                        style={{ backgroundColor: "#1e3a6e", display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", ...printStyle }}
                       >
-                        <span className="text-[13px] font-black text-white shrink-0">{sec.num}</span>
-                        <span className="text-[13px] font-black text-white uppercase tracking-widest">{sec.title}</span>
+                        <span style={{ fontSize: "13px", fontWeight: 900, color: "white", flexShrink: 0 }}>{sec.num}</span>
+                        <span style={{ fontSize: "13px", fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>{sec.title}</span>
                       </div>
                       {/* Items */}
-                      <table className="w-full border-collapse">
+                      <table style={{ width: "100%", borderCollapse: "collapse" }}>
                         <tbody>
                           {sec.items.map((item, ii) => {
                             const isCheque = /cheque(s)?\s+shall\s+be\s+prepared\s+in\s+fav/i.test(item.body);
                             return (
                               <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? "#f0f4f9" : "#ffffff", ...printStyle }}>
                                 <td
-                                  className="border border-gray-300 px-2 py-[5px] text-[12px] font-semibold text-gray-600 text-center align-top"
-                                  style={{ width: 30 }}
+                                  style={{ border: "1px solid #d1d5db", padding: "5px 8px", fontSize: "12px", fontWeight: 600, color: "#4b5563", textAlign: "center", verticalAlign: "top", width: 30 }}
                                 >
                                   {item.num}
                                 </td>
                                 <td
-                                  className={`border border-gray-300 px-3 py-[5px] text-[12px] leading-snug align-top ${isCheque ? "font-bold text-[#0f2d5a]" : "text-gray-800"}`}
+                                  style={{ border: "1px solid #d1d5db", padding: "5px 12px", fontSize: "12px", lineHeight: 1.5, verticalAlign: "top", fontWeight: isCheque ? 700 : 400, color: isCheque ? "#0f2d5a" : "#1f2937" }}
                                 >
                                   {item.body}
                                 </td>
