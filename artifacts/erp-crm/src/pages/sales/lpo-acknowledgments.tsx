@@ -18,10 +18,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer, Mail } from "lucide-react";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { useEmailCompose } from "@/contexts/email-compose-context";
 
 const BASE = import.meta.env.BASE_URL;
 const MAX_MB = 20;
@@ -56,6 +57,7 @@ export function LpoAcknowledgments() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { openCompose } = useEmailCompose();
 
   const [search, setSearch] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -1070,53 +1072,82 @@ export function LpoAcknowledgments() {
       {/* ─── AC LETTER: Document Preview ─── */}
       <Dialog open={acPreviewOpen} onOpenChange={v => { setAcPreviewOpen(v); if (!v) setAcLetterRecord(null); }}>
         <DialogContent className="max-w-5xl h-[95vh] flex flex-col gap-0 p-0 overflow-hidden">
-          {/* Toolbar */}
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0f2d5a] shrink-0">
-            <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 mr-1"
-              onClick={() => setAcPreviewOpen(false)}>
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back
-            </Button>
-            <div className="h-5 w-px bg-white/20" />
-            <div className="flex-1 text-white font-semibold text-sm pl-1 truncate">
-              Acknowledgement Letter
+          <DialogTitle className="sr-only">Acknowledgement Letter Preview</DialogTitle>
+
+          {/* ── Top toolbar (light, matching quotation detail style) ── */}
+          <div className="shrink-0 border-b bg-white">
+            {/* Row 1: back + title + badges */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b">
+              <Button size="sm" variant="ghost" className="text-slate-600 hover:text-slate-900 -ml-1"
+                onClick={() => setAcPreviewOpen(false)}>
+                <ArrowLeft className="w-4 h-4 mr-1" /> Back
+              </Button>
+              <div className="h-4 w-px bg-slate-200" />
+              <FileText className="w-4 h-4 text-[#0f2d5a]" />
+              <span className="font-semibold text-[#0f2d5a] text-sm">Acknowledgement Letter</span>
               {acLetterRecord?.lpoNumber && (
-                <span className="ml-2 text-white/60 font-normal text-xs">— {acLetterRecord.lpoNumber}</span>
+                <span className="inline-flex items-center rounded border border-slate-300 bg-slate-50 px-2 py-0.5 text-xs font-mono text-slate-600">
+                  {acLetterRecord.lpoNumber}
+                </span>
+              )}
+              {acLetterRecord?.customerName && (
+                <span className="inline-flex items-center rounded bg-blue-50 border border-blue-200 px-2 py-0.5 text-xs text-blue-700">
+                  {acLetterRecord.customerName}
+                </span>
               )}
             </div>
-            <Button size="sm" variant="outline"
-              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-              onClick={() => {
-                const el = acLetterRef.current;
-                if (!el) return;
-                const w = window.open("", "_blank");
-                if (!w) return;
-                w.document.write(`<!DOCTYPE html><html><head><title>Acknowledgement Letter</title><style>*{box-sizing:border-box}body{margin:0;padding:48px 64px;font-family:Helvetica,Arial,sans-serif;color:#222}</style></head><body>${el.innerHTML}</body></html>`);
-                w.document.close();
-                setTimeout(() => { w.focus(); w.print(); }, 400);
-              }}>
-              <Printer className="w-3.5 h-3.5 mr-1.5" /> Print
-            </Button>
-            <Button size="sm" variant="outline"
-              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-              disabled={acPdfGenerating}
-              onClick={downloadAckLetterPdf}>
-              {acPdfGenerating
-                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Generating…</>
-                : <><Download className="w-3.5 h-3.5 mr-1.5" />Download PDF</>}
-            </Button>
+
+            {/* Row 2: action buttons */}
+            <div className="flex items-center gap-2 px-4 py-2">
+              <Button size="sm" variant="outline" disabled={acPdfGenerating} onClick={downloadAckLetterPdf}
+                className="border-slate-300 text-slate-700 hover:bg-slate-50">
+                {acPdfGenerating
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Generating…</>
+                  : <><Download className="w-3.5 h-3.5 mr-1.5" />Download PDF</>}
+              </Button>
+
+              <Button size="sm" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  if (!acLetterRecord) return;
+                  const co = (companies ?? []).find(c => c.id === (acLetterRecord.companyId ?? activeCompanyId)) as any;
+                  openCompose({
+                    to: acLetterRecord.customerName ? [acLetterRecord.customerName] : [],
+                    subject: `Acknowledgement Letter${acLetterRecord.lpoNumber ? ` – LPO No. ${acLetterRecord.lpoNumber}` : ""}`,
+                    body: `Dear Sir/Madam,\n\nPlease find attached our Acknowledgement Letter for ${acLetterRecord.lpoNumber ? `LPO No. ${acLetterRecord.lpoNumber}` : "the above-referenced LPO"}.\n\nKindly review and confirm receipt.\n\nWarm regards,\n${co?.name ?? ""}`,
+                  });
+                }}>
+                <Mail className="w-3.5 h-3.5 mr-1.5" />Send Email
+              </Button>
+
+              <Button size="sm" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  const el = acLetterRef.current;
+                  if (!el) return;
+                  const w = window.open("", "_blank");
+                  if (!w) return;
+                  w.document.write(`<!DOCTYPE html><html><head><title>Acknowledgement Letter</title>
+                    <style>*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+                    body{margin:0;padding:0;font-family:Helvetica,Arial,sans-serif;color:#222;background:#fff}
+                    @page{size:A4;margin:15mm 18mm}
+                    @media print{body{padding:0}}</style></head><body>${el.innerHTML}</body></html>`);
+                  w.document.close();
+                  setTimeout(() => { w.focus(); w.print(); }, 400);
+                }}>
+                <Printer className="w-3.5 h-3.5 mr-1.5" />Print / PDF
+              </Button>
+            </div>
           </div>
 
-          {/* Document area */}
-          <div className="flex-1 overflow-y-auto bg-gray-200 p-6">
+          {/* ── Document area ── */}
+          <div className="flex-1 overflow-y-auto bg-[#e5e7eb] p-8">
             {acLetterRecord && (() => {
               const co = (companies ?? []).find(c => c.id === (acLetterRecord.companyId ?? activeCompanyId)) as any;
-              const ourName = co?.name || "Our Company";
+              const ourName  = co?.name || "Our Company";
               const clientName = acLetterRecord.customerName || "Client";
               const lpoRef = acLetterRecord.lpoNumber ? `LPO No. ${acLetterRecord.lpoNumber}` : "the above-referenced LPO";
-              const qtRef = acLetterRecord.quotationNumber ? ` (Quotation No. ${acLetterRecord.quotationNumber})` : "";
-              const today = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
-              const refs = [acLetterRecord.lpoNumber && `LPO No: ${acLetterRecord.lpoNumber}`, acLetterRecord.quotationNumber && `Quotation No: ${acLetterRecord.quotationNumber}`].filter(Boolean).join("   |   ");
-              const paras = [
+              const qtRef  = acLetterRecord.quotationNumber ? ` (Quotation No. ${acLetterRecord.quotationNumber})` : "";
+              const today  = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+              const paras  = [
                 `We are pleased to acknowledge receipt of your Local Purchase Order ${lpoRef} and confirm our formal acceptance of the order as detailed therein.`,
                 `${ourName} hereby accepts the terms and conditions set forth in the above LPO and commits to fulfilling the supply of goods and/or services as specified, in accordance with the agreed delivery schedule, payment terms, and quality standards${qtRef}.`,
                 `${clientName}, by issuing the above LPO, acknowledges and agrees to the terms and conditions of ${ourName}, including the pricing, scope of work, payment terms, and delivery timelines as confirmed in the referenced quotation and the LPO.`,
@@ -1126,73 +1157,97 @@ export function LpoAcknowledgments() {
               return (
                 <div
                   ref={acLetterRef}
-                  className="bg-white mx-auto shadow-xl"
-                  style={{ maxWidth: 794, minHeight: 1050, padding: "56px 64px", fontFamily: "Helvetica, Arial, sans-serif" }}
+                  className="bg-white mx-auto shadow-2xl"
+                  style={{ maxWidth: 794, minHeight: 1123, padding: "48px 60px", fontFamily: "Helvetica, Arial, sans-serif" }}
                 >
-                  {/* ── Letterhead ── */}
-                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
-                    {/* Logo */}
+                  {/* ══ LETTERHEAD ══ */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 0 }}>
+                    {/* Logo left */}
                     <div style={{ flexShrink: 0 }}>
-                      {co?.logo && (
-                        <img src={co.logo} alt="Company Logo" style={{ maxHeight: 72, maxWidth: 160, objectFit: "contain" }} />
+                      {co?.logo
+                        ? <img src={co.logo} alt="Logo" style={{ maxHeight: 80, maxWidth: 180, objectFit: "contain" }} />
+                        : <div style={{ width: 100, height: 60, background: "#0f2d5a", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <span style={{ color: "#fff", fontWeight: 700, fontSize: 11, textAlign: "center", padding: "0 6px" }}>{ourName}</span>
+                          </div>
+                      }
+                    </div>
+                    {/* Company details right */}
+                    <div style={{ textAlign: "right", maxWidth: 280 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "#0f2d5a", letterSpacing: 0.2, textTransform: "uppercase" }}>{ourName}</div>
+                      {co?.address  && <div style={{ fontSize: 9.5, color: "#444", marginTop: 5, lineHeight: 1.5 }}>{co.address}</div>}
+                      {co?.phone    && <div style={{ fontSize: 9.5, color: "#444" }}>Tel: {co.phone}</div>}
+                      {co?.email    && <div style={{ fontSize: 9.5, color: "#444" }}>{co.email}</div>}
+                      {co?.website  && <div style={{ fontSize: 9.5, color: "#0f2d5a" }}>{co.website}</div>}
+                      {co?.trn      && <div style={{ fontSize: 9.5, color: "#444", marginTop: 3 }}>TRN: {co.trn}</div>}
+                    </div>
+                  </div>
+
+                  {/* Navy divider */}
+                  <div style={{ borderTop: "3px solid #0f2d5a", margin: "14px 0 0" }} />
+                  <div style={{ borderTop: "1px solid #b0bec5", marginBottom: 20 }} />
+
+                  {/* ══ FROM / TO two-column block ══ */}
+                  <div style={{ display: "flex", gap: 24, marginBottom: 22 }}>
+                    {/* FROM — our company */}
+                    <div style={{ flex: 1, padding: "12px 14px", background: "#f0f4fa", borderLeft: "3px solid #0f2d5a", borderRadius: "0 4px 4px 0" }}>
+                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "#0f2d5a", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>From</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a" }}>{ourName}</div>
+                      {co?.address && <div style={{ fontSize: 9.5, color: "#555", marginTop: 3, lineHeight: 1.5 }}>{co.address}</div>}
+                      {co?.phone   && <div style={{ fontSize: 9.5, color: "#555" }}>Tel: {co.phone}</div>}
+                      {co?.email   && <div style={{ fontSize: 9.5, color: "#555" }}>{co.email}</div>}
+                      {co?.trn     && <div style={{ fontSize: 9.5, color: "#555", marginTop: 2 }}>TRN: {co.trn}</div>}
+                    </div>
+
+                    {/* TO — client */}
+                    <div style={{ flex: 1, padding: "12px 14px", background: "#fff8f0", borderLeft: "3px solid #b45309", borderRadius: "0 4px 4px 0" }}>
+                      <div style={{ fontSize: 8.5, fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 6 }}>To</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#111" }}>{clientName}</div>
+                      {acLetterRecord.lpoNumber && (
+                        <div style={{ fontSize: 9.5, color: "#555", marginTop: 3 }}>LPO Reference: <strong>{acLetterRecord.lpoNumber}</strong></div>
                       )}
-                    </div>
-                    {/* Company details */}
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 17, fontWeight: 700, color: "#0f2d5a", letterSpacing: 0.3 }}>{ourName}</div>
-                      {co?.address && <div style={{ fontSize: 10, color: "#555", marginTop: 4 }}>{co.address}</div>}
-                      {co?.phone && <div style={{ fontSize: 10, color: "#555" }}>Tel: {co.phone}</div>}
-                      {co?.email && <div style={{ fontSize: 10, color: "#555" }}>{co.email}</div>}
-                      {co?.website && <div style={{ fontSize: 10, color: "#555" }}>{co.website}</div>}
-                      {co?.trn && <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>TRN: {co.trn}</div>}
+                      {acLetterRecord.quotationNumber && (
+                        <div style={{ fontSize: 9.5, color: "#555" }}>Quotation No: {acLetterRecord.quotationNumber}</div>
+                      )}
+                      <div style={{ fontSize: 9.5, color: "#555", marginTop: 3 }}>Date: {today}</div>
                     </div>
                   </div>
 
-                  {/* Divider */}
-                  <div style={{ borderTop: "3px solid #0f2d5a", marginBottom: 24 }} />
-
-                  {/* Date & Refs */}
-                  <div style={{ fontSize: 11, color: "#333", marginBottom: 4 }}>Date: <strong>{today}</strong></div>
-                  {refs && <div style={{ fontSize: 11, color: "#333", marginBottom: 20 }}>Ref: {refs}</div>}
-
-                  {/* Client addressee block */}
-                  <div style={{ marginBottom: 20, padding: "12px 16px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6 }}>
-                    <div style={{ fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>To</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{clientName}</div>
-                    {acLetterRecord.lpoNumber && (
-                      <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>LPO Reference: {acLetterRecord.lpoNumber}</div>
-                    )}
-                  </div>
-
-                  <div style={{ fontSize: 11, color: "#333", marginBottom: 20 }}>Dear Sir/Madam,</div>
+                  {/* Greeting */}
+                  <div style={{ fontSize: 11, color: "#333", marginBottom: 18 }}>Dear Sir/Madam,</div>
 
                   {/* Subject */}
-                  <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: "#0f2d5a", textDecoration: "underline", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 24 }}>
+                  <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: "#0f2d5a", textDecoration: "underline", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 22 }}>
                     Acknowledgement of Local Purchase Order
                   </div>
 
-                  {/* Body paragraphs */}
+                  {/* Body */}
                   {paras.map((p, i) => (
-                    <p key={i} style={{ fontSize: 11, color: "#222", marginBottom: 14, lineHeight: 1.8, textAlign: "justify", margin: "0 0 16px 0" }}>{p}</p>
+                    <div key={i} style={{ fontSize: 11, color: "#222", lineHeight: 1.85, textAlign: "justify", marginBottom: 15 }}>{p}</div>
                   ))}
 
                   {/* Closing */}
-                  <div style={{ fontSize: 11, color: "#333", marginTop: 28, marginBottom: 52 }}>Yours faithfully,</div>
+                  <div style={{ fontSize: 11, color: "#333", marginTop: 30, marginBottom: 60 }}>Yours faithfully,</div>
 
-                  {/* Signature blocks */}
+                  {/* Dual signature blocks */}
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <div style={{ width: "44%" }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {ourName}</div>
-                      <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 8 }} />
-                      <div style={{ fontSize: 10, color: "#555" }}>Authorized Signatory</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 56 }}>For {ourName}</div>
+                      <div style={{ borderTop: "1.5px solid #333", width: 210, marginBottom: 7 }} />
+                      <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
                       <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{ourName}</div>
                     </div>
                     <div style={{ width: "44%", textAlign: "right" }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {clientName}</div>
-                      <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 8, marginLeft: "auto" }} />
-                      <div style={{ fontSize: 10, color: "#555" }}>Authorized Signatory</div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 56 }}>For {clientName}</div>
+                      <div style={{ borderTop: "1.5px solid #333", width: 210, marginBottom: 7, marginLeft: "auto" }} />
+                      <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
                       <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
                     </div>
+                  </div>
+
+                  {/* Footer stripe */}
+                  <div style={{ marginTop: 48, borderTop: "2px solid #0f2d5a", paddingTop: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ fontSize: 8.5, color: "#888" }}>{ourName}{co?.address ? ` · ${co.address}` : ""}</div>
+                    {co?.trn && <div style={{ fontSize: 8.5, color: "#888" }}>TRN: {co.trn}</div>}
                   </div>
                 </div>
               );
