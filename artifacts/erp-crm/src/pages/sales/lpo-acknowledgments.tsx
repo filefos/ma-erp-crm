@@ -18,9 +18,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer } from "lucide-react";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
 
 const BASE = import.meta.env.BASE_URL;
 const MAX_MB = 20;
@@ -73,12 +74,13 @@ export function LpoAcknowledgments() {
   const [previewSigOn, setPreviewSigOn] = useState(false);
   const [acPickOpen, setAcPickOpen] = useState(false);
   const [acPickId, setAcPickId] = useState<number | null>(null);
-  const [acPreviewUrl, setAcPreviewUrl] = useState<string | null>(null);
+  const [acLetterRecord, setAcLetterRecord] = useState<AckRecord | null>(null);
   const [acPreviewOpen, setAcPreviewOpen] = useState(false);
-  const [acGenerating, setAcGenerating] = useState(false);
+  const [acPdfGenerating, setAcPdfGenerating] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
+  const acLetterRef = useRef<HTMLDivElement>(null);
 
   // Authenticated fetch → Blob URL (avoids 401 on plain href/iframe)
   async function authedFetch(url: string): Promise<string> {
@@ -234,22 +236,26 @@ export function LpoAcknowledgments() {
     page.drawText(clientName, { x: c2, y, font: fReg, size: 8, color: grey });
   }
 
-  async function generateStandaloneAckLetter(record: AckRecord) {
-    setAcGenerating(true);
+  function openAckLetterPreview(record: AckRecord) {
+    setAcLetterRecord(record);
+    setAcPickOpen(false);
+    setAcPreviewOpen(true);
+  }
+
+  async function downloadAckLetterPdf() {
+    if (!acLetterRef.current || !acLetterRecord) return;
+    setAcPdfGenerating(true);
     try {
-      const pdfDoc = await PDFDocument.create();
-      await appendAckLetter(pdfDoc, record);
-      const bytes = await pdfDoc.save();
-      const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
-      if (acPreviewUrl) URL.revokeObjectURL(acPreviewUrl);
-      const url = URL.createObjectURL(blob);
-      setAcPreviewUrl(url);
-      setAcPickOpen(false);
-      setAcPreviewOpen(true);
-    } catch (e: any) {
-      toast({ title: "Failed to generate letter", description: e.message, variant: "destructive" });
+      const filename = `Acknowledgement_Letter_${acLetterRecord.lpoNumber ?? acLetterRecord.id}.pdf`;
+      const { base64 } = await captureElementToPdfBase64(acLetterRef.current, filename);
+      const link = document.createElement("a");
+      link.href = `data:application/pdf;base64,${base64}`;
+      link.download = filename;
+      link.click();
+    } catch {
+      toast({ title: "PDF generation failed", variant: "destructive" });
     } finally {
-      setAcGenerating(false);
+      setAcPdfGenerating(false);
     }
   }
 
@@ -1048,60 +1054,149 @@ export function LpoAcknowledgments() {
               <Button
                 size="sm"
                 className="bg-amber-600 hover:bg-amber-700 text-white"
-                disabled={!acPickId || acGenerating}
+                disabled={!acPickId}
                 onClick={() => {
                   const rec = (records ?? []).find(r => r.id === acPickId);
-                  if (rec) generateStandaloneAckLetter(rec);
+                  if (rec) openAckLetterPreview(rec);
                 }}
               >
-                {acGenerating
-                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Generating…</>
-                  : <><FileText className="w-3.5 h-3.5 mr-1.5" />Open Letter</>}
+                <FileText className="w-3.5 h-3.5 mr-1.5" />Open Letter
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ─── AC LETTER: PDF preview ─── */}
-      <Dialog
-        open={acPreviewOpen}
-        onOpenChange={v => {
-          setAcPreviewOpen(v);
-          if (!v && acPreviewUrl) { URL.revokeObjectURL(acPreviewUrl); setAcPreviewUrl(null); }
-        }}
-      >
-        <DialogContent className="max-w-3xl h-[90vh] flex flex-col gap-0 p-0">
-          <DialogHeader className="px-5 pt-4 pb-3 border-b shrink-0">
-            <div className="flex items-center justify-between pr-6">
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-amber-600" />
-                Acknowledgement Letter
-              </DialogTitle>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-green-700 border-green-300 hover:bg-green-50"
-                onClick={() => {
-                  if (!acPreviewUrl) return;
-                  const a = document.createElement("a");
-                  a.href = acPreviewUrl;
-                  a.download = "acknowledgement_letter.pdf";
-                  a.click();
-                }}
-              >
-                <Download className="w-3.5 h-3.5 mr-1.5" />Download
-              </Button>
+      {/* ─── AC LETTER: Document Preview ─── */}
+      <Dialog open={acPreviewOpen} onOpenChange={v => { setAcPreviewOpen(v); if (!v) setAcLetterRecord(null); }}>
+        <DialogContent className="max-w-5xl h-[95vh] flex flex-col gap-0 p-0 overflow-hidden">
+          {/* Toolbar */}
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-[#0f2d5a] shrink-0">
+            <Button size="sm" variant="ghost" className="text-white hover:bg-white/10 mr-1"
+              onClick={() => setAcPreviewOpen(false)}>
+              <ArrowLeft className="w-4 h-4 mr-1" /> Back
+            </Button>
+            <div className="h-5 w-px bg-white/20" />
+            <div className="flex-1 text-white font-semibold text-sm pl-1 truncate">
+              Acknowledgement Letter
+              {acLetterRecord?.lpoNumber && (
+                <span className="ml-2 text-white/60 font-normal text-xs">— {acLetterRecord.lpoNumber}</span>
+              )}
             </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            {acPreviewUrl && (
-              <iframe
-                src={acPreviewUrl}
-                className="w-full h-full border-0"
-                title="Acknowledgement Letter Preview"
-              />
-            )}
+            <Button size="sm" variant="outline"
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              onClick={() => {
+                const el = acLetterRef.current;
+                if (!el) return;
+                const w = window.open("", "_blank");
+                if (!w) return;
+                w.document.write(`<!DOCTYPE html><html><head><title>Acknowledgement Letter</title><style>*{box-sizing:border-box}body{margin:0;padding:48px 64px;font-family:Helvetica,Arial,sans-serif;color:#222}</style></head><body>${el.innerHTML}</body></html>`);
+                w.document.close();
+                setTimeout(() => { w.focus(); w.print(); }, 400);
+              }}>
+              <Printer className="w-3.5 h-3.5 mr-1.5" /> Print
+            </Button>
+            <Button size="sm" variant="outline"
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              disabled={acPdfGenerating}
+              onClick={downloadAckLetterPdf}>
+              {acPdfGenerating
+                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Generating…</>
+                : <><Download className="w-3.5 h-3.5 mr-1.5" />Download PDF</>}
+            </Button>
+          </div>
+
+          {/* Document area */}
+          <div className="flex-1 overflow-y-auto bg-gray-200 p-6">
+            {acLetterRecord && (() => {
+              const co = (companies ?? []).find(c => c.id === (acLetterRecord.companyId ?? activeCompanyId)) as any;
+              const ourName = co?.name || "Our Company";
+              const clientName = acLetterRecord.customerName || "Client";
+              const lpoRef = acLetterRecord.lpoNumber ? `LPO No. ${acLetterRecord.lpoNumber}` : "the above-referenced LPO";
+              const qtRef = acLetterRecord.quotationNumber ? ` (Quotation No. ${acLetterRecord.quotationNumber})` : "";
+              const today = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+              const refs = [acLetterRecord.lpoNumber && `LPO No: ${acLetterRecord.lpoNumber}`, acLetterRecord.quotationNumber && `Quotation No: ${acLetterRecord.quotationNumber}`].filter(Boolean).join("   |   ");
+              const paras = [
+                `We are pleased to acknowledge receipt of your Local Purchase Order ${lpoRef} and confirm our formal acceptance of the order as detailed therein.`,
+                `${ourName} hereby accepts the terms and conditions set forth in the above LPO and commits to fulfilling the supply of goods and/or services as specified, in accordance with the agreed delivery schedule, payment terms, and quality standards${qtRef}.`,
+                `${clientName}, by issuing the above LPO, acknowledges and agrees to the terms and conditions of ${ourName}, including the pricing, scope of work, payment terms, and delivery timelines as confirmed in the referenced quotation and the LPO.`,
+                `Both parties mutually agree that this acknowledgement serves as a binding confirmation of the transaction, and both ${ourName} and ${clientName} are committed to fulfilling their respective obligations as outlined in the referenced documents.`,
+                `We look forward to a successful business relationship and the timely execution of this order. Should you require any further clarification, please do not hesitate to contact us.`,
+              ];
+              return (
+                <div
+                  ref={acLetterRef}
+                  className="bg-white mx-auto shadow-xl"
+                  style={{ maxWidth: 794, minHeight: 1050, padding: "56px 64px", fontFamily: "Helvetica, Arial, sans-serif" }}
+                >
+                  {/* ── Letterhead ── */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+                    {/* Logo */}
+                    <div style={{ flexShrink: 0 }}>
+                      {co?.logo && (
+                        <img src={co.logo} alt="Company Logo" style={{ maxHeight: 72, maxWidth: 160, objectFit: "contain" }} />
+                      )}
+                    </div>
+                    {/* Company details */}
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: "#0f2d5a", letterSpacing: 0.3 }}>{ourName}</div>
+                      {co?.address && <div style={{ fontSize: 10, color: "#555", marginTop: 4 }}>{co.address}</div>}
+                      {co?.phone && <div style={{ fontSize: 10, color: "#555" }}>Tel: {co.phone}</div>}
+                      {co?.email && <div style={{ fontSize: 10, color: "#555" }}>{co.email}</div>}
+                      {co?.website && <div style={{ fontSize: 10, color: "#555" }}>{co.website}</div>}
+                      {co?.trn && <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>TRN: {co.trn}</div>}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ borderTop: "3px solid #0f2d5a", marginBottom: 24 }} />
+
+                  {/* Date & Refs */}
+                  <div style={{ fontSize: 11, color: "#333", marginBottom: 4 }}>Date: <strong>{today}</strong></div>
+                  {refs && <div style={{ fontSize: 11, color: "#333", marginBottom: 20 }}>Ref: {refs}</div>}
+
+                  {/* Client addressee block */}
+                  <div style={{ marginBottom: 20, padding: "12px 16px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6 }}>
+                    <div style={{ fontSize: 10, color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>To</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>{clientName}</div>
+                    {acLetterRecord.lpoNumber && (
+                      <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>LPO Reference: {acLetterRecord.lpoNumber}</div>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: 11, color: "#333", marginBottom: 20 }}>Dear Sir/Madam,</div>
+
+                  {/* Subject */}
+                  <div style={{ textAlign: "center", fontSize: 13, fontWeight: 700, color: "#0f2d5a", textDecoration: "underline", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 24 }}>
+                    Acknowledgement of Local Purchase Order
+                  </div>
+
+                  {/* Body paragraphs */}
+                  {paras.map((p, i) => (
+                    <p key={i} style={{ fontSize: 11, color: "#222", marginBottom: 14, lineHeight: 1.8, textAlign: "justify", margin: "0 0 16px 0" }}>{p}</p>
+                  ))}
+
+                  {/* Closing */}
+                  <div style={{ fontSize: 11, color: "#333", marginTop: 28, marginBottom: 52 }}>Yours faithfully,</div>
+
+                  {/* Signature blocks */}
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div style={{ width: "44%" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {ourName}</div>
+                      <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 8 }} />
+                      <div style={{ fontSize: 10, color: "#555" }}>Authorized Signatory</div>
+                      <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{ourName}</div>
+                    </div>
+                    <div style={{ width: "44%", textAlign: "right" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {clientName}</div>
+                      <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 8, marginLeft: "auto" }} />
+                      <div style={{ fontSize: 10, color: "#555" }}>Authorized Signatory</div>
+                      <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </DialogContent>
       </Dialog>
