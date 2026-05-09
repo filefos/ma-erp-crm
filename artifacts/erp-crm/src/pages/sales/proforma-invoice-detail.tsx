@@ -112,6 +112,14 @@ export function ProformaInvoiceDetail({ id }: Props) {
     ? additionalItems.map(ai => ({ ...ai, price: +((ai.price ?? 0) * fraction).toFixed(2) }))
     : additionalItems;
 
+  // Installment label row shown between BAR 2 and grand total
+  const piPct = Math.round(fraction * 100);
+  const installmentNote = isInstallment
+    ? piPct > 50
+      ? `${piPct}% Final Payment upon Delivery before Offloading`
+      : `${piPct}% Advance Payment`
+    : undefined;
+
   // Format raw ISO validity date (e.g. "2026-05-09") to "09 May 2026"
   const rawValidity = (pi as any).validityDate as string | null | undefined;
   const validity = rawValidity
@@ -143,6 +151,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
     grandTotal: pi.total,
     paymentTerms: pi.paymentTerms ?? (quotation as any)?.paymentTerms,
     notes: (pi as any).notes,
+    installmentNote,
     additionalItems: docAdditionalItems,
     items: sourceItems.map((i: any) => ({
       description: i.description,

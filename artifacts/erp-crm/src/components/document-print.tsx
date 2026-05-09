@@ -67,6 +67,7 @@ export interface DocumentData {
   deliveryDate?: string;
   deliveryAddress?: string;
   notes?: string;
+  installmentNote?: string;
   supplierName?: string;
   supplierContact?: string;
   supplierPhone?: string;
@@ -552,6 +553,17 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <WordsRow words={numberToWords(combinedSubtotalExclVat)} />
               </tbody>
             </table>
+
+            {/* ── INSTALLMENT LABEL ROW (Tax Invoice / Proforma only) ───────── */}
+            {data.installmentNote && (isTax || data.type === "proforma") && (
+              <table className="w-full border-collapse border border-gray-400 mb-0 mt-0">
+                <tbody>
+                  <NavyBar amount={formatAED(grand)}>
+                    {data.installmentNote}
+                  </NavyBar>
+                </tbody>
+              </table>
+            )}
 
             {/* ── BANK DETAILS + VAT + GRAND TOTAL ─────────────────────────── */}
             <div className={`flex gap-0 border border-gray-400 mb-0 mt-0${isQuotation ? " justify-end" : ""}`}>

@@ -142,6 +142,14 @@ export function InvoiceDetail({ id }: Props) {
     ? additionalItems.map(ai => ({ ...ai, price: +((ai.price ?? 0) * fraction).toFixed(2) }))
     : additionalItems;
 
+  // Installment label row shown between BAR 2 and grand total
+  const pct = Math.round(fraction * 100);
+  const installmentNote = isInstallment
+    ? pct > 50
+      ? `${pct}% Final Payment upon Delivery before Offloading`
+      : `${pct}% Advance Payment`
+    : undefined;
+
   const docData: DocumentData = {
     type: "tax_invoice",
     docNumber: inv.invoiceNumber,
@@ -159,6 +167,7 @@ export function InvoiceDetail({ id }: Props) {
     grandTotal: inv.grandTotal,
     paymentTerms: (inv as any).paymentTerms ?? undefined,
     notes: (inv as any).notes ?? undefined,
+    installmentNote,
     additionalItems: docAdditionalItems,
     items: sourceItems.map((i: any) => ({
       description: i.description,
