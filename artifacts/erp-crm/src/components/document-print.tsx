@@ -341,6 +341,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             padding-left: 3px;
             padding-right: 3px;
           }
+          /* Signature block pinned just above the footer in print */
+          .print-sig-block {
+            position: fixed;
+            bottom: 44px;
+            left: 0;
+            right: 0;
+            background: white;
+          }
           /* Page number label visible on print */
           .page-num-label { display: inline !important; }
         }
@@ -684,7 +692,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── SIGNATURE BLOCK (non-quotation) + FOOTER — pinned together at bottom */}
         {!isQuotation && (
-          <div className="mt-auto" style={{ paddingBottom: "50px" }}>
+          <div className="print-sig-block mt-auto" style={{ paddingBottom: "50px" }}>
             {data.type === "delivery_note" ? (
               /* Delivery note: stamp above our company, signature above client company */
               <div className="flex items-end justify-between text-xs pt-3 pb-3 px-4">
