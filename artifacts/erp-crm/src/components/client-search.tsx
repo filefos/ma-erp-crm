@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useListContacts } from "@workspace/api-client-react";
+import { useListContacts, getListContactsQueryKey } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +20,13 @@ export function ClientSearch({ value, onSelect, onClear, placeholder = "Search c
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const { data: contacts = [] } = useListContacts(
-    { search: query || undefined },
-    { query: { enabled: open || query.length > 0 } }
-  );
+  const searchParams = { search: query || undefined };
+  const { data: contacts = [] } = useListContacts(searchParams, {
+    query: {
+      queryKey: getListContactsQueryKey(searchParams),
+      enabled: open || query.length > 0,
+    },
+  });
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

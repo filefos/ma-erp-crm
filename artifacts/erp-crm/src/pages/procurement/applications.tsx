@@ -290,7 +290,10 @@ function DetailBody({ app, notes, setNotes, act, pending }: DetailProps) {
         ) : (
           <div className="space-y-3">
             {atts.map((f, idx) => {
-              const url = `/api/supplier-applications/${app.id}/attachments/${idx}`;
+              const token = localStorage.getItem("erp_token") ?? "";
+              const baseUrl = `${import.meta.env.BASE_URL}api/supplier-applications/${app.id}/attachments/${idx}`;
+              const previewUrl = `${baseUrl}?token=${encodeURIComponent(token)}`;
+              const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}&download=1`;
               const isImage = (f.contentType ?? "").startsWith("image/");
               const isPdf = (f.contentType ?? "").includes("pdf") || f.filename.toLowerCase().endsWith(".pdf");
               return (
@@ -304,7 +307,7 @@ function DetailBody({ app, notes, setNotes, act, pending }: DetailProps) {
                       </div>
                     </div>
                     <a
-                      href={url}
+                      href={downloadUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="text-xs text-[#1e6ab0] hover:underline flex items-center gap-1 shrink-0"
@@ -313,11 +316,11 @@ function DetailBody({ app, notes, setNotes, act, pending }: DetailProps) {
                     </a>
                   </div>
                   {isImage ? (
-                    <a href={url} target="_blank" rel="noreferrer" className="block bg-muted/20">
-                      <img src={url} alt={f.filename} className="max-h-64 mx-auto object-contain" />
+                    <a href={previewUrl} target="_blank" rel="noreferrer" className="block bg-muted/20">
+                      <img src={previewUrl} alt={f.filename} className="max-h-64 mx-auto object-contain" />
                     </a>
                   ) : isPdf ? (
-                    <iframe src={url} title={f.filename} className="w-full h-72 bg-muted/20" />
+                    <iframe src={previewUrl} title={f.filename} className="w-full h-72 bg-muted/20" />
                   ) : (
                     <div className="px-3 py-4 text-xs text-muted-foreground text-center">
                       Inline preview not available for this file type — use Download.

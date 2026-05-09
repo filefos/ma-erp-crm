@@ -381,18 +381,42 @@ router.get("/supplier-applications/:id", requireAuth, requirePermission("supplie
   res.json(toResponse(reg));
 });
 
-router.get("/supplier-applications/:id/attachments/:idx", requireAuth, requirePermission("suppliers", "view"), async (req, res): Promise<void> => {
+// Accepts Bearer token via Authorization header OR ?token= query param
+// (query-param form is required for <iframe src> and <a href download>
+//  which the browser cannot send custom headers for).
+router.get("/supplier-applications/:id/attachments/:idx", async (req, res): Promise<void> => {
+  let token: string | undefined;
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else if (typeof req.query.token === "string") {
+    token = req.query.token;
+  }
+  if (!token) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { getUserFromToken } = await import("../lib/auth");
+  const user = await getUserFromToken(token);
+  if (!user || !user.isActive) { res.status(401).json({ error: "Unauthorized" }); return; }
+
   const id = parseInt(String(req.params.id), 10);
   const idx = parseInt(String(req.params.idx), 10);
   const [reg] = await db.select().from(supplierRegistrationsTable).where(eq(supplierRegistrationsTable.id, id));
   if (!reg) { res.status(404).json({ error: "Not found" }); return; }
-  if (!inScope(req, reg.companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const userCompanyIds: number[] = (user as any).companyIds ?? ((user as any).companyId ? [(user as any).companyId] : []);
+  const isSuperAdmin = (user as any).role === "super_admin" || (user as any).permissionLevel === "super_admin";
+  if (!isSuperAdmin && userCompanyIds.length > 0 && !userCompanyIds.includes(reg.companyId)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
   const atts = parseJson<Array<{ filename: string; contentType: string; size: number; content?: string }>>(reg.attachments, []);
   const att = atts[idx];
   if (!att?.content) { res.status(404).json({ error: "Attachment not found" }); return; }
   const buf = Buffer.from(att.content, "base64");
+  const disposition = req.query.download === "1" ? "attachment" : "inline";
   res.setHeader("Content-Type", att.contentType || "application/octet-stream");
-  res.setHeader("Content-Disposition", `attachment; filename="${att.filename}"`);
+  res.setHeader("Content-Disposition", `${disposition}; filename="${encodeURIComponent(att.filename)}"`);
   res.setHeader("Content-Length", buf.length);
   res.send(buf);
 });
