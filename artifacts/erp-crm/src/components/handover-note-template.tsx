@@ -240,17 +240,30 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
         {/* ── BODY TEXT ── */}
         <div className="flex-1 px-4 pt-3 pb-2 text-xs leading-relaxed text-black">
           <p className="mb-2 text-justify">
-            We, <strong>{co.name}</strong>, hereby certify that the above works, materials, and items have been
-            duly completed and formally handed over to <strong className="uppercase">{doc.clientName}</strong>
-            {doc.lpoNumber ? ` as per LPO No. ${doc.lpoNumber}` : ""}
-            {doc.projectRef ? `, Project Reference: ${doc.projectRef}` : ""}.
-            This Handover Note serves as the official record of project completion and delivery.
+            We, <strong>{co.name}</strong>, hereby certify that the above-mentioned works, materials, and items
+            have been duly completed and formally handed over to{" "}
+            <strong className="uppercase">{doc.clientName}</strong>
+            {doc.lpoNumber ? `, as per LPO No. ${doc.lpoNumber}` : ""}
+            {doc.projectRef ? `, under the project reference ${doc.projectRef}` : doc.projectDescription ? `, under the project reference ${projDesc}` : ""}.{" "}
+            This Handover Note shall serve as the official record of project completion, delivery, and handover.
+          </p>
+
+          <p className="mb-2 text-justify">
+            We confirm that all works listed above have been completed in accordance with the agreed specifications,
+            approved requirements, applicable industry standards, and quality expectations. The supplied items have
+            been inspected and handed over in good condition, and the project is considered completed from our side
+            as per the agreed scope of work.
+          </p>
+
+          <p className="mb-2 text-justify">
+            We kindly request your formal acknowledgement of this handover by signing below. Upon signing, it shall
+            be understood that the materials/items have been received and accepted by your authorized representative,
+            unless any written comments or observations are mentioned at the time of handover.
           </p>
 
           <p className="mb-3 text-justify">
-            We confirm that all works listed above have been completed in accordance with the agreed specifications,
-            applicable industry standards, and quality requirements. We hereby request your formal acknowledgement
-            of this handover by signing below.
+            We appreciate your cooperation and thank you for choosing <strong>{co.name}</strong>. We look forward
+            to supporting your future project requirements.
           </p>
 
           {doc.notes?.trim() && (
