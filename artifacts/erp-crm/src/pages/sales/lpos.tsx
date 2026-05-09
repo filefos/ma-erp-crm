@@ -15,8 +15,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Plus, Pencil, Paperclip, FileIcon, X, Download,
-  Building2, Calendar, DollarSign, FileText, ClipboardList, Sparkles, Upload, Link2, Printer, Loader2 as Loader2Icon,
+  Building2, Calendar, DollarSign, FileText, ClipboardList, Sparkles, Upload, Link2, Printer, Loader2 as Loader2Icon, Trash2,
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ExportMenu } from "@/components/ExportMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { extractLpoFields, authHeaders } from "@/lib/ai-client";
@@ -160,6 +164,8 @@ export function LposList() {
   const [editAttachments, setEditAttachments] = useState<AttachmentMeta[]>([]);
   const [aiExtracting, setAiExtracting] = useState(false);
   const aiInputRef = useRef<HTMLInputElement | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: lpos = [], isLoading } = useListLpos();
   const { data: companies = [] } = useListCompanies();
@@ -168,6 +174,25 @@ export function LposList() {
   const { user } = useAuth();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/lpos"] });
+
+  async function handleDelete(id: number) {
+    setDeleting(true);
+    try {
+      const r = await fetch(`${BASE}api/lpos/${id}`, { method: "DELETE", headers: authHeaders() });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        throw new Error((d as any).error ?? `HTTP ${r.status}`);
+      }
+      invalidate();
+      toast({ title: "LPO deleted." });
+      if (detailId === id) setDetailId(null);
+    } catch (e: any) {
+      toast({ title: e?.message ?? "Delete failed", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteId(null);
+    }
+  }
 
   const createMutation = useCreateLpo({
     mutation: {
@@ -406,6 +431,7 @@ export function LposList() {
               <TableHead>Payment Terms</TableHead>
               <TableHead>Attachments</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-10"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -460,6 +486,16 @@ export function LposList() {
                     <Badge variant="secondary" className={statusBadge(l.status ?? "active")}>
                       {l.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell onClick={e => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={e => { e.stopPropagation(); setConfirmDeleteId(l.id); }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               );
@@ -581,6 +617,28 @@ export function LposList() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Delete Confirmation ── */}
+      <AlertDialog open={confirmDeleteId !== null} onOpenChange={open => { if (!open) setConfirmDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete LPO?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this LPO and cannot be undone. Any linked project, proforma invoices, undertaking letter and handover note will remain but lose the LPO reference.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={deleting}
+              onClick={() => confirmDeleteId !== null && handleDelete(confirmDeleteId)}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
