@@ -83,6 +83,35 @@ export function ProformaInvoiceDetail({ id }: Props) {
     if (raw) additionalItems = JSON.parse(raw);
   } catch { /* fall back to document-print defaults */ }
 
+  // For installment PIs (e.g. 30%) the stored pi.subtotal = combined_base × 30%.
+  // document-print uses data.subtotal as "project items only" (BAR 1) and then
+  // ADDS the full additional items on top — which produces wrong totals.
+  // Fix: scale both the project-items subtotal and additional-item prices by the
+  // installment fraction so document-print's arithmetic gives the correct result.
+  //
+  //  fraction   = pi.subtotal / (q.subtotal + included_additional)
+  //             = 8,970 / (24,700 + 5,200)  = 0.30
+  //  docSubtotal = q.subtotal × fraction     = 7,410   ← BAR 1
+  //  scaled additional: 3,000 × 0.3 = 900, 2,200 × 0.3 = 660
+  //  BAR 2 = 7,410 + 900 + 660              = 8,970  ✓
+  //  VAT 5%                                 = 448.50 ✓
+  //  Grand Total                            = 9,418.50 ✓
+  const qSubtotal = (quotation as any)?.subtotal as number | undefined ?? 0;
+  const qAdditionalIncluded = (additionalItems ?? []).reduce(
+    (s, ai) => s + (ai.status === "Included" ? ((ai.price ?? 0) * (ai.quantity ?? 1)) : 0), 0
+  );
+  const qCombinedBase = qSubtotal + qAdditionalIncluded;
+  // Only scale when the quotation is loaded and the PI is a partial installment
+  const fraction = qCombinedBase > 0 ? subtotal / qCombinedBase : 1;
+  const isInstallment = fraction < 0.9999 && qCombinedBase > 0;
+
+  // Project-items subtotal to use for BAR 1
+  const docSubtotal = isInstallment ? +(qSubtotal * fraction).toFixed(2) : subtotal;
+  // Additional items scaled to the installment fraction
+  const docAdditionalItems = isInstallment && additionalItems
+    ? additionalItems.map(ai => ({ ...ai, price: +((ai.price ?? 0) * fraction).toFixed(2) }))
+    : additionalItems;
+
   // Format raw ISO validity date (e.g. "2026-05-09") to "09 May 2026"
   const rawValidity = (pi as any).validityDate as string | null | undefined;
   const validity = rawValidity
@@ -108,13 +137,13 @@ export function ProformaInvoiceDetail({ id }: Props) {
     projectLocation: (pi as any).projectLocation,
     date: pi.createdAt ? new Date(pi.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : undefined,
     validity,
-    subtotal,
+    subtotal: docSubtotal,
     vatPercent,
     vatAmount,
     grandTotal: pi.total,
     paymentTerms: pi.paymentTerms ?? (quotation as any)?.paymentTerms,
     notes: (pi as any).notes,
-    additionalItems,
+    additionalItems: docAdditionalItems,
     items: sourceItems.map((i: any) => ({
       description: i.description,
       sizeStatus: i.unit,
