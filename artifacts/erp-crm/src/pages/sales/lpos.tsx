@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { extractLpoFields, authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { SignatureStampPreview } from "@/components/signature-stamp-preview";
 
 const BASE = import.meta.env.BASE_URL;
 const MAX_MB = 20;
@@ -969,6 +970,13 @@ function LpoDetailView({
         )}
       </div>
       </div>{/* end lpo-detail-print */}
+
+      {/* Signature & Stamp Preview */}
+      <SignatureStampPreview
+        signatureUrl={signatureUrl}
+        stampUrl={stampUrl}
+        stampWidthPct={stampWidthPct}
+      />
     </div>
   );
 }

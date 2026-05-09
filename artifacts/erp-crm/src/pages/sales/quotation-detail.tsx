@@ -19,6 +19,7 @@ import { ExportButtons } from "@/components/export-buttons";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
+import { SignatureStampPreview } from "@/components/signature-stamp-preview";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -464,6 +465,12 @@ export function QuotationDetail({ id }: Props) {
           <ExportButtons docNumber={q.quotationNumber ?? q.id?.toString() ?? "Quotation"} recipientPhone={q.clientPhone ?? undefined} recipientEmail={q.clientEmail ?? undefined} companyId={q.companyId ?? undefined} docTypeLabel="Quotation" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === q.companyId)?.stamp ?? undefined} />
         </div>
       </div>
+
+      {/* Signature & Stamp Preview */}
+      <SignatureStampPreview
+        signatureUrl={user?.signatureUrl ?? undefined}
+        stampUrl={companies?.find(c => c.id === q.companyId)?.stamp ?? undefined}
+      />
 
       {/* Document */}
       <DocumentPrint data={docData} />

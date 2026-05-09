@@ -12,6 +12,7 @@ import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
+import { SignatureStampPreview } from "@/components/signature-stamp-preview";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
@@ -251,6 +252,10 @@ export function InvoiceDetail({ id }: Props) {
           <ExportButtons docNumber={inv.invoiceNumber ?? inv.id?.toString() ?? "Invoice"} recipientPhone={(inv as any).clientPhone ?? undefined} recipientEmail={(inv as any).clientEmail ?? undefined} companyId={inv.companyId ?? undefined} docTypeLabel="Tax Invoice" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === inv.companyId)?.stamp ?? undefined} />
         </div>
       </div>
+      <SignatureStampPreview
+        signatureUrl={user?.signatureUrl ?? undefined}
+        stampUrl={companies?.find(c => c.id === inv.companyId)?.stamp ?? undefined}
+      />
       <DocumentPrint data={docData} />
       {(inv as any)?.projectId && (
         <InvoiceProjectCost projectId={(inv as any).projectId} invoiceId={invId} />
