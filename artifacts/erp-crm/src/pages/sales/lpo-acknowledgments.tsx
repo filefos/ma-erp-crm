@@ -18,7 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer, Mail } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer, Mail, ChevronDown, Sheet } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
 import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
@@ -1135,6 +1136,94 @@ export function LpoAcknowledgments() {
                 }}>
                 <Printer className="w-3.5 h-3.5 mr-1.5" />Print / PDF
               </Button>
+
+              {/* ── Export To dropdown ── */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
+                    <Download className="w-3.5 h-3.5 mr-1.5" />Export To<ChevronDown className="w-3 h-3 ml-1.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  {/* PDF */}
+                  <DropdownMenuItem
+                    disabled={acPdfGenerating}
+                    onClick={downloadAckLetterPdf}
+                    className="gap-2 cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-red-600" />
+                    <span>PDF (.pdf)</span>
+                    {acPdfGenerating && <Loader2 className="w-3 h-3 ml-auto animate-spin" />}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Word */}
+                  <DropdownMenuItem
+                    className="gap-2 cursor-pointer"
+                    onClick={() => {
+                      const el = acLetterRef.current;
+                      if (!el || !acLetterRecord) return;
+                      const co = (companies ?? []).find(c => c.id === (acLetterRecord.companyId ?? activeCompanyId)) as any;
+                      const filename = `acknowledgement_letter_${acLetterRecord.lpoNumber ?? "letter"}.doc`;
+                      const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office'
+                        xmlns:w='urn:schemas-microsoft-com:office:word'
+                        xmlns='http://www.w3.org/TR/REC-html40'>
+                        <head><meta charset='utf-8'>
+                        <style>
+                          body{font-family:Calibri,Arial,sans-serif;font-size:11pt;margin:2cm 2.5cm;}
+                          table{border-collapse:collapse;width:100%;}
+                          td,th{padding:6pt;}
+                        </style>
+                        <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>
+                        <w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+                        </head><body>${el.innerHTML}</body></html>`;
+                      const blob = new Blob([html], { type: "application/msword" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url; a.download = filename; a.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 2000);
+                    }}
+                  >
+                    <FileText className="w-4 h-4 text-blue-700" />
+                    <span>Word (.doc)</span>
+                  </DropdownMenuItem>
+
+                  {/* Excel / CSV */}
+                  <DropdownMenuItem
+                    className="gap-2 cursor-pointer"
+                    onClick={() => {
+                      if (!acLetterRecord) return;
+                      const co = (companies ?? []).find(c => c.id === (acLetterRecord.companyId ?? activeCompanyId)) as any;
+                      const today = new Date().toLocaleDateString("en-AE", { day: "2-digit", month: "long", year: "numeric" });
+                      const rows = [
+                        ["Field", "Value"],
+                        ["Date", today],
+                        ["Our Company", co?.name ?? ""],
+                        ["Our Address", co?.address ?? ""],
+                        ["Our Phone", co?.phone ?? ""],
+                        ["Our Email", co?.email ?? ""],
+                        ["Our TRN", co?.trn ?? ""],
+                        ["Client / Customer", acLetterRecord.customerName ?? ""],
+                        ["LPO Number", acLetterRecord.lpoNumber ?? ""],
+                        ["Quotation Number", acLetterRecord.quotationNumber ?? ""],
+                        ["Document Type", "Acknowledgement Letter"],
+                      ];
+                      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+                      const blob = new Blob([csv], { type: "text/csv" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `acknowledgement_letter_${acLetterRecord.lpoNumber ?? "data"}.csv`;
+                      a.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 2000);
+                    }}
+                  >
+                    <Sheet className="w-4 h-4 text-green-700" />
+                    <span>Excel (.csv)</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
