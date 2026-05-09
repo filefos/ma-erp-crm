@@ -335,7 +335,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           /* Auto page numbering: hide hardcoded label, show CSS counter */
           .page-num-label { display: none !important; }
           .page-num-auto::after {
-            content: "Page " counter(page) " of " counter(pages);
+            content: counter(page) "-" counter(pages);
           }
         }
       `}</style>
@@ -672,7 +672,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </div>
             <PageFooter
               left={<>{"PRIME ERP SYSTEM"}{data.projectRef ? `\u00a0\u00a0|\u00a0\u00a0PROJECT ID: ${data.projectRef}` : ""}{`\u00a0\u00a0|\u00a0\u00a0DATE: ${printDate}\u00a0\u00a0|\u00a0\u00a0TIME: ${printTime}\u00a0\u00a0|\u00a0\u00a0DOCUMENT #: ${data.docNumber}`}</>}
-              page="Page 1 of 1"
+              page="1-1"
             />
           </div>
         )}
@@ -709,7 +709,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             </div>
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
-              page="Page 1 of 3"
+              page="1-3"
             />
           </>
         )}
@@ -802,7 +802,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
-              page="Page 2 of 3"
+              page="2-3"
             />
           </div>
         )}
@@ -889,7 +889,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
-              page="Page 3 of 3"
+              page="3-3"
             />
           </div>
         )}
@@ -921,7 +921,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
             <PageFooter
               left={<>PRIME ERP SYSTEM{data.printedByUniqueId ? `\u00a0\u00a0\u00a0\u00a0UNIQUE ID: ${data.printedByUniqueId}` : ""}{data.clientCode ? `\u00a0\u00a0\u00a0\u00a0CLIENT CODE: ${data.clientCode}` : ""}</>}
-              page={`Additional Page ${si + 1}`}
+              page={`${si + 4}-${3 + (data.customSections?.length ?? 0)}`}
             />
           </div>
         ))}
