@@ -1380,7 +1380,7 @@ export function LpoAcknowledgments() {
                       const stampUrl = coApi?.stamp ?? null;
                       const sigUrl   = (user as any)?.signatureUrl ?? null;
                       return (
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 40 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
                           {/* Our company sig block */}
                           <div style={{ width: "44%", position: "relative" as const }}>
                             <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 4 }}>For {co.name}</div>
