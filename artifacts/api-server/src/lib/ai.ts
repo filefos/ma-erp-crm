@@ -62,6 +62,9 @@ export const aiModelName = (): string => DEFAULT_MODEL;
 
 // Vision-capable chat. `imageDataUrl` must be a `data:image/...;base64,...` URL.
 // Uses the OpenAI integration proxy with multi-modal content blocks.
+// Always uses gpt-4o (full model) for best OCR accuracy regardless of DEFAULT_MODEL.
+const VISION_MODEL = "gpt-4o";
+
 export async function chatWithVision(
   systemPrompt: string,
   userText: string,
@@ -73,14 +76,14 @@ export async function chatWithVision(
   }
   const url = `${BASE_URL!.replace(/\/$/, "")}/chat/completions`;
   const body = {
-    model: opts.model ?? DEFAULT_MODEL,
+    model: opts.model ?? VISION_MODEL,
     messages: [
       { role: "system", content: systemPrompt },
       {
         role: "user",
         content: [
           { type: "text", text: userText },
-          { type: "image_url", image_url: { url: imageDataUrl } },
+          { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } },
         ],
       },
     ],

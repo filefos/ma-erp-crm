@@ -468,24 +468,33 @@ router.post("/lpos/extract", requirePermission("lpos", "create"), async (req, re
     return;
   }
   const dataUrl = `data:${contentType};base64,${fileBase64}`;
-  const sys = `You are an expert at extracting purchase order (LPO/PO) fields from scanned documents. Output ONLY a JSON object with these keys (use empty string when unknown, no extra commentary):
+  const sys = `You are a highly accurate OCR and data-extraction specialist for UAE construction and trading companies. Your task is to extract specific fields from a Local Purchase Order (LPO / Purchase Order) document image.
+
+READ EVERY PART OF THE DOCUMENT CAREFULLY — headers, tables, footers, stamps, handwritten text — before extracting.
+
+Output ONLY a valid JSON object with exactly these keys. No markdown, no prose, no code fences — raw JSON only:
 {
-  "lpoNumber": "...",
-  "lpoDate": "YYYY-MM-DD",
-  "clientName": "...",
-  "lpoValue": 0,
-  "projectRef": "...",
-  "paymentTerms": "...",
-  "scope": "...",
-  "deliverySchedule": "...",
-  "notes": ""
+  "lpoNumber": "<the PO/LPO reference number printed on the document, e.g. MPL-PO-26-000026>",
+  "lpoDate": "<date in YYYY-MM-DD format; convert DD/MM/YYYY or MM/DD/YYYY as needed>",
+  "clientName": "<full legal name of the company that ISSUED this purchase order (the buyer)>",
+  "lpoValue": <total order value as a plain number, no currency symbols or commas>,
+  "projectRef": "<project reference, site name, or job description if mentioned>",
+  "paymentTerms": "<exact payment terms as written, e.g. '30% advance, 70% before delivery'>",
+  "scope": "<brief description of what is being ordered — items, services, or works>",
+  "deliverySchedule": "<delivery location, date, or schedule if stated>",
+  "notes": "<any other important terms, conditions, or remarks>"
 }
-- lpoValue must be a number (no currency symbols, no commas).
-- lpoDate must be ISO YYYY-MM-DD; if only month/year is visible, use the 1st.
-- Keep scope concise (one or two sentences).`;
+
+Strict rules:
+1. lpoNumber: copy it EXACTLY as printed — preserve slashes, dashes, and alphanumerics.
+2. lpoDate: output ISO format YYYY-MM-DD only. If the document shows DD/MM/YYYY (common in UAE), convert correctly. E.g. 08/05/2026 → 2026-05-08.
+3. clientName: the ISSUING company (who is buying), NOT the supplier/vendor. Usually at the top of the document with their logo, address, and TRN.
+4. lpoValue: look for "Total", "Grand Total", "Amount", "LPO Value" — take the final total. Strip AED, commas, spaces. Output as a number only.
+5. paymentTerms: copy verbatim from the document.
+6. Use empty string "" for any field not found in the document. Never guess or hallucinate values.`;
   let raw = "";
   try {
-    raw = await chatWithVision(sys, "Extract LPO fields from this document.", dataUrl, { maxCompletionTokens: 1200 });
+    raw = await chatWithVision(sys, "Extract all LPO fields from this purchase order document. Look carefully at every section.", dataUrl, { maxCompletionTokens: 2000 });
   } catch (err: any) {
     req.log?.warn({ err }, "AI LPO extract failed");
     res.status(502).json({ error: err?.message ?? "AI extract failed" });
