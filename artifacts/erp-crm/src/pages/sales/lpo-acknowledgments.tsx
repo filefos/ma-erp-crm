@@ -156,7 +156,7 @@ export function LpoAcknowledgments() {
       for (const page of pages) {
         const { width } = page.getSize();
         if (stampImg) {
-          const scaled = stampImg.scaleToFit(220, stampH);
+          const scaled = stampImg.scaleToFit(170, stampH);
           page.drawImage(stampImg, {
             x: width - margin - scaled.width,
             y: margin,
@@ -796,8 +796,8 @@ export function LpoAcknowledgments() {
                             position: "absolute",
                             bottom: 20,
                             right: 36,
-                            maxHeight: 140,
-                            maxWidth: 240,
+                            maxHeight: 100,
+                            maxWidth: 190,
                             objectFit: "contain",
                             opacity: 0.85,
                             pointerEvents: "none",
