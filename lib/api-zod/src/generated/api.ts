@@ -1177,6 +1177,193 @@ export const DeleteContactResponse = zod.object({
 });
 
 /**
+ * @summary List deals
+ */
+export const ListDealsQueryParams = zod.object({
+  stage: zod.coerce.string().optional(),
+  companyId: zod.coerce.number().optional(),
+  assignedToId: zod.coerce.number().optional(),
+  leadId: zod.coerce.number().optional(),
+});
+
+export const ListDealsResponseItem = zod.object({
+  id: zod.number(),
+  dealNumber: zod.string(),
+  title: zod.string(),
+  clientName: zod.string().optional(),
+  value: zod.number().optional(),
+  stage: zod.string(),
+  probability: zod.number().optional(),
+  expectedCloseDate: zod.string().optional(),
+  assignedToId: zod.number().optional(),
+  assignedToName: zod.string().optional(),
+  companyId: zod.number().optional(),
+  leadId: zod.number().optional(),
+  notes: zod.string().optional(),
+  createdById: zod.number().optional(),
+  createdAt: zod.string(),
+  updatedAt: zod.string().optional(),
+});
+export const ListDealsResponse = zod.array(ListDealsResponseItem);
+
+/**
+ * @summary Create deal
+ */
+export const CreateDealBody = zod.object({
+  title: zod.string(),
+  clientName: zod.string().optional(),
+  value: zod.number().optional(),
+  stage: zod.string(),
+  probability: zod.number().optional(),
+  expectedCloseDate: zod.string().optional(),
+  assignedToId: zod.number().optional(),
+  companyId: zod.number().optional(),
+  leadId: zod.number().optional(),
+  notes: zod.string().optional(),
+});
+
+/**
+ * @summary Update deal
+ */
+export const UpdateDealParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateDealBody = zod.object({
+  title: zod.string(),
+  clientName: zod.string().optional(),
+  value: zod.number().optional(),
+  stage: zod.string(),
+  probability: zod.number().optional(),
+  expectedCloseDate: zod.string().optional(),
+  assignedToId: zod.number().optional(),
+  companyId: zod.number().optional(),
+  leadId: zod.number().optional(),
+  notes: zod.string().optional(),
+});
+
+export const UpdateDealResponse = zod.object({
+  id: zod.number(),
+  dealNumber: zod.string(),
+  title: zod.string(),
+  clientName: zod.string().optional(),
+  value: zod.number().optional(),
+  stage: zod.string(),
+  probability: zod.number().optional(),
+  expectedCloseDate: zod.string().optional(),
+  assignedToId: zod.number().optional(),
+  assignedToName: zod.string().optional(),
+  companyId: zod.number().optional(),
+  leadId: zod.number().optional(),
+  notes: zod.string().optional(),
+  createdById: zod.number().optional(),
+  createdAt: zod.string(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete deal
+ */
+export const DeleteDealParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteDealResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary List activities
+ */
+export const ListActivitiesQueryParams = zod.object({
+  type: zod.coerce.string().optional(),
+  leadId: zod.coerce.number().optional(),
+  dealId: zod.coerce.number().optional(),
+  contactId: zod.coerce.number().optional(),
+  isDone: zod.coerce.boolean().optional(),
+});
+
+export const ListActivitiesResponseItem = zod.object({
+  id: zod.number(),
+  type: zod.string(),
+  subject: zod.string(),
+  description: zod.string().optional(),
+  dueDate: zod.string().optional(),
+  isDone: zod.boolean(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  createdById: zod.number().optional(),
+  createdByName: zod.string().optional(),
+  companyId: zod.number().optional(),
+  createdAt: zod.string(),
+  updatedAt: zod.string().optional(),
+});
+export const ListActivitiesResponse = zod.array(ListActivitiesResponseItem);
+
+/**
+ * @summary Create activity
+ */
+export const CreateActivityBody = zod.object({
+  type: zod.string(),
+  subject: zod.string(),
+  description: zod.string().optional(),
+  dueDate: zod.string().optional(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  isDone: zod.boolean().optional(),
+});
+
+/**
+ * @summary Update activity
+ */
+export const UpdateActivityParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateActivityBody = zod.object({
+  type: zod.string(),
+  subject: zod.string(),
+  description: zod.string().optional(),
+  dueDate: zod.string().optional(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  isDone: zod.boolean().optional(),
+});
+
+export const UpdateActivityResponse = zod.object({
+  id: zod.number(),
+  type: zod.string(),
+  subject: zod.string(),
+  description: zod.string().optional(),
+  dueDate: zod.string().optional(),
+  isDone: zod.boolean(),
+  leadId: zod.number().optional(),
+  dealId: zod.number().optional(),
+  contactId: zod.number().optional(),
+  createdById: zod.number().optional(),
+  createdByName: zod.string().optional(),
+  companyId: zod.number().optional(),
+  createdAt: zod.string(),
+  updatedAt: zod.string().optional(),
+});
+
+/**
+ * @summary Delete activity
+ */
+export const DeleteActivityParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteActivityResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
  * @summary List quotations
  */
 export const ListQuotationsQueryParams = zod.object({

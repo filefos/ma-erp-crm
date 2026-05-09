@@ -63,9 +63,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
     // projectId is required at runtime for SDK 49+; pull from app config.
     const projectId =
-      // @ts-expect-error - expoConfig types are loose
       (await import("expo-constants")).default?.expoConfig?.extra?.eas?.projectId
-      // @ts-expect-error
       ?? (await import("expo-constants")).default?.easConfig?.projectId
       ?? undefined;
 

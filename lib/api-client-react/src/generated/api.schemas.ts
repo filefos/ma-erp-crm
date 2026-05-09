@@ -334,6 +334,66 @@ export interface CreateContactBody {
   notes?: string;
 }
 
+export interface Deal {
+  id: number;
+  dealNumber: string;
+  title: string;
+  clientName?: string;
+  value?: number;
+  stage: string;
+  probability?: number;
+  expectedCloseDate?: string;
+  assignedToId?: number;
+  assignedToName?: string;
+  companyId?: number;
+  leadId?: number;
+  notes?: string;
+  createdById?: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CreateDealBody {
+  title: string;
+  clientName?: string;
+  value?: number;
+  stage: string;
+  probability?: number;
+  expectedCloseDate?: string;
+  assignedToId?: number;
+  companyId?: number;
+  leadId?: number;
+  notes?: string;
+}
+
+export interface Activity {
+  id: number;
+  type: string;
+  subject: string;
+  description?: string;
+  dueDate?: string;
+  isDone: boolean;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  createdById?: number;
+  createdByName?: string;
+  companyId?: number;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CreateActivityBody {
+  type: string;
+  subject: string;
+  description?: string;
+  dueDate?: string;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  isDone?: boolean;
+}
+
 export interface QuotationItem {
   id: number;
   quotationId?: number;
@@ -2009,6 +2069,21 @@ export type GetLeadsPipelineParams = {
 export type ListContactsParams = {
   search?: string;
   companyId?: number;
+};
+
+export type ListDealsParams = {
+  stage?: string;
+  companyId?: number;
+  assignedToId?: number;
+  leadId?: number;
+};
+
+export type ListActivitiesParams = {
+  type?: string;
+  leadId?: number;
+  dealId?: number;
+  contactId?: number;
+  isDone?: boolean;
 };
 
 export type ListQuotationsParams = {

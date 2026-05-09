@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./activity";
 export * from "./adminCompanyCard";
 export * from "./adminSummary";
 export * from "./asset";
@@ -23,6 +24,7 @@ export * from "./cheque";
 export * from "./company";
 export * from "./companyRef";
 export * from "./contact";
+export * from "./createActivityBody";
 export * from "./createAssetBody";
 export * from "./createAttendanceBody";
 export * from "./createBankAccountBody";
@@ -30,6 +32,7 @@ export * from "./createChartOfAccountBody";
 export * from "./createChequeBody";
 export * from "./createCompanyBody";
 export * from "./createContactBody";
+export * from "./createDealBody";
 export * from "./createDelegatedTaskBody";
 export * from "./createDeliveryNoteBody";
 export * from "./createDeliveryNoteBodyItemsItem";
@@ -65,6 +68,7 @@ export * from "./createTaxInvoiceBody";
 export * from "./createUndertakingLetterBody";
 export * from "./createUserBody";
 export * from "./dashboardSummary";
+export * from "./deal";
 export * from "./delegatedTask";
 export * from "./deleteChartOfAccount200";
 export * from "./deleteJournalEntry200";
@@ -94,6 +98,7 @@ export * from "./journalEntryLine";
 export * from "./lead";
 export * from "./leadsPipeline";
 export * from "./leadUpdateResponse";
+export * from "./listActivitiesParams";
 export * from "./listAssetsParams";
 export * from "./listAttendanceParams";
 export * from "./listAuditLogsParams";
@@ -101,6 +106,7 @@ export * from "./listBankAccountsParams";
 export * from "./listChartOfAccountsParams";
 export * from "./listChequesParams";
 export * from "./listContactsParams";
+export * from "./listDealsParams";
 export * from "./listDeliveryNotesParams";
 export * from "./listEmployeesParams";
 export * from "./listExpensesParams";
