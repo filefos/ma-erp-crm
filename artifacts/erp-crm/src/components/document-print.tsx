@@ -677,11 +677,11 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <div className="font-bold mb-1">Prepared by:</div>
                 <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
                 {data.preparedBySignatureUrl && (
-                  <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                  <div data-html2canvas-ignore="true" style={{ marginTop: 6, display: "flex", justifyContent: "center" }}>
                     <img
                       src={data.preparedBySignatureUrl}
                       alt="Signature"
-                      style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85, display: "block" }}
+                      style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
                     />
                   </div>
                 )}
