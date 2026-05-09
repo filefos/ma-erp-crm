@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer, Mail, ChevronDown, Sheet, MessageCircle } from "lucide-react";
+import { Search, Upload, Eye, Download, Trash2, RefreshCw, FileText, X, CheckCircle2, Loader2, Stamp, PenLine, ArrowLeft, Printer, Mail, ChevronDown, Sheet, MessageCircle, Save } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
@@ -89,6 +89,11 @@ export function LpoAcknowledgments() {
   const [acWaSending, setAcWaSending] = useState(false);
   const [editLpoId, setEditLpoId] = useState<number | null>(null);
   const [editLpoVal, setEditLpoVal] = useState("");
+  const [viewWaOpen, setViewWaOpen] = useState(false);
+  const [viewWaPhone, setViewWaPhone] = useState("");
+  const [viewWaMessage, setViewWaMessage] = useState("");
+  const [viewWaSending, setViewWaSending] = useState(false);
+  const [viewSavingId, setViewSavingId] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +273,103 @@ export function LpoAcknowledgments() {
       toast({ title: "PDF generation failed", variant: "destructive" });
     } finally {
       setAcPdfGenerating(false);
+    }
+  }
+
+  async function buildViewPdf(record: AckRecord): Promise<Uint8Array> {
+    const sigUrl = (user as any)?.signatureUrl ?? null;
+    const company = (companies ?? []).find(c => c.id === (record.companyId ?? activeCompanyId));
+    const stampUrl = (company as any)?.stamp ?? null;
+    const pdfRes = await fetch(`${BASE}api/lpo-acknowledgments/${record.id}/file`, { headers: authHeaders() });
+    if (!pdfRes.ok) throw new Error("Could not fetch PDF");
+    const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer());
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const margin = 36;
+    const stampH = 120;
+    let stampImg = null as Awaited<ReturnType<typeof pdfDoc.embedPng>> | null;
+    let sigImg = null as Awaited<ReturnType<typeof pdfDoc.embedPng>> | null;
+    if (previewStampOn && stampUrl) {
+      const { bytes, isPng } = await fetchImageBytes(stampUrl);
+      stampImg = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+    }
+    if (previewSigOn && sigUrl) {
+      const { bytes, isPng } = await fetchImageBytes(sigUrl);
+      sigImg = isPng ? await pdfDoc.embedPng(bytes) : await pdfDoc.embedJpg(bytes);
+    }
+    if (stampImg || sigImg) {
+      for (const page of pdfDoc.getPages()) {
+        const { width } = page.getSize();
+        let stampX = width - margin;
+        if (stampImg) {
+          const scaled = stampImg.scaleToFit(170, stampH);
+          stampX = width - margin - scaled.width;
+          page.drawImage(stampImg, { x: stampX, y: margin, width: scaled.width, height: scaled.height, opacity: 0.85 });
+        }
+        if (sigImg) {
+          const scaled = sigImg.scaleToFit(80, 40);
+          const sigX = stampImg ? stampX - scaled.width - 8 : width - margin - scaled.width;
+          page.drawImage(sigImg, { x: sigX, y: margin, width: scaled.width, height: scaled.height, opacity: 0.85 });
+        }
+      }
+    }
+    await appendAckLetter(pdfDoc, record);
+    return await pdfDoc.save();
+  }
+
+  async function handleViewSaveToSystem(record: AckRecord) {
+    setViewSavingId(record.id);
+    try {
+      const bytes = await buildViewPdf(record);
+      let binary = "";
+      const chunk = 8192;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode(...bytes.slice(i, i + chunk));
+      }
+      const b64 = btoa(binary);
+      const r = await fetch(`${BASE}api/lpo-acknowledgments/${record.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ fileContent: b64, fileName: record.fileName, contentType: "application/pdf", fileSize: bytes.length }),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      qc.invalidateQueries({ queryKey: ["lpo-acknowledgments"] });
+      toast({ title: "Saved to system ✓", description: previewStampOn || previewSigOn ? "Stamped/signed PDF saved." : "PDF saved with acknowledgement letter." });
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e.message, variant: "destructive" });
+    } finally {
+      setViewSavingId(null);
+    }
+  }
+
+  async function handleViewWaSend() {
+    if (!viewRecord) return;
+    const digits = viewWaPhone.replace(/[^0-9]/g, "");
+    if (!digits) {
+      toast({ title: "Phone number required", description: "Enter the recipient's WhatsApp number with country code.", variant: "destructive" });
+      return;
+    }
+    setViewWaSending(true);
+    try {
+      const bytes = await buildViewPdf(viewRecord);
+      const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      const suffix = previewStampOn || previewSigOn ? "_stamped" : "_ack";
+      const filename = viewRecord.fileName.replace(/\.pdf$/i, "") + suffix + ".pdf";
+      const file = new File([blob], filename, { type: "application/pdf" });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: viewWaMessage });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        window.open(`https://wa.me/${digits}?text=${encodeURIComponent(viewWaMessage)}`, "_blank", "noopener,noreferrer");
+        toast({ title: "WhatsApp opened ✓", description: `PDF saved as ${filename} — drag it into the WhatsApp chat.` });
+      }
+      setViewWaOpen(false);
+    } catch (err) {
+      toast({ title: "Send failed", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+    } finally {
+      setViewWaSending(false);
     }
   }
 
@@ -1026,6 +1128,65 @@ export function LpoAcknowledgments() {
                     : <Download className="w-3.5 h-3.5 mr-1.5" />}
                   Download
                 </Button>
+                {/* WhatsApp */}
+                <Button size="sm" variant="outline"
+                  className="text-green-600 border-green-400 hover:bg-green-50"
+                  onClick={() => {
+                    if (!viewRecord) return;
+                    setViewWaPhone("");
+                    setViewWaMessage(`Dear ${viewRecord.customerName},\n\nPlease find attached the LPO acknowledgment${viewRecord.lpoNumber ? ` for LPO No. ${viewRecord.lpoNumber}` : ""}.\n\nBest regards`);
+                    setViewWaOpen(true);
+                  }}
+                >
+                  <MessageCircle className="w-3.5 h-3.5 mr-1" />
+                  WhatsApp
+                </Button>
+                {/* Email */}
+                <Button size="sm" variant="outline"
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  disabled={!!viewSavingId}
+                  onClick={async () => {
+                    if (!viewRecord) return;
+                    try {
+                      const bytes = await buildViewPdf(viewRecord);
+                      let binary = "";
+                      const chunk = 8192;
+                      for (let i = 0; i < bytes.length; i += chunk) {
+                        binary += String.fromCharCode(...bytes.slice(i, i + chunk));
+                      }
+                      const b64 = btoa(binary);
+                      const linkedQt = (quotations ?? []).find((q: any) =>
+                        viewRecord.quotationNumber && q.quotationNumber === viewRecord.quotationNumber
+                      ) as any;
+                      openCompose({
+                        toAddress: linkedQt?.clientEmail ?? "",
+                        toName: viewRecord.customerName,
+                        subject: `LPO Acknowledgment${viewRecord.lpoNumber ? ` — LPO No. ${viewRecord.lpoNumber}` : ""} — ${viewRecord.customerName}`,
+                        body: `Dear ${viewRecord.customerName},\n\nPlease find attached the LPO acknowledgment${viewRecord.lpoNumber ? ` for LPO No. ${viewRecord.lpoNumber}` : ""}.\n\nBest regards`,
+                        clientName: viewRecord.customerName,
+                        sourceRef: viewRecord.lpoNumber ?? viewRecord.quotationNumber ?? "",
+                        companyId: viewRecord.companyId ?? undefined,
+                        attachments: [{ name: viewRecord.fileName, content: b64, type: "application/pdf" }],
+                      });
+                    } catch (e: any) {
+                      toast({ title: "Could not prepare email", description: e.message, variant: "destructive" });
+                    }
+                  }}
+                >
+                  <Mail className="w-3.5 h-3.5 mr-1" />
+                  Email
+                </Button>
+                {/* Save to system */}
+                <Button size="sm" variant="outline"
+                  className="text-[#0f2d5a] border-[#1e6ab0] hover:bg-blue-50 disabled:opacity-60"
+                  disabled={!!viewSavingId}
+                  onClick={() => viewRecord && handleViewSaveToSystem(viewRecord)}
+                >
+                  {viewSavingId === viewRecord?.id
+                    ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    : <Save className="w-3.5 h-3.5 mr-1" />}
+                  Save
+                </Button>
               </div>
             </div>
           </DialogHeader>
@@ -1592,6 +1753,57 @@ export function LpoAcknowledgments() {
               className="bg-[#25D366] hover:bg-[#1ea952] text-white w-full sm:w-auto"
             >
               {acWaSending
+                ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing…</>
+                : <><MessageCircle className="w-4 h-4 mr-1" />Download PDF & Open WhatsApp</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── View PDF WhatsApp Dialog ─── */}
+      <Dialog open={viewWaOpen} onOpenChange={o => { if (!viewWaSending) setViewWaOpen(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#0f2d5a]">
+              <MessageCircle className="w-5 h-5 text-[#25D366]" />
+              Send LPO PDF via WhatsApp
+            </DialogTitle>
+            <DialogDescription>
+              The PDF (with any active stamp/signature) will be prepared and WhatsApp will open. Attach the downloaded PDF in the chat and tap Send.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <div className="space-y-1">
+              <Label htmlFor="view-wa-phone">WhatsApp Number *</Label>
+              <Input
+                id="view-wa-phone"
+                value={viewWaPhone}
+                onChange={e => setViewWaPhone(e.target.value)}
+                placeholder="971501234567"
+                inputMode="tel"
+                autoFocus
+                disabled={viewWaSending}
+              />
+              <p className="text-[11px] text-gray-500">Country code required. Spaces and symbols are ignored.</p>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="view-wa-message">Pre-filled message</Label>
+              <Textarea
+                id="view-wa-message"
+                value={viewWaMessage}
+                onChange={e => setViewWaMessage(e.target.value)}
+                rows={4}
+                disabled={viewWaSending}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => void handleViewWaSend()}
+              disabled={viewWaSending || !viewWaPhone.replace(/[^0-9]/g, "")}
+              className="bg-[#25D366] hover:bg-[#1ea952] text-white w-full sm:w-auto"
+            >
+              {viewWaSending
                 ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing…</>
                 : <><MessageCircle className="w-4 h-4 mr-1" />Download PDF & Open WhatsApp</>}
             </Button>
