@@ -157,6 +157,10 @@ export interface Company {
   vatPercent?: number;
   logo?: string;
   stamp?: string;
+  /** Width of the stamp as a percentage of the page width (default 30). */
+  stampWidthPct?: number;
+  /** Bottom margin of the stamp as a percentage of the page height (default 3). */
+  stampMarginPct?: number;
   bankDetails?: string;
   letterhead?: string;
   isActive: boolean;
@@ -175,6 +179,10 @@ export interface CreateCompanyBody {
   vatPercent?: number;
   logo?: string;
   stamp?: string;
+  /** Width of the stamp as a percentage of the page width (default 30). */
+  stampWidthPct?: number;
+  /** Bottom margin of the stamp as a percentage of the page height (default 3). */
+  stampMarginPct?: number;
   bankDetails?: string;
   letterhead?: string;
 }

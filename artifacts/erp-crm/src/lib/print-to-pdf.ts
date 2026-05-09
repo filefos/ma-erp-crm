@@ -78,14 +78,18 @@ async function stampImagesOnSlice(
   sliceCanvas: HTMLCanvasElement,
   signatureUrl: string | undefined,
   stampUrl: string | undefined,
+  stampWidthPct?: number | null,
+  stampMarginPct?: number | null,
 ): Promise<void> {
   if (!signatureUrl && !stampUrl) return;
   const ctx = sliceCanvas.getContext("2d");
   if (!ctx) return;
 
+  const widthFraction = (stampWidthPct != null ? stampWidthPct : 30) / 100;
+  const marginFraction = (stampMarginPct != null ? stampMarginPct : 3) / 100;
   const maxH = Math.floor(sliceCanvas.height * 0.14);
-  const maxW = Math.floor(sliceCanvas.width * 0.30);
-  const bottomMargin = Math.floor(sliceCanvas.height * 0.03);
+  const maxW = Math.floor(sliceCanvas.width * widthFraction);
+  const bottomMargin = Math.floor(sliceCanvas.height * marginFraction);
   const opacity = 0.85;
 
   const drawImg = (img: HTMLImageElement, centreX: number) => {
@@ -119,6 +123,8 @@ async function stampImagesOnSlice(
 export interface PdfOptions {
   signatureUrl?: string;
   stampUrl?: string;
+  stampWidthPct?: number | null;
+  stampMarginPct?: number | null;
 }
 
 export async function captureElementToPdfBase64(
@@ -128,6 +134,8 @@ export async function captureElementToPdfBase64(
 ): Promise<{ base64: string; filename: string }> {
   const signatureUrl = options?.signatureUrl || undefined;
   const stampUrl = options?.stampUrl || undefined;
+  const stampWidthPct = options?.stampWidthPct;
+  const stampMarginPct = options?.stampMarginPct;
   const hasOverlay = !!(signatureUrl || stampUrl);
 
   const rawCanvas = await html2canvas(el, {
@@ -174,7 +182,7 @@ export async function captureElementToPdfBase64(
       sctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
       sctx.drawImage(canvas, 0, 0);
     }
-    if (hasOverlay) await stampImagesOnSlice(sliceCanvas, signatureUrl, stampUrl);
+    if (hasOverlay) await stampImagesOnSlice(sliceCanvas, signatureUrl, stampUrl, stampWidthPct, stampMarginPct);
     const dataUrl = sliceCanvas.toDataURL("image/jpeg", 0.92);
     const drawHeight = Math.min(pageHeight, canvas.height / ratio);
     pdf.addImage(dataUrl, "JPEG", 0, 0, imgWidth, drawHeight, undefined, "FAST");
@@ -215,7 +223,7 @@ export async function captureElementToPdfBase64(
       0, y, sliceCanvas.width, sliceH,
       0, 0, sliceCanvas.width, sliceH,
     );
-    if (hasOverlay) await stampImagesOnSlice(sliceCanvas, signatureUrl, stampUrl);
+    if (hasOverlay) await stampImagesOnSlice(sliceCanvas, signatureUrl, stampUrl, stampWidthPct, stampMarginPct);
     const dataUrl = sliceCanvas.toDataURL("image/jpeg", 0.92);
     if (pageIndex > 0) pdf.addPage();
     const sliceHeightPt = sliceH / ratio;

@@ -9,10 +9,10 @@ import { CreateCompanyBody, UpdateCompanyBody } from "@workspace/api-zod";
 const router = Router();
 router.use(requireAuth);
 
-// Field-level filtering: non-admins receive only id/name/shortName/prefix/vatPercent/logo/isActive.
+// Field-level filtering: non-admins receive only id/name/shortName/prefix/vatPercent/logo/stamp/stampWidthPct/stampMarginPct/isActive.
 // Sensitive fields (trn, bankDetails, letterhead, address, phone, email) require admin.
-function publicCompanyFields<T extends { id: number; name: string; shortName: string | null; prefix: string | null; vatPercent: number | null; logo: string | null; stamp: string | null; isActive: boolean }>(c: T) {
-  return { id: c.id, name: c.name, shortName: c.shortName, prefix: c.prefix, vatPercent: c.vatPercent, logo: c.logo, stamp: c.stamp, isActive: c.isActive };
+function publicCompanyFields<T extends { id: number; name: string; shortName: string | null; prefix: string | null; vatPercent: number | null; logo: string | null; stamp: string | null; stampWidthPct: number | null; stampMarginPct: number | null; isActive: boolean }>(c: T) {
+  return { id: c.id, name: c.name, shortName: c.shortName, prefix: c.prefix, vatPercent: c.vatPercent, logo: c.logo, stamp: c.stamp, stampWidthPct: c.stampWidthPct, stampMarginPct: c.stampMarginPct, isActive: c.isActive };
 }
 
 router.get("/companies", async (req, res): Promise<void> => {
@@ -44,6 +44,8 @@ router.post("/companies", requirePermissionLevel("super_admin"), validateBody(Cr
     vatPercent: data.vatPercent ?? 5,
     logo: data.logo,
     stamp: data.stamp,
+    stampWidthPct: data.stampWidthPct,
+    stampMarginPct: data.stampMarginPct,
     bankDetails: data.bankDetails,
     letterhead: data.letterhead,
   }).returning();

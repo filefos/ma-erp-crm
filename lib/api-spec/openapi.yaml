@@ -4375,6 +4375,12 @@ components:
           type: string
         stamp:
           type: string
+        stampWidthPct:
+          type: number
+          description: Width of the stamp as a percentage of the page width (default 30).
+        stampMarginPct:
+          type: number
+          description: Bottom margin of the stamp as a percentage of the page height (default 3).
         bankDetails:
           type: string
         letterhead:
@@ -4410,6 +4416,12 @@ components:
           type: string
         stamp:
           type: string
+        stampWidthPct:
+          type: number
+          description: Width of the stamp as a percentage of the page width (default 30).
+        stampMarginPct:
+          type: number
+          description: Bottom margin of the stamp as a percentage of the page height (default 3).
         bankDetails:
           type: string
         letterhead:

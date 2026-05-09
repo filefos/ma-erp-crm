@@ -17,6 +17,8 @@ export const companiesTable = pgTable("companies", {
   stamp: text("stamp"),
   bankDetails: text("bank_details"),
   letterhead: text("letterhead"),
+  stampWidthPct: doublePrecision("stamp_width_pct"),
+  stampMarginPct: doublePrecision("stamp_margin_pct"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

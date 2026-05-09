@@ -13,6 +13,7 @@ interface FormState {
   name: string; shortName: string; prefix: string; trn: string;
   email: string; phone: string; website: string; address: string;
   vatPercent: number; logo: string; stamp: string;
+  stampWidthPct: number; stampMarginPct: number;
 }
 
 export function CompaniesAdmin() {
@@ -22,6 +23,7 @@ export function CompaniesAdmin() {
   const [form, setForm] = useState<FormState>({
     name: "", shortName: "", prefix: "", trn: "",
     email: "", phone: "", website: "", address: "", vatPercent: 5, logo: "", stamp: "",
+    stampWidthPct: 30, stampMarginPct: 3,
   });
   const fileRef = useRef<HTMLInputElement>(null);
   const stampRef = useRef<HTMLInputElement>(null);
@@ -48,6 +50,8 @@ export function CompaniesAdmin() {
       vatPercent: c.vatPercent ?? 5,
       logo: c.logo ?? "",
       stamp: c.stamp ?? "",
+      stampWidthPct: c.stampWidthPct ?? 30,
+      stampMarginPct: c.stampMarginPct ?? 3,
     });
     setEditId(c.id);
   };
@@ -247,6 +251,32 @@ export function CompaniesAdmin() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Stamp placement */}
+            <div className="space-y-1">
+              <Label>Stamp width %</Label>
+              <Input
+                type="number"
+                min={5}
+                max={80}
+                step={1}
+                value={form.stampWidthPct}
+                onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampWidthPct: Number.isNaN(v) ? 30 : v })); }}
+              />
+              <p className="text-[11px] text-muted-foreground">Width of stamp relative to page width (default 30).</p>
+            </div>
+            <div className="space-y-1">
+              <Label>Stamp bottom margin %</Label>
+              <Input
+                type="number"
+                min={0}
+                max={30}
+                step={0.5}
+                value={form.stampMarginPct}
+                onChange={e => { const v = parseFloat(e.target.value); setForm(p => ({ ...p, stampMarginPct: Number.isNaN(v) ? 3 : v })); }}
+              />
+              <p className="text-[11px] text-muted-foreground">Gap from page bottom as % of page height (default 3).</p>
             </div>
           </div>
 

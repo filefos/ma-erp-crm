@@ -568,6 +568,8 @@ export function LposList() {
                 }
                 signatureUrl={user?.signatureUrl ?? undefined}
                 stampUrl={companies.find(c => c.id === selectedLpo?.companyId)?.stamp ?? undefined}
+                stampWidthPct={companies.find(c => c.id === selectedLpo?.companyId)?.stampWidthPct ?? undefined}
+                stampMarginPct={companies.find(c => c.id === selectedLpo?.companyId)?.stampMarginPct ?? undefined}
               />
             )
           )}
@@ -758,11 +760,15 @@ function LpoDetailView({
   linkedQuotation,
   signatureUrl,
   stampUrl,
+  stampWidthPct,
+  stampMarginPct,
 }: {
   lpo: any;
   linkedQuotation: any | null;
   signatureUrl?: string;
   stampUrl?: string;
+  stampWidthPct?: number | null;
+  stampMarginPct?: number | null;
 }) {
   const atts: AttachmentMeta[] = lpo.attachments ?? [];
   const BASE_URL = import.meta.env.BASE_URL;
@@ -777,6 +783,8 @@ function LpoDetailView({
       const { base64 } = await captureElementToPdfBase64(el, filename, {
         signatureUrl: signatureUrl || undefined,
         stampUrl: stampUrl || undefined,
+        stampWidthPct: stampWidthPct ?? undefined,
+        stampMarginPct: stampMarginPct ?? undefined,
       });
       const link = document.createElement("a");
       link.href = `data:application/pdf;base64,${base64}`;

@@ -21,6 +21,8 @@ async function runMigrations() {
     await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS lpo_file_url TEXT`);
     await db.execute(sql`ALTER TABLE lpos ADD COLUMN IF NOT EXISTS scope TEXT`);
     await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS stamp TEXT`);
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS stamp_width_pct DOUBLE PRECISION`);
+    await db.execute(sql`ALTER TABLE companies ADD COLUMN IF NOT EXISTS stamp_margin_pct DOUBLE PRECISION`);
     // Supplier enhancements
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS company_id INTEGER`);
     await db.execute(sql`ALTER TABLE suppliers ADD COLUMN IF NOT EXISTS whatsapp TEXT`);

@@ -193,6 +193,18 @@ export const ListCompaniesResponseItem = zod.object({
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
   stamp: zod.string().optional(),
+  stampWidthPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Width of the stamp as a percentage of the page width (default 30).",
+    ),
+  stampMarginPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Bottom margin of the stamp as a percentage of the page height (default 3).",
+    ),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
   isActive: zod.boolean(),
@@ -215,6 +227,18 @@ export const CreateCompanyBody = zod.object({
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
   stamp: zod.string().optional(),
+  stampWidthPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Width of the stamp as a percentage of the page width (default 30).",
+    ),
+  stampMarginPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Bottom margin of the stamp as a percentage of the page height (default 3).",
+    ),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
 });
@@ -239,6 +263,18 @@ export const GetCompanyResponse = zod.object({
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
   stamp: zod.string().optional(),
+  stampWidthPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Width of the stamp as a percentage of the page width (default 30).",
+    ),
+  stampMarginPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Bottom margin of the stamp as a percentage of the page height (default 3).",
+    ),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
   isActive: zod.boolean(),
@@ -264,6 +300,18 @@ export const UpdateCompanyBody = zod.object({
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
   stamp: zod.string().optional(),
+  stampWidthPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Width of the stamp as a percentage of the page width (default 30).",
+    ),
+  stampMarginPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Bottom margin of the stamp as a percentage of the page height (default 3).",
+    ),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
 });
@@ -281,6 +329,18 @@ export const UpdateCompanyResponse = zod.object({
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
   stamp: zod.string().optional(),
+  stampWidthPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Width of the stamp as a percentage of the page width (default 30).",
+    ),
+  stampMarginPct: zod
+    .number()
+    .optional()
+    .describe(
+      "Bottom margin of the stamp as a percentage of the page height (default 3).",
+    ),
   bankDetails: zod.string().optional(),
   letterhead: zod.string().optional(),
   isActive: zod.boolean(),
