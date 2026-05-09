@@ -31,10 +31,14 @@ export function MyProfile() {
 
   // Signature state
   const [sigPreview, setSigPreview] = useState<string | null>(null);
+  const [sigSavedUrl, setSigSavedUrl] = useState<string | null>(null);
   const [sigSaving, setSigSaving] = useState(false);
   const [sigSaved, setSigSaved] = useState(false);
+  const [sigClearing, setSigClearing] = useState(false);
+  const [sigCleared, setSigCleared] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const token = localStorage.getItem("erp_token");
+  const sigDirty = sigPreview !== sigSavedUrl;
 
   // AI automation level
   const [autoLevel, setAutoLevel] = useState<AutomationLevel>("suggest");
@@ -75,9 +79,11 @@ export function MyProfile() {
   useEffect(() => {
     if (u) {
       setForm({ name: u.name ?? "", email: u.email ?? "", phone: u.phone ?? "" });
-      if (u.signatureUrl) setSigPreview(u.signatureUrl);
+      const saved = u.signatureUrl ?? null;
+      setSigPreview(saved);
+      setSigSavedUrl(saved);
     }
-  }, [u?.id]);
+  }, [u?.id, u?.signatureUrl]);
 
   const update = useUpdateUser({
     mutation: {
@@ -119,11 +125,17 @@ export function MyProfile() {
     if (!sigPreview) return;
     setSigSaving(true);
     try {
-      await fetch(`/api/users/${u.id}/signature`, {
+      const res = await fetch(`/api/users/${u.id}/signature`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ signatureUrl: sigPreview }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert((err as { error?: string }).error ?? "Failed to save signature. Please try again.");
+        return;
+      }
+      setSigSavedUrl(sigPreview);
       queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
       setSigSaved(true);
       setTimeout(() => setSigSaved(false), 3000);
@@ -132,9 +144,28 @@ export function MyProfile() {
     }
   };
 
-  const handleRemoveSignature = () => {
-    setSigPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const handleClearSignature = async () => {
+    setSigClearing(true);
+    try {
+      const res = await fetch(`/api/users/${u.id}/signature`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ signatureUrl: null }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert((err as { error?: string }).error ?? "Failed to clear signature. Please try again.");
+        return;
+      }
+      setSigPreview(null);
+      setSigSavedUrl(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+      setSigCleared(true);
+      setTimeout(() => setSigCleared(false), 3000);
+    } finally {
+      setSigClearing(false);
+    }
   };
 
   return (
@@ -239,8 +270,15 @@ export function MyProfile() {
                 <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                   <Upload className="w-3.5 h-3.5 mr-1.5" />Change
                 </Button>
-                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={handleRemoveSignature}>
-                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />Remove
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={handleClearSignature}
+                  disabled={sigClearing}
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                  {sigClearing ? "Clearing…" : "Clear"}
                 </Button>
               </div>
             </div>
@@ -251,13 +289,13 @@ export function MyProfile() {
             >
               <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">Click to upload signature image</p>
-              <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF (transparent PNG recommended)</p>
+              <p className="text-xs text-muted-foreground mt-1">PNG or JPG (transparent PNG recommended)</p>
             </div>
           )}
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/jpg"
             className="hidden"
             onChange={handleSignatureFile}
           />
@@ -266,12 +304,13 @@ export function MyProfile() {
               size="sm"
               className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
               onClick={handleSaveSignature}
-              disabled={!sigPreview || sigSaving}
+              disabled={!sigPreview || !sigDirty || sigSaving}
             >
               <Check className="w-3.5 h-3.5 mr-1.5" />
               {sigSaving ? "Saving..." : "Save Signature"}
             </Button>
             {sigSaved && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Signature saved!</span>}
+            {sigCleared && <span className="text-sm text-emerald-600 flex items-center gap-1"><Check className="w-4 h-4" />Signature cleared.</span>}
           </div>
         </CardContent>
       </Card>
