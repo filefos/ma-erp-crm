@@ -687,9 +687,11 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           <div className="mt-auto" style={{ paddingBottom: "50px" }}>
             <div className="grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-3 pb-3 px-4">
               <div>
-                <div className="font-bold mb-0.5">Prepared by:</div>
                 {data.type !== "delivery_note" && (
-                  <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+                  <>
+                    <div className="font-bold mb-0.5">Prepared by:</div>
+                    <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+                  </>
                 )}
                 {data.preparedBySignatureUrl && (
                   <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "flex-start" }}>
