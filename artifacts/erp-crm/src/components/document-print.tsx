@@ -703,7 +703,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 </div>
                 <div className="text-right">
                   {data.clientName && (
-                    <div className="font-bold text-[13px] mb-0.5">{data.clientName}</div>
+                    <>
+                      <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                      <div className="font-bold text-[13px] mb-0.5">{data.clientName}</div>
+                    </>
                   )}
                   {data.preparedBySignatureUrl && (
                     <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end", paddingTop: 46 }}>
