@@ -282,61 +282,71 @@ export function QuotationNew() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded border border-[#1a3d6e]">
+            <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-center pb-2 pt-1 font-semibold w-10">S#</th>
-                  <th className="text-left pb-2 pt-1 font-semibold pl-2">Description</th>
-                  <th className="text-left pb-2 pt-1 font-semibold w-32 pl-2">Size / Status</th>
-                  <th className="text-right pb-2 pt-1 font-semibold w-28">Price (AED)</th>
-                  <th className="text-right pb-2 pt-1 font-semibold w-16">Qty.</th>
-                  <th className="text-right pb-2 pt-1 font-semibold w-32">Total (AED)</th>
-                  <th className="w-8"></th>
+                <tr className="bg-[#1a3d6e] text-white">
+                  <th className="text-center py-2 px-2 font-semibold w-12 border border-[#2d5a9e] border-t-0 border-l-0">S#</th>
+                  <th className="text-center py-2 px-2 font-semibold border border-[#2d5a9e] border-t-0">Description</th>
+                  <th className="text-center py-2 px-2 font-semibold w-32 border border-[#2d5a9e] border-t-0">Size / Status</th>
+                  <th className="text-center py-2 px-2 font-semibold w-28 border border-[#2d5a9e] border-t-0">Price (AED)</th>
+                  <th className="text-center py-2 px-2 font-semibold w-16 border border-[#2d5a9e] border-t-0">Qty.</th>
+                  <th className="text-center py-2 px-2 font-semibold w-24 border border-[#2d5a9e] border-t-0">Discount %</th>
+                  <th className="text-center py-2 px-2 font-semibold w-32 border border-[#2d5a9e] border-t-0 border-r-0">Total (AED)</th>
+                  <th className="w-8 bg-[#1a3d6e] border-0"></th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, i) => (
-                  <tr key={i} className="border-b last:border-0 align-top">
-                    <td className="py-1 text-center text-muted-foreground font-medium pt-2">
+                  <tr key={i} className="align-top bg-[#d6e8f7] hover:bg-[#c5ddf3]">
+                    <td className="py-2 px-2 text-center font-semibold text-[#1a3d6e] border border-[#6fa3d8] border-t-0 border-l-0">
                       {String(i + 1).padStart(2, "0")}
                     </td>
-                    <td className="py-1 pr-2 pl-2">
+                    <td className="py-1 px-2 border border-[#6fa3d8] border-t-0">
                       <Textarea
                         value={item.description}
                         onChange={e => updateItem(i, "description", e.target.value)}
-                        className="text-sm min-h-[64px] resize-y"
+                        className="text-sm min-h-[64px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
                         placeholder="Describe prefab cabin details..."
                       />
                     </td>
-                    <td className="py-1 px-1">
+                    <td className="py-1 px-1 border border-[#6fa3d8] border-t-0">
                       <Input
                         value={item.unit}
                         onChange={e => updateItem(i, "unit", e.target.value)}
-                        className="h-8 text-sm"
+                        className="h-8 text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
                         placeholder="e.g. 12X6X2.4M"
                       />
                     </td>
-                    <td className="py-1 px-1">
+                    <td className="py-1 px-1 border border-[#6fa3d8] border-t-0">
                       <Input
                         type="number"
                         value={item.rate}
                         onChange={e => updateItem(i, "rate", e.target.value)}
-                        className="h-8 text-right w-full text-sm"
+                        className="h-8 text-right w-full text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
                       />
                     </td>
-                    <td className="py-1 px-1">
+                    <td className="py-1 px-1 border border-[#6fa3d8] border-t-0">
                       <Input
                         type="number"
                         value={item.quantity}
                         onChange={e => updateItem(i, "quantity", e.target.value)}
-                        className="h-8 text-right w-full text-sm"
+                        className="h-8 text-right w-full text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
                       />
                     </td>
-                    <td className="py-1 pl-1 text-right font-medium pt-2 text-sm">
+                    <td className="py-1 px-1 border border-[#6fa3d8] border-t-0">
+                      <Input
+                        type="number"
+                        value={item.discount}
+                        onChange={e => updateItem(i, "discount", e.target.value)}
+                        className="h-8 text-right w-full text-sm bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                        min={0} max={100}
+                      />
+                    </td>
+                    <td className="py-2 px-2 text-right font-semibold text-[#1a3d6e] border border-[#6fa3d8] border-t-0 border-r-0">
                       AED {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-1 pl-1">
+                    <td className="py-1 px-1 border-0">
                       {items.length > 1 && (
                         <Button
                           variant="ghost"
