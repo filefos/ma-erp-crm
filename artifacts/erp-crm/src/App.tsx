@@ -14,6 +14,9 @@ import { LeadsList } from "@/pages/crm/leads";
 import { LeadDetail } from "@/pages/crm/lead-detail";
 import { ContactsList } from "@/pages/crm/contacts";
 import { CustomerProfile } from "@/pages/crm/customer-profile";
+import { DealsList } from "@/pages/crm/deals";
+import { DealDetail } from "@/pages/crm/deal-detail";
+import { ActivitiesPage } from "@/pages/crm/activities";
 import { QuotationsList } from "@/pages/sales/quotations";
 import { QuotationDetail } from "@/pages/sales/quotation-detail";
 import { QuotationNew } from "@/pages/sales/quotation-new";
@@ -148,6 +151,17 @@ function Router() {
       </Route>
       <Route path="/crm/contacts">
         <ModuleGuard module="contacts"><ContactsList /></ModuleGuard>
+      </Route>
+      <Route path="/crm/deals/:id">
+        {(params) => (
+          <ModuleGuard module="deals"><DealDetail id={params.id!} /></ModuleGuard>
+        )}
+      </Route>
+      <Route path="/crm/deals">
+        <ModuleGuard module="deals"><DealsList /></ModuleGuard>
+      </Route>
+      <Route path="/crm/activities">
+        <ModuleGuard module="activities"><ActivitiesPage /></ModuleGuard>
       </Route>
 
       {/* Sales */}

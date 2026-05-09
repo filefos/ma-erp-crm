@@ -26,7 +26,7 @@ export interface Lead {
   assignedToId?: number;
   assignedToName?: string;
   notes?: string;
-  nextFollowUp?: string;
+  nextFollowUp?: string | null;
   leadScore: string;
   companyType?: string;
   website?: string;

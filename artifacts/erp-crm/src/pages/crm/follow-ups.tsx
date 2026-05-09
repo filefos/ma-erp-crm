@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "wouter";
-import { useListLeads, useUpdateLead } from "@workspace/api-client-react";
+import { useListLeads, useUpdateLead, useListActivities, useUpdateActivity } from "@workspace/api-client-react";
+import type { Lead, Activity, CreateActivityBody, CreateLeadBody } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,16 +17,73 @@ import {
 } from "lucide-react";
 import { localDayKey } from "@/components/crm/premium";
 
-type FollowUpItem = {
-  kind: "lead" | "activity";
+type LeadFollowUpItem = {
+  kind: "lead";
   id: number;
-  date: string;          // ISO yyyy-mm-dd
-  primary: string;       // lead name or activity subject
-  secondary?: string;    // company / requirement
-  refId: number;         // lead id (for navigation)
-  raw: any;
-  type?: string;         // activity type
+  date: string;
+  primary: string;
+  secondary?: string;
+  refId: number;
+  raw: Lead;
+  type?: undefined;
 };
+
+type ActivityFollowUpItem = {
+  kind: "activity";
+  id: number;
+  date: string;
+  primary: string;
+  secondary?: string;
+  refId: number;
+  raw: Activity;
+  type: string;
+};
+
+type FollowUpItem = LeadFollowUpItem | ActivityFollowUpItem;
+
+function leadToBody(lead: Lead, overrides: Partial<CreateLeadBody> = {}): CreateLeadBody {
+  return {
+    leadName: lead.leadName,
+    companyName: lead.companyName,
+    contactPerson: lead.contactPerson,
+    designation: lead.designation,
+    phone: lead.phone,
+    whatsapp: lead.whatsapp,
+    email: lead.email,
+    location: lead.location,
+    source: lead.source,
+    requirementType: lead.requirementType,
+    quantity: lead.quantity,
+    budget: lead.budget,
+    status: lead.status,
+    assignedToId: lead.assignedToId,
+    notes: lead.notes,
+    nextFollowUp: lead.nextFollowUp ?? undefined,
+    leadScore: lead.leadScore,
+    companyType: lead.companyType,
+    website: lead.website,
+    licenseNumber: lead.licenseNumber,
+    trnNumber: lead.trnNumber,
+    officeAddress: lead.officeAddress,
+    companyId: lead.companyId,
+    ...overrides,
+  };
+}
+
+function activityToBody(a: Activity, overrides: Partial<CreateActivityBody> = {}): CreateActivityBody {
+  return {
+    type: a.type,
+    subject: a.subject,
+    description: a.description,
+    dueDate: a.dueDate,
+    leadId: a.leadId,
+    dealId: a.dealId,
+    contactId: a.contactId,
+    companyId: a.companyId,
+    isDone: a.isDone,
+    ...overrides,
+  };
+}
 
 const todayISO = () => localDayKey();
 const inDaysISO = (d: number) => {
@@ -35,7 +93,7 @@ const inDaysISO = (d: number) => {
 
 export function FollowUpCenter() {
   const { data: leadsRaw } = useListLeads({});
-  const activitiesRaw: any[] = [];
+  const { data: activitiesRaw } = useListActivities({});
   const { filterByCompany } = useActiveCompany();
   const [search, setSearch] = useState("");
   const [reschedule, setReschedule] = useState<{ leadId: number; current: string } | null>(null);
@@ -43,10 +101,15 @@ export function FollowUpCenter() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const leads = useMemo(() => filterByCompany(leadsRaw ?? []), [leadsRaw, filterByCompany]);
+  const leads: Lead[] = useMemo(() => filterByCompany(leadsRaw ?? []) as Lead[], [leadsRaw, filterByCompany]);
+  const activities: Activity[] = useMemo(() => filterByCompany(activitiesRaw ?? []) as Activity[], [activitiesRaw, filterByCompany]);
 
   const updateLead = useUpdateLead({
     mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/leads"] }) },
+  });
+
+  const updateActivity = useUpdateActivity({
+    mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/activities"] }) },
   });
 
   const items = useMemo(() => {
@@ -60,13 +123,23 @@ export function FollowUpCenter() {
         });
       }
     }
+    for (const a of activities) {
+      if (!a.isDone && a.dueDate) {
+        out.push({
+          kind: "activity", id: a.id, date: a.dueDate, primary: a.subject,
+          secondary: a.description,
+          refId: a.leadId ?? a.dealId ?? 0,
+          raw: a, type: a.type,
+        });
+      }
+    }
     out.sort((a, b) => a.date.localeCompare(b.date));
     if (search) {
       const s = search.toLowerCase();
       return out.filter(i => i.primary.toLowerCase().includes(s) || (i.secondary ?? "").toLowerCase().includes(s));
     }
     return out;
-  }, [leads, search]);
+  }, [leads, activities, search]);
 
   const today = todayISO();
   const week = inDaysISO(7);
@@ -76,10 +149,18 @@ export function FollowUpCenter() {
   const later    = items.filter(i => i.date > week);
 
   const markDone = (item: FollowUpItem) => {
-      if (item.kind === "activity") return;
-      updateLead.mutate({ id: item.id, data: { ...item.raw, nextFollowUp: null } as any },
-        { onSuccess: () => toast({ title: "Follow-up cleared", description: item.primary }) });
-    };
+    if (item.kind === "activity") {
+      updateActivity.mutate(
+        { id: item.id, data: activityToBody(item.raw, { isDone: true }) },
+        { onSuccess: () => toast({ title: "Activity marked done", description: item.primary }) },
+      );
+      return;
+    }
+    updateLead.mutate(
+      { id: item.id, data: { ...leadToBody(item.raw), nextFollowUp: null } },
+      { onSuccess: () => toast({ title: "Follow-up cleared", description: item.primary }) },
+    );
+  };
 
   const openReschedule = (item: FollowUpItem) => {
     if (item.kind !== "lead") return;
@@ -92,12 +173,15 @@ export function FollowUpCenter() {
     if (!reschedule) return;
     const lead = leads.find(l => l.id === reschedule.leadId);
     if (!lead) return;
-    updateLead.mutate({ id: lead.id, data: { ...lead, nextFollowUp: rescheduleDate } as any }, {
-      onSuccess: () => {
-        toast({ title: "Rescheduled", description: `${lead.leadName} → ${rescheduleDate}` });
-        setReschedule(null);
+    updateLead.mutate(
+      { id: lead.id, data: leadToBody(lead, { nextFollowUp: rescheduleDate }) },
+      {
+        onSuccess: () => {
+          toast({ title: "Rescheduled", description: `${lead.leadName} → ${rescheduleDate}` });
+          setReschedule(null);
+        },
       },
-    });
+    );
   };
 
   return (
@@ -192,18 +276,26 @@ function FollowUpList({ items, emptyText, overdue, onDone, onReschedule }: {
   return (
     <div className="bg-card border rounded-xl divide-y">
       {items.map(item => {
-        const lead = item.raw;
-        const phone = item.kind === "lead" ? lead.phone : null;
-        const whatsapp = item.kind === "lead" ? lead.whatsapp : null;
-        const email = item.kind === "lead" ? lead.email : null;
         const isLead = item.kind === "lead";
-        const score = lead.leadScore;
+        const leadRaw = isLead ? item.raw : null;
+        const phone = leadRaw?.phone ?? null;
+        const whatsapp = leadRaw?.whatsapp ?? null;
+        const email = leadRaw?.email ?? null;
+        const score = leadRaw?.leadScore ?? null;
         return (
           <div key={`${item.kind}-${item.id}`} className="p-3 flex items-center gap-3 hover:bg-muted/30">
             <div className={`w-1 h-12 rounded-full shrink-0 ${overdue ? "bg-red-500" : item.date === todayISO() ? "bg-orange-500" : "bg-blue-500"}`} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <Link href={`/crm/leads/${item.refId}`} className="font-medium text-sm hover:text-primary truncate">{item.primary}</Link>
+                {isLead ? (
+                  <Link href={`/crm/leads/${item.refId}`} className="font-medium text-sm hover:text-primary truncate">{item.primary}</Link>
+                ) : item.raw.leadId ? (
+                  <Link href={`/crm/leads/${item.raw.leadId}`} className="font-medium text-sm hover:text-primary truncate">{item.primary}</Link>
+                ) : item.raw.dealId ? (
+                  <Link href={`/crm/deals/${item.raw.dealId}`} className="font-medium text-sm hover:text-primary truncate">{item.primary}</Link>
+                ) : (
+                  <Link href="/crm/activities" className="font-medium text-sm hover:text-primary truncate">{item.primary}</Link>
+                )}
                 {isLead && score === "hot"  && <Badge variant="secondary" className="bg-red-100 text-red-700 text-[10px]">🔥 Hot</Badge>}
                 {isLead && score === "warm" && <Badge variant="secondary" className="bg-orange-100 text-orange-700 text-[10px]">🌡️ Warm</Badge>}
                 {!isLead && <Badge variant="outline" className="capitalize text-[10px]">{item.type?.replace("_", " ")}</Badge>}

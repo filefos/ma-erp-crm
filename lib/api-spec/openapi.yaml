@@ -4797,6 +4797,7 @@ components:
           type: string
         nextFollowUp:
           type: string
+          nullable: true
         leadScore:
           type: string
         companyType:
@@ -4856,6 +4857,7 @@ components:
           type: string
         nextFollowUp:
           type: string
+          nullable: true
         leadScore:
           type: string
         companyType:

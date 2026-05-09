@@ -43,6 +43,8 @@ const NAV: NavGroup[] = [
       { href: "/crm", label: "CRM Dashboard", icon: LayoutDashboard },
       { href: "/crm/contacts", label: "Contacts & Profiles", icon: HardHat },
       { href: "/crm/leads", label: "Leads", icon: Users },
+      { href: "/crm/deals", label: "Deals", icon: Briefcase },
+      { href: "/crm/activities", label: "Activities", icon: Clock },
       { href: "/crm/reports", label: "CRM Reports", icon: BarChart },
     ],
   },

@@ -22,7 +22,7 @@ export interface CreateLeadBody {
   status: string;
   assignedToId?: number;
   notes?: string;
-  nextFollowUp?: string;
+  nextFollowUp?: string | null;
   leadScore?: string;
   companyType?: string;
   website?: string;
