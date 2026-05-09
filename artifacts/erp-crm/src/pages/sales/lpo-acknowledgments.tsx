@@ -69,6 +69,8 @@ export function LpoAcknowledgments() {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [stampingId, setStampingId] = useState<number | null>(null);
+  const [previewStampOn, setPreviewStampOn] = useState(false);
+  const [previewSigOn, setPreviewSigOn] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
@@ -639,6 +641,8 @@ export function LpoAcknowledgments() {
         if (!open) {
           setViewRecord(null);
           setPreviewBackRecord(null);
+          setPreviewStampOn(false);
+          setPreviewSigOn(false);
         }
       }}>
         <DialogContent className="max-w-5xl h-[90vh] flex flex-col p-0">
@@ -665,31 +669,51 @@ export function LpoAcknowledgments() {
               </DialogTitle>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
-                  size="sm" variant="outline"
-                  className="text-purple-700 border-purple-300 hover:bg-purple-50 disabled:opacity-60"
-                  disabled={!!stampingId}
-                  onClick={() => viewRecord && handleStampSign(viewRecord, "stamp")}
+                  size="sm"
+                  variant={previewStampOn ? "default" : "outline"}
+                  className={previewStampOn
+                    ? "bg-purple-700 text-white hover:bg-purple-800"
+                    : "text-purple-700 border-purple-300 hover:bg-purple-50"}
+                  onClick={() => {
+                    if (!previewStampOn) {
+                      const company = (companies ?? []).find(c => c.id === viewRecord?.companyId);
+                      if (!(company as any)?.stamp) {
+                        toast({ title: "No stamp configured", description: "Go to Admin → Companies and upload a company stamp.", variant: "destructive" });
+                        return;
+                      }
+                    }
+                    setPreviewStampOn(v => !v);
+                  }}
                 >
-                  {stampingId === viewRecord?.id
-                    ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                    : <Stamp className="w-3.5 h-3.5 mr-1" />}
+                  <Stamp className="w-3.5 h-3.5 mr-1" />
                   P.STAMP
                 </Button>
                 <Button
-                  size="sm" variant="outline"
-                  className="text-orange-700 border-orange-300 hover:bg-orange-50 disabled:opacity-60"
-                  disabled={!!stampingId}
-                  onClick={() => viewRecord && handleStampSign(viewRecord, "signature")}
+                  size="sm"
+                  variant={previewSigOn ? "default" : "outline"}
+                  className={previewSigOn
+                    ? "bg-orange-600 text-white hover:bg-orange-700"
+                    : "text-orange-700 border-orange-300 hover:bg-orange-50"}
+                  onClick={() => {
+                    if (!previewSigOn && !user?.signatureUrl) {
+                      toast({ title: "No signature uploaded", description: "Go to your Profile settings and upload a signature.", variant: "destructive" });
+                      return;
+                    }
+                    setPreviewSigOn(v => !v);
+                  }}
                 >
-                  {stampingId === viewRecord?.id
-                    ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                    : <PenLine className="w-3.5 h-3.5 mr-1" />}
+                  <PenLine className="w-3.5 h-3.5 mr-1" />
                   P.SIGNATURE
                 </Button>
-                <Button size="sm" variant="outline" className="text-green-700 border-green-300"
+                <Button size="sm" variant="outline"
+                  className="text-green-700 border-green-300 disabled:opacity-60"
+                  disabled={!!stampingId}
                   onClick={() => {
                     if (!viewRecord) return;
-                    if (blobUrl) {
+                    if (previewStampOn || previewSigOn) {
+                      const mode = previewStampOn && previewSigOn ? "both" : previewStampOn ? "stamp" : "signature";
+                      handleStampSign(viewRecord, mode);
+                    } else if (blobUrl) {
                       const a = document.createElement("a");
                       a.href = blobUrl;
                       a.download = viewRecord.fileName;
@@ -698,7 +722,10 @@ export function LpoAcknowledgments() {
                       downloadAuthed(`${BASE}api/lpo-acknowledgments/${viewRecord.id}/file?download=1`, viewRecord.fileName);
                     }
                   }}>
-                  <Download className="w-3.5 h-3.5 mr-1.5" />Download
+                  {stampingId === viewRecord?.id
+                    ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                    : <Download className="w-3.5 h-3.5 mr-1.5" />}
+                  Download
                 </Button>
               </div>
             </div>
@@ -725,15 +752,55 @@ export function LpoAcknowledgments() {
                   </div>
                 }
               >
-                {Array.from({ length: numPages }, (_, i) => (
-                  <Page
-                    key={i + 1}
-                    pageNumber={i + 1}
-                    className="shadow-md mb-2"
-                    renderTextLayer={true}
-                    renderAnnotationLayer={false}
-                  />
-                ))}
+                {Array.from({ length: numPages }, (_, i) => {
+                  const isLast = i === numPages - 1;
+                  const company = (companies ?? []).find(c => c.id === viewRecord?.companyId);
+                  const stampUrl = (company as any)?.stamp ?? null;
+                  const sigUrl = user?.signatureUrl ?? null;
+                  const showStamp = isLast && previewStampOn && stampUrl;
+                  const showSig = isLast && previewSigOn && sigUrl;
+                  return (
+                    <div key={i + 1} className="relative shadow-md mb-2">
+                      <Page
+                        pageNumber={i + 1}
+                        renderTextLayer={true}
+                        renderAnnotationLayer={false}
+                      />
+                      {showSig && (
+                        <img
+                          src={sigUrl}
+                          alt="Signature"
+                          style={{
+                            position: "absolute",
+                            bottom: 36,
+                            left: 36,
+                            maxHeight: 56,
+                            maxWidth: 150,
+                            objectFit: "contain",
+                            opacity: 0.85,
+                            pointerEvents: "none",
+                          }}
+                        />
+                      )}
+                      {showStamp && (
+                        <img
+                          src={stampUrl}
+                          alt="Stamp"
+                          style={{
+                            position: "absolute",
+                            bottom: 24,
+                            right: 36,
+                            maxHeight: 90,
+                            maxWidth: 180,
+                            objectFit: "contain",
+                            opacity: 0.85,
+                            pointerEvents: "none",
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </Document>
             )}
           </div>
