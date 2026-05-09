@@ -686,36 +686,38 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {!isQuotation && (
           <div className="mt-auto" style={{ paddingBottom: "50px" }}>
             {data.type === "delivery_note" ? (
-              /* Delivery note: For & on behalf spans from left edge; client name + signature on far right */
-              <div className="flex items-start justify-between text-xs pt-3 pb-3 px-4">
+              /* Delivery note: stamp above our company, signature above client company */
+              <div className="flex items-end justify-between text-xs pt-3 pb-3 px-4">
+                {/* Left — stamp (top) then For & on behalf of our company */}
                 <div>
-                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                  <div className="font-bold text-[13px]">{coName}</div>
                   {data.stampUrl && (
-                    <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                    <div data-html2canvas-ignore="true" style={{ marginBottom: 8 }}>
                       <img
                         src={data.stampUrl}
                         alt="Stamp"
-                        style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block" }}
+                        style={{ maxHeight: 120, maxWidth: 200, objectFit: "contain", opacity: 0.85, display: "block" }}
                       />
                     </div>
                   )}
+                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                  <div className="font-bold text-[13px]">{coName}</div>
                 </div>
+                {/* Right — signature (top) then For & on behalf of client */}
                 <div className="text-right">
-                  {data.clientName && (
-                    <>
-                      <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                      <div className="font-bold text-[13px] mb-0.5">{data.clientName}</div>
-                    </>
-                  )}
                   {data.preparedBySignatureUrl && (
-                    <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end", paddingTop: 46 }}>
+                    <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
                       <img
                         src={data.preparedBySignatureUrl}
                         alt="Signature"
                         style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
                       />
                     </div>
+                  )}
+                  {data.clientName && (
+                    <>
+                      <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                      <div className="font-bold text-[13px]">{data.clientName}</div>
+                    </>
                   )}
                 </div>
               </div>
