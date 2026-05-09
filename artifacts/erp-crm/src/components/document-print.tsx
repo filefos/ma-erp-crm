@@ -785,13 +785,13 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <table className="print-spec-table w-full mb-3" style={{ borderCollapse: "collapse", border: "1.5px solid #666" }}>
                   <thead>
                     <tr style={navyBg}>
-                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "center", fontSize: "8.5pt", fontWeight: 700, padding: "5px 4px", width: 84 }}>
+                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "center", fontSize: "10pt", fontWeight: 700, padding: "5px 4px", width: 90 }}>
                         Section
                       </th>
-                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "center", fontSize: "8.5pt", fontWeight: 700, padding: "5px 2px", width: 28 }}>
+                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "center", fontSize: "10pt", fontWeight: 700, padding: "5px 2px", width: 30 }}>
                         Pt.
                       </th>
-                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "left", fontSize: "8.5pt", fontWeight: 700, padding: "5px 8px" }}>
+                      <th style={{ ...navyBg, border: "1px solid #888", color: "white", textAlign: "left", fontSize: "10pt", fontWeight: 700, padding: "5px 8px" }}>
                         DESCRIPTION
                       </th>
                     </tr>
@@ -811,11 +811,11 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                                 color: "white",
                                 textAlign: "center",
                                 fontWeight: 800,
-                                fontSize: "8pt",
+                                fontSize: "9.5pt",
                                 verticalAlign: "middle",
                                 padding: "4px 3px",
                                 lineHeight: 1.25,
-                                width: 84,
+                                width: 90,
                               }}
                             >
                               {section.title.split(/\s+/).map((word, wi) => (
@@ -823,10 +823,10 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                               ))}
                             </td>
                           )}
-                          <td style={{ border: "1px solid #bbb", textAlign: "center", fontSize: "8.5pt", fontWeight: 600, padding: "3px 2px", verticalAlign: "top", color: "#333", width: 28 }}>
+                          <td style={{ border: "1px solid #bbb", textAlign: "center", fontSize: "10pt", fontWeight: 600, padding: "4px 2px", verticalAlign: "top", color: "#333", width: 30 }}>
                             {String.fromCharCode(97 + pi)}
                           </td>
-                          <td style={{ border: "1px solid #bbb", fontSize: "8.5pt", padding: "3px 8px", verticalAlign: "top", lineHeight: 1.45 }}>
+                          <td style={{ border: "1px solid #bbb", fontSize: "10pt", padding: "4px 8px", verticalAlign: "top", lineHeight: 1.5 }}>
                             {pt.split("\n").map((line, li) => (
                               <React.Fragment key={li}>
                                 {line}
