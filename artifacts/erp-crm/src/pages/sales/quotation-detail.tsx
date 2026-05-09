@@ -202,6 +202,7 @@ export function QuotationDetail({ id }: Props) {
       sizeStatus: i.unit,
       unitPrice: i.rate,
       quantity: i.quantity,
+      discount: (i as any).discount ?? 0,
       total: i.amount,
     })),
     preparedByName: (q as any).preparedByName,

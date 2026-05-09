@@ -9,6 +9,7 @@ export interface DocumentItem {
   unitPrice?: number;
   quantity: number;
   unit?: string;
+  discount?: number;
   total?: number;
   vatPercent?: number;
 }
@@ -267,6 +268,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     (s, ai) => s + (ai.status === "Included" ? ((ai.price ?? 0) * (ai.quantity ?? 1)) : 0), 0
   );
   const combinedSubtotalExclVat = projectItemsSubtotal + additionalTotal;
+  const hasDiscount = data.items.some(i => (i.discount ?? 0) > 0);
   // Always recalculate VAT from the live combined subtotal so it is consistent
   // with the displayed additional-items table (especially for proformas created
   // before additional items were carried over from the quotation).
@@ -464,6 +466,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-center">Size/status</th>
               {!isDelivery && <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-right">Price(AED)</th>}
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-right">Qty.</th>
+              {hasDiscount && !isDelivery && <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-center">Disc%</th>}
               {isTax && <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-center">VAT %</th>}
               {!isDelivery && <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-right">Total(AED)</th>}
             </tr>
@@ -483,6 +486,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                 <Td center>{item.sizeStatus ?? item.unit ?? "—"}</Td>
                 {!isDelivery && <Td right>{item.unitPrice != null ? formatAED(item.unitPrice) : "—"}</Td>}
                 <Td right>{item.quantity}</Td>
+                {hasDiscount && !isDelivery && <Td center>{(item.discount ?? 0) > 0 ? `${item.discount}%` : "—"}</Td>}
                 {isTax && <Td center>{item.vatPercent ?? vat}%</Td>}
                 {!isDelivery && <Td right bold>{item.total != null ? formatAED(item.total) : "—"}</Td>}
               </tr>
