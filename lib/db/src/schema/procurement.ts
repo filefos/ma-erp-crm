@@ -210,13 +210,34 @@ export const supplierRegistrationsTable = pgTable("supplier_registrations", {
   reviewNotes: text("review_notes"),
   supplierIdCreated: integer("supplier_id_created"),
 
+  // Invite linkage (set when registration originated from an admin invite link)
+  inviteToken: text("invite_token"),
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ─── Supplier Invite Links ───────────────────────────────────────────────────
+// Admin-generated single-use links that send suppliers directly to the
+// registration form pre-filled with the relevant company and contact details.
+export const supplierInvitesTable = pgTable("supplier_invites", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  companyId: integer("company_id").notNull(),
+  supplierEmail: text("supplier_email"),
+  supplierCompanyName: text("supplier_company_name"),
+  status: text("status").notNull().default("pending"), // pending | used | expired
+  registrationId: integer("registration_id"),
+  createdById: integer("created_by_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  usedAt: timestamp("used_at"),
+  expiresAt: timestamp("expires_at"),
 });
 
 export const insertSupplierSchema = createInsertSchema(suppliersTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type SupplierCategory = typeof supplierCategoriesTable.$inferSelect;
 export type SupplierRegistration = typeof supplierRegistrationsTable.$inferSelect;
+export type SupplierInvite = typeof supplierInvitesTable.$inferSelect;
 export const insertPurchaseRequestSchema = createInsertSchema(purchaseRequestsTable).omit({ id: true, prNumber: true, createdAt: true, updatedAt: true });
 export const insertRfqSchema = createInsertSchema(rfqsTable).omit({ id: true, rfqNumber: true, createdAt: true, updatedAt: true });
 export const insertSupplierQuotationSchema = createInsertSchema(supplierQuotationsTable).omit({ id: true, sqNumber: true, createdAt: true, updatedAt: true });

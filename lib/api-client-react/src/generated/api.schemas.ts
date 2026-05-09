@@ -915,6 +915,30 @@ export interface SubmitSupplierRegistrationBody {
   attachments?: SubmitSupplierRegistrationBodyAttachmentsItem[];
   agreedTerms: boolean;
   agreedCodeOfConduct: boolean;
+  /** Optional: token from admin-generated invite link */
+  inviteToken?: string;
+}
+
+export interface SupplierInvite {
+  id: number;
+  token: string;
+  companyId: number;
+  supplierEmail?: string | null;
+  supplierCompanyName?: string | null;
+  status: string;
+  registrationId?: number | null;
+  createdById: number;
+  createdAt: string;
+  usedAt?: string | null;
+  expiresAt?: string | null;
+  /** Full URL to send to the supplier */
+  registrationLink: string;
+}
+
+export interface CreateSupplierInviteBody {
+  companyId: number;
+  supplierEmail?: string;
+  supplierCompanyName?: string;
 }
 
 export type SupplierApplicationDecisionBodyDecision =

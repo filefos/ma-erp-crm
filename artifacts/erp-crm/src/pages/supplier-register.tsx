@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useListPublicCompanies,
   useListSupplierCategories,
   useSubmitSupplierRegistration,
+  useGetSupplierInvite,
+  getGetSupplierInviteQueryKey,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import {
   Building2, User, Banknote, Tags, Paperclip, FileText, ClipboardList,
-  CheckCircle2, AlertCircle, Loader2, ArrowRight, ArrowLeft, Plus, X,
+  CheckCircle2, AlertCircle, Loader2, ArrowRight, ArrowLeft, Plus, X, Link2,
 } from "lucide-react";
 
 type DocumentType =
@@ -69,6 +71,23 @@ export default function SupplierRegisterPage() {
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState<{ refNumber: string; companyName: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteBanner, setInviteBanner] = useState<string | null>(null);
+
+  // Parse ?invite=<token> from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tok = params.get("invite");
+    if (tok) setInviteToken(tok);
+  }, []);
+
+  // Fetch invite metadata when token is present
+  const { data: inviteData } = useGetSupplierInvite(inviteToken ?? "", {
+    query: {
+      queryKey: getGetSupplierInviteQueryKey(inviteToken ?? ""),
+      enabled: !!inviteToken,
+    },
+  });
 
   const [form, setForm] = useState({
     companyId: 0,
@@ -124,6 +143,21 @@ export default function SupplierRegisterPage() {
   });
   const [refClients, setRefClients] = useState<ReferenceClient[]>([{ name: "", contact: "" }]);
   const [files, setFiles] = useState<UploadedFile[]>([]);
+
+  // Pre-fill form when invite data arrives
+  useEffect(() => {
+    if (!inviteData) return;
+    setForm(prev => ({
+      ...prev,
+      companyId: inviteData.companyId ?? prev.companyId,
+      companyName: (inviteData as any).supplierCompanyName ?? prev.companyName,
+      email: (inviteData as any).supplierEmail ?? prev.email,
+    }));
+    const parts: string[] = [];
+    if ((inviteData as any).supplierCompanyName) parts.push((inviteData as any).supplierCompanyName);
+    if ((inviteData as any).supplierEmail) parts.push((inviteData as any).supplierEmail);
+    setInviteBanner(parts.length ? `Invited: ${parts.join(" · ")}` : "You were invited to register as a supplier.");
+  }, [inviteData]);
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm(p => ({ ...p, [key]: value }));
@@ -257,7 +291,8 @@ export default function SupplierRegisterPage() {
           ...form,
           referenceClients: cleanRefs,
           attachments: files.map(f => ({ filename: f.filename, contentType: f.contentType, content: f.content, documentType: f.documentType })),
-        },
+          ...(inviteToken ? { inviteToken } : {}),
+        } as any,
       });
       const co = companies?.find(c => c.id === form.companyId);
       setSubmitted({ refNumber: result.refNumber, companyName: co?.name ?? "Procurement Team" });
@@ -313,6 +348,12 @@ export default function SupplierRegisterPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {inviteBanner && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            <Link2 className="w-4 h-4 shrink-0 text-blue-600" />
+            <span>{inviteBanner}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-6 overflow-x-auto">
           {STEPS.map((s, i) => {
             const Icon = s.icon;

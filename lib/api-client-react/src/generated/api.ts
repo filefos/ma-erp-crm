@@ -65,6 +65,7 @@ import type {
   CreateSalesTargetBody,
   CreateStockEntryBody,
   CreateSupplierBody,
+  CreateSupplierInviteBody,
   CreateSupplierQuotationBody,
   CreateTaxInvoiceBody,
   CreateUndertakingLetterBody,
@@ -169,6 +170,7 @@ import type {
   Supplier,
   SupplierApplicationDecisionBody,
   SupplierCategoryItem,
+  SupplierInvite,
   SupplierQuotation,
   SupplierRegistration,
   TaxInvoice,
@@ -7102,6 +7104,256 @@ export function useListSupplierCategories<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getListSupplierCategoriesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Generate a unique supplier registration invite link (admin)
+ */
+export const getCreateSupplierInviteUrl = () => {
+  return `/api/supplier-invites`;
+};
+
+export const createSupplierInvite = async (
+  createSupplierInviteBody: CreateSupplierInviteBody,
+  options?: RequestInit,
+): Promise<SupplierInvite> => {
+  return customFetch<SupplierInvite>(getCreateSupplierInviteUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSupplierInviteBody),
+  });
+};
+
+export const getCreateSupplierInviteMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSupplierInvite>>,
+    TError,
+    { data: BodyType<CreateSupplierInviteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createSupplierInvite>>,
+  TError,
+  { data: BodyType<CreateSupplierInviteBody> },
+  TContext
+> => {
+  const mutationKey = ["createSupplierInvite"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createSupplierInvite>>,
+    { data: BodyType<CreateSupplierInviteBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createSupplierInvite(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateSupplierInviteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createSupplierInvite>>
+>;
+export type CreateSupplierInviteMutationBody =
+  BodyType<CreateSupplierInviteBody>;
+export type CreateSupplierInviteMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate a unique supplier registration invite link (admin)
+ */
+export const useCreateSupplierInvite = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSupplierInvite>>,
+    TError,
+    { data: BodyType<CreateSupplierInviteBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createSupplierInvite>>,
+  TError,
+  { data: BodyType<CreateSupplierInviteBody> },
+  TContext
+> => {
+  return useMutation(getCreateSupplierInviteMutationOptions(options));
+};
+
+/**
+ * @summary List supplier invite links (admin)
+ */
+export const getListSupplierInvitesUrl = () => {
+  return `/api/supplier-invites`;
+};
+
+export const listSupplierInvites = async (
+  options?: RequestInit,
+): Promise<SupplierInvite[]> => {
+  return customFetch<SupplierInvite[]>(getListSupplierInvitesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListSupplierInvitesQueryKey = () => {
+  return [`/api/supplier-invites`] as const;
+};
+
+export const getListSupplierInvitesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSupplierInvites>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listSupplierInvites>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListSupplierInvitesQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listSupplierInvites>>
+  > = ({ signal }) => listSupplierInvites({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSupplierInvites>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListSupplierInvitesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSupplierInvites>>
+>;
+export type ListSupplierInvitesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List supplier invite links (admin)
+ */
+
+export function useListSupplierInvites<
+  TData = Awaited<ReturnType<typeof listSupplierInvites>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listSupplierInvites>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListSupplierInvitesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Look up an invite by token (public — used by the registration form)
+ */
+export const getGetSupplierInviteUrl = (token: string) => {
+  return `/api/supplier-invite/${token}`;
+};
+
+export const getSupplierInvite = async (
+  token: string,
+  options?: RequestInit,
+): Promise<SupplierInvite> => {
+  return customFetch<SupplierInvite>(getGetSupplierInviteUrl(token), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSupplierInviteQueryKey = (token: string) => {
+  return [`/api/supplier-invite/${token}`] as const;
+};
+
+export const getGetSupplierInviteQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSupplierInvite>>,
+  TError = ErrorType<void>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSupplierInvite>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSupplierInviteQueryKey(token);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSupplierInvite>>
+  > = ({ signal }) => getSupplierInvite(token, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!token,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSupplierInvite>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSupplierInviteQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSupplierInvite>>
+>;
+export type GetSupplierInviteQueryError = ErrorType<void>;
+
+/**
+ * @summary Look up an invite by token (public — used by the registration form)
+ */
+
+export function useGetSupplierInvite<
+  TData = Awaited<ReturnType<typeof getSupplierInvite>>,
+  TError = ErrorType<void>,
+>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSupplierInvite>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSupplierInviteQueryOptions(token, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

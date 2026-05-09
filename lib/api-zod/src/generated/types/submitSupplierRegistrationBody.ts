@@ -54,4 +54,6 @@ export interface SubmitSupplierRegistrationBody {
   attachments?: SubmitSupplierRegistrationBodyAttachmentsItem[];
   agreedTerms: boolean;
   agreedCodeOfConduct: boolean;
+  /** Optional: token from admin-generated invite link */
+  inviteToken?: string;
 }

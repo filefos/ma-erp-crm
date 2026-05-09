@@ -1714,6 +1714,59 @@ paths:
                 items:
                   $ref: "#/components/schemas/SupplierCategoryItem"
 
+  /supplier-invites:
+    post:
+      operationId: createSupplierInvite
+      tags: [suppliers]
+      summary: Generate a unique supplier registration invite link (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplierInviteBody"
+      responses:
+        "201":
+          description: Invite created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierInvite"
+    get:
+      operationId: listSupplierInvites
+      tags: [suppliers]
+      summary: List supplier invite links (admin)
+      responses:
+        "200":
+          description: Invite list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SupplierInvite"
+
+  /supplier-invite/{token}:
+    get:
+      operationId: getSupplierInvite
+      tags: [suppliers]
+      summary: Look up an invite by token (public — used by the registration form)
+      security: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invite metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SupplierInvite"
+        "404":
+          description: Not found or expired
+
   /supplier-register:
     post:
       operationId: submitSupplierRegistration
@@ -5946,7 +5999,33 @@ components:
             required: [filename, contentType, content]
         agreedTerms: { type: boolean }
         agreedCodeOfConduct: { type: boolean }
+        inviteToken: { type: string, description: "Optional: token from admin-generated invite link" }
       required: [companyId, companyName, tradeName, tradeLicenseNo, licenseAuthority, licenseExpiry, establishedYear, companySize, country, city, emirate, poBox, address, website, contactPerson, designation, email, phone, tenderContactName, tenderContactMobile, tenderContactEmail, bankName, bankBranch, bankAccountName, bankAccountNumber, iban, swift, currency, yearsExperience, turnoverBand, employeeBand, agreedTerms, agreedCodeOfConduct, categories]
+
+    SupplierInvite:
+      type: object
+      properties:
+        id: { type: integer }
+        token: { type: string }
+        companyId: { type: integer }
+        supplierEmail: { type: string, nullable: true }
+        supplierCompanyName: { type: string, nullable: true }
+        status: { type: string }
+        registrationId: { type: integer, nullable: true }
+        createdById: { type: integer }
+        createdAt: { type: string }
+        usedAt: { type: string, nullable: true }
+        expiresAt: { type: string, nullable: true }
+        registrationLink: { type: string, description: "Full URL to send to the supplier" }
+      required: [id, token, companyId, status, createdById, createdAt, registrationLink]
+
+    CreateSupplierInviteBody:
+      type: object
+      properties:
+        companyId: { type: integer }
+        supplierEmail: { type: string }
+        supplierCompanyName: { type: string }
+      required: [companyId]
 
     SupplierApplicationDecisionBody:
       type: object

@@ -11,6 +11,7 @@ import {
   notificationsTable,
   userCompanyAccessTable,
   usersTable,
+  supplierInvitesTable,
 } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import nodemailer from "nodemailer";
@@ -38,6 +39,13 @@ const REQUIRED_DOC_TYPES = ["trade_licence", "bank_reference", "signatory_id"] a
 
 function parseJson<T = unknown>(str: string | null | undefined, fallback: T): T {
   try { return JSON.parse(str ?? "") as T; } catch { return fallback; }
+}
+
+function toInviteResponse(invite: typeof supplierInvitesTable.$inferSelect, req: { protocol: string; get(h: string): string | undefined }) {
+  const proto = (process.env.NODE_ENV === "production") ? "https" : req.protocol;
+  const host = req.get("host") ?? "localhost";
+  const registrationLink = `${proto}://${host}/supplier-register?invite=${invite.token}`;
+  return { ...invite, registrationLink };
 }
 
 function toResponse(reg: typeof supplierRegistrationsTable.$inferSelect) {
@@ -338,9 +346,23 @@ router.post("/supplier-register", submitLimiter, async (req, res): Promise<void>
       agreedTerms: Boolean(b.agreedTerms),
       agreedCodeOfConduct: Boolean(b.agreedCodeOfConduct),
       ipAddress: ip || null,
+      inviteToken: (b as any).inviteToken ? String((b as any).inviteToken).slice(0, 100) : null,
     }).returning();
     return row;
   });
+
+  // Mark the invite as used (if one was provided and is still pending)
+  if ((b as any).inviteToken) {
+    const tok = String((b as any).inviteToken);
+    const [inv] = await db.select().from(supplierInvitesTable).where(eq(supplierInvitesTable.token, tok));
+    if (inv && inv.status === "pending") {
+      await db.update(supplierInvitesTable).set({
+        status: "used",
+        usedAt: new Date(),
+        registrationId: reg.id,
+      }).where(eq(supplierInvitesTable.id, inv.id));
+    }
+  }
 
   // Acknowledge applicant
   await sendEmail({
@@ -551,6 +573,51 @@ router.post("/supplier-applications/:id/decision", requireAuth, requirePermissio
   });
 
   res.json(toResponse(updated));
+});
+
+// ─── Admin: create invite link ───────────────────────────────────────────────
+
+router.post("/supplier-invites", requireAuth, requirePermission("suppliers", "edit"), async (req, res): Promise<void> => {
+  const companyId = Number(req.body?.companyId);
+  if (!companyId) { res.status(400).json({ error: "companyId required" }); return; }
+  if (!inScope(req, companyId)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const [company] = await db.select().from(companiesTable).where(eq(companiesTable.id, companyId));
+  if (!company) { res.status(400).json({ error: "Invalid company" }); return; }
+
+  const token = crypto.randomUUID();
+  const userId = (req as any).user?.id;
+  const [invite] = await db.insert(supplierInvitesTable).values({
+    token,
+    companyId,
+    supplierEmail: req.body?.supplierEmail ? String(req.body.supplierEmail).slice(0, 200) : null,
+    supplierCompanyName: req.body?.supplierCompanyName ? String(req.body.supplierCompanyName).slice(0, 300) : null,
+    status: "pending",
+    createdById: userId,
+  }).returning();
+  res.status(201).json(toInviteResponse(invite, req));
+});
+
+// ─── Admin: list invite links ────────────────────────────────────────────────
+
+router.get("/supplier-invites", requireAuth, requirePermission("suppliers", "view"), async (req, res) => {
+  let rows = await db.select().from(supplierInvitesTable).orderBy(sql`${supplierInvitesTable.createdAt} desc`);
+  rows = rows.filter(r => inScope(req, r.companyId));
+  res.json(rows.map(r => toInviteResponse(r, req)));
+});
+
+// ─── Public: look up invite by token (for the registration form) ─────────────
+
+router.get("/supplier-invite/:token", async (req, res): Promise<void> => {
+  const { token } = req.params;
+  const [invite] = await db.select().from(supplierInvitesTable).where(eq(supplierInvitesTable.token, token));
+  if (!invite) { res.status(404).json({ error: "Invite not found" }); return; }
+  if (invite.status === "used") { res.status(410).json({ error: "This invite link has already been used" }); return; }
+  if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) {
+    await db.update(supplierInvitesTable).set({ status: "expired" }).where(eq(supplierInvitesTable.id, invite.id));
+    res.status(410).json({ error: "This invite link has expired" });
+    return;
+  }
+  res.json(toInviteResponse(invite, req));
 });
 
 export default router;

@@ -3,12 +3,17 @@ import {
   useListSupplierApplications,
   useGetSupplierApplication,
   useDecideSupplierApplication,
+  useCreateSupplierInvite,
+  useListSupplierInvites,
+  useListPublicCompanies,
   getListSupplierApplicationsQueryKey,
+  getListSupplierInvitesQueryKey,
 } from "@workspace/api-client-react";
 import type {
   SupplierRegistration,
   SupplierRegistrationStatus,
   SupplierApplicationDecisionBodyDecision,
+  SupplierInvite,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
@@ -19,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
@@ -26,9 +32,16 @@ import {
   Tabs, TabsList, TabsTrigger,
 } from "@/components/ui/tabs";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import {
   CheckCircle2, XCircle, MessageCircleQuestion, FileCheck, Building2, Mail,
   Banknote, Paperclip, Download, Loader2, FileText, ShieldCheck, ClipboardList,
-  Tags, Image as ImageIcon,
+  Tags, Image as ImageIcon, Link2, Copy, Send, ExternalLink,
 } from "lucide-react";
 
 const STATUS_BADGES: Record<SupplierRegistrationStatus, string> = {
@@ -48,11 +61,50 @@ const STATUS_LABELS: Record<SupplierRegistrationStatus, string> = {
 export function SupplierApplicationsList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [openId, setOpenId] = useState<number | null>(null);
-  const { filterByCompany } = useActiveCompany();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteTab, setInviteTab] = useState<"create" | "history">("create");
+  const [inviteForm, setInviteForm] = useState({ companyId: "", supplierEmail: "", supplierCompanyName: "" });
+  const [inviteResult, setInviteResult] = useState<SupplierInvite | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data, isLoading } = useListSupplierApplications(
     statusFilter === "all" ? {} : { status: statusFilter }
   );
+  const { data: companies } = useListPublicCompanies();
+  const { data: invites } = useListSupplierInvites();
   const filtered: SupplierRegistration[] = filterByCompany((data ?? []) as SupplierRegistration[]);
+  const filteredInvites = filterByCompany((invites ?? []) as any[]) as SupplierInvite[];
+
+  const createInvite = useCreateSupplierInvite({
+    mutation: {
+      onSuccess: (result) => {
+        setInviteResult(result as SupplierInvite);
+        queryClient.invalidateQueries({ queryKey: getListSupplierInvitesQueryKey() });
+      },
+      onError: (e: any) => {
+        toast({ title: "Failed to generate invite", description: e?.message, variant: "destructive" });
+      },
+    },
+  });
+
+  function handleGenerateInvite() {
+    if (!inviteForm.companyId) { toast({ title: "Please select a company", variant: "destructive" }); return; }
+    createInvite.mutate({ data: {
+      companyId: Number(inviteForm.companyId),
+      supplierEmail: inviteForm.supplierEmail || undefined,
+      supplierCompanyName: inviteForm.supplierCompanyName || undefined,
+    }});
+  }
+
+  function copyLink(link: string) {
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -66,6 +118,118 @@ export function SupplierApplicationsList() {
             </a>
           </p>
         </div>
+        <Dialog open={inviteOpen} onOpenChange={v => { setInviteOpen(v); if (!v) { setInviteResult(null); setInviteForm({ companyId: String(activeCompanyId ?? ""), supplierEmail: "", supplierCompanyName: "" }); } }}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => { setInviteOpen(true); setInviteTab("create"); setInviteResult(null); setInviteForm(f => ({ ...f, companyId: String(activeCompanyId ?? "") })); }}>
+              <Link2 className="w-4 h-4 mr-2" />Invite Supplier
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-[#1e6ab0]" />Supplier Registration Invite
+              </DialogTitle>
+            </DialogHeader>
+            <Tabs value={inviteTab} onValueChange={v => setInviteTab(v as "create" | "history")}>
+              <TabsList className="w-full mb-4">
+                <TabsTrigger value="create" className="flex-1">Generate Link</TabsTrigger>
+                <TabsTrigger value="history" className="flex-1">Sent Invites ({filteredInvites.length})</TabsTrigger>
+              </TabsList>
+
+              {inviteTab === "create" && (
+                <div className="space-y-4">
+                  {!inviteResult ? (
+                    <>
+                      <div className="space-y-1">
+                        <Label>Apply to Company <span className="text-red-500">*</span></Label>
+                        <Select value={inviteForm.companyId} onValueChange={v => setInviteForm(f => ({ ...f, companyId: v }))}>
+                          <SelectTrigger><SelectValue placeholder="Select company…" /></SelectTrigger>
+                          <SelectContent>
+                            {(companies ?? []).map(c => (
+                              <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Supplier Email <span className="text-muted-foreground text-xs">(optional, pre-fills form)</span></Label>
+                        <Input placeholder="supplier@company.com" value={inviteForm.supplierEmail} onChange={e => setInviteForm(f => ({ ...f, supplierEmail: e.target.value }))} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Supplier Company Name <span className="text-muted-foreground text-xs">(optional, pre-fills form)</span></Label>
+                        <Input placeholder="ABC Trading LLC" value={inviteForm.supplierCompanyName} onChange={e => setInviteForm(f => ({ ...f, supplierCompanyName: e.target.value }))} />
+                      </div>
+                      <Button className="w-full bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleGenerateInvite} disabled={createInvite.isPending || !inviteForm.companyId}>
+                        {createInvite.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</> : <><Send className="w-4 h-4 mr-2" />Generate Invite Link</>}
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 border border-emerald-200">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span className="text-sm font-medium">Invite link generated!</span>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Unique Registration Link</Label>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-muted rounded-md px-3 py-2 text-xs font-mono break-all select-all border">
+                            {inviteResult.registrationLink}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <Button className="flex-1" variant="outline" onClick={() => copyLink(inviteResult.registrationLink)}>
+                            <Copy className="w-3.5 h-3.5 mr-1.5" />{copied ? "Copied!" : "Copy Link"}
+                          </Button>
+                          <Button className="flex-1" variant="outline" asChild>
+                            <a href={inviteResult.registrationLink} target="_blank" rel="noreferrer">
+                              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />Open
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Share this link with the supplier. When they click it, the registration form will open pre-filled with the company and contact details you entered. The link is single-use and will be marked as used once submitted.
+                      </p>
+                      <Button variant="outline" className="w-full" onClick={() => { setInviteResult(null); setInviteForm({ companyId: String(activeCompanyId ?? ""), supplierEmail: "", supplierCompanyName: "" }); }}>
+                        Generate Another Link
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {inviteTab === "history" && (
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {filteredInvites.length === 0 ? (
+                    <div className="text-center py-8 text-sm text-muted-foreground">No invite links generated yet.</div>
+                  ) : filteredInvites.map(inv => (
+                    <div key={inv.id} className="border rounded-lg p-3 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          {inv.supplierCompanyName && <div className="text-sm font-medium">{inv.supplierCompanyName}</div>}
+                          {inv.supplierEmail && <div className="text-xs text-muted-foreground">{inv.supplierEmail}</div>}
+                          {!inv.supplierCompanyName && !inv.supplierEmail && <div className="text-xs text-muted-foreground italic">No pre-fill info</div>}
+                        </div>
+                        <Badge variant="secondary" className={inv.status === "used" ? "bg-emerald-100 text-emerald-800" : inv.status === "expired" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"}>
+                          {inv.status}
+                        </Badge>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        Created {new Date(inv.createdAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" })}
+                        {inv.usedAt && ` · Used ${new Date(inv.usedAt).toLocaleDateString("en-AE", { day: "2-digit", month: "short", year: "numeric" })}`}
+                      </div>
+                      {inv.status === "pending" && (
+                        <Button size="sm" variant="outline" className="w-full h-7 text-xs" onClick={() => copyLink(inv.registrationLink)}>
+                          <Copy className="w-3 h-3 mr-1" />Copy Link
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Tabs>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs value={statusFilter} onValueChange={setStatusFilter}>

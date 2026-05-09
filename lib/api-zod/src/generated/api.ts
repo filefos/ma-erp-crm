@@ -2938,6 +2938,58 @@ export const ListSupplierCategoriesResponse = zod.array(
 );
 
 /**
+ * @summary Generate a unique supplier registration invite link (admin)
+ */
+export const CreateSupplierInviteBody = zod.object({
+  companyId: zod.number(),
+  supplierEmail: zod.string().optional(),
+  supplierCompanyName: zod.string().optional(),
+});
+
+/**
+ * @summary List supplier invite links (admin)
+ */
+export const ListSupplierInvitesResponseItem = zod.object({
+  id: zod.number(),
+  token: zod.string(),
+  companyId: zod.number(),
+  supplierEmail: zod.string().nullish(),
+  supplierCompanyName: zod.string().nullish(),
+  status: zod.string(),
+  registrationId: zod.number().nullish(),
+  createdById: zod.number(),
+  createdAt: zod.string(),
+  usedAt: zod.string().nullish(),
+  expiresAt: zod.string().nullish(),
+  registrationLink: zod.string().describe("Full URL to send to the supplier"),
+});
+export const ListSupplierInvitesResponse = zod.array(
+  ListSupplierInvitesResponseItem,
+);
+
+/**
+ * @summary Look up an invite by token (public — used by the registration form)
+ */
+export const GetSupplierInviteParams = zod.object({
+  token: zod.coerce.string(),
+});
+
+export const GetSupplierInviteResponse = zod.object({
+  id: zod.number(),
+  token: zod.string(),
+  companyId: zod.number(),
+  supplierEmail: zod.string().nullish(),
+  supplierCompanyName: zod.string().nullish(),
+  status: zod.string(),
+  registrationId: zod.number().nullish(),
+  createdById: zod.number(),
+  createdAt: zod.string(),
+  usedAt: zod.string().nullish(),
+  expiresAt: zod.string().nullish(),
+  registrationLink: zod.string().describe("Full URL to send to the supplier"),
+});
+
+/**
  * @summary Submit a supplier registration application (public)
  */
 export const SubmitSupplierRegistrationBody = zod.object({
@@ -3012,6 +3064,10 @@ export const SubmitSupplierRegistrationBody = zod.object({
     .optional(),
   agreedTerms: zod.boolean(),
   agreedCodeOfConduct: zod.boolean(),
+  inviteToken: zod
+    .string()
+    .optional()
+    .describe("Optional: token from admin-generated invite link"),
 });
 
 /**
