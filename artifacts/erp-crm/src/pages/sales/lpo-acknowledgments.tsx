@@ -1372,44 +1372,44 @@ export function LpoAcknowledgments() {
                       <div key={i} style={{ fontSize: 11, color: "#222", lineHeight: 1.85, textAlign: "justify" as const, marginBottom: 13 }}>{p}</div>
                     ))}
 
-                    <div style={{ fontSize: 11, color: "#333", marginTop: 26, marginBottom: 56 }}>Yours faithfully,</div>
-
-                    {/* Dual signature blocks */}
-                    {(() => {
-                      const coApi = (companies ?? []).find(c => c.id === companyId) as any;
-                      const stampUrl = coApi?.stamp ?? null;
-                      const sigUrl   = (user as any)?.signatureUrl ?? null;
-                      return (
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-                          {/* Our company sig block */}
-                          <div style={{ width: "44%", position: "relative" as const }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 4 }}>For {co.name}</div>
-                            {/* Stamp / signature overlay inside the space above the line */}
-                            <div style={{ height: 56, position: "relative" as const, display: "flex", alignItems: "flex-end", gap: 6, paddingBottom: 4 }}>
-                              {acSigOn && sigUrl && (
-                                <img src={sigUrl} alt="Signature"
-                                  style={{ maxHeight: 40, maxWidth: 90, objectFit: "contain", opacity: 0.88 }} />
-                              )}
-                              {acStampOn && stampUrl && (
-                                <img src={stampUrl} alt="Stamp"
-                                  style={{ maxHeight: 56, maxWidth: 110, objectFit: "contain", opacity: 0.88 }} />
-                              )}
-                            </div>
-                            <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6 }} />
-                            <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
-                            <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{co.name}</div>
-                          </div>
-                          {/* Client sig block */}
-                          <div style={{ width: "44%", textAlign: "right" as const }}>
-                            <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 52 }}>For {clientName}</div>
-                            <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6, marginLeft: "auto" }} />
-                            <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
-                            <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    <div style={{ fontSize: 11, color: "#333", marginTop: 26 }}>Yours faithfully,</div>
                   </div>
+
+                  {/* ══ SIGNATURE BLOCKS — outside flex:1 so they sit just above the footer ══ */}
+                  {(() => {
+                    const coApi = (companies ?? []).find(c => c.id === companyId) as any;
+                    const stampUrl = coApi?.stamp ?? null;
+                    const sigUrl   = (user as any)?.signatureUrl ?? null;
+                    return (
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "20px 24px 16px" }}>
+                        {/* Our company sig block */}
+                        <div style={{ width: "44%", position: "relative" as const }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 4 }}>For {co.name}</div>
+                          {/* Stamp / signature overlay inside the space above the line */}
+                          <div style={{ height: 56, display: "flex", alignItems: "flex-end", gap: 6, paddingBottom: 4 }}>
+                            {acSigOn && sigUrl && (
+                              <img src={sigUrl} alt="Signature"
+                                style={{ maxHeight: 40, maxWidth: 90, objectFit: "contain", opacity: 0.88 }} />
+                            )}
+                            {acStampOn && stampUrl && (
+                              <img src={stampUrl} alt="Stamp"
+                                style={{ maxHeight: 56, maxWidth: 110, objectFit: "contain", opacity: 0.88 }} />
+                            )}
+                          </div>
+                          <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6 }} />
+                          <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
+                          <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{co.name}</div>
+                        </div>
+                        {/* Client sig block */}
+                        <div style={{ width: "44%", textAlign: "right" as const }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 56 }}>For {clientName}</div>
+                          <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6, marginLeft: "auto" }} />
+                          <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
+                          <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* ══ FOOTER — exact match to PageFooter in document-print.tsx ══ */}
                   <div style={{ padding: "0 24px 12px" }}>
