@@ -1,23 +1,24 @@
 import { useState } from "react";
-import { useListTaxInvoices, useCreateTaxInvoice, getListTaxInvoicesQueryKey } from "@workspace/api-client-react";
+import { useListTaxInvoices, useCreateTaxInvoice, useDeleteTaxInvoice, getListTaxInvoicesQueryKey } from "@workspace/api-client-react";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Link } from "wouter";
-import { Search, Plus, Trash2 } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Search, Plus, Trash2, Eye, Pencil } from "lucide-react";
 import { ExportMenu } from "@/components/ExportMenu";
 import { WhatsAppQuickIcon } from "@/components/whatsapp-button";
 import { AccountsPageHeader } from "@/components/accounts-page-header";
 import { CompanyField } from "@/components/CompanyField";
 import { useQueryClient } from "@tanstack/react-query";
 import { DelegateTaskButton } from "@/components/delegate-task-button";
+import { useToast } from "@/hooks/use-toast";
 
 const paymentStatusColors: Record<string, string> = {
   paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -46,9 +47,23 @@ export function TaxInvoicesList() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [items, setItems] = useState<Item[]>([emptyItem()]);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
 
   const { data: invoices, isLoading } = useListTaxInvoices({ search: search || undefined });
+
+  const deleteMutation = useDeleteTaxInvoice({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListTaxInvoicesQueryKey() });
+        setDeleteId(null);
+        toast({ title: "Tax Invoice deleted." });
+      },
+      onError: () => toast({ title: "Failed to delete.", variant: "destructive" }),
+    },
+  });
   const { filterByCompany } = useActiveCompany();
   const filtered = filterByCompany(invoices ?? []).filter(i => status === "all" || i.paymentStatus === status);
   const totalOutstanding = filtered?.reduce((s, i) => s + (i.balance ?? 0), 0) ?? 0;
@@ -288,7 +303,28 @@ export function TaxInvoicesList() {
                   <TableCell className="text-right font-medium text-red-600">AED {inv.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell><Badge variant="secondary" className={paymentStatusColors[inv.paymentStatus] ?? ""}>{inv.paymentStatus}</Badge></TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <Button
+                        size="sm" variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => navigate(`/accounts/invoices/${inv.id}`)}
+                      >
+                        <Eye className="w-3.5 h-3.5 mr-1" />View
+                      </Button>
+                      <Button
+                        size="sm" variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => navigate(`/accounts/invoices/${inv.id}/edit`)}
+                      >
+                        <Pencil className="w-3.5 h-3.5 mr-1" />Edit
+                      </Button>
+                      <Button
+                        size="sm" variant="outline"
+                        className="h-7 px-2 text-xs text-destructive border-destructive/40 hover:bg-destructive hover:text-white"
+                        onClick={() => setDeleteId(inv.id)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1" />Delete
+                      </Button>
                       {inv.clientPhone && (
                         <WhatsAppQuickIcon
                           phone={inv.clientPhone}
@@ -319,6 +355,28 @@ export function TaxInvoicesList() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Delete Confirmation */}
+      <Dialog open={deleteId !== null} onOpenChange={o => { if (!o) setDeleteId(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Tax Invoice</DialogTitle>
+            <DialogDescription>
+              This will permanently delete the tax invoice. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={deleteMutation.isPending}
+              onClick={() => { if (deleteId) deleteMutation.mutate({ id: deleteId }); }}
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

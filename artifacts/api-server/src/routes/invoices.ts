@@ -252,6 +252,15 @@ router.put("/tax-invoices/:id", requirePermission("tax_invoices", "edit"), requi
   res.json(inv);
 });
 
+router.delete("/tax-invoices/:id", requirePermission("tax_invoices", "delete"), async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [existing] = await db.select().from(taxInvoicesTable).where(eq(taxInvoicesTable.id, id));
+  if (!existing) { res.status(404).json({ error: "Not found" }); return; }
+  if (!scopeFilter(req, [existing]).length) { res.status(403).json({ error: "Forbidden" }); return; }
+  await db.delete(taxInvoicesTable).where(eq(taxInvoicesTable.id, id));
+  res.status(204).send();
+});
+
 // Delivery Notes
 router.get("/delivery-notes", requirePermission("delivery_notes", "view"), async (req, res): Promise<void> => {
   let rows = await db.select().from(deliveryNotesTable).orderBy(sql`${deliveryNotesTable.createdAt} desc`);

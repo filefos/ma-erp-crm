@@ -1152,6 +1152,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TaxInvoice"
+    delete:
+      operationId: deleteTaxInvoice
+      tags: [tax-invoices]
+      summary: Delete tax invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
 
   # DELIVERY NOTES
   /delivery-notes:

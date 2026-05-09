@@ -1962,6 +1962,13 @@ export const UpdateTaxInvoiceResponse = zod.object({
 });
 
 /**
+ * @summary Delete tax invoice
+ */
+export const DeleteTaxInvoiceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary List delivery notes
  */
 export const ListDeliveryNotesQueryParams = zod.object({
