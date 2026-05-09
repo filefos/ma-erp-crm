@@ -126,11 +126,11 @@ export function TechSpecEditor({ sections, onChange }: Props) {
                   <td className="border border-gray-400 px-1 py-1 text-center font-semibold text-gray-600 align-top text-sm">
                     {String.fromCharCode(97 + pi)}
                   </td>
-                  <td className="border border-gray-400 px-1 py-0.5 align-top">
+                  <td className="border border-gray-400 px-2 py-1 align-top">
                     <textarea
-                      className="w-full resize-none text-sm border-0 outline-none bg-transparent leading-snug py-0.5"
+                      className="w-full resize-none text-base border-0 outline-none bg-transparent leading-relaxed"
                       value={point}
-                      rows={Math.max(1, Math.ceil((point.length || 1) / 80))}
+                      rows={Math.max(2, Math.ceil((point.length || 1) / 60))}
                       placeholder={point === "" ? "(empty row — leave blank for print spacing)" : ""}
                       onChange={e => updatePoint(si, pi, e.target.value)}
                     />
