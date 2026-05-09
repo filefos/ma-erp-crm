@@ -286,11 +286,6 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
               <div className="text-[11px] font-black uppercase">{co.name}</div>
             </div>
 
-            {/* RIGHT: client "For & on behalf of" */}
-            <div className="text-right">
-              <div className="text-[10px] text-gray-600">For &amp; on behalf of</div>
-              <div className="text-[11px] font-black uppercase">{doc.clientName}</div>
-            </div>
           </div>
 
           {/* Disclaimer */}
