@@ -685,16 +685,24 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {/* ── SIGNATURE BLOCK (non-quotation) + FOOTER — pinned together at bottom */}
         {!isQuotation && (
           <div className="mt-auto" style={{ paddingBottom: "50px" }}>
-            <div className="grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-3 pb-3 px-4">
-              <div>
-                {data.type !== "delivery_note" && (
-                  <>
-                    <div className="font-bold mb-0.5">Prepared by:</div>
-                    <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
-                  </>
-                )}
+            {data.type === "delivery_note" ? (
+              /* Delivery note: For & on behalf spans from left edge; signature floats right */
+              <div className="flex items-start justify-between text-xs border-t border-gray-400 pt-3 pb-3 px-4">
+                <div>
+                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                  <div className="font-bold text-[13px]">{coName}</div>
+                  {data.stampUrl && (
+                    <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                      <img
+                        src={data.stampUrl}
+                        alt="Stamp"
+                        style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block" }}
+                      />
+                    </div>
+                  )}
+                </div>
                 {data.preparedBySignatureUrl && (
-                  <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "flex-start" }}>
+                  <div data-html2canvas-ignore="true" style={{ display: "flex", justifyContent: "flex-end", paddingTop: 46 }}>
                     <img
                       src={data.preparedBySignatureUrl}
                       alt="Signature"
@@ -703,20 +711,37 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   </div>
                 )}
               </div>
-              <div className={data.type === "delivery_note" ? "text-left" : "text-right"}>
-                <div className="font-bold mb-0.5">For &amp; on behalf of</div>
-                <div className="font-bold text-[13px]">{coName}</div>
-                {data.stampUrl && (
-                  <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
-                    <img
-                      src={data.stampUrl}
-                      alt="Stamp"
-                      style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: data.type === "delivery_note" ? 0 : "auto" }}
-                    />
-                  </div>
-                )}
+            ) : (
+              /* All other documents: Prepared by on left, For & on behalf on right */
+              <div className="grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-3 pb-3 px-4">
+                <div>
+                  <div className="font-bold mb-0.5">Prepared by:</div>
+                  <div className="text-gray-700">{data.preparedByName ?? co.contact}</div>
+                  {data.preparedBySignatureUrl && (
+                    <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "flex-start" }}>
+                      <img
+                        src={data.preparedBySignatureUrl}
+                        alt="Signature"
+                        style={{ maxHeight: 56, maxWidth: 180, objectFit: "contain", opacity: 0.85 }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className="font-bold mb-0.5">For &amp; on behalf of</div>
+                  <div className="font-bold text-[13px]">{coName}</div>
+                  {data.stampUrl && (
+                    <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                      <img
+                        src={data.stampUrl}
+                        alt="Stamp"
+                        style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: "auto" }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
             <PageFooter
               left={<>{"PRIME ERP SYSTEM"}{data.projectRef ? `\u00a0\u00a0|\u00a0\u00a0PROJECT ID: ${data.projectRef}` : ""}{`\u00a0\u00a0|\u00a0\u00a0DATE: ${printDate}\u00a0\u00a0|\u00a0\u00a0TIME: ${printTime}\u00a0\u00a0|\u00a0\u00a0DOCUMENT #: ${data.docNumber}`}</>}
               page="1-1"
