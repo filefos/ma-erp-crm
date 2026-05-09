@@ -186,16 +186,19 @@ export function LposList() {
         } else {
           toast({ title: "LPO registered." });
         }
-        if (auto?.proformaInvoice || auto?.taxInvoice) {
-          const parts: string[] = [];
-          if (auto.proformaInvoice) parts.push(`Proforma ${auto.proformaInvoice.piNumber}`);
-          if (auto.taxInvoice) parts.push(`Tax Invoice ${auto.taxInvoice.invoiceNumber}`);
+        if (auto?.proformaInvoices?.length || auto?.proformaInvoice) {
+          const pis: Array<{ piNumber: string }> = auto.proformaInvoices?.length
+            ? auto.proformaInvoices
+            : [auto.proformaInvoice];
+          const count = pis.length;
+          const labels = pis.map((p: { piNumber: string }) => p.piNumber).join(", ");
           toast({
-            title: "Draft invoices auto-created",
-            description: parts.join(" + ") + " — review them in Accounts.",
+            title: count > 1
+              ? `${count} Proforma Invoice drafts auto-created`
+              : "Proforma Invoice draft auto-created",
+            description: `${labels} — review them in Accounts.`,
           });
           queryClient.invalidateQueries({ queryKey: ["/proforma-invoices"] });
-          queryClient.invalidateQueries({ queryKey: ["/tax-invoices"] });
         }
       },
       onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }),

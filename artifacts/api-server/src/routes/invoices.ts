@@ -66,6 +66,86 @@ async function genDocNumber(companyId: number, type: string, table: any) {
   return `${prefix}-${type}-${year}-${String(num).padStart(4, "0")}`;
 }
 
+// ── Payment-terms parsing (server-side mirror of frontend lib/payment-terms.ts) ──
+interface PtInstallment { label: string; percent: number }
+interface PtInstallmentWithAmount extends PtInstallment { subtotal: number; vatAmount: number; total: number }
+
+const PT_STAGE_KEYWORDS: { match: RegExp; label: string }[] = [
+  { match: /\bfinal\b/i,                                                       label: "Final Payment" },
+  { match: /\bprogress\b/i,                                                     label: "Progress Payment" },
+  { match: /\b(before|prior to|on|upon)\s+delivery\b/i,                        label: "Before Delivery" },
+  { match: /\bdelivery\b/i,                                                     label: "Before Delivery" },
+  { match: /\b(installation|hand[- ]?over|offload)/i,                          label: "On Installation" },
+  { match: /\bretention\b/i,                                                    label: "Retention" },
+  { match: /\b(advance|down[\s-]?payment|on\s+lpo|upon\s+lpo|on\s+po|upon\s+po)\b/i, label: "Advance" },
+];
+
+function ptLabelFromFragment(fragment: string, isFirst: boolean): string {
+  for (const { match, label } of PT_STAGE_KEYWORDS) {
+    if (match.test(fragment)) return label;
+  }
+  return isFirst ? "Advance" : "Payment";
+}
+
+function parsePaymentTermsBackend(raw: string | null | undefined): PtInstallment[] {
+  if (!raw || !raw.trim()) return [];
+  const text = raw.replace(/\s+/g, " ").trim();
+  const coarseFragments = text
+    .split(/[,;\n]| and /i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const fragments: string[] = [];
+  for (const frag of coarseFragments) {
+    const pctRegex = /\d+(?:\.\d+)?\s*%/g;
+    const positions: number[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = pctRegex.exec(frag)) !== null) positions.push(m.index);
+    if (positions.length <= 1) {
+      fragments.push(frag);
+    } else {
+      let prev = 0;
+      for (let i = 1; i < positions.length; i++) {
+        fragments.push(frag.slice(prev, positions[i]).trim());
+        prev = positions[i];
+      }
+      fragments.push(frag.slice(prev).trim());
+    }
+  }
+  const installments: PtInstallment[] = [];
+  fragments.forEach((frag, idx) => {
+    const pctMatch = frag.match(/(\d+(?:\.\d+)?)\s*%/);
+    if (!pctMatch) return;
+    const percent = parseFloat(pctMatch[1]);
+    if (!isFinite(percent) || percent <= 0) return;
+    installments.push({ label: ptLabelFromFragment(frag, idx === 0), percent });
+  });
+  return installments;
+}
+
+function calculateInstallmentsBackend(
+  installments: PtInstallment[],
+  baseSubtotal: number,
+  vatPercent: number,
+): PtInstallmentWithAmount[] {
+  if (!installments.length) return [];
+  const totalVat   = +(baseSubtotal * vatPercent / 100).toFixed(2);
+  const totalGrand = +(baseSubtotal + totalVat).toFixed(2);
+  const computed = installments.map((inst) => {
+    const sub = +(baseSubtotal * inst.percent / 100).toFixed(2);
+    const vat = +(sub * vatPercent / 100).toFixed(2);
+    return { ...inst, subtotal: sub, vatAmount: vat, total: +(sub + vat).toFixed(2) };
+  });
+  // Absorb rounding drift into the last installment when percentages sum to 100.
+  const sumPct = installments.reduce((s, i) => s + i.percent, 0);
+  if (Math.abs(sumPct - 100) < 0.001) {
+    const last = computed[computed.length - 1];
+    last.subtotal = +(last.subtotal + (baseSubtotal - computed.reduce((s, c) => s + c.subtotal, 0))).toFixed(2);
+    last.vatAmount = +(last.vatAmount + (totalVat   - computed.reduce((s, c) => s + c.vatAmount, 0))).toFixed(2);
+    last.total     = +(last.total     + (totalGrand - computed.reduce((s, c) => s + c.total,     0))).toFixed(2);
+  }
+  return computed;
+}
+
 function parsePiItems(pi: typeof proformaInvoicesTable.$inferSelect) {
   let items = [];
   try { items = JSON.parse((pi as any).items ?? "[]"); } catch {}
@@ -605,19 +685,15 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
     req.log?.warn({ err }, "Failed to auto-create project from LPO");
   }
 
-  // AUTO-CREATE draft Proforma + draft Tax Invoice from this LPO.
-  // Payment terms are sourced strictly from the linked quotation (fallback: lpo field).
-  // Line items, VAT %, subtotal/vatAmount are inherited from the quotation when available
-  // so the accountant has a fully pre-populated draft to review — not a blank document.
+  // AUTO-CREATE draft Proforma Invoices — one per payment installment.
+  // Tax Invoice drafts are NOT auto-created; they are raised manually by the accountant.
   const today = new Date().toISOString().split("T")[0];
 
   // Use quotation financials when available; otherwise back-calculate from LPO value.
   const invoicePaymentTerms = quotation?.paymentTerms ?? lpo.paymentTerms ?? null;
   const invoiceItems        = (quotation as any)?.items ?? lpo.items ?? "[]";
-  const vatPercent          = quotation?.vatPercent ?? 5;
+  const vatPercent          = Number(quotation?.vatPercent ?? 5);
   const value               = Number(lpo.lpoValue ?? quotation?.grandTotal ?? 0);
-  // If quotation has its own subtotal/vat, use them directly (more accurate).
-  // Otherwise derive them from the LPO value (assumes VAT-inclusive amount).
   const subtotal = quotation?.subtotal != null
     ? Number(quotation.subtotal)
     : +(value / (1 + vatPercent / 100)).toFixed(2);
@@ -626,66 +702,50 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
     : +(value - subtotal).toFixed(2);
   const grandTotal = +(subtotal + vatAmount).toFixed(2) || value;
 
-  let createdPi: any = null;
-  let createdTi: any = null;
-  try {
-    const piNumber = await genDocNumber(lpo.companyId, "PI", proformaInvoicesTable);
-    const [pi] = await db.insert(proformaInvoicesTable).values({
-      piNumber,
-      companyId: lpo.companyId,
-      clientCode,
-      clientName: lpo.clientName,
-      clientEmail: (quotation as any)?.clientEmail ?? null,
-      clientPhone: (quotation as any)?.clientPhone ?? null,
-      projectName: resolvedProjectRef ?? quotation?.projectName ?? null,
-      projectLocation: (quotation as any)?.projectLocation ?? null,
-      projectRef: resolvedProjectRef ?? null,
-      projectId: resolvedProjectId ?? null,
-      quotationId: lpo.quotationId,
-      lpoId: lpo.id,
-      subtotal,
-      vatPercent,
-      vatAmount,
-      total: grandTotal,
-      paymentTerms: invoicePaymentTerms,
-      validityDate: today,
-      status: "draft",
-      preparedById: req.user?.id,
-      createdById: req.user?.id,
-      items: invoiceItems,
-    } as any).returning();
-    createdPi = pi;
-  } catch (err) {
-    req.log?.warn({ err }, "Failed to auto-create draft Proforma from LPO");
-  }
-  try {
-    const invoiceNumber = await genDocNumber(lpo.companyId, "INV", taxInvoicesTable);
-    const [ti] = await db.insert(taxInvoicesTable).values({
-      invoiceNumber,
-      companyId: lpo.companyId,
-      clientCode,
-      clientName: lpo.clientName,
-      invoiceDate: today,
-      supplyDate: today,
-      projectRef: resolvedProjectRef ?? null,
-      projectId: resolvedProjectId ?? null,
-      quotationId: lpo.quotationId,
-      lpoId: lpo.id,
-      paymentTerms: invoicePaymentTerms,
-      items: invoiceItems,
-      subtotal,
-      vatPercent,
-      vatAmount,
-      grandTotal,
-      amountPaid: 0,
-      balance: grandTotal,
-      paymentStatus: "unpaid",
-      status: "draft",
-      createdById: req.user?.id,
-    } as any).returning();
-    createdTi = ti;
-  } catch (err) {
-    req.log?.warn({ err }, "Failed to auto-create draft Tax Invoice from LPO");
+  // Parse payment terms into installments; fall back to one full-value PI if no percentages found.
+  const parsedInstallments = parsePaymentTermsBackend(invoicePaymentTerms);
+  const piInstallments: PtInstallmentWithAmount[] = parsedInstallments.length > 0
+    ? calculateInstallmentsBackend(parsedInstallments, subtotal, vatPercent)
+    : [{ label: "Full Payment", percent: 100, subtotal, vatAmount: +(subtotal * vatPercent / 100).toFixed(2), total: grandTotal }];
+
+  const createdPis: Array<{ id: number; piNumber: string }> = [];
+  const totalInstallments = piInstallments.length;
+  for (let i = 0; i < totalInstallments; i++) {
+    const inst = piInstallments[i];
+    const termDesc = totalInstallments > 1
+      ? `Installment ${i + 1} of ${totalInstallments}: ${inst.percent}% – ${inst.label}`
+      : inst.label;
+    try {
+      const piNumber = await genDocNumber(lpo.companyId, "PI", proformaInvoicesTable);
+      const [pi] = await db.insert(proformaInvoicesTable).values({
+        piNumber,
+        companyId: lpo.companyId,
+        clientCode,
+        clientName: lpo.clientName,
+        clientEmail: (quotation as any)?.clientEmail ?? null,
+        clientPhone: (quotation as any)?.clientPhone ?? null,
+        projectName: resolvedProjectRef ?? quotation?.projectName ?? null,
+        projectLocation: (quotation as any)?.projectLocation ?? null,
+        projectRef: resolvedProjectRef ?? null,
+        projectId: resolvedProjectId ?? null,
+        quotationId: lpo.quotationId,
+        lpoId: lpo.id,
+        subtotal: inst.subtotal,
+        vatPercent,
+        vatAmount: inst.vatAmount,
+        total: inst.total,
+        paymentTerms: termDesc,
+        validityDate: today,
+        status: "draft",
+        preparedById: req.user?.id,
+        createdById: req.user?.id,
+        items: invoiceItems,
+      } as any).returning();
+      createdPis.push({ id: pi.id, piNumber: pi.piNumber });
+      req.log?.info({ lpoId: lpo.id, piNumber: pi.piNumber, installment: i + 1, of: totalInstallments }, "Auto-created Proforma draft from LPO");
+    } catch (err) {
+      req.log?.warn({ err, installment: i + 1 }, "Failed to auto-create draft Proforma from LPO");
+    }
   }
 
   // AUTO-CREATE draft Undertaking Letter + Handover Note from this LPO.
@@ -743,8 +803,10 @@ router.post("/lpos", requirePermission("lpos", "create"), requireBodyCompanyAcce
     projectId: resolvedProjectId,
     autoCreated: {
       project: autoProject,
-      proformaInvoice: createdPi ? { id: createdPi.id, piNumber: createdPi.piNumber } : null,
-      taxInvoice: createdTi ? { id: createdTi.id, invoiceNumber: createdTi.invoiceNumber } : null,
+      proformaInvoices: createdPis,
+      // proformaInvoice kept for backward-compat (first PI or null)
+      proformaInvoice: createdPis[0] ?? null,
+      taxInvoice: null,
       undertakingLetter: createdUl ? { id: createdUl.id, ulNumber: createdUl.ulNumber } : null,
       handoverNote: createdHon ? { id: createdHon.id, honNumber: createdHon.honNumber } : null,
     },

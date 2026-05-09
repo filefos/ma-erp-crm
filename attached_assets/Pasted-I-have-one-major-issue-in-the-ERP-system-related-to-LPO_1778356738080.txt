@@ -1,0 +1,117 @@
+I have one major issue in the ERP system related to LPO registration and invoice draft creation.
+
+Please carefully fix ONLY this issue and do not change any other module or existing logic unless it is directly required for this fix.
+
+Current issue:
+After registering an LPO in the system, the system is automatically creating both:
+1. Proforma Invoice draft
+2. Tax Invoice draft
+
+This is incorrect.
+
+New required behavior:
+After registering an LPO, the system should automatically create ONLY Proforma Invoice drafts.
+
+Important:
+Do NOT create any Tax Invoice draft automatically after LPO registration.
+Tax Invoice must not be generated at this stage.
+
+Main logic required:
+The Proforma Invoice draft must be created based on the exact payment terms from the Quotation / LPO.
+
+The system must read and understand the payment terms and create Proforma Invoice drafts according to the number of payment terms or installments.
+
+Examples:
+
+Example 1:
+If the Quotation / LPO has 3 payment terms, then the system must create 3 separate Proforma Invoice drafts.
+
+Example:
+Payment Term 1: 30% advance
+Payment Term 2: 40% during production
+Payment Term 3: 30% before delivery
+
+Then create:
+Proforma Invoice Draft 1 = 30%
+Proforma Invoice Draft 2 = 40%
+Proforma Invoice Draft 3 = 30%
+
+Example 2:
+If the payment terms are 2 terms, then create 2 Proforma Invoice drafts.
+
+Example:
+30% advance upon receiving LPO and approved drawing
+70% final amount upon delivery but before offloading
+
+Then create:
+Proforma Invoice Draft 1 = 30% of total Quotation / LPO value
+Proforma Invoice Draft 2 = 70% of total Quotation / LPO value
+
+Example 3:
+If the payment term is in 4 installments, then create 4 Proforma Invoice drafts according to each installment percentage/value.
+
+Important calculation rules:
+1. The total value of all Proforma Invoice drafts must exactly match the Quotation / LPO total amount.
+2. The system must not create one full-value Proforma Invoice if the payment term has multiple installments.
+3. The system must split the Proforma Invoices based on payment term percentage or amount.
+4. The Proforma Invoice values must match the Quotation / LPO values exactly.
+5. If VAT, discount, subtotal, or grand total exists in the Quotation / LPO, the Proforma Invoice must follow the same calculation structure correctly.
+6. Do not allow mismatch between Quotation total, LPO total, and total Proforma Invoice draft amount.
+7. Add validation to ensure the combined Proforma Invoice drafts equal the original LPO / Quotation total.
+
+Payment term detection:
+The system should automatically fetch the payment terms from the Quotation / LPO.
+
+If the payment terms are manual text, the system should intelligently detect percentages and installment structure from the text.
+
+Example manual text:
+“30% advance upon receiving the LPO & approved drawing.
+70% final amount upon delivery but before offloading.”
+
+The system should understand this means:
+Term 1 = 30%
+Term 2 = 70%
+
+Then it should create 2 Proforma Invoice drafts.
+
+If payment terms contain 3 percentages, create 3 drafts.
+If payment terms contain 4 percentages, create 4 drafts.
+
+Required Proforma Invoice draft data:
+Each Proforma Invoice draft should include:
+- Project ID
+- Client details
+- LPO reference
+- Quotation reference
+- Payment term description
+- Installment number
+- Percentage or amount
+- Calculated invoice value
+- VAT if applicable
+- Total invoice amount
+- Draft status
+
+Naming / numbering:
+Use clear installment numbering, for example:
+PI-001 / Installment 1
+PI-002 / Installment 2
+PI-003 / Installment 3
+
+Or follow the existing Proforma Invoice numbering system, but make sure each installment is clearly identifiable.
+
+Very important:
+Remove or disable the current logic that automatically creates Tax Invoice drafts after LPO registration.
+
+The correct workflow should be:
+LPO Registered → System reads payment terms → System creates required Proforma Invoice drafts only → No Tax Invoice draft is created.
+
+Acceptance criteria:
+1. Registering an LPO with 2 payment terms creates exactly 2 Proforma Invoice drafts.
+2. Registering an LPO with 3 payment terms creates exactly 3 Proforma Invoice drafts.
+3. Registering an LPO with 4 payment terms creates exactly 4 Proforma Invoice drafts.
+4. No Tax Invoice draft is created automatically.
+5. Total of all Proforma Invoice drafts equals the exact Quotation / LPO total.
+6. Manual payment term text is correctly detected and converted into Proforma Invoice drafts.
+7. Existing Quotation, LPO, CRM, Sales, Accounts, Procurement, Inventory, and Project modules should not be affected except where required for this invoice draft logic.
+
+Please inspect the current LPO registration flow, invoice draft creation function, payment term structure, and Proforma Invoice calculation logic. Then fix the issue professionally with clean, safe, and maintainable code.
