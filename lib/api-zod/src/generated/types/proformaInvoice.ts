@@ -21,6 +21,7 @@ export interface ProformaInvoice {
   vatAmount?: number;
   total: number;
   paymentTerms?: string;
+  notes?: string;
   validityDate?: string;
   status: string;
   preparedById?: number;

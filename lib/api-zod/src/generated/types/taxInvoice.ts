@@ -27,6 +27,8 @@ export interface TaxInvoice {
   grandTotal: number;
   amountPaid?: number;
   balance?: number;
+  paymentTerms?: string;
+  notes?: string;
   paymentStatus: string;
   status?: string;
   createdAt: string;

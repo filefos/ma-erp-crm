@@ -5309,6 +5309,8 @@ components:
           type: number
         paymentTerms:
           type: string
+        notes:
+          type: string
         validityDate:
           type: string
         status:
@@ -5343,6 +5345,8 @@ components:
         total:
           type: number
         paymentTerms:
+          type: string
+        notes:
           type: string
         validityDate:
           type: string
@@ -5393,6 +5397,10 @@ components:
           type: number
         balance:
           type: number
+        paymentTerms:
+          type: string
+        notes:
+          type: string
         paymentStatus:
           type: string
         status:
@@ -5430,6 +5438,10 @@ components:
           type: number
         grandTotal:
           type: number
+        paymentTerms:
+          type: string
+        notes:
+          type: string
         paymentStatus:
           type: string
       required: [companyId, clientName, grandTotal]

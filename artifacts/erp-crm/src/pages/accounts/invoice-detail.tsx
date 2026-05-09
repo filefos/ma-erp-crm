@@ -131,6 +131,7 @@ export function InvoiceDetail({ id }: Props) {
     vatAmount: inv.vatAmount,
     grandTotal: inv.grandTotal,
     paymentTerms: (inv as any).paymentTerms ?? undefined,
+    notes: (inv as any).notes ?? undefined,
     items: sourceItems.map((i: any) => ({
       description: i.description,
       sizeStatus: i.unit ?? i.sizeStatus,

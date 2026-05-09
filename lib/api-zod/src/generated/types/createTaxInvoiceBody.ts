@@ -20,5 +20,7 @@ export interface CreateTaxInvoiceBody {
   vatPercent?: number;
   vatAmount?: number;
   grandTotal: number;
+  paymentTerms?: string;
+  notes?: string;
   paymentStatus?: string;
 }

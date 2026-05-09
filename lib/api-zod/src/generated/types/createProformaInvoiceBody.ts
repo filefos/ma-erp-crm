@@ -17,6 +17,7 @@ export interface CreateProformaInvoiceBody {
   vatAmount?: number;
   total: number;
   paymentTerms?: string;
+  notes?: string;
   validityDate?: string;
   status?: string;
 }

@@ -492,6 +492,7 @@ export interface ProformaInvoice {
   vatAmount?: number;
   total: number;
   paymentTerms?: string;
+  notes?: string;
   validityDate?: string;
   status: string;
   preparedById?: number;
@@ -510,6 +511,7 @@ export interface CreateProformaInvoiceBody {
   vatAmount?: number;
   total: number;
   paymentTerms?: string;
+  notes?: string;
   validityDate?: string;
   status?: string;
 }
@@ -535,6 +537,8 @@ export interface TaxInvoice {
   grandTotal: number;
   amountPaid?: number;
   balance?: number;
+  paymentTerms?: string;
+  notes?: string;
   paymentStatus: string;
   status?: string;
   createdAt: string;
@@ -554,6 +558,8 @@ export interface CreateTaxInvoiceBody {
   vatPercent?: number;
   vatAmount?: number;
   grandTotal: number;
+  paymentTerms?: string;
+  notes?: string;
   paymentStatus?: string;
 }
 

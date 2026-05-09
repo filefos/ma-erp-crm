@@ -256,6 +256,12 @@ export function QuotationDetail({ id }: Props) {
     for (const { i } of chosen) {
       const ci = computed[i];
       const termsText = installmentToTermsText(installments[i], i, installments.length);
+      // Build a descriptive note for the installment, e.g. "30% Proforma Invoice – Advance Payment"
+      const instLabel = /\b(payment|delivery|installation|retention)\b/i.test(ci.label)
+        ? ci.label
+        : `${ci.label} Payment`;
+      const piNote = `${ci.percent}% Proforma Invoice – ${instLabel}`;
+      const taxNote = `${ci.percent}% Tax Invoice – ${instLabel}`;
 
       try {
         if (target === "pi") {
@@ -277,6 +283,7 @@ export function QuotationDetail({ id }: Props) {
               clientContactPerson: (q as any).clientContactPerson,
               customerTrn: (q as any).customerTrn,
               projectLocation: q.projectLocation,
+              notes: piNote,
             } as Record<string, unknown>),
           } });
           created.push({ name: res.piNumber, id: res.id });
@@ -300,6 +307,7 @@ export function QuotationDetail({ id }: Props) {
               clientPhone: q.clientPhone,
               projectName: q.projectName,
               projectLocation: q.projectLocation,
+              notes: taxNote,
             } as Record<string, unknown>),
           } });
           created.push({ name: res.invoiceNumber, id: res.id });

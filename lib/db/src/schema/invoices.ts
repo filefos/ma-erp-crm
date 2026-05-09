@@ -49,6 +49,7 @@ export const taxInvoicesTable = pgTable("tax_invoices", {
   projectId: integer("project_id"),
   projectRef: text("project_ref"),
   paymentTerms: text("payment_terms"),
+  notes: text("notes"),
   items: text("items").default("[]"),
   subtotal: doublePrecision("subtotal").default(0),
   vatPercent: doublePrecision("vat_percent").default(5),
