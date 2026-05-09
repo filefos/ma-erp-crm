@@ -366,15 +366,16 @@ export function PaymentsReceivedList() {
                 <Input value={form.customerName} onChange={f("customerName")} placeholder="Customer / company name" />
               </div>
 
-              {/* Project Code — read-only if auto-fetched */}
-              {form.projectRef && (
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2 bg-[#0f2d5a]/5 border border-[#0f2d5a]/20 rounded-lg px-3 py-2">
-                    <span className="text-[10px] uppercase tracking-wider text-[#0f2d5a]/70 font-medium">Project Code</span>
-                    <span className="font-mono font-bold text-[#0f2d5a] text-sm ml-auto">{form.projectRef}</span>
-                  </div>
-                </div>
-              )}
+              {/* Project Code — editable, auto-filled from invoice lookup */}
+              <div className="space-y-1 col-span-2">
+                <Label>Project Code</Label>
+                <Input
+                  value={form.projectRef}
+                  onChange={f("projectRef")}
+                  placeholder="e.g. PM-PRJ-2026-0001 (auto-filled from invoice)"
+                  className={form.projectRef ? "font-mono font-semibold border-[#0f2d5a]/40 bg-[#0f2d5a]/5" : ""}
+                />
+              </div>
 
               <div className="space-y-1"><Label>Payment Date *</Label><Input type="date" value={form.paymentDate} onChange={f("paymentDate")} /></div>
               <div className="space-y-1">
