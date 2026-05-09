@@ -532,7 +532,7 @@ export function QuotationEdit({ id }: Props) {
       </Card>
 
       {/* Additional Commercial Items */}
-      <Card>
+      <Card style={{ margin: "50px 50px" }}>
         <CardHeader><CardTitle>Additional Commercial Items</CardTitle></CardHeader>
         <CardContent>
           <table className="w-full text-sm">
@@ -612,6 +612,13 @@ export function QuotationEdit({ id }: Props) {
           >
             <Plus className="w-4 h-4 mr-1" />Add Row
           </Button>
+          {/* Additional Commercial Items Subtotal */}
+          <div className="flex justify-end items-baseline gap-4 mt-4 pt-3 border-t">
+            <span className="text-sm text-muted-foreground">Additional Commercial Items Subtotal (Excl. VAT)</span>
+            <span className="text-base font-bold text-[#0f2d5a]">
+              AED {additionalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </span>
+          </div>
         </CardContent>
       </Card>
 
