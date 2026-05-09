@@ -532,7 +532,7 @@ export function QuotationEdit({ id }: Props) {
       </Card>
 
       {/* Additional Commercial Items */}
-      <Card style={{ margin: "50px 50px" }}>
+      <Card style={{ margin: "10px" }}>
         <CardHeader><CardTitle>Additional Commercial Items</CardTitle></CardHeader>
         <CardContent>
           <table className="w-full text-sm">
@@ -649,11 +649,13 @@ export function QuotationEdit({ id }: Props) {
                 </table>
               </div>
             )}
-            <div className="w-80 flex-shrink-0 space-y-3">
+            <div className="w-96 flex-shrink-0 space-y-2">
+              {/* Project Items row */}
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal (Project Items)</span>
-                <span>AED {projectItemsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="text-muted-foreground">Project Items Subtotal (Excl. VAT)</span>
+                <span className="font-medium">AED {projectItemsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
+              {/* Discount */}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm text-muted-foreground">Discount (%)</span>
                 <Input
@@ -663,18 +665,17 @@ export function QuotationEdit({ id }: Props) {
                   onChange={e => setForm(p => ({ ...p, discount: parseFloat(e.target.value) || 0 }))}
                 />
               </div>
-              {additionalTotal > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Additional Commercial Items</span>
-                  <span>AED {additionalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                </div>
-              )}
-              {additionalTotal > 0 && (
-                <div className="flex justify-between text-sm font-medium border-t pt-2">
-                  <span className="text-muted-foreground">Combined Subtotal (Excl. VAT)</span>
-                  <span>AED {combinedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                </div>
-              )}
+              {/* Additional Commercial Items row — always visible */}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Additional Commercial Items Subtotal (Excl. VAT)</span>
+                <span className="font-medium">AED {additionalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              {/* Combined */}
+              <div className="flex justify-between text-sm font-semibold border-t pt-2 mt-1">
+                <span>Total Amount (Excl. VAT)</span>
+                <span>AED {combinedSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+              </div>
+              {/* VAT */}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm text-muted-foreground">VAT (%)</span>
                 <Input
@@ -685,12 +686,12 @@ export function QuotationEdit({ id }: Props) {
                 />
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">VAT Amount</span>
+                <span className="text-muted-foreground">VAT {form.vatPercent ?? 5}% Amount</span>
                 <span>AED {vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Grand Total</span>
+              <div className="flex justify-between font-bold text-lg pt-1">
+                <span>Grand Total (Incl. VAT)</span>
                 <span className="text-primary">AED {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
