@@ -132,9 +132,9 @@ export function TCEditor({ sections, onChange, onReset }: Props) {
                         </td>
                         <td className={`border border-gray-200 px-2 py-1 align-top ${isCheque ? "bg-blue-50" : ""}`}>
                           <textarea
-                            className={`w-full resize-none border-0 outline-none bg-transparent leading-snug py-0.5 text-sm ${isCheque ? "font-semibold text-[#0f2d5a]" : ""}`}
+                            className={`w-full resize-none border-0 outline-none bg-transparent leading-relaxed text-base ${isCheque ? "font-semibold text-[#0f2d5a]" : ""}`}
                             value={body}
-                            rows={Math.max(1, Math.ceil((body.length || 1) / 90))}
+                            rows={Math.max(2, Math.ceil((body.length || 1) / 60))}
                             placeholder="Enter item text..."
                             onChange={e => updateItem(si, ii, `${ii + 1}. ${e.target.value}`)}
                           />
