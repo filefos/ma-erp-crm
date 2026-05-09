@@ -290,13 +290,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
     <>
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 4px 3px; }
+          @page { size: A4 portrait; margin: 0; }
           html, body { background: white !important; }
           body * { visibility: hidden; }
           .print-doc, .print-doc * { visibility: visible; }
           .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
             box-shadow: none !important; border: none !important; padding: 0 !important;
-            margin: 0 !important; border-radius: 0 !important; }
+            margin: 0 !important; border-radius: 0 !important;
+            min-height: 0 !important; height: auto !important; }
           .print-doc { orphans: 3; widows: 3; }
           /* Forced section break only between the three quotation pages */
           .print-page-break {
@@ -683,7 +684,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── SIGNATURE BLOCK (non-quotation) + FOOTER — pinned together at bottom */}
         {!isQuotation && (
-          <div className="mt-auto">
+          <div className="mt-auto" style={{ paddingBottom: "50px" }}>
             <div className="grid grid-cols-2 gap-8 text-xs border-t border-gray-400 pt-3 pb-3 px-4">
               <div>
                 <div className="font-bold mb-0.5">Prepared by:</div>
