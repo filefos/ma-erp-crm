@@ -10,8 +10,8 @@ import {
   ArrowLeft, Building2, Mail, Phone, MapPin, User, Hash,
   FileText, ClipboardList, Receipt, TruckIcon, FileCheck,
   Download, Eye, Search, Loader2, ExternalLink, DollarSign,
-  AlertCircle, RefreshCw, Banknote, Handshake, Stamp,
-  CreditCard, CheckCircle2, Clock,
+  AlertCircle, RefreshCw, Banknote, CheckCircle2,
+  Clock, FileIcon,
 } from "lucide-react";
 import { authHeaders } from "@/lib/ai-client";
 import { HelpButton } from "@/components/help-button";
@@ -94,6 +94,50 @@ function EmptyRow({ cols, msg }: { cols: number; msg: string }) {
     <TableRow>
       <TableCell colSpan={cols} className="text-center py-10 text-muted-foreground text-sm">{msg}</TableCell>
     </TableRow>
+  );
+}
+
+type AttachmentMeta = { filename: string; contentType: string; size?: number; content?: string };
+
+function parseAttachments(raw: any): AttachmentMeta[] {
+  if (!raw) return [];
+  try { return typeof raw === "string" ? JSON.parse(raw) : raw; } catch { return []; }
+}
+
+function fmtBytes(b: number) {
+  if (!b) return "";
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const REF_LABEL: Record<string, string> = {
+  cheque:        "Cheque No.",
+  bank_transfer: "Transfer Ref",
+  online:        "Transaction ID",
+  card:          "Transaction ID",
+  cash:          "Receipt No.",
+};
+
+function ReceiptDownloads({ attachments }: { attachments: AttachmentMeta[] }) {
+  if (attachments.length === 0) return <span className="text-xs text-muted-foreground italic">No receipt</span>;
+  return (
+    <div className="flex flex-col gap-1">
+      {attachments.map((att, i) => (
+        <a
+          key={i}
+          href={att.content ? `data:${att.contentType};base64,${att.content}` : "#"}
+          download={att.filename}
+          className="flex items-center gap-1.5 text-xs text-[#1e6ab0] hover:underline"
+          title={att.filename}
+        >
+          <FileIcon className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate max-w-[120px]">{att.filename}</span>
+          {att.size ? <span className="text-muted-foreground shrink-0">({fmtBytes(att.size)})</span> : null}
+          <Download className="w-3 h-3 flex-shrink-0" />
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -591,35 +635,40 @@ export function CustomerProfile({ id }: Props) {
                     <TableHead>Date</TableHead>
                     <TableHead>Method</TableHead>
                     <TableHead>Invoice Ref</TableHead>
-                    <TableHead>Reference</TableHead>
+                    <TableHead>Cheque / Ref No.</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Attachments</TableHead>
+                    <TableHead>Receipt / Scan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {fq(payments, ["paymentNumber","customerName","invoiceRef","referenceNumber","notes"]).length === 0
                     ? <EmptyRow cols={8} msg="No payment records found for this customer." />
                     : fq(payments, ["paymentNumber","customerName","invoiceRef","referenceNumber","notes"]).map((pmt: any) => {
-                      let attachments: any[] = [];
-                      try { attachments = JSON.parse(pmt.attachments ?? "[]"); } catch { /* ignore */ }
+                      const atts = parseAttachments(pmt.attachments);
+                      const method = pmt.paymentMethod ?? "bank_transfer";
+                      const refLabel = REF_LABEL[method] ?? "Ref #";
+                      const isCheque = method === "cheque";
                       return (
-                        <TableRow key={pmt.id} className="hover:bg-muted/20">
+                        <TableRow key={pmt.id} className={`hover:bg-muted/20 ${isCheque ? "bg-purple-50/40" : ""}`}>
                           <TableCell className="font-mono font-bold text-[#0f2d5a] text-xs">{pmt.paymentNumber}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{fmtDate(pmt.paymentDate)}</TableCell>
-                          <TableCell><PaymentMethodBadge method={pmt.paymentMethod ?? "bank_transfer"} /></TableCell>
+                          <TableCell><PaymentMethodBadge method={method} /></TableCell>
                           <TableCell className="font-mono text-xs">{pmt.invoiceRef || "—"}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">{pmt.referenceNumber || "—"}</TableCell>
+                          <TableCell>
+                            {pmt.referenceNumber ? (
+                              <div>
+                                <div className="text-[10px] text-muted-foreground uppercase tracking-wide leading-none mb-0.5">{refLabel}</div>
+                                <div className={`font-mono text-xs font-semibold ${isCheque ? "text-purple-800" : "text-gray-700"}`}>
+                                  {pmt.referenceNumber}
+                                </div>
+                              </div>
+                            ) : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
                           <TableCell className="font-bold text-emerald-700">{fmtAED(pmt.amount)}</TableCell>
                           <TableCell><StatusBadge status={pmt.status ?? "completed"} /></TableCell>
-                          <TableCell>
-                            {attachments.length > 0 ? (
-                              <span className="flex items-center gap-1 text-xs text-blue-700">
-                                <FileCheck className="w-3.5 h-3.5" />{attachments.length} file{attachments.length !== 1 ? "s" : ""}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground italic">None</span>
-                            )}
+                          <TableCell className="min-w-[140px]">
+                            <ReceiptDownloads attachments={atts} />
                           </TableCell>
                         </TableRow>
                       );
