@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { SignatureStampPreview } from "@/components/signature-stamp-preview";
+import { canSignDocuments } from "@/lib/permissions";
 import { useCreateQuotation, useListCompanies, useGetLead, getGetLeadQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +86,7 @@ const DEFAULT_TECH_SPECS = getSpecTemplate(DEFAULT_SPEC_TYPE);
 export function QuotationNew() {
   const [location, navigate] = useLocation();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { data: companies } = useListCompanies();
 
   // ?leadId=N → prefill the form from the lead.
@@ -734,6 +738,14 @@ export function QuotationNew() {
           </CardContent>
         )}
       </Card>
+
+      {canSignDocuments((user as any)?.permissionLevel) && (
+        <SignatureStampPreview
+          signatureUrl={(user as any)?.signatureUrl ?? undefined}
+          stampUrl={companies?.find(c => c.id === form.companyId)?.stamp ?? undefined}
+          stampWidthPct={companies?.find(c => c.id === form.companyId)?.stampWidthPct ?? undefined}
+        />
+      )}
 
       <div className="flex gap-3 justify-end">
         <Button variant="outline" asChild><Link href="/sales/quotations">Cancel</Link></Button>

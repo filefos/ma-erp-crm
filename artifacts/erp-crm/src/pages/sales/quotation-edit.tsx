@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { SignatureStampPreview } from "@/components/signature-stamp-preview";
+import { canSignDocuments } from "@/lib/permissions";
 import {
   useGetQuotation, useUpdateQuotation, useListCompanies,
   getGetQuotationQueryKey, getListQuotationsQueryKey,
@@ -100,6 +103,7 @@ export function QuotationEdit({ id }: Props) {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: q, isLoading } = useGetQuotation(qid, {
     query: { queryKey: getGetQuotationQueryKey(qid), enabled: !!qid },
@@ -797,6 +801,14 @@ export function QuotationEdit({ id }: Props) {
           </CardContent>
         )}
       </Card>
+
+      {canSignDocuments((user as any)?.permissionLevel) && (
+        <SignatureStampPreview
+          signatureUrl={(user as any)?.signatureUrl ?? undefined}
+          stampUrl={companies?.find(c => c.id === form.companyId)?.stamp ?? undefined}
+          stampWidthPct={companies?.find(c => c.id === form.companyId)?.stampWidthPct ?? undefined}
+        />
+      )}
 
       {/* Save Actions */}
       <div className="flex gap-3 justify-end items-center flex-wrap pb-8">
