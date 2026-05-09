@@ -1402,7 +1402,7 @@ export function LpoAcknowledgments() {
                         </div>
                         {/* Client sig block */}
                         <div style={{ width: "44%", textAlign: "right" as const }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 56 }}>For {clientName}</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: "#0f2d5a", marginBottom: 100 }}>For {clientName}</div>
                           <div style={{ borderTop: "1.5px solid #333", width: 200, marginBottom: 6, marginLeft: "auto" }} />
                           <div style={{ fontSize: 9.5, color: "#555" }}>Authorized Signatory & Stamp</div>
                           <div style={{ fontSize: 10, color: "#0f2d5a", fontWeight: 600, marginTop: 2 }}>{clientName}</div>
