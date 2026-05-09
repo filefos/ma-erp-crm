@@ -61,6 +61,7 @@ export function QuotationDetail({ id }: Props) {
   const [convertOpen, setConvertOpen] = useState<ConvertTarget | null>(null);
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [selected, setSelected] = useState<boolean[]>([]);
+  const [includeFullAmount, setIncludeFullAmount] = useState(false);
 
   const { data: q, isLoading } = useGetQuotation(qid, {
     query: { queryKey: getGetQuotationQueryKey(qid), enabled: !!qid },
@@ -125,9 +126,25 @@ export function QuotationDetail({ id }: Props) {
       : [{ label: "Full Payment", percent: 100 }];
     setInstallments(initial);
     setSelected(initial.map(() => true));
+    // For Tax Invoice, pre-tick the "Full Contract Value" row
+    setIncludeFullAmount(convertOpen === "tax");
   }, [convertOpen, q]);
 
-  const baseSubtotal = q?.subtotal ?? 0;
+  // Sum the additional commercial items (Included only) to get the true combined subtotal
+  const additionalItemsTotal = useMemo(() => {
+    try {
+      const raw = (q as any)?.additionalItems;
+      if (!raw) return 0;
+      const parsed: Array<{ status?: string; price?: number; quantity?: number }> = JSON.parse(raw);
+      return parsed.reduce(
+        (sum, item) => sum + (item.status === "Included" ? ((item.price ?? 0) * (item.quantity ?? 1)) : 0),
+        0
+      );
+    } catch { return 0; }
+  }, [q]);
+
+  // Base for installment maths = project items + included additional items (e.g. 24,700 + 5,200 = 29,900)
+  const baseSubtotal = (q?.subtotal ?? 0) + additionalItemsTotal;
   const vatPercent = q?.vatPercent ?? 5;
 
   // Hook must run on every render — keep it above early returns to satisfy Rules of Hooks.
@@ -287,6 +304,37 @@ export function QuotationDetail({ id }: Props) {
           } });
           created.push({ name: res.invoiceNumber, id: res.id });
         }
+      } catch {
+        failures += 1;
+      }
+    }
+
+    // Full Contract Value Tax Invoice (100% of combined subtotal)
+    if (target === "tax" && includeFullAmount) {
+      try {
+        const fullVat = +(baseSubtotal * vatPercent / 100).toFixed(2);
+        const res = await createTax.mutateAsync({ data: {
+          companyId: q.companyId,
+          clientName: q.clientName,
+          quotationId: q.id,
+          invoiceDate: today,
+          supplyDate: today,
+          subtotal: baseSubtotal,
+          vatPercent,
+          vatAmount: fullVat,
+          grandTotal: +(baseSubtotal + fullVat).toFixed(2),
+          paymentStatus: "unpaid",
+          ...({
+            clientCode: (q as any).clientCode,
+            clientTrn: (q as any).customerTrn,
+            paymentTerms: q.paymentTerms ?? "Full Contract Value",
+            clientEmail: q.clientEmail,
+            clientPhone: q.clientPhone,
+            projectName: q.projectName,
+            projectLocation: q.projectLocation,
+          } as Record<string, unknown>),
+        } });
+        created.push({ name: res.invoiceNumber, id: res.id });
       } catch {
         failures += 1;
       }
@@ -501,9 +549,14 @@ export function QuotationDetail({ id }: Props) {
 
           <div className="space-y-3">
             <div className="text-xs text-muted-foreground">
-              Quote subtotal: <span className="font-medium text-foreground">AED {baseSubtotal.toLocaleString()}</span>
+              Contract value (excl. VAT): <span className="font-medium text-foreground">AED {baseSubtotal.toLocaleString()}</span>
+              {additionalItemsTotal > 0 && (
+                <span className="ml-1 text-[11px]">
+                  (items {((q?.subtotal ?? 0)).toLocaleString()} + commercial {additionalItemsTotal.toLocaleString()})
+                </span>
+              )}
               {" · "}VAT: <span className="font-medium text-foreground">{vatPercent}%</span>
-              {q.paymentTerms ? <> {" · "}Source terms: <span className="italic">"{q.paymentTerms}"</span></> : null}
+              {q.paymentTerms ? <> {" · "}Terms: <span className="italic">"{q.paymentTerms}"</span></> : null}
             </div>
 
             <div className="rounded border overflow-hidden">
@@ -570,6 +623,31 @@ export function QuotationDetail({ id }: Props) {
                     </td>
                     <td colSpan={4}></td>
                   </tr>
+                  {/* Full Contract Value row — Tax Invoice only */}
+                  {convertOpen === "tax" && (
+                    <tr className="border-t bg-green-50">
+                      <td className="p-2">
+                        <Checkbox
+                          checked={includeFullAmount}
+                          onCheckedChange={(v) => setIncludeFullAmount(!!v)}
+                        />
+                      </td>
+                      <td className="p-2 text-xs font-semibold text-green-800">
+                        Full Contract Value Invoice
+                      </td>
+                      <td className="p-2 text-right text-xs text-green-800">100%</td>
+                      <td className="p-2 text-right text-xs tabular-nums text-green-800">
+                        {baseSubtotal.toLocaleString()}
+                      </td>
+                      <td className="p-2 text-right text-xs tabular-nums text-green-800">
+                        {(+(baseSubtotal * vatPercent / 100).toFixed(2)).toLocaleString()}
+                      </td>
+                      <td className="p-2 text-right text-xs font-medium tabular-nums text-green-800">
+                        {(+(baseSubtotal * (1 + vatPercent / 100)).toFixed(2)).toLocaleString()}
+                      </td>
+                      <td className="p-2"></td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -595,9 +673,10 @@ export function QuotationDetail({ id }: Props) {
               disabled={!!converting}
               className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
             >
-              {converting
-                ? "Creating…"
-                : `Create ${selected.filter(Boolean).length} Invoice${selected.filter(Boolean).length === 1 ? "" : "s"}`}
+              {converting ? "Creating…" : (() => {
+                const n = selected.filter(Boolean).length + (convertOpen === "tax" && includeFullAmount ? 1 : 0);
+                return `Create ${n} Invoice${n === 1 ? "" : "s"}`;
+              })()}
             </Button>
           </DialogFooter>
         </DialogContent>
