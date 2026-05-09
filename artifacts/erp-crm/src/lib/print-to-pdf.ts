@@ -127,6 +127,84 @@ export interface PdfOptions {
   stampMarginPct?: number | null;
 }
 
+// Attempt to load a URL as a data URL via CORS fetch so it can be embedded
+// in a cross-origin print window.  Falls back to the original URL so browsers
+// can still render it via <img> even when the fetch is blocked.
+async function urlToDataUrlWithFallback(url: string): Promise<string> {
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Inject a signature/stamp overlay into a cloned element and write the result
+ * into an already-open print window, then trigger window.print().
+ *
+ * The caller MUST open the window synchronously before any await so the browser
+ * does not block it as a popup.  Pass that window handle here.
+ */
+export async function stampAndPrint(
+  win: Window,
+  el: HTMLElement,
+  docTitle: string,
+  signatureUrl: string | undefined,
+  stampUrl: string | undefined,
+): Promise<void> {
+  const [sigSrc, stpSrc] = await Promise.all([
+    signatureUrl ? urlToDataUrlWithFallback(signatureUrl) : Promise.resolve(null),
+    stampUrl ? urlToDataUrlWithFallback(stampUrl) : Promise.resolve(null),
+  ]);
+
+  const clone = el.cloneNode(true) as HTMLElement;
+
+  if (sigSrc || stpSrc) {
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+      "display:flex;justify-content:center;align-items:flex-end;gap:24px;margin:8px 16px 4px;opacity:0.85;";
+    if (sigSrc) {
+      const img = document.createElement("img");
+      img.src = sigSrc;
+      img.style.cssText = "max-height:64px;max-width:140px;object-fit:contain;";
+      overlay.appendChild(img);
+    }
+    if (stpSrc) {
+      const img = document.createElement("img");
+      img.src = stpSrc;
+      img.style.cssText = "max-height:64px;max-width:140px;object-fit:contain;";
+      overlay.appendChild(img);
+    }
+    const disclaimer = Array.from(clone.querySelectorAll("div")).find(
+      d => d.textContent?.includes("computer generated document"),
+    );
+    if (disclaimer?.parentNode) {
+      disclaimer.parentNode.insertBefore(overlay, disclaimer);
+    } else {
+      clone.appendChild(overlay);
+    }
+  }
+
+  win.document.write(`<!DOCTYPE html><html><head>
+    <title>${docTitle}</title>
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      body { margin: 0; padding: 0; background: white; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    </style>
+  </head><body>${clone.outerHTML}</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); win.close(); }, 400);
+}
+
 export async function captureElementToPdfBase64(
   el: HTMLElement,
   filename: string,

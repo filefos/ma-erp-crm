@@ -17,7 +17,7 @@ import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { HandoverNoteTemplate } from "@/components/handover-note-template";
 import { useToast } from "@/hooks/use-toast";
-import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { captureElementToPdfBase64, stampAndPrint } from "@/lib/print-to-pdf";
 
 interface Props { id: string }
 
@@ -40,6 +40,7 @@ export function HandoverNoteDetail({ id }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [form, setForm] = useState({
     handoverDate: "", projectDescription: "", receivedByName: "",
     receivedByDesignation: "", clientRepresentative: "",
@@ -88,21 +89,28 @@ export function HandoverNoteDetail({ id }: Props) {
   const addItem = () => setForm(p => ({ ...p, items: [...p.items, EMPTY_ITEM()] }));
   const removeItem = (idx: number) => setForm(p => ({ ...p, items: p.items.filter((_, i) => i !== idx) }));
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (!printRef.current || !hon) return;
+
+    // Open synchronously while still in the user-gesture stack so browsers
+    // don't block it as a popup.
     const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(`<!DOCTYPE html><html><head>
-      <title>${hon.honNumber}</title>
-      <style>
-        @page { size: A4 portrait; margin: 0; }
-        body { margin: 0; padding: 0; background: white; }
-        * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      </style>
-    </head><body>${printRef.current.outerHTML}</body></html>`);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 400);
+    if (!win) {
+      toast({ title: "Pop-up blocked. Please allow pop-ups for this site and try again.", variant: "destructive" });
+      return;
+    }
+
+    setPrinting(true);
+    try {
+      const signatureUrl = user?.signatureUrl || undefined;
+      const stampUrl = companies?.find(c => c.id === (hon as any).companyId)?.stamp || undefined;
+      await stampAndPrint(win, printRef.current, hon.honNumber ?? "HON", signatureUrl, stampUrl);
+    } catch {
+      toast({ title: "Print preparation failed. Try Export PDF instead.", variant: "destructive" });
+      win.close();
+    } finally {
+      setPrinting(false);
+    }
   };
 
   const handleExportPdf = async () => {
@@ -204,8 +212,8 @@ export function HandoverNoteDetail({ id }: Props) {
           >
             {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1.5" />Send Email</>}
           </Button>
-          <Button size="sm" variant="outline" onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-1.5" />Print / PDF
+          <Button size="sm" variant="outline" onClick={handlePrint} disabled={printing}>
+            {printing ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing…</> : <><Printer className="w-4 h-4 mr-1.5" />Print / PDF</>}
           </Button>
           <Button size="sm" variant="outline" onClick={handleExportPdf} disabled={exporting}>
             <Download className="w-4 h-4 mr-1.5" />{exporting ? "Exporting…" : "Export PDF"}
