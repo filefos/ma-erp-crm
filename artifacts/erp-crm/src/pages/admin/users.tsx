@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useListUsers, useCreateUser, useUpdateUser, useListCompanies, useListDepartments,
   useGetUserPermissions, useUpdateUserPermissions,
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Power, Pencil, ShieldCheck, Loader2, KeyRound, Trash2, ClipboardList } from "lucide-react";
+import { Search, Plus, Power, Pencil, ShieldCheck, Loader2, KeyRound, Trash2, ClipboardList, Upload, Check } from "lucide-react";
 import { DelegateTaskDialog } from "@/components/delegate-task-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +46,7 @@ type EditableUser = {
   permissionLevel?: string;
   departmentId?: number | null;
   companyId?: number | null;
+  signatureUrl?: string | null;
 };
 
 function ChangePasswordDialog({ user, open, onClose }: { user: EditableUser; open: boolean; onClose: () => void }) {
@@ -110,7 +111,10 @@ function EditUserDialog({
   departments: { id: number; name: string }[];
   companies: { id: number; shortName: string }[];
 }) {
+  const token = localStorage.getItem("erp_token");
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
@@ -120,6 +124,12 @@ function EditUserDialog({
     departmentId: user.departmentId ? String(user.departmentId) : "none",
     companyId: user.companyId ? String(user.companyId) : "none",
   });
+
+  const [sigPreview, setSigPreview] = useState<string | null>(user.signatureUrl ?? null);
+  const [sigSavedUrl, setSigSavedUrl] = useState<string | null>(user.signatureUrl ?? null);
+  const [sigSaving, setSigSaving] = useState(false);
+  const [sigError, setSigError] = useState("");
+
   useEffect(() => {
     setForm({
       name: user.name,
@@ -130,7 +140,12 @@ function EditUserDialog({
       departmentId: user.departmentId ? String(user.departmentId) : "none",
       companyId: user.companyId ? String(user.companyId) : "none",
     });
+    setSigPreview(user.signatureUrl ?? null);
+    setSigSavedUrl(user.signatureUrl ?? null);
+    setSigError("");
   }, [user]);
+
+  const sigDirty = sigPreview !== sigSavedUrl;
 
   const update = useUpdateUser({
     mutation: {
@@ -141,7 +156,40 @@ function EditUserDialog({
     },
   });
 
-  const submit = () => {
+  const handleSignatureFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setSigPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const saveSignature = async (urlValue: string | null): Promise<boolean> => {
+    setSigSaving(true);
+    setSigError("");
+    try {
+      const res = await fetch(`/api/users/${user.id}/signature`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ signatureUrl: urlValue }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setSigError((err as { error?: string }).error ?? "Failed to save signature.");
+        return false;
+      }
+      setSigSavedUrl(urlValue);
+      return true;
+    } finally {
+      setSigSaving(false);
+    }
+  };
+
+  const submit = async () => {
+    if (sigDirty) {
+      const ok = await saveSignature(sigPreview);
+      if (!ok) return;
+    }
     update.mutate({
       id: user.id,
       data: {
@@ -156,9 +204,11 @@ function EditUserDialog({
     });
   };
 
+  const isBusy = update.isPending || sigSaving;
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent data-testid="edit-user-dialog">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" data-testid="edit-user-dialog">
         <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil className="w-4 h-4 text-[#1e6ab0]" />Edit user — {user.name}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-3 pt-2">
           <div className="space-y-1 col-span-2"><Label>Full Name *</Label><Input value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} data-testid="edit-user-name" /></div>
@@ -195,10 +245,55 @@ function EditUserDialog({
             </Select>
           </div>
         </div>
+
+        {/* Signature section */}
+        <div className="mt-4 pt-4 border-t space-y-2">
+          <Label className="text-sm font-medium">Signature</Label>
+          <p className="text-xs text-muted-foreground">Upload a signature image on behalf of this user. It will appear on printed documents.</p>
+          {sigPreview ? (
+            <div className="border rounded-lg p-3 bg-muted/30 flex items-center gap-4">
+              <img src={sigPreview} alt="Signature" className="h-14 object-contain rounded border bg-white p-1" style={{ maxWidth: 200 }} />
+              <div className="flex flex-col gap-1.5">
+                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="w-3.5 h-3.5 mr-1.5" />Change
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => { setSigPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" />Clear
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center cursor-pointer hover:border-[#1e6ab0]/50 hover:bg-blue-50/50 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="w-7 h-7 mx-auto text-muted-foreground mb-1.5" />
+              <p className="text-sm text-muted-foreground">Click to upload signature image</p>
+              <p className="text-xs text-muted-foreground mt-0.5">PNG or JPG (transparent PNG recommended)</p>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg"
+            className="hidden"
+            onChange={handleSignatureFile}
+          />
+          {sigDirty && (
+            <p className="text-xs text-amber-600 flex items-center gap-1">Unsaved signature change — will be saved with the form.</p>
+          )}
+          {sigError && <p className="text-xs text-destructive">{sigError}</p>}
+        </div>
+
         <DialogFooter className="border-t pt-3 mt-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.name || !form.email || update.isPending} data-testid="save-edit-user">
-            {update.isPending ? "Saving..." : "Save changes"}
+          <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.name || !form.email || isBusy} data-testid="save-edit-user">
+            {isBusy ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Saving...</> : <><Check className="w-3.5 h-3.5 mr-1.5" />Save changes</>}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -553,6 +648,7 @@ export function UsersList() {
                         onClick={() => setEditing({
                           id: u.id, name: u.name, email: u.email, phone, role: u.role,
                           isActive: u.isActive, permissionLevel: lvl, departmentId, companyId,
+                          signatureUrl: (u as { signatureUrl?: string | null }).signatureUrl ?? null,
                         })}
                       >
                         <Pencil className="w-3.5 h-3.5 text-[#1e6ab0]" />

@@ -289,10 +289,35 @@ router.post("/users/:id/change-password", requirePermissionLevel("company_admin"
 
 router.put("/users/:id/signature", requireAuth, async (req, res): Promise<void> => {
   const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
-  if (req.user?.id !== id) {
-    res.status(403).json({ error: "You can only update your own signature" });
-    return;
+  const me = req.user!;
+  const callerLevel = me.permissionLevel ?? "user";
+  const callerRank = PERMISSION_RANK[callerLevel] ?? 0;
+  const isAdmin = callerLevel === "super_admin" || callerLevel === "company_admin";
+
+  // Self-update is always allowed; admins can update users within their scope.
+  if (me.id !== id) {
+    if (!isAdmin) {
+      res.status(403).json({ error: "You can only update your own signature" });
+      return;
+    }
+    if (!(await userInScope(req, id))) {
+      res.status(403).json({ error: "Forbidden", message: "Target user is outside your company scope" });
+      return;
+    }
+    // Rank protection: same rules as PUT /users/:id and change-password.
+    const [target] = await db.select({ permissionLevel: usersTable.permissionLevel }).from(usersTable).where(eq(usersTable.id, id));
+    if (!target) { res.status(404).json({ error: "Not found" }); return; }
+    const targetRank = PERMISSION_RANK[target.permissionLevel ?? "user"] ?? 0;
+    if (targetRank > callerRank) {
+      res.status(403).json({ error: "Forbidden", message: "Cannot modify a user with higher access than yours" });
+      return;
+    }
+    if (target.permissionLevel === "super_admin" && callerLevel !== "super_admin") {
+      res.status(403).json({ error: "Forbidden", message: "Only super_admin may modify super_admin users" });
+      return;
+    }
   }
+
   const { signatureUrl } = req.body;
   await db.execute(sql`UPDATE users SET signature_url = ${signatureUrl}, updated_at = NOW() WHERE id = ${id}`);
   res.json({ success: true });
