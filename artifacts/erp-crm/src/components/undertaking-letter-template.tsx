@@ -117,9 +117,8 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
             }
             .print-sig-block {
               position: fixed;
-              bottom: 28px;
-              left: 0;
-              right: 0;
+              bottom: 50px;
+              left: 50px;
               background: white;
             }
           }
