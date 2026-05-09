@@ -100,13 +100,28 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
       >
         <style>{`
           @media print {
-            @page { size: A4 portrait; margin: 4px 3px; }
+            @page { size: A4 portrait; margin: 0; }
             html, body { background: white !important; }
             body * { visibility: hidden; }
             .print-doc, .print-doc * { visibility: visible; }
             .print-doc { position: absolute; left: 0; top: 0; width: 100%; max-width: 100% !important;
               box-shadow: none !important; border: none !important; padding: 0 !important;
-              margin: 0 !important; border-radius: 0 !important; }
+              margin: 0 !important; border-radius: 0 !important;
+              min-height: 0 !important; height: auto !important; overflow: visible !important; }
+            .ul-page-footer {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              background: white;
+            }
+            .print-sig-block {
+              position: fixed;
+              bottom: 28px;
+              left: 0;
+              right: 0;
+              background: white;
+            }
           }
         `}</style>
 
@@ -242,13 +257,15 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
           <p className="mb-4">Thank you for your cooperation and understanding.</p>
 
 
-          {/* ── PREPARED BY / FOR & ON BEHALF ── */}
-          <div className="flex justify-between items-end mb-2">
+        </div>
+
+        {/* ── SIGNATURE BLOCK — fixed above footer in print ── */}
+        <div className="print-sig-block px-4 pb-1">
+          <div className="flex items-end justify-between">
+            {/* LEFT: signature + stamp + "For & on behalf of [our company]" */}
             <div>
-              <div className="text-[10px] font-semibold">Prepared by:</div>
-              <div className="text-[11px]">{doc.signedByName || co.contact}</div>
               {doc.signatureUrl && (
-                <div data-html2canvas-ignore="true" style={{ marginTop: 46, display: "flex", justifyContent: "center" }}>
+                <div data-html2canvas-ignore="true" style={{ marginBottom: 4 }}>
                   <img
                     src={doc.signatureUrl}
                     alt="Signature"
@@ -256,32 +273,35 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
                   />
                 </div>
               )}
-            </div>
-            <div className="text-right">
-              <div className="text-[10px]">For &amp; on behalf of</div>
-              <div className="text-[11px] font-black uppercase">{co.name}</div>
               {doc.stampUrl && (
-                <div data-html2canvas-ignore="true" style={{ marginTop: 6 }}>
+                <div data-html2canvas-ignore="true" style={{ marginBottom: 4 }}>
                   <img
                     src={doc.stampUrl}
                     alt="Stamp"
-                    style={{ maxHeight: 160, maxWidth: 360, objectFit: "contain", opacity: 0.85, display: "block", marginLeft: "auto" }}
+                    style={{ maxHeight: 150, maxWidth: 150, objectFit: "contain", opacity: 0.85 }}
                   />
                 </div>
               )}
+              <div className="text-[10px] text-gray-600">For &amp; on behalf of</div>
+              <div className="text-[11px] font-black uppercase">{co.name}</div>
+            </div>
+
+            {/* RIGHT: client "For & on behalf of" */}
+            <div className="text-right">
+              <div className="text-[10px] text-gray-600">For &amp; on behalf of</div>
+              <div className="text-[11px] font-black uppercase">{doc.clientName}</div>
             </div>
           </div>
 
+          {/* Disclaimer */}
+          <div className="text-center text-[8px] text-gray-400 italic pt-1">
+            This is a computer generated document. No signature or stamp required.
+          </div>
         </div>
 
-        {/* ── DISCLAIMER (just above footer) ── */}
-        <div className="text-center text-[8px] text-gray-400 italic pb-2">
-          This is a computer generated document. No signature or stamp required.
-        </div>
-
-        {/* ── FOOTER ── */}
+        {/* ── FOOTER — fixed to bottom in print ── */}
         <div
-          className="mt-auto border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[11px] text-[#0f2d5a]"
+          className="ul-page-footer border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
           style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
         >
           <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>

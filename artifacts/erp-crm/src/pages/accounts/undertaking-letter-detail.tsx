@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
-import { ArrowLeft, Pencil, CheckCircle, Download, Printer, Mail, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, CheckCircle, Download, Printer, Mail, Loader2, Stamp, PenLine } from "lucide-react";
 import { useEmailCompose } from "@/contexts/email-compose-context";
 import { ExportButtons } from "@/components/export-buttons";
 import { UndertakingLetterTemplate } from "@/components/undertaking-letter-template";
@@ -37,6 +37,8 @@ export function UndertakingLetterDetail({ id }: Props) {
   const [exporting, setExporting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [stampVisible, setStampVisible] = useState(true);
+  const [signatureVisible, setSignatureVisible] = useState(true);
 
   const { user } = useAuth();
   const { data: companies } = useListCompanies();
@@ -133,39 +135,57 @@ export function UndertakingLetterDetail({ id }: Props) {
     signedDate: (ul as any).signedDate ?? null,
     notes: (ul as any).notes ?? null,
     companyId: (ul as any).companyId ?? 1,
-    signatureUrl: user?.signatureUrl ?? null,
-    stampUrl: companies?.find(c => c.id === ((ul as any).companyId ?? 1))?.stamp ?? null,
+    signatureUrl: signatureVisible ? (user?.signatureUrl ?? null) : null,
+    stampUrl: stampVisible ? (companies?.find(c => c.id === ((ul as any).companyId ?? 1))?.stamp ?? null) : null,
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      {/* Action bar — hidden on print */}
-      <div className="no-print flex flex-wrap items-center gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/accounts/undertaking-letters">
-            <ArrowLeft className="w-4 h-4 mr-1" />Back
-          </Link>
-        </Button>
-
-        <Badge className={`capitalize ${STATUS_COLORS[ul.status] ?? "bg-gray-100"}`}>
-          {ul.status}
-        </Badge>
-
-        {(ul as any)?.projectRef && (
-          <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
-            PROJECT ID: {(ul as any).projectRef}
-          </Badge>
-        )}
-
-        <span className="font-mono text-sm text-muted-foreground">{ul.ulNumber}</span>
-
-        {!editMode && (
-          <Button size="sm" variant="outline" onClick={openEdit}>
-            <Pencil className="w-3.5 h-3.5 mr-1.5" />Edit
+      {/* Action bar — two rows, hidden on print */}
+      <div className="no-print space-y-2">
+        {/* Row 1: nav + status + edit | stamp/sig toggles */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/accounts/undertaking-letters">
+              <ArrowLeft className="w-4 h-4 mr-1" />Back
+            </Link>
           </Button>
-        )}
+          <Badge className={`capitalize ${STATUS_COLORS[ul.status] ?? "bg-gray-100"}`}>
+            {ul.status}
+          </Badge>
+          {(ul as any)?.projectRef && (
+            <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
+              PROJECT ID: {(ul as any).projectRef}
+            </Badge>
+          )}
+          <span className="font-mono text-sm text-muted-foreground">{ul.ulNumber}</span>
+          {!editMode && (
+            <Button size="sm" variant="outline" onClick={openEdit}>
+              <Pencil className="w-3.5 h-3.5 mr-1.5" />Edit
+            </Button>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={stampVisible ? "default" : "outline"}
+              className={stampVisible ? "bg-violet-600 hover:bg-violet-700 text-white" : "text-violet-600 border-violet-400"}
+              onClick={() => setStampVisible(v => !v)}
+            >
+              <Stamp className="w-3.5 h-3.5 mr-1" />P.STAMP
+            </Button>
+            <Button
+              size="sm"
+              variant={signatureVisible ? "default" : "outline"}
+              className={signatureVisible ? "bg-orange-500 hover:bg-orange-600 text-white" : "text-orange-500 border-orange-400"}
+              onClick={() => setSignatureVisible(v => !v)}
+            >
+              <PenLine className="w-3.5 h-3.5 mr-1" />P.SIGNATURE
+            </Button>
+          </div>
+        </div>
 
-        <div className="ml-auto flex gap-2">
+        {/* Row 2: document action buttons */}
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm" variant="outline"
             disabled={generatingPdf}
