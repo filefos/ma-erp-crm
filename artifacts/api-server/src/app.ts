@@ -549,7 +549,12 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGIN
+    ? process.env.ALLOWED_ORIGIN.split(",").map(s => s.trim())
+    : true,
+  credentials: true,
+}));
 // Larger limits to support file uploads (base64-embedded attachments,
 // quotation/LPO line item images, signatures, logos, etc.)
 app.use(express.json({

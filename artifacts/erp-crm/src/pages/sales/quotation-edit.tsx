@@ -813,8 +813,8 @@ export function QuotationEdit({ id }: Props) {
       {canSignDocuments((user as any)?.permissionLevel) && (
         <SignatureStampPreview
           signatureUrl={(user as any)?.signatureUrl ?? undefined}
-          stampUrl={companies?.find(c => c.id === form.companyId)?.stamp ?? undefined}
-          stampWidthPct={companies?.find(c => c.id === form.companyId)?.stampWidthPct ?? undefined}
+          stampUrl={companies?.find(c => c.id === Number(form.companyId))?.stamp ?? undefined}
+          stampWidthPct={companies?.find(c => c.id === Number(form.companyId))?.stampWidthPct ?? undefined}
         />
       )}
 

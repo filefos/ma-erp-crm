@@ -1166,7 +1166,7 @@ export function LpoAcknowledgments() {
                         clientName: viewRecord.customerName,
                         sourceRef: viewRecord.lpoNumber ?? viewRecord.quotationNumber ?? "",
                         companyId: viewRecord.companyId ?? undefined,
-                        attachments: [{ name: viewRecord.fileName, content: b64, type: "application/pdf" }],
+                        attachments: [{ filename: viewRecord.fileName, content: b64, contentType: "application/pdf", size: b64.length }],
                       });
                     } catch (e: any) {
                       toast({ title: "Could not prepare email", description: e.message, variant: "destructive" });
@@ -1419,7 +1419,7 @@ export function LpoAcknowledgments() {
                   if (!acLetterRecord) return;
                   const co = (companies ?? []).find(c => c.id === (acLetterRecord.companyId ?? activeCompanyId)) as any;
                   openCompose({
-                    to: acLetterRecord.customerName ? [acLetterRecord.customerName] : [],
+                    toName: acLetterRecord.customerName ?? "",
                     subject: `Acknowledgement Letter${acLetterRecord.lpoNumber ? ` – LPO No. ${acLetterRecord.lpoNumber}` : ""}`,
                     body: `Dear Sir/Madam,\n\nPlease find attached our Acknowledgement Letter for ${acLetterRecord.lpoNumber ? `LPO No. ${acLetterRecord.lpoNumber}` : "the above-referenced LPO"}.\n\nKindly review and confirm receipt.\n\nWarm regards,\n${co?.name ?? ""}`,
                   });

@@ -98,7 +98,7 @@ export function PaymentsMadeList() {
   const filteredSuppliers = allSuppliers.filter(s => {
     if (!supplierQuery) return true;
     const q = supplierQuery.toLowerCase();
-    return s.name.toLowerCase().includes(q) || (s.code ?? "").toLowerCase().includes(q) || (s.email ?? "").toLowerCase().includes(q);
+    return s.name.toLowerCase().includes(q) || ((s as any).code ?? "").toLowerCase().includes(q) || (s.email ?? "").toLowerCase().includes(q);
   }).slice(0, 8);
 
   const openCreate = () => {
@@ -383,7 +383,7 @@ export function PaymentsMadeList() {
                           <div className="min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate">{s.name}</div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              {s.code && <span className="text-[10px] font-mono text-[#1e6ab0]">{s.code}</span>}
+                              {(s as any).code && <span className="text-[10px] font-mono text-[#1e6ab0]">{(s as any).code}</span>}
                               {s.category && <span className="text-[10px] text-gray-400">{s.category}</span>}
                               {(s as any).email && <span className="text-[10px] text-gray-400 truncate">{(s as any).email}</span>}
                             </div>
@@ -393,7 +393,7 @@ export function PaymentsMadeList() {
                       {allSuppliers.filter(s => {
                         if (!supplierQuery) return true;
                         const q = supplierQuery.toLowerCase();
-                        return s.name.toLowerCase().includes(q) || (s.code ?? "").toLowerCase().includes(q);
+                        return s.name.toLowerCase().includes(q) || ((s as any).code ?? "").toLowerCase().includes(q);
                       }).length > 8 && (
                         <div className="px-3 py-2 text-xs text-muted-foreground text-center border-t">
                           Keep typing to narrow results…
