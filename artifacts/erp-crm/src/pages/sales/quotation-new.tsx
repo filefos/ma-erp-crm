@@ -55,6 +55,20 @@ interface AdditionalItem {
 
 const emptyItem = (): Item => ({ description: "", quantity: 1, unit: "", rate: 0, amount: 0, discount: 0 });
 
+const DESCRIPTION_PRESETS = [
+  { value: "fire_rated",      label: "Fire Rated Portacabin",    text: "Supply and delivery of prefabricated fire rated portacabin following detail;\n• " },
+  { value: "site_office",     label: "Site Office",              text: "Supply and delivery of prefabricated site office following detail;\n• " },
+  { value: "security_cabin",  label: "Security Cabin",           text: "Supply and delivery of prefabricated security cabin following detail;\n• " },
+  { value: "standard_cabin",  label: "Standard Cabin",           text: "Supply and delivery of prefabricated standard cabin following detail;\n• " },
+  { value: "container",       label: "Modified Container",       text: "Supply and delivery of modified container following detail;\n• " },
+  { value: "aluminium",       label: "Aluminium Cladded Cabin",  text: "Supply and delivery of Aluminium cladded cabin following detail;\n• " },
+  { value: "sandwich",        label: "Sandwich Panel Cabin",     text: "Supply and delivery of Sandwich panel type cabin following detail;\n• " },
+  { value: "fencing",         label: "Fencing",                  text: "Supply and delivery of fencing following detail;\n• " },
+  { value: "parking_shade",   label: "Parking Shade",            text: "Supply and delivery of Parking shade following detail;\n• " },
+  { value: "furniture",       label: "Furniture Installation",   text: "Supply and delivery of Furniture installation following detail;\n• " },
+  { value: "custom",          label: "Custom (type below)",      text: "" },
+];
+
 const DEFAULT_ADDITIONAL_ITEMS: AdditionalItem[] = [
   { description: "Transportation including RTA Permit", status: "Included", price: 0, quantity: 1, amount: 0 },
   { description: "Brand New SUPER GENERAL SPLIT AC UNIT", status: "Excluded", price: 0, quantity: 1, amount: 0 },
@@ -302,12 +316,29 @@ export function QuotationNew() {
                     <td className="px-2 text-center font-semibold text-[#1a3d6e] border border-[#6fa3d8] border-t-0 border-l-0 align-middle">
                       {String(i + 1).padStart(2, "0")}
                     </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
+                    <td className="p-1 border border-[#6fa3d8] border-t-0 align-top">
+                      <Select
+                        value=""
+                        onValueChange={v => {
+                          const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
+                          if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
+                          else if (preset?.value === "custom") updateItem(i, "description", "");
+                        }}
+                      >
+                        <SelectTrigger className="h-7 text-xs mb-1 bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
+                          <SelectValue placeholder="▾ Select template..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DESCRIPTION_PRESETS.map(p => (
+                            <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Textarea
                         value={item.description}
                         onChange={e => updateItem(i, "description", e.target.value)}
-                        className="text-sm min-h-[72px] h-full resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
-                        placeholder="Describe prefab cabin details..."
+                        className="text-sm min-h-[60px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
+                        placeholder="Select a template above or type freely..."
                       />
                     </td>
                     <td className="p-1 border border-[#6fa3d8] border-t-0" style={{ height: "1px" }}>
