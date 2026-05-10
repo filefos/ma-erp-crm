@@ -201,7 +201,7 @@ export function Login() {
   const CompanySelector = ({ value, onChange }: { value: number | null; onChange: (id: number) => void }) =>
     companies && companies.length > 0 ? (
       <div className="space-y-2" data-testid="company-selector">
-        <Label className="text-xs font-medium text-white/60">Company workspace</Label>
+        <Label className="text-xs font-medium">Company workspace</Label>
         <div className="grid grid-cols-2 gap-2">
           {companies.map((c) => {
             const selected = value === c.id;
@@ -221,11 +221,11 @@ export function Login() {
                 className={`relative text-left rounded-lg border p-3 transition-all ${
                   selected
                     ? `${selBorder} ${selBg5} ring-2 ${selRing}`
-                    : "border-white/10 hover:border-white/25 hover:bg-white/5"
+                    : "border-border hover:border-muted-foreground/40 hover:bg-muted/40"
                 }`}
               >
-                <div className={`text-[10px] font-mono tracking-widest uppercase ${selected ? selText : "text-white/40"}`}>{c.prefix}</div>
-                <div className="text-xs font-semibold mt-1 leading-tight truncate text-white/80">{c.shortName ?? c.name}</div>
+                <div className={`text-[10px] font-mono tracking-widest uppercase ${selected ? selText : "text-muted-foreground"}`}>{c.prefix}</div>
+                <div className="text-xs font-semibold mt-1 leading-tight truncate">{c.shortName ?? c.name}</div>
                 {selected && <Check className={`absolute top-2 right-2 w-3.5 h-3.5 ${selText}`} />}
               </button>
             );
@@ -252,18 +252,12 @@ export function Login() {
         )}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center">
-            {/* PRIME wordmark — left dark panel */}
-            <div className="flex items-center gap-3">
-              <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
-                style={{ background: isEliteLogin ? "linear-gradient(135deg,#8B0000,#C00000)" : "linear-gradient(135deg,#1e6ab0,#38bdf8)" }}
-              >
-                <span className="text-white font-black text-lg tracking-tight select-none">P</span>
-              </div>
-              <div>
-                <div className="font-black text-2xl tracking-[0.35em] uppercase text-white leading-none">PRIME</div>
-                <div className="text-[8px] font-bold tracking-[0.22em] uppercase text-white/45 leading-none mt-1">ERP SYSTEMS</div>
-              </div>
+            <div className="bg-white/95 rounded-xl px-5 py-3 backdrop-blur ring-1 ring-white/20">
+              <img
+                src={lBrand.logoSrc}
+                alt={lBrand.logoAlt}
+                className="h-12 w-auto object-contain transition-all duration-300"
+              />
             </div>
           </div>
           <div className="space-y-6 max-w-md">
@@ -282,44 +276,26 @@ export function Login() {
       </div>
 
       {/* RIGHT — form panel */}
-      <div
-        className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(145deg,#0D0D0D 0%,#1C0000 45%,#0D0D0D 100%)" }}
-      >
-        {/* subtle radial glow */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at 70% 30%,rgba(139,0,0,0.18) 0%,transparent 60%)" }} />
-        {/* top accent line */}
-        <div className="absolute top-0 inset-x-0 h-px" style={{ background: "linear-gradient(90deg,transparent,#8B0000,#C00000,#8B0000,transparent)" }} />
-
-        <div className="relative z-10 w-full max-w-sm space-y-6">
-          {/* Mobile PRIME wordmark */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-sm space-y-6">
           <div className="lg:hidden flex items-center gap-3 mb-4">
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: isEliteLogin ? "linear-gradient(135deg,#8B0000,#C00000)" : "linear-gradient(135deg,#1e6ab0,#38bdf8)" }}
-            >
-              <span className="text-white font-black text-sm select-none">P</span>
-            </div>
-            <div>
-              <div className="font-black text-xl tracking-[0.35em] uppercase text-white leading-none">PRIME</div>
-              <div className="text-[7px] font-bold tracking-[0.2em] uppercase text-white/40 leading-none mt-0.5">ERP SYSTEMS</div>
-            </div>
+            <img src={lBrand.logoSrc} alt={lBrand.logoAlt} className="h-10 w-auto object-contain" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight text-white">Welcome back</h2>
-            <p className="text-sm text-white/50">Sign in to your ERP workspace.</p>
+            <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+            <p className="text-sm text-muted-foreground">Sign in to your ERP workspace.</p>
           </div>
 
           {/* Mode tabs */}
-          <div className="flex rounded-lg border border-white/10 overflow-hidden bg-white/5">
+          <div className="flex rounded-lg border border-border overflow-hidden bg-muted/30">
             <button
               type="button"
               onClick={() => switchMode("password")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-all ${
                 mode === "password"
                   ? lBrand.tabActiveCls
-                  : "text-white/40 hover:text-white hover:bg-white/8"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
               style={mode === "password" ? { background: lBrand.primary } : {}}
             >
@@ -332,7 +308,7 @@ export function Login() {
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-all ${
                 mode === "otp"
                   ? lBrand.tabActiveCls
-                  : "text-white/40 hover:text-white hover:bg-white/8"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
               style={mode === "otp" ? { background: lBrand.primary } : {}}
             >
@@ -347,7 +323,7 @@ export function Login() {
               <CompanySelector value={companyId} onChange={setCompanyId} />
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-xs font-medium text-white/60">Email address</Label>
+                  <Label htmlFor="email" className="text-xs font-medium">Email address</Label>
                   <Input
                     id="email"
                     type="email"
@@ -356,11 +332,11 @@ export function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
-                    className="h-10 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:border-white/40 focus:bg-white/8"
+                    className="h-10"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="password" className="text-xs font-medium text-white/60">Password</Label>
+                  <Label htmlFor="password" className="text-xs font-medium">Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -368,7 +344,7 @@ export function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     autoComplete="current-password"
-                    className="h-10 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:border-white/40 focus:bg-white/8"
+                    className="h-10"
                   />
                 </div>
                 {error && (
@@ -403,7 +379,7 @@ export function Login() {
                   <CompanySelector value={otpCompanyId} onChange={setOtpCompanyId} />
                   <form onSubmit={handleRequestOtp} className="space-y-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="otp-email" className="text-xs font-medium text-white/60">Email address</Label>
+                      <Label htmlFor="otp-email" className="text-xs font-medium">Email address</Label>
                       <Input
                         id="otp-email"
                         type="email"
@@ -412,7 +388,7 @@ export function Login() {
                         onChange={(e) => { setOtpEmail(e.target.value); setOtpError(null); }}
                         required
                         autoComplete="email"
-                        className="h-10 bg-white/5 border-white/15 text-white placeholder:text-white/25 focus:border-white/40 focus:bg-white/8"
+                        className="h-10"
                       />
                     </div>
                     {otpError && (
@@ -444,37 +420,37 @@ export function Login() {
                   <button
                     type="button"
                     onClick={() => { setOtpStep("email"); setOtpError(null); setOtpCode(["","","","","",""]); }}
-                    className="flex items-center gap-1 text-xs text-white/40 hover:text-white transition-colors"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     Back
                   </button>
 
-                  <div className="rounded-lg bg-green-900/30 border border-green-500/30 p-4 text-sm text-green-300 space-y-2">
-                    <p className="font-semibold text-green-200">OTP code sent!</p>
+                  <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800 space-y-2">
+                    <p className="font-semibold">OTP code sent!</p>
                     <div className="space-y-1">
                       {sentVia.whatsapp && maskedPhone && (
-                        <p className="text-xs text-green-300 flex items-center gap-1.5">
-                          <span className="text-green-400">✓</span>
+                        <p className="text-xs text-green-700 flex items-center gap-1.5">
+                          <span className="text-green-500">✓</span>
                           WhatsApp → <span className="font-mono font-semibold">{maskedPhone}</span>
                         </p>
                       )}
                       {sentVia.email && (
-                        <p className="text-xs text-green-300 flex items-center gap-1.5">
-                          <span className="text-green-400">✓</span>
+                        <p className="text-xs text-green-700 flex items-center gap-1.5">
+                          <span className="text-green-500">✓</span>
                           Email → <span className="font-mono font-semibold">{otpEmail}</span>
                         </p>
                       )}
                       {!sentVia.whatsapp && !sentVia.email && (
-                        <p className="text-xs text-amber-300">Check with your administrator — delivery not configured yet.</p>
+                        <p className="text-xs text-amber-700">Check with your administrator — delivery not configured yet.</p>
                       )}
                     </div>
-                    <p className="text-xs text-green-400/80">Enter the 6-digit code below. Expires in 5 minutes.</p>
+                    <p className="text-xs text-green-600">Enter the 6-digit code below. Expires in 5 minutes.</p>
                   </div>
 
                   {/* 6-digit OTP boxes */}
                   <div className="space-y-3">
-                    <Label className="text-xs font-medium text-white/60">Enter 6-digit OTP</Label>
+                    <Label className="text-xs font-medium">Enter 6-digit OTP</Label>
                     <div className="flex gap-2 justify-center" onPaste={handleOtpPaste}>
                       {otpCode.map((digit, i) => (
                         <input
@@ -487,7 +463,7 @@ export function Login() {
                           onChange={e => handleOtpDigit(i, e.target.value)}
                           onKeyDown={e => handleOtpKeyDown(i, e)}
                           className={`w-11 h-14 text-center text-xl font-bold border-2 rounded-lg outline-none transition-all ${lBrand.focusCls} focus:ring-2 ${
-                            digit ? lBrand.filledCls : "border-white/15 bg-white/5 text-white"
+                            digit ? lBrand.filledCls : "border-border bg-background text-foreground"
                           } ${otpVerifying ? "opacity-60 pointer-events-none" : ""}`}
                           disabled={otpVerifying}
                         />
@@ -519,8 +495,8 @@ export function Login() {
 
                   <div className="text-center">
                     {resendCountdown > 0 ? (
-                      <p className="text-xs text-white/40">
-                        Resend available in <span className="font-mono font-semibold text-white/60">{resendCountdown}s</span>
+                      <p className="text-xs text-muted-foreground">
+                        Resend available in <span className="font-mono font-semibold">{resendCountdown}s</span>
                       </p>
                     ) : (
                       <button
@@ -541,14 +517,14 @@ export function Login() {
           {/* unused otpSent ref suppressor */}
           {otpSent && null}
 
-          <div className="rounded-md border border-white/10 bg-white/5 p-3 text-[11px] text-white/40">
-            <span className="font-semibold text-white/60">Secure access</span> — All actions are
+          <div className="rounded-md border border-border bg-muted/40 p-3 text-[11px] text-muted-foreground">
+            <span className="font-semibold text-foreground/80">Secure access</span> — All actions are
             recorded in the audit trail. Contact your administrator if you cannot sign in.
           </div>
 
-          <div className="text-center text-xs text-white/30 border-t border-white/10 pt-3">
+          <div className="text-center text-xs text-muted-foreground border-t pt-3">
             Are you a vendor?{" "}
-            <a href="/supplier-register" className="font-medium hover:underline text-white/60 hover:text-white transition-colors">
+            <a href="/supplier-register" className={`font-medium hover:underline ${lBrand.textCls}`}>
               Become a supplier →
             </a>
           </div>
