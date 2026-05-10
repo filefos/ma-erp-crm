@@ -252,12 +252,9 @@ export function Login() {
         )}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center">
-            <div className="bg-white/95 rounded-xl px-5 py-3 backdrop-blur ring-1 ring-white/20">
-              <img
-                src={lBrand.logoSrc}
-                alt={lBrand.logoAlt}
-                className="h-12 w-auto object-contain transition-all duration-300"
-              />
+            <div className="flex flex-col leading-none">
+              <span className="text-3xl font-black tracking-[0.25em] text-white uppercase">PRIME</span>
+              <span className="text-[10px] font-semibold tracking-[0.3em] text-white/60 uppercase mt-0.5">ERP SYSTEMS</span>
             </div>
           </div>
           <div className="space-y-6 max-w-md">
@@ -279,7 +276,10 @@ export function Login() {
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-sm space-y-6">
           <div className="lg:hidden flex items-center gap-3 mb-4">
-            <img src={lBrand.logoSrc} alt={lBrand.logoAlt} className="h-10 w-auto object-contain" />
+            <div className="flex flex-col leading-none">
+              <span className="text-2xl font-black tracking-[0.25em] uppercase">PRIME</span>
+              <span className="text-[9px] font-semibold tracking-[0.3em] text-muted-foreground uppercase mt-0.5">ERP SYSTEMS</span>
+            </div>
           </div>
 
           <div className="space-y-2">
