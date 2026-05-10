@@ -24,3 +24,4 @@ export * from "./lpo-acknowledgments";
 export * from "./company-documents";
 export * from "./deals";
 export * from "./crm-activities";
+export * from "./employee-registration";

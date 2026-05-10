@@ -13,6 +13,7 @@ import projectsRouter from "./projects";
 import salesTargetsRouter from "./sales-targets";
 import procurementRouter from "./procurement";
 import supplierRegistrationsRouter from "./supplier-registrations";
+import employeeRegistrationRouter from "./employee-registration";
 import inventoryRouter from "./inventory";
 import assetsRouter from "./assets";
 import hrRouter from "./hr";
@@ -44,6 +45,8 @@ router.use(authRouter);
 // Express propagates sub-router middleware into the parent chain. The admin
 // endpoints inside this router still gate themselves explicitly.
 router.use(supplierRegistrationsRouter);
+// Public employee-registration endpoints (token-based form) + admin CRUD.
+router.use(employeeRegistrationRouter);
 router.use(companiesRouter);
 router.use(departmentsRouter);
 router.use(usersRouter);

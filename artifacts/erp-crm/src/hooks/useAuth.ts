@@ -29,7 +29,7 @@ export function useAuth() {
       localStorage.removeItem("erp_token");
       queryClient.clear();
       const p = window.location.pathname;
-      if (p !== "/login" && p !== "/supplier-register") setLocation("/login");
+      if (p !== "/login" && p !== "/supplier-register" && !p.startsWith("/employee-register/")) setLocation("/login");
     }
   }, [error, queryClient, setLocation]);
 
@@ -74,7 +74,7 @@ export function useAuth() {
 
   useEffect(() => {
     const p = window.location.pathname;
-    if (!token && p !== "/login" && p !== "/supplier-register") {
+    if (!token && p !== "/login" && p !== "/supplier-register" && !p.startsWith("/employee-register/")) {
       setLocation("/login");
     }
   }, [token, setLocation]);

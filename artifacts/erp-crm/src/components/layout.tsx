@@ -16,7 +16,7 @@ import {
   BarChart, Settings, Bell, LogOut, Menu, ChevronDown, ChevronRight,
   Building2, TruckIcon, Wrench, ClipboardList, FileCheck, UserCog, ScrollText, KeyRound, Home, Mail,
   BookOpen, ArrowDownCircle, ArrowUpCircle, BookMarked, PieChart, Bot, Send, ArrowLeft, TrendingUp,
-  MessageCircle, Wallet, RotateCcw, MonitorCheck, PackageCheck,
+  MessageCircle, Wallet, RotateCcw, MonitorCheck, PackageCheck, UserPlus,
 } from "lucide-react";
 import { useState } from "react";
 import { AskAIButton } from "@/components/ask-ai";
@@ -119,6 +119,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/hr/dashboard", label: "HR Dashboard", icon: LayoutDashboard },
       { href: "/hr/employees", label: "Employees", icon: HardHat },
+      { href: "/hr/employee-registrations", label: "Employee Registration Panel", icon: UserPlus },
       { href: "/hr/attendance", label: "Attendance", icon: Clock },
       { href: "/hr/offer-letters", label: "Offer Letters", icon: Mail },
       { href: "/hr/payroll", label: "Payroll", icon: Wallet },
@@ -659,7 +660,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || location === "/login" || location === "/supplier-register") return <>{children}</>;
+  if (!isAuthenticated || location === "/login" || location === "/supplier-register" || location.startsWith("/employee-register/")) return <>{children}</>;
 
   return (
     <div className={`flex h-screen bg-background overflow-hidden${isElite ? " elite-active" : ""}`}>

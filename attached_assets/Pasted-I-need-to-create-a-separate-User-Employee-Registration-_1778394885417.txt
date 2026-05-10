@@ -1,0 +1,477 @@
+I need to create a separate User / Employee Registration Panel in the ERP system.
+
+Very important:
+Please do not disturb the existing ERP modules, database logic, dashboards, invoices, quotations, accounts, procurement, inventory, projects, or reports.
+Only create and connect the new employee/user registration panel and document collection flow.
+
+MAIN REQUIREMENT
+
+I want a simple but professional system where, when I create a new user/employee in the ERP, the system automatically generates:
+
+1. Unique User ID
+2. Unique Employee Registration Link
+3. Department-wise reference ID, if department is selected
+4. Employee document submission page
+5. HR/admin review panel
+
+The purpose is:
+I should be able to create a user/employee from the admin side, then share the generated registration link with that person. The person will open the link and complete their full employee/company registration details and upload all required documents.
+
+WORKFLOW
+
+Admin / HR creates new user:
+- Employee name
+- Mobile number
+- Email
+- Department
+- Position / Designation
+- Joining type, if available
+- Location / Branch, if available
+
+After saving:
+The system must automatically generate:
+- Unique User ID
+- Unique registration link
+- Department reference ID
+
+Example:
+User ID: EMP-2026-0001
+Department ID: HR-EMP-0001 or ACC-EMP-0001
+Registration Link: https://yourdomain.com/employee-register/EMP-2026-0001/token
+
+The link must be unique and secure.
+
+EMPLOYEE REGISTRATION PAGE
+
+The employee should open the shared link and fill the full registration form.
+
+The form should include the following sections:
+
+1. Personal Information
+- Full name
+- Father name
+- Date of birth
+- Gender
+- Nationality
+- Marital status
+- Mobile number
+- Email address
+- Current address
+- Permanent home country address
+- Emergency contact name
+- Emergency contact number
+- Relationship with emergency contact
+
+2. Location Information
+- Current country
+- Current state / emirate
+- Current city
+- Home country
+- Home state / province
+- Home city
+
+3. Employment Information
+- Department
+- Designation
+- Position applied for / assigned position
+- Expected joining date
+- Previous company name
+- Previous company location
+- Previous designation
+- Reason for leaving previous company
+- Total years of experience
+- Years of experience in Gulf / UAE / GCC
+- Years of experience in home country
+- Skills / trade category
+- Salary expectation, if required
+- Visa status, if applicable
+- UAE driving license status, if applicable
+
+4. Experience Details
+The employee should be able to add multiple experience records.
+
+Each experience record should include:
+- Company name
+- Country
+- City
+- Designation
+- Start date
+- End date
+- Total duration
+- Reason for leaving
+- Job responsibilities
+
+5. Education / Academic Details
+The employee should be able to add multiple academic records.
+
+Each education record should include:
+- Certificate / degree name
+- Institute name
+- Country
+- Passing year
+- Grade / percentage, if available
+- Certificate upload
+
+6. Required Document Uploads
+
+Create a document upload section for employee documents.
+
+Required documents:
+- Emirates ID / EID, if available
+- Passport copy
+- Academic certificate
+- Country ID / National ID
+- CV / Resume
+- Passport-size photo
+- Visa copy, if available
+- Labour card, if available
+- Work permit, if available
+- Experience certificate
+- Previous company certificate, if available
+- UAE driving license, if available
+- Home country driving license, if available
+- Police clearance certificate, if required
+- Medical fitness certificate, if required
+- Any other document required according to UAE employment/company requirements
+
+Each document upload should store:
+- Document type
+- File name
+- File URL / storage path
+- Uploaded date
+- Expiry date, if applicable
+- Verification status
+- Admin remarks
+
+7. UAE Law / Compliance Documents
+
+The system should include a section for UAE employment compliance documents.
+
+Suggested UAE-related document categories:
+- Passport
+- Emirates ID
+- Residence visa
+- Labour contract
+- Work permit
+- Medical fitness certificate
+- Health insurance card
+- Labour card, if applicable
+- Offer letter
+- Employment contract
+- Company undertaking, if required
+- Police clearance, if required by role
+- Trade certificate / qualification certificate, if required by role
+
+Important:
+Some documents may not be available at the initial registration stage. The system should allow the document status to be:
+- Required
+- Submitted
+- Pending
+- Not applicable
+- Expired
+- Verified
+- Rejected
+
+8. Relative / Emergency Documents
+
+Add section for relative or emergency contact details and related documents if needed.
+
+Fields:
+- Relative name
+- Relationship
+- Contact number
+- Country
+- Address
+- Relative ID document upload, if required
+- Emergency authorization document, if required
+
+ADMIN / HR REVIEW PANEL
+
+Create an admin-side panel where HR/admin can view all employee registration submissions.
+
+HR/admin should be able to:
+- View employee profile
+- View submitted documents
+- Download documents
+- Verify documents
+- Reject documents with remarks
+- Mark document as pending
+- Add missing document request
+- Update employee status
+- Approve registration
+- Send back for correction
+
+Employee registration status:
+- Link generated
+- Pending submission
+- Submitted
+- Under review
+- Correction required
+- Approved
+- Rejected
+- Active employee
+- Inactive employee
+
+DOCUMENT VALIDATION RULES
+
+1. Required documents must be clearly marked.
+2. Passport upload should be required.
+3. Country ID / National ID should be required if applicable.
+4. Academic certificate should be required if the job requires qualification.
+5. Emirates ID should be required for UAE employees if available.
+6. Expiry date should be captured for passport, Emirates ID, visa, labour card, work permit, medical, insurance, and license.
+7. System should highlight expired or near-expiry documents.
+8. Document upload should support PDF, JPG, JPEG, PNG.
+9. File size limit should be controlled.
+10. Files should be stored securely.
+
+SECURITY REQUIREMENTS
+
+The registration link must be secure and unique.
+
+Rules:
+- Each link must have a unique token.
+- The link should be connected to only one user/employee.
+- The link should not show other employee data.
+- Admin should be able to deactivate or regenerate the link.
+- After final approval, admin can lock the registration form.
+- Employee should not access admin dashboard.
+- Employee should only access their own registration page.
+
+DATABASE SUGGESTION
+
+Create or update tables carefully.
+
+Suggested tables:
+
+employees:
+- id
+- employee_code
+- user_id
+- registration_token
+- registration_link
+- department_id
+- department_employee_code
+- full_name
+- father_name
+- date_of_birth
+- gender
+- nationality
+- marital_status
+- mobile
+- email
+- current_country
+- current_state
+- current_city
+- home_country
+- home_state
+- home_city
+- current_address
+- permanent_address
+- emergency_contact_name
+- emergency_contact_number
+- emergency_contact_relationship
+- department
+- designation
+- expected_joining_date
+- visa_status
+- uae_driving_license_status
+- total_experience_years
+- gulf_experience_years
+- home_country_experience_years
+- previous_company
+- previous_designation
+- reason_for_leaving_previous_company
+- registration_status
+- admin_remarks
+- created_at
+- updated_at
+
+employee_documents:
+- id
+- employee_id
+- document_type
+- document_name
+- file_url
+- file_name
+- expiry_date
+- status
+- required
+- admin_remarks
+- uploaded_at
+- verified_at
+- verified_by
+
+employee_experience:
+- id
+- employee_id
+- company_name
+- country
+- city
+- designation
+- start_date
+- end_date
+- total_duration
+- reason_for_leaving
+- job_responsibilities
+
+employee_education:
+- id
+- employee_id
+- certificate_name
+- institute_name
+- country
+- passing_year
+- grade
+- certificate_file_url
+
+employee_relatives:
+- id
+- employee_id
+- relative_name
+- relationship
+- contact_number
+- country
+- address
+- relative_document_url
+
+departments:
+- id
+- department_code
+- department_name
+
+USER ID / DEPARTMENT ID FORMAT
+
+Please generate clean professional IDs.
+
+Examples:
+Employee ID:
+EMP-2026-0001
+
+HR Department Employee:
+HR-EMP-2026-0001
+
+Accounts Department Employee:
+ACC-EMP-2026-0001
+
+Sales Department Employee:
+SAL-EMP-2026-0001
+
+Procurement Department Employee:
+PRO-EMP-2026-0001
+
+Inventory Department Employee:
+INV-EMP-2026-0001
+
+Projects Department Employee:
+PRJ-EMP-2026-0001
+
+Assets Department Employee:
+AST-EMP-2026-0001
+
+Reports/Admin Department Employee:
+ADM-EMP-2026-0001
+
+FRONTEND REQUIREMENTS
+
+Create these pages:
+
+1. Admin Employee Create Page
+Purpose:
+HR/admin creates the initial employee/user record and generates the registration link.
+
+2. Employee Registration Public Page
+Purpose:
+Employee fills complete details and uploads documents using the secure link.
+
+3. Employee Profile View Page
+Purpose:
+Admin can view complete employee profile.
+
+4. Employee Document Review Page
+Purpose:
+Admin can verify/reject/download documents.
+
+5. Employee List Page
+Purpose:
+Admin can view all employees with filters.
+
+Filters:
+- Department
+- Status
+- Document pending
+- Document expired
+- Nationality
+- Joining date
+- Registration status
+
+6. Employee Document Expiry Alert Page
+Purpose:
+Show documents that are expired or near expiry.
+
+DESIGN REQUIREMENTS
+
+Use the Elite Prefabricated Houses ERP theme:
+- Dark red gradient
+- Black
+- Charcoal
+- White
+- Light grey
+
+The employee registration page should look clean, simple, and professional.
+
+Use sections/cards:
+- Personal Information
+- Employment Information
+- Experience
+- Education
+- Documents
+- Emergency Contact
+- Final Declaration
+
+FINAL DECLARATION
+
+At the end of the employee registration form, add declaration text:
+
+“I hereby confirm that the information and documents provided are true and correct to the best of my knowledge. I understand that any false information or invalid document may result in rejection of my employment registration.”
+
+Add checkbox:
+“I agree and confirm.”
+
+Employee must check this before submitting.
+
+NOTIFICATION / SHARING
+
+After admin creates the employee record, show:
+- Unique Employee ID
+- Registration link
+- Copy link button
+- Share by WhatsApp button, if available
+- Share by email button, if available
+
+If email/SMS/WhatsApp integration already exists, use it carefully.
+If not, just provide copyable link.
+
+ACCEPTANCE CRITERIA
+
+The work is complete only when:
+
+1. Admin can create a user/employee record.
+2. System generates unique Employee ID.
+3. System generates unique secure registration link.
+4. Admin can copy/share the link.
+5. Employee can open the link and fill full details.
+6. Employee can upload required documents.
+7. Employee can add experience history.
+8. Employee can add academic history.
+9. Employee can add nationality, country, state, city, previous company, and experience details.
+10. UAE-related document categories are available.
+11. Admin can review, verify, reject, or request correction.
+12. Documents can be downloaded/viewed securely.
+13. Registration status updates properly.
+14. Employee data is saved in the correct database tables.
+15. No existing ERP module is damaged.
+16. UI follows Elite Prefabricated Houses color theme.
+17. The system is clean, simple, scalable, and professional.
+
+Please implement this carefully as a separate employee/user registration panel connected to the HR module, with secure unique registration links and proper employee document management.

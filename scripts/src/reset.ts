@@ -25,6 +25,7 @@ async function reset() {
     notifications, audit_logs, device_tokens,
     user_permissions, user_company_access, permissions, roles,
     user_activity_sessions, client_code_seqs,
+    employee_reg_relatives, employee_reg_education, employee_reg_experience, employee_reg_documents, employee_registrations,
     offer_letter_attachments, offer_letters,
     employee_attachments, attendance, employees,
     payments_made, payments_received,

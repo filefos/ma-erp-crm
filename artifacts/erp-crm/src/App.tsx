@@ -72,6 +72,9 @@ import { AttendanceList } from "@/pages/hr/attendance";
 import { OfferLettersList } from "@/pages/hr/offer-letters";
 import { PayrollPage } from "@/pages/hr/payroll";
 import { OfferLetterDetail } from "@/pages/hr/offer-letter-detail";
+import { EmployeeRegistrations } from "@/pages/hr/employee-registrations";
+import { EmployeeRegistrationDetail } from "@/pages/hr/employee-registration-detail";
+import EmployeeRegisterPage from "@/pages/employee-register";
 import { AssetsList } from "@/pages/assets/index";
 import { ReportsHub } from "@/pages/reports/index";
 import { SalesPipelineReport } from "@/pages/reports/sales-pipeline";
@@ -114,6 +117,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/supplier-register" component={SupplierRegisterPage} />
+      <Route path="/employee-register/:token" component={EmployeeRegisterPage} />
       {/* The executive dashboard renders permission-gated sections per user;
           it does not require a specific module guard (which would create a
           redirect loop, since ModuleGuard redirects to /dashboard on deny).
@@ -364,6 +368,14 @@ function Router() {
       <Route path="/hr/offer-letters/:id">
         {(params) => (
           <ModuleGuard module="offer_letters"><OfferLetterDetail id={params.id} /></ModuleGuard>
+        )}
+      </Route>
+      <Route path="/hr/employee-registrations">
+        <ModuleGuard module="employees"><EmployeeRegistrations /></ModuleGuard>
+      </Route>
+      <Route path="/hr/employee-registrations/:id">
+        {(params) => (
+          <ModuleGuard module="employees"><EmployeeRegistrationDetail id={params.id} /></ModuleGuard>
         )}
       </Route>
 
