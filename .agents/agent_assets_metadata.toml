@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "l53V3_fNr3GgOTHnUKqWv"
+uri = "file://artifacts/erp-crm/public/elite-prefab-logo.svg"
+type = "image"
+title = "Elite Prefab Logo (SVG)"

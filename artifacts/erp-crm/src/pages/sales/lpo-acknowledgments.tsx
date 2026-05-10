@@ -1554,7 +1554,7 @@ export function LpoAcknowledgments() {
               // Hardcoded company info matching document-print.tsx exactly
               const CO_INFO: Record<number, { name: string; address: string; phone: string; email: string; contact: string; website?: string }> = {
                 1: { name: "PRIME MAX PREFAB HOUSES IND. LLC. SP.", address: "Plot # 2040, Sajja Industrial Area, Sharjah, UAE", phone: "056 616 3555", email: "sales@primemaxprefab.com", contact: "ASIF LATIF", website: "www.primemaxprefab.com" },
-                2: { name: "ELITE PREFAB INDUSTRIES LLC", address: "Industrial Area, Dubai, UAE", phone: "+971 55 100 2000", email: "info@eliteprefab.ae", contact: "Sales Team" },
+                2: { name: "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC", address: "Sajja Industrial Area, Sharjah, UAE", phone: "+971 55 100 2000", email: "info@eliteprefab.ae", contact: "General Manager", website: "www.eliteprefab.ae" },
               };
               const co = CO_INFO[companyId] ?? CO_INFO[1];
               const logoSrc = companyId === 2 ? `${BASE}elite-prefab-logo.svg` : `${BASE}prime-max-logo.png`;

@@ -242,7 +242,7 @@ export function printTable(
 <body>
 
   <div class="letterhead">
-    <div class="co-name">Prime Max Prefab Houses Ind. LLC <span class="co-div"></span> Elite Prefab Industries LLC</div>
+    <div class="co-name">Prime Max Prefab Houses Ind. LLC <span class="co-div"></span> Elite Pre-Fabricated Houses Trading Co. LLC</div>
     <div class="co-sub">
       Industrial Area 12, Sharjah, UAE &nbsp;|&nbsp; TRN: 100234567890001
       &nbsp;&nbsp;&bull;&nbsp;&nbsp;

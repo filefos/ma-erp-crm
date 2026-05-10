@@ -1,18 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
-  <!-- House rooftops - similar to Prime Max style but mirrored/slightly different arrangement -->
-  <!-- Left roof -->
-  <polyline points="30,110 100,45 170,110" fill="none" stroke="#152965" stroke-width="11" stroke-linejoin="round" stroke-linecap="square"/>
-  <!-- Right roof (offset, overlapping) -->
-  <polyline points="80,110 160,38 240,110" fill="none" stroke="#152965" stroke-width="11" stroke-linejoin="round" stroke-linecap="square"/>
-  <!-- Horizontal base line -->
-  <line x1="30" y1="118" x2="240" y2="118" stroke="#152965" stroke-width="7"/>
-  <line x1="50" y1="128" x2="220" y2="128" stroke="#152965" stroke-width="3.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 310" width="660" height="310">
 
-  <!-- Company name -->
-  <text x="200" y="160" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="34" fill="#152965" text-anchor="middle" letter-spacing="2">ELITE PREFAB</text>
+  <!-- House icon centred at x=330 -->
 
-  <!-- Subtitle with decorative dashes -->
-  <line x1="30" y1="175" x2="90" y2="175" stroke="#152965" stroke-width="2.5"/>
-  <text x="200" y="179" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#152965" text-anchor="middle" letter-spacing="1.5">HOUSES TRADING CO. LLC</text>
-  <line x1="310" y1="175" x2="370" y2="175" stroke="#152965" stroke-width="2.5"/>
+  <!-- Main house solid (navy) -->
+  <polygon points="330,16 195,120 232,120 232,174 428,174 428,120 465,120" fill="#0f2d5a"/>
+
+  <!-- Right roof overhang accent (gold) -->
+  <polygon points="358,46 465,120 428,120 332,58" fill="#c9942a"/>
+
+  <!-- Chimney (gold) -->
+  <rect x="380" y="34" width="28" height="54" fill="#c9942a"/>
+
+  <!-- Window 2x2 pane (gold) -->
+  <rect x="282" y="128" width="14" height="14" fill="#c9942a"/>
+  <rect x="300" y="128" width="14" height="14" fill="#c9942a"/>
+  <rect x="282" y="146" width="14" height="14" fill="#c9942a"/>
+  <rect x="300" y="146" width="14" height="14" fill="#c9942a"/>
+
+  <!-- Door (gold) -->
+  <rect x="345" y="145" width="28" height="29" fill="#c9942a"/>
+
+  <!-- Ground line: navy left, gold right -->
+  <rect x="115" y="174" width="212" height="9" fill="#0f2d5a"/>
+  <rect x="327" y="174" width="218" height="9" fill="#c9942a"/>
+
+  <!-- ELITE (gold) -->
+  <text x="87" y="242"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900" font-size="66"
+        fill="#c9942a" letter-spacing="2">ELITE</text>
+
+  <!-- PREFAB (navy) -->
+  <text x="314" y="242"
+        font-family="Arial Black, Arial, sans-serif"
+        font-weight="900" font-size="66"
+        fill="#0f2d5a" letter-spacing="2">PREFAB</text>
+
+  <!-- Subtitle centred -->
+  <text x="330" y="281"
+        font-family="Arial, Helvetica, sans-serif"
+        font-weight="700" font-size="19"
+        fill="#0f2d5a" letter-spacing="1.4"
+        text-anchor="middle">PRE-FABRICATED HOUSES TRADING CO. LLC</text>
 </svg>
