@@ -1,45 +1,73 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 310" width="660" height="310">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 310" width="600" height="310">
+  <defs>
+    <clipPath id="rightSlopeClip">
+      <!-- right slope band: narrow parallelogram along the right roof slope -->
+      <polygon points="295,18 535,170 525,150 285,10"/>
+    </clipPath>
+    <clipPath id="eliteClip">
+      <text x="300" y="238" text-anchor="middle"
+            font-family="Arial Black, Arial, sans-serif"
+            font-weight="900" font-size="112" letter-spacing="-2">ELITE</text>
+    </clipPath>
+  </defs>
 
-  <!-- House icon centred at x=330 -->
+  <!-- ── ROOF ─────────────────────────────── -->
+  <!-- Left slope: solid black -->
+  <line x1="68" y1="165" x2="295" y2="18" stroke="#0D0D0D" stroke-width="13" stroke-linecap="round"/>
 
-  <!-- Main house solid (navy) -->
-  <polygon points="330,16 195,120 232,120 232,174 428,174 428,120 465,120" fill="#0f2d5a"/>
+  <!-- Right slope: red/black diagonal stripes clipped to slope band -->
+  <g clip-path="url(#rightSlopeClip)">
+    <!-- Bands rotate at same angle as slope (~32°), running parallel to it -->
+    <rect x="-50" y="-30" width="700" height="22" fill="#8B0000"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="-5"  width="700" height="16" fill="#1E1E1E"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="19"  width="700" height="16" fill="#8B0000"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="43"  width="700" height="13" fill="#1E1E1E"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="64"  width="700" height="12" fill="#8B0000"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="84"  width="700" height="10" fill="#1E1E1E"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="103" width="700" height="9"  fill="#8B0000"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="121" width="700" height="7"  fill="#1E1E1E"  transform="rotate(-32,300,90)"/>
+    <rect x="-50" y="138" width="700" height="6"  fill="#8B0000"  transform="rotate(-32,300,90)"/>
+  </g>
+  <!-- Right slope outline: black on top -->
+  <line x1="305" y1="18" x2="534" y2="165" stroke="#0D0D0D" stroke-width="13" stroke-linecap="round"/>
 
-  <!-- Right roof overhang accent (gold) -->
-  <polygon points="358,46 465,120 428,120 332,58" fill="#c9942a"/>
+  <!-- Horizontal base lines flanking the centre gap -->
+  <line x1="68"  y1="165" x2="232" y2="165" stroke="#0D0D0D" stroke-width="7"/>
+  <line x1="368" y1="165" x2="534" y2="165" stroke="#0D0D0D" stroke-width="7"/>
 
-  <!-- Chimney (gold) -->
-  <rect x="380" y="34" width="28" height="54" fill="#c9942a"/>
+  <!-- Window: 2×2 red panes centred under peak -->
+  <rect x="276" y="86"  width="14" height="14" rx="1" fill="#8B0000"/>
+  <rect x="294" y="86"  width="14" height="14" rx="1" fill="#8B0000"/>
+  <rect x="276" y="104" width="14" height="14" rx="1" fill="#8B0000"/>
+  <rect x="294" y="104" width="14" height="14" rx="1" fill="#8B0000"/>
 
-  <!-- Window 2x2 pane (gold) -->
-  <rect x="282" y="128" width="14" height="14" fill="#c9942a"/>
-  <rect x="300" y="128" width="14" height="14" fill="#c9942a"/>
-  <rect x="282" y="146" width="14" height="14" fill="#c9942a"/>
-  <rect x="300" y="146" width="14" height="14" fill="#c9942a"/>
-
-  <!-- Door (gold) -->
-  <rect x="345" y="145" width="28" height="29" fill="#c9942a"/>
-
-  <!-- Ground line: navy left, gold right -->
-  <rect x="115" y="174" width="212" height="9" fill="#0f2d5a"/>
-  <rect x="327" y="174" width="218" height="9" fill="#c9942a"/>
-
-  <!-- ELITE (gold) -->
-  <text x="87" y="242"
+  <!-- ── ELITE — venetian-blind stripe effect ── -->
+  <!-- Solid black text base -->
+  <text x="300" y="238" text-anchor="middle"
         font-family="Arial Black, Arial, sans-serif"
-        font-weight="900" font-size="66"
-        fill="#c9942a" letter-spacing="2">ELITE</text>
+        font-weight="900" font-size="112" letter-spacing="-2" fill="#0D0D0D">ELITE</text>
+  <!-- White stripes clipped to letter outlines -->
+  <g clip-path="url(#eliteClip)">
+    <rect x="0" y="140" width="600" height="10" fill="white"/>
+    <rect x="0" y="158" width="600" height="9"  fill="white"/>
+    <rect x="0" y="175" width="600" height="8"  fill="white"/>
+    <rect x="0" y="191" width="600" height="7"  fill="white"/>
+    <rect x="0" y="206" width="600" height="6"  fill="white"/>
+    <rect x="0" y="220" width="600" height="5"  fill="white"/>
+    <rect x="0" y="232" width="600" height="4"  fill="white"/>
+  </g>
 
-  <!-- PREFAB (navy) -->
-  <text x="314" y="242"
-        font-family="Arial Black, Arial, sans-serif"
-        font-weight="900" font-size="66"
-        fill="#0f2d5a" letter-spacing="2">PREFAB</text>
+  <!-- Red accent bars below ELITE -->
+  <rect x="68"  y="248" width="464" height="7" fill="#8B0000"/>
+  <rect x="68"  y="259" width="464" height="3" fill="#8B0000"/>
 
-  <!-- Subtitle centred -->
-  <text x="330" y="281"
-        font-family="Arial, Helvetica, sans-serif"
-        font-weight="700" font-size="19"
-        fill="#0f2d5a" letter-spacing="1.4"
-        text-anchor="middle">PRE-FABRICATED HOUSES TRADING CO. LLC</text>
+  <!-- ── Subtitle ── -->
+  <!-- left dash -->
+  <line x1="68"  y1="291" x2="107" y2="291" stroke="#0D0D0D" stroke-width="2.5"/>
+  <text x="115" y="295" font-family="Arial, Helvetica, sans-serif" font-weight="700"
+        font-size="17.5" letter-spacing="3" fill="#0D0D0D">PREFABRICATED </text>
+  <text x="362" y="295" font-family="Arial, Helvetica, sans-serif" font-weight="700"
+        font-size="17.5" letter-spacing="3" fill="#8B0000">HOUSES</text>
+  <!-- right dash -->
+  <line x1="492" y1="291" x2="532" y2="291" stroke="#8B0000" stroke-width="2.5"/>
 </svg>

@@ -4,11 +4,15 @@ import { useAuth } from "@/hooks/useAuth";
 
 const STORAGE_KEY = "erp_active_company_id";
 const CHANGE_EVENT = "erp:active-company-changed";
+const ELITE_SCHEME_KEY = "elite_color_scheme";
+const ELITE_SCHEME_EVENT = "erp:elite-scheme-changed";
 
 const COMPANY_INFO: Record<number, { name: string; short: string; poweredBy: string; logoSrc: string }> = {
   1: { name: "Prime Max Prefab Houses Ind. LLC", short: "Prime Max", poweredBy: "Prime Solution", logoSrc: "/prime-max-logo.png" },
   2: { name: "Elite Pre-Fabricated Houses Trading Co. LLC", short: "Elite Prefab", poweredBy: "Prime Solution", logoSrc: "/elite-prefab-logo.svg" },
 };
+
+export type EliteScheme = "A" | "B";
 
 function readStored(): number | null {
   if (typeof window === "undefined") return null;
@@ -18,19 +22,21 @@ function readStored(): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function readEliteScheme(): EliteScheme {
+  if (typeof window === "undefined") return "A";
+  return (localStorage.getItem(ELITE_SCHEME_KEY) as EliteScheme) ?? "A";
+}
+
 export function useActiveCompany() {
   const { user } = useAuth();
   const userCompanyId = (user as any)?.companyId as number | null | undefined;
 
-  // localStorage is the source of truth for the user-selected workspace; the
-  // user's primary companyId is only a fallback when nothing has been picked.
   const [activeCompanyId, setActiveCompanyId] = useState<number>(() => {
     return readStored() ?? userCompanyId ?? 1;
   });
 
-  // Sync to login/logout — when the user object first loads with a companyId
-  // and nothing has been picked yet, seed localStorage so the API header is
-  // attached on the very next request.
+  const [eliteScheme, setEliteSchemeState] = useState<EliteScheme>(readEliteScheme);
+
   useEffect(() => {
     if (readStored() == null && userCompanyId) {
       localStorage.setItem(STORAGE_KEY, String(userCompanyId));
@@ -38,8 +44,6 @@ export function useActiveCompany() {
     }
   }, [userCompanyId]);
 
-  // React to switches initiated elsewhere in the app (other tabs, the
-  // company switcher dropdown, etc.).
   useEffect(() => {
     const onChange = () => {
       const next = readStored();
@@ -53,16 +57,27 @@ export function useActiveCompany() {
     };
   }, []);
 
+  useEffect(() => {
+    const onSchemeChange = () => setEliteSchemeState(readEliteScheme());
+    window.addEventListener(ELITE_SCHEME_EVENT, onSchemeChange);
+    return () => window.removeEventListener(ELITE_SCHEME_EVENT, onSchemeChange);
+  }, []);
+
   const queryClient = useQueryClient();
 
   const setActiveCompany = useCallback((id: number) => {
     localStorage.setItem(STORAGE_KEY, String(id));
     setActiveCompanyId(id);
     window.dispatchEvent(new Event(CHANGE_EVENT));
-    // Server-side scoping changes — drop all cached queries so every screen
-    // re-fetches against the new workspace.
     queryClient.clear();
   }, [queryClient]);
+
+  const toggleEliteScheme = useCallback(() => {
+    const next: EliteScheme = readEliteScheme() === "A" ? "B" : "A";
+    localStorage.setItem(ELITE_SCHEME_KEY, next);
+    setEliteSchemeState(next);
+    window.dispatchEvent(new Event(ELITE_SCHEME_EVENT));
+  }, []);
 
   const info = COMPANY_INFO[activeCompanyId] ?? COMPANY_INFO[1];
 
@@ -82,5 +97,7 @@ export function useActiveCompany() {
     logoSrc: info.logoSrc,
     setActiveCompany,
     filterByCompany,
+    eliteScheme,
+    toggleEliteScheme,
   };
 }

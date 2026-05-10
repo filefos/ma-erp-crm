@@ -300,7 +300,8 @@ function NavGroupItem({ group }: { group: NavGroup }) {
               (item.href !== "/" && location.startsWith(item.href + "/"));
             return (
               <Link key={item.href} href={item.href}
-                className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-[#1e6ab0] text-white font-medium" : "text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-white/8"}`}>
+                className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isActive ? "text-white font-medium" : "text-sidebar-foreground/55 hover:text-sidebar-foreground hover:bg-white/8"}`}
+                style={isActive ? { backgroundColor: "var(--sidebar-active-item, #1e6ab0)" } : undefined}>
                 <ItemIcon className="w-3.5 h-3.5 shrink-0" />
                 {item.label}
               </Link>
@@ -317,7 +318,8 @@ function DashboardLink() {
   const isActive = location === "/" || location === "/dashboard";
   return (
     <Link href="/dashboard"
-      className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors ${isActive ? "bg-[#1e6ab0] text-white font-medium" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/8"}`}>
+      className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm transition-colors ${isActive ? "text-white font-medium" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/8"}`}
+      style={isActive ? { backgroundColor: "var(--sidebar-active-item, #1e6ab0)" } : undefined}>
       <LayoutDashboard className="w-4 h-4 shrink-0" />
       Dashboard
     </Link>
@@ -416,16 +418,60 @@ function NotificationBell() {
   );
 }
 
+// Color schemes for Elite Prefab branding
+const ELITE_SCHEMES = {
+  A: {
+    // Scheme A — Charcoal/Black
+    "--sidebar": "0 0% 8%",
+    "--sidebar-foreground": "0 0% 93%",
+    "--sidebar-border": "0 0% 16%",
+    "--sidebar-accent": "0 75% 18%",
+    "--sidebar-accent-foreground": "0 0% 100%",
+    "--sidebar-active-item": "#8B0000",
+    "--sidebar-avatar": "#8B0000",
+    label: "A",
+    tip: "Black",
+  },
+  B: {
+    // Scheme B — Dark Crimson/Red
+    "--sidebar": "0 72% 20%",
+    "--sidebar-foreground": "0 0% 95%",
+    "--sidebar-border": "0 60% 28%",
+    "--sidebar-accent": "0 0% 10%",
+    "--sidebar-accent-foreground": "0 0% 100%",
+    "--sidebar-active-item": "#1E1E1E",
+    "--sidebar-avatar": "#1E1E1E",
+    label: "B",
+    tip: "Red",
+  },
+} as const;
+
 function SidebarContent() {
   const { user, logout } = useAuth();
-  const { companyShort, poweredBy, logoSrc } = useActiveCompany();
+  const { companyShort, poweredBy, logoSrc, activeCompanyId, eliteScheme, toggleEliteScheme } = useActiveCompany();
   const { can } = usePermissions();
   const u = user as { name?: string; permissionLevel?: string; role?: string; departmentName?: string; uniqueUserId?: string | null } | undefined;
   const level = u?.permissionLevel ?? "user";
   const visibleGroups = visibleGroupsFor(u, can("emails"));
 
+  const isElite = activeCompanyId === 2;
+  const scheme = isElite ? ELITE_SCHEMES[eliteScheme] : null;
+
+  const sidebarStyle: React.CSSProperties = scheme
+    ? {
+        "--sidebar": scheme["--sidebar"],
+        "--sidebar-foreground": scheme["--sidebar-foreground"],
+        "--sidebar-border": scheme["--sidebar-border"],
+        "--sidebar-accent": scheme["--sidebar-accent"],
+        "--sidebar-accent-foreground": scheme["--sidebar-accent-foreground"],
+        "--sidebar-active-item": scheme["--sidebar-active-item"],
+      } as React.CSSProperties
+    : { "--sidebar-active-item": "#1e6ab0" } as React.CSSProperties;
+
+  const avatarBg = isElite ? scheme!["--sidebar-avatar"] : "#1e6ab0";
+
   return (
-    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
+    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground" style={sidebarStyle}>
       {/* Logo */}
       <div className="px-4 py-3 border-b border-white/10">
         <div className="bg-white rounded-lg px-3 py-2 inline-block">
@@ -448,8 +494,30 @@ function SidebarContent() {
 
       {/* User footer */}
       <div className="p-3 border-t border-white/10">
+        {/* Elite A/B scheme switcher */}
+        {isElite && (
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <span className="text-[10px] text-white/40 flex-1">Brand theme</span>
+            <button
+              onClick={toggleEliteScheme}
+              title={`Switch to scheme ${eliteScheme === "A" ? "B (Red)" : "A (Black)"}`}
+              className="flex items-center gap-0.5 rounded-md overflow-hidden ring-1 ring-white/20 hover:ring-white/50 transition-all text-[10px] font-bold"
+            >
+              <span
+                className={`px-2.5 py-1 transition-colors ${eliteScheme === "A" ? "bg-[#1E1E1E] text-white" : "bg-white/10 text-white/40"}`}
+              >A</span>
+              <span
+                className={`px-2.5 py-1 transition-colors ${eliteScheme === "B" ? "bg-[#8B0000] text-white" : "bg-white/10 text-white/40"}`}
+              >B</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 mb-2 px-2">
-          <div className="w-7 h-7 rounded-full bg-[#1e6ab0] flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/15">
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ring-1 ring-white/15"
+            style={{ backgroundColor: avatarBg }}
+          >
             {u?.name?.charAt(0)?.toUpperCase() ?? "U"}
           </div>
           <div className="flex-1 min-w-0">
