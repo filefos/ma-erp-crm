@@ -7,6 +7,7 @@
     "hello": "tsx ./src/hello.ts",
     "seed": "tsx ./src/seed.ts",
     "fix-roles": "tsx ./src/fix-roles.ts",
+    "reset": "tsx ./src/reset.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
