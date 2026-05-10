@@ -20,6 +20,54 @@ import { format } from "date-fns";
 const AUTH_KEY = "erp_token";
 function authHeaders() { return { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem(AUTH_KEY) ?? ""}` }; }
 
+interface DocRowProps {
+  doc: { id: number; documentName: string; documentType: string; fileData: string | null; fileName: string | null; expiryDate: string | null; status: string; adminRemarks: string | null };
+  onVerify: (docId: number, status: string, adminRemarks?: string) => void;
+  onDownload: (docId: number, fileName: string | null) => void;
+}
+
+function DocRow({ doc, onVerify, onDownload }: DocRowProps) {
+  const sm = DOC_STATUS_META[doc.status] ?? { label: doc.status, color: "bg-gray-100 text-gray-600" };
+  const [showRemarks, setShowRemarks] = useState(false);
+  const [remarks, setRemarks] = useState(doc.adminRemarks ?? "");
+  return (
+    <Card>
+      <CardContent className="p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium text-sm">{doc.documentName}</span>
+              <Badge className={`text-[10px] border-0 ${sm.color}`}>{sm.label}</Badge>
+              <span className="text-xs text-muted-foreground font-mono">{doc.documentType}</span>
+            </div>
+            {doc.expiryDate && <p className="text-xs text-muted-foreground mt-0.5">Expiry: {doc.expiryDate}</p>}
+            {doc.adminRemarks && <p className="text-xs text-muted-foreground mt-0.5 italic">Remarks: {doc.adminRemarks}</p>}
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {doc.fileData === "[uploaded]" && (
+              <Button size="sm" variant="outline" onClick={() => onDownload(doc.id, doc.fileName)}>
+                <Download className="w-3.5 h-3.5" />
+              </Button>
+            )}
+            <Button size="sm" variant="outline" className="text-emerald-600 hover:text-emerald-700" onClick={() => onVerify(doc.id, "verified")}>
+              <CheckCircle className="w-3.5 h-3.5" />
+            </Button>
+            <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setShowRemarks(!showRemarks)}>
+              <XCircle className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+        {showRemarks && (
+          <div className="mt-3 flex gap-2">
+            <Input placeholder="Rejection remarks…" value={remarks} onChange={e => setRemarks(e.target.value)} className="text-sm h-8" />
+            <Button size="sm" variant="destructive" onClick={() => { onVerify(doc.id, "rejected", remarks); setShowRemarks(false); }}>Reject</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 const DOC_STATUS_META: Record<string, { label: string; color: string }> = {
   submitted: { label: "Submitted", color: "bg-blue-100 text-blue-800" },
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
@@ -248,49 +296,14 @@ export function EmployeeRegistrationDetail({ id }: { id: string }) {
                 <div className="text-center py-8 text-muted-foreground text-sm">No documents uploaded yet.</div>
               ) : (
                 <div className="space-y-2">
-                  {reg.documents.map(doc => {
-                    const sm = DOC_STATUS_META[doc.status] ?? { label: doc.status, color: "bg-gray-100 text-gray-600" };
-                    const [showRemarks, setShowRemarks] = useState(false);
-                    const [remarks, setRemarks] = useState(doc.adminRemarks ?? "");
-                    return (
-                      <Card key={doc.id}>
-                        <CardContent className="p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-medium text-sm">{doc.documentName}</span>
-                                <Badge className={`text-[10px] border-0 ${sm.color}`}>{sm.label}</Badge>
-                                <span className="text-xs text-muted-foreground font-mono">{doc.documentType}</span>
-                              </div>
-                              {doc.expiryDate && (
-                                <p className="text-xs text-muted-foreground mt-0.5">Expiry: {doc.expiryDate}</p>
-                              )}
-                              {doc.adminRemarks && <p className="text-xs text-muted-foreground mt-0.5 italic">Remarks: {doc.adminRemarks}</p>}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              {doc.fileData === "[uploaded]" && (
-                                <Button size="sm" variant="outline" onClick={() => downloadDoc(doc.id, doc.fileName)}>
-                                  <Download className="w-3.5 h-3.5" />
-                                </Button>
-                              )}
-                              <Button size="sm" variant="outline" className="text-emerald-600 hover:text-emerald-700" onClick={() => verifyDoc.mutate({ docId: doc.id, status: "verified" })}>
-                                <CheckCircle className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => setShowRemarks(!showRemarks)}>
-                                <XCircle className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                          {showRemarks && (
-                            <div className="mt-3 flex gap-2">
-                              <Input placeholder="Rejection remarks…" value={remarks} onChange={e => setRemarks(e.target.value)} className="text-sm h-8" />
-                              <Button size="sm" variant="destructive" onClick={() => { verifyDoc.mutate({ docId: doc.id, status: "rejected", adminRemarks: remarks }); setShowRemarks(false); }}>Reject</Button>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  {reg.documents.map(doc => (
+                    <DocRow
+                      key={doc.id}
+                      doc={doc}
+                      onVerify={(docId, status, adminRemarks) => verifyDoc.mutate({ docId, status, adminRemarks })}
+                      onDownload={(docId, fileName) => downloadDoc(docId, fileName)}
+                    />
+                  ))}
                 </div>
               )}
             </TabsContent>
