@@ -46,19 +46,27 @@ async function reset() {
   console.log("All tables cleared.");
 
   const [company] = await db.insert(companiesTable).values({
-    name: "My Company",
-    shortName: "MC",
-    prefix: "MC",
+    name: "Prime Max Prefab Houses Ind. LLC",
+    shortName: "Prime Max",
+    prefix: "PM",
+    trn: "105383255400003",
+    vatPercent: 5,
+    bankDetails: [
+      "Account Title: PRIME MAX PREFAB HOUSES IND LLC SP",
+      "IBAN: AE300030014498851920002",
+      "Account Number: 14498851920002",
+      "BIC / SWIFT: ADCBAEAAXXX",
+    ].join("\n"),
   }).returning();
 
-  console.log(`Created placeholder company: ${company.name} (id=${company.id})`);
+  console.log(`Created company: ${company.name} (id=${company.id})`);
 
   const [dept] = await db.insert(departmentsTable).values({
     name: "Administration",
     companyId: company.id,
   }).returning();
 
-  const superAdminRole = await db.insert(rolesTable).values({
+  const [superAdminRole] = await db.insert(rolesTable).values({
     code: "super_admin",
     name: "Super Admin",
     description: "Unrestricted access across all companies and modules",
@@ -67,7 +75,7 @@ async function reset() {
   }).returning();
 
   const permValues = MODULES.map(module => ({
-    roleId: superAdminRole[0].id,
+    roleId: superAdminRole.id,
     module,
     canView: true, canCreate: true, canEdit: true,
     canApprove: true, canDelete: true, canExport: true, canPrint: true,
@@ -81,7 +89,7 @@ async function reset() {
     email: "filefos@gmail.com",
     passwordHash,
     phone: "",
-    roleId: superAdminRole[0].id,
+    roleId: superAdminRole.id,
     departmentId: dept.id,
     companyId: company.id,
     permissionLevel: "super_admin",
@@ -95,11 +103,12 @@ async function reset() {
   });
 
   console.log("\n✓ Reset complete!");
-  console.log("─────────────────────────────────────");
+  console.log("─────────────────────────────────────────────────");
+  console.log(`  Company:  Prime Max Prefab Houses Ind. LLC`);
+  console.log(`  TRN:      105383255400003`);
   console.log(`  Email:    filefos@gmail.com`);
   console.log(`  Password: Prime@2026`);
-  console.log("─────────────────────────────────────");
-  console.log("\nLog in and go to Admin → Companies to set up your real company.");
+  console.log("─────────────────────────────────────────────────");
   process.exit(0);
 }
 
