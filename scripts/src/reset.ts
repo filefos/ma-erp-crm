@@ -83,12 +83,10 @@ async function reset() {
   // ── Departments ────────────────────────────────────────────────────────────
   const [pmDept] = await db.insert(departmentsTable).values({
     name: "Administration",
-    companyId: primeMax.id,
   }).returning();
 
   await db.insert(departmentsTable).values({
     name: "Administration",
-    companyId: elite.id,
   });
 
   // ── Super Admin role ───────────────────────────────────────────────────────
@@ -116,7 +114,7 @@ async function reset() {
     email: "filefos@gmail.com",
     passwordHash,
     phone: "",
-    roleId: superAdminRole.id,
+    role: "super_admin",
     departmentId: pmDept.id,
     companyId: primeMax.id,
     permissionLevel: "super_admin",

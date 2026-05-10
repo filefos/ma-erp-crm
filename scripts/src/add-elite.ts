@@ -19,7 +19,7 @@ async function run() {
   }).returning();
   console.log(`Created company: ${elite.name} (id=${elite.id})`);
 
-  await db.insert(departmentsTable).values({ name: "Administration", companyId: elite.id });
+  await db.insert(departmentsTable).values({ name: "Administration" });
   console.log("Created Administration dept for Elite");
 
   await db.update(companiesTable).set({
