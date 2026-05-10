@@ -156,6 +156,81 @@ const REF_LABELS: Record<DocumentType, string> = {
   purchase_order: "PO Number",
 };
 
+// ── Document brand theme ────────────────────────────────────────────────────
+interface DocTheme {
+  headerBg: string;
+  titleBg: string;
+  titleGradient?: string;
+  sectionHeaderBg: string;
+  labelBg: string;
+  labelHalfBg: string;
+  tableHeaderBg: string;
+  navyBarBg: string;
+  navyBarAmountBg: string;
+  oddRowBg: string;
+  addItemsOddBg: string;
+  addItemsEvenBg: string;
+  specOddBg: string;
+  tcOddBg: string;
+  vatRowBg: string;
+  grandTotalBg: string;
+  footerColor: string;
+  footerBorderColor: string;
+  chequeColor: string;
+  tcSectionHeaderBg: string;
+  tcHighlightColor: string;
+}
+
+const PRIME_THEME: DocTheme = {
+  headerBg: "#0f2d5a",
+  titleBg: "#1e6ab0",
+  sectionHeaderBg: "#0f2d5a",
+  labelBg: "#0f2d5a",
+  labelHalfBg: "#1e3a6e",
+  tableHeaderBg: "#0f2d5a",
+  navyBarBg: "#0f2d5a",
+  navyBarAmountBg: "#1e5a9e",
+  oddRowBg: "#dce6f1",
+  addItemsOddBg: "#eaf0f8",
+  addItemsEvenBg: "#ffffff",
+  specOddBg: "#f4f7fb",
+  tcOddBg: "#f0f4f9",
+  vatRowBg: "#bdd7ee",
+  grandTotalBg: "#70ad47",
+  footerColor: "#0f2d5a",
+  footerBorderColor: "#0f2d5a",
+  chequeColor: "#0f2d5a",
+  tcSectionHeaderBg: "#1e3a6e",
+  tcHighlightColor: "#0f2d5a",
+};
+
+const ELITE_THEME: DocTheme = {
+  headerBg: "#0D0D0D",
+  titleBg: "#8B0000",
+  titleGradient: "linear-gradient(90deg, #8B0000 0%, #C00000 50%, #8B0000 100%)",
+  sectionHeaderBg: "#0D0D0D",
+  labelBg: "#1E1E1E",
+  labelHalfBg: "#1E1E1E",
+  tableHeaderBg: "#0D0D0D",
+  navyBarBg: "#0D0D0D",
+  navyBarAmountBg: "#6B0000",
+  oddRowBg: "#F3F3F3",
+  addItemsOddBg: "#F3F3F3",
+  addItemsEvenBg: "#ffffff",
+  specOddBg: "#F3F3F3",
+  tcOddBg: "#F5F5F5",
+  vatRowBg: "#E0E0E0",
+  grandTotalBg: "#8B0000",
+  footerColor: "#0D0D0D",
+  footerBorderColor: "#8B0000",
+  chequeColor: "#8B0000",
+  tcSectionHeaderBg: "#1E1E1E",
+  tcHighlightColor: "#8B0000",
+};
+
+const DocThemeContext = React.createContext<DocTheme>(PRIME_THEME);
+// ──────────────────────────────────────────────────────────────────────────
+
 function Th({ children, right, center }: { children: React.ReactNode; right?: boolean; center?: boolean }) {
   return (
     <th
@@ -190,36 +265,39 @@ function Td({
 }
 
 function LabelTd({ children }: { children: React.ReactNode }) {
+  const theme = React.useContext(DocThemeContext);
   return (
     <td className="border border-gray-400 px-2 py-[2px] text-[11px] font-semibold text-white whitespace-nowrap w-[18%]"
-      style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+      style={{ backgroundColor: theme.labelBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
       {children}
     </td>
   );
 }
 
 function LabelTdHalf({ children }: { children: React.ReactNode }) {
+  const theme = React.useContext(DocThemeContext);
   return (
     <td className="border border-gray-400 px-2 py-[2px] text-[11px] font-semibold text-white whitespace-nowrap"
-      style={{ width: "38%", backgroundColor: "#1e3a6e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+      style={{ width: "38%", backgroundColor: theme.labelHalfBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
       {children}
     </td>
   );
 }
 
 function NavyBar({ children, amount }: { children: React.ReactNode; amount?: string }) {
+  const theme = React.useContext(DocThemeContext);
   return (
     <tr style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
       <td
         className="border border-gray-400 px-2 py-[2px] text-[11px] font-black uppercase text-white"
-        style={{ backgroundColor: "#0f2d5a" } as React.CSSProperties}
+        style={{ backgroundColor: theme.navyBarBg } as React.CSSProperties}
       >
         {children}
       </td>
       {amount !== undefined && (
         <td
           className="border border-gray-400 px-2 py-[2px] text-[11px] font-black text-right text-white whitespace-nowrap"
-          style={{ width: 130, backgroundColor: "#1e5a9e" } as React.CSSProperties}
+          style={{ width: 130, backgroundColor: theme.navyBarAmountBg } as React.CSSProperties}
         >
           {amount}
         </td>
@@ -229,14 +307,15 @@ function NavyBar({ children, amount }: { children: React.ReactNode; amount?: str
 }
 
 function PageFooter({ left, page, hideDisclaimer }: { left: React.ReactNode; page: string; hideDisclaimer?: boolean }) {
+  const theme = React.useContext(DocThemeContext);
   return (
     <div className="doc-page-footer">
       {!hideDisclaimer && (
-        <div className="text-center text-[10px] italic text-[#0f2d5a] mb-1">
+        <div className="text-center text-[10px] italic mb-1" style={{ color: theme.footerColor }}>
           This is a computer generated document. No signature or stamp required.
         </div>
       )}
-      <div className="flex items-center justify-between text-[10px] text-[#0f2d5a] border-t border-[#0f2d5a] pt-1">
+      <div className="flex items-center justify-between text-[10px] pt-1" style={{ color: theme.footerColor, borderTop: `1px solid ${theme.footerBorderColor}` }}>
         <span className="font-mono tracking-wide">{left}</span>
         <span className="font-semibold">{page}</span>
       </div>
@@ -259,6 +338,7 @@ function WordsRow({ words, colSpan }: { words: string; colSpan?: number }) {
 }
 
 export function DocumentPrint({ data }: { data: DocumentData }) {
+  const theme = data.companyId === 2 ? ELITE_THEME : PRIME_THEME;
   const co = COMPANIES[data.companyId] ?? COMPANIES[1];
   const coName = data.companyRef ?? co.name;
   const companyLogo = data.companyId === 2
@@ -296,7 +376,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
   const additionalItems = data.additionalItems ?? DEFAULT_ADDITIONAL_ITEMS;
 
   return (
-    <>
+    <DocThemeContext.Provider value={theme}>
       <style>{`
         @media print {
           @page { size: A4 portrait; margin: 0 3.5mm; }
@@ -367,7 +447,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── LETTERHEAD ─────────────────────────────────────────────── */}
         <div className="overflow-hidden mb-[2px]">
-          <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+          <div className="text-white py-2 px-4 flex items-center gap-4" style={{ backgroundColor: theme.headerBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
             {companyLogo && (
               <img
                 src={companyLogo}
@@ -382,7 +462,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
             </div>
           </div>
-          <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+          <div className="text-white text-center py-1" style={{ background: theme.titleGradient ?? theme.titleBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
             <span className="text-[15px] font-black tracking-widest uppercase">{DOC_TITLES[data.type]}</span>
           </div>
         </div>
@@ -393,8 +473,8 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <table className="w-full border-collapse border border-gray-400 mb-3">
               <thead>
                 <tr>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Buyer (Our Company)</th>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Supplier Detail</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: theme.sectionHeaderBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Buyer (Our Company)</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: theme.sectionHeaderBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Supplier Detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -414,7 +494,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <table className="flex-1 border-collapse border border-gray-400">
               <thead>
                 <tr>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Company Detail</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: theme.sectionHeaderBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Company Detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -439,7 +519,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             <table className="flex-1 border-collapse border border-gray-400">
               <thead>
                 <tr>
-                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Client DETAIL</th>
+                  <th colSpan={2} className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left" style={{ backgroundColor: theme.sectionHeaderBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>Client DETAIL</th>
                 </tr>
               </thead>
               <tbody>
@@ -478,7 +558,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {/* ── LINE ITEMS TABLE ─────────────────────────────────────────── */}
         <table className="w-full border-collapse border border-gray-400 mb-0">
           <thead>
-            <tr style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+            <tr style={{ backgroundColor: theme.tableHeaderBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-center w-8">S#</th>
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-left">Description</th>
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-center">Size/status</th>
@@ -498,7 +578,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
               </tr>
             )}
             {data.items.map((item, i) => (
-              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#dce6f1", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : theme.oddRowBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <Td center bold>{String(i + 1).padStart(2, "0")}</Td>
                 <Td style={{ whiteSpace: "pre-line" }}>{item.description}</Td>
                 <Td center>{item.sizeStatus ?? item.unit ?? "—"}</Td>
@@ -516,7 +596,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {isPO && (
           <table className="w-full border-collapse border border-gray-400 mb-3 mt-0">
             <tbody>
-              <tr className="bg-[#0f2d5a] text-white" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <tr className="text-white" style={{ backgroundColor: theme.navyBarBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <td className="border border-gray-400 px-2 py-2 text-sm font-black">TOTAL AMOUNT (AED)</td>
                 <td className="border border-gray-400 px-2 py-2 text-sm font-black text-right">{formatAED(grand)}</td>
               </tr>
@@ -546,7 +626,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   {additionalItems.map((row, idx) => {
                     const rowTotal = (row.price ?? 0) * (row.quantity ?? 1);
                     return (
-                      <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#eaf0f8" : "#ffffff", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                      <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? theme.addItemsOddBg : theme.addItemsEvenBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                         <td className="border border-gray-400 px-2 py-[2px] text-xs">{row.description}</td>
                         <td
                           className="border border-gray-400 px-2 py-[2px] text-xs text-center font-semibold whitespace-nowrap"
@@ -633,11 +713,11 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                         </td>
                       </tr>
                     )}
-                    <tr style={{ backgroundColor: "#bdd7ee", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                    <tr style={{ backgroundColor: theme.vatRowBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                       <td className="border border-gray-300 px-2 py-[2px] text-xs font-semibold">VAT {vat}%</td>
                       <td className="border border-gray-300 px-2 py-[2px] text-xs font-semibold text-right">{formatAED(vatAmt)}</td>
                     </tr>
-                    <tr style={{ backgroundColor: "#70ad47", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+                    <tr style={{ background: theme.titleGradient ?? theme.grandTotalBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                       <td className="border border-gray-300 px-2 py-[2px] text-xs font-black text-white">Grand Total (AED)</td>
                       <td className="border border-gray-300 px-2 py-[2px] text-xs font-black text-white text-right">{formatAED(grand)}</td>
                     </tr>
@@ -694,7 +774,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
 
         {/* ── CHEQUE FAVOR NOTE (quotation page 1, subtle, left-aligned) */}
         {isQuotation && (
-          <div className="mb-3 text-[10px] text-[#0f2d5a] font-semibold text-left">
+          <div className="mb-3 text-[10px] font-semibold text-left" style={{ color: theme.chequeColor }}>
             All cheques shall be prepared in favor of "{co.name}".
           </div>
         )}
@@ -815,7 +895,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           <div className="print-page-break mt-8" style={{ minHeight: "267mm", display: "flex", flexDirection: "column" }}>
             {/* Page 2 Letterhead */}
             <div style={{ overflow: "hidden", marginBottom: 2 }}>
-              <div style={{ backgroundColor: "#0f2d5a", color: "white", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div style={{ backgroundColor: theme.headerBg, color: "white", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
                   <img src={companyLogo} alt="Logo" style={{ maxHeight: 60, maxWidth: 130, height: "auto", objectFit: "contain", borderRadius: 4, background: "white", padding: 4, flexShrink: 0 }} />
                 )}
@@ -825,7 +905,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div style={{ fontSize: 11, opacity: 0.9 }}>Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div style={{ backgroundColor: "#1e6ab0", color: "white", textAlign: "center", padding: "4px 0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div style={{ background: theme.titleGradient ?? theme.titleBg, color: "white", textAlign: "center", padding: "4px 0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: 3, textTransform: "uppercase" }}>TECHNICAL SPECIFICATION</span>
               </div>
             </div>
@@ -833,7 +913,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
             {(() => {
               const specSections = parseTechSpecs(data.techSpecs ?? "");
               const printStyle = { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties;
-              const navyBg = { ...printStyle, backgroundColor: "#0f2d5a" };
+              const navyBg = { ...printStyle, backgroundColor: theme.tableHeaderBg };
               return (
                 <table className="print-spec-table w-full mb-3" style={{ borderCollapse: "collapse", border: "1.5px solid #666", flex: 1, height: "100%" }}>
                   <thead>
@@ -854,7 +934,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                       const pts = section.points.filter(p => p.trim() !== "");
                       if (pts.length === 0) return [];
                       return pts.map((pt, pi) => (
-                        <tr key={`${si}-${pi}`} style={{ backgroundColor: pi % 2 === 0 ? "#ffffff" : "#f4f7fb", ...printStyle }}>
+                        <tr key={`${si}-${pi}`} style={{ backgroundColor: pi % 2 === 0 ? "#ffffff" : theme.specOddBg, ...printStyle }}>
                           {pi === 0 && (
                             <td
                               rowSpan={pts.length}
@@ -909,7 +989,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           <div className="print-page-break mt-8">
             {/* Page 3 Letterhead */}
             <div style={{ overflow: "hidden", marginBottom: 2 }}>
-              <div style={{ backgroundColor: "#0f2d5a", color: "white", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div style={{ backgroundColor: theme.headerBg, color: "white", padding: "8px 16px", display: "flex", alignItems: "center", gap: 16, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
                   <img src={companyLogo} alt="Logo" style={{ maxHeight: 60, maxWidth: 130, height: "auto", objectFit: "contain", borderRadius: 4, background: "white", padding: 4, flexShrink: 0 }} />
                 )}
@@ -919,7 +999,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div style={{ fontSize: 11, opacity: 0.9 }}>Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div style={{ backgroundColor: "#1e6ab0", color: "white", textAlign: "center", padding: "4px 0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div style={{ background: theme.titleGradient ?? theme.titleBg, color: "white", textAlign: "center", padding: "4px 0", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <span style={{ fontSize: 15, fontWeight: 900, letterSpacing: 3, textTransform: "uppercase" }}>TERMS &amp; CONDITIONS</span>
               </div>
             </div>
@@ -947,7 +1027,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                     <div key={si} style={{ marginBottom: 5 }}>
                       {/* Section header */}
                       <div
-                        style={{ backgroundColor: "#1e3a6e", display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", ...printStyle }}
+                        style={{ backgroundColor: theme.tcSectionHeaderBg, display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", ...printStyle }}
                       >
                         <span style={{ fontSize: "11px", fontWeight: 900, color: "white", flexShrink: 0 }}>{sec.num}</span>
                         <span style={{ fontSize: "11px", fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>{sec.title}</span>
@@ -958,14 +1038,14 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                           {sec.items.map((item, ii) => {
                             const isCheque = /cheque(s)?\s+shall\s+be\s+prepared\s+in\s+fav/i.test(item.body);
                             return (
-                              <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? "#f0f4f9" : "#ffffff", ...printStyle }}>
+                              <tr key={ii} style={{ backgroundColor: ii % 2 === 0 ? theme.tcOddBg : "#ffffff", ...printStyle }}>
                                 <td
                                   style={{ border: "1px solid #d1d5db", padding: "4px 8px", fontSize: "10.5px", fontWeight: 600, color: "#4b5563", textAlign: "center", verticalAlign: "top", width: 28 }}
                                 >
                                   {item.num}
                                 </td>
                                 <td
-                                  style={{ border: "1px solid #d1d5db", padding: "4px 12px", fontSize: "10.5px", lineHeight: 1.4, verticalAlign: "top", fontWeight: isCheque ? 700 : 400, color: isCheque ? "#0f2d5a" : "#1f2937" }}
+                                  style={{ border: "1px solid #d1d5db", padding: "4px 12px", fontSize: "10.5px", lineHeight: 1.4, verticalAlign: "top", fontWeight: isCheque ? 700 : 400, color: isCheque ? theme.tcHighlightColor : "#1f2937" }}
                                 >
                                   {item.body}
                                 </td>
@@ -993,7 +1073,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
         {isQuotation && (data.customSections ?? []).map((sec, si) => (
           <div key={si} className="print-page-break mt-8">
             <div className="overflow-hidden mb-[2px]">
-              <div className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div className="text-white py-2 px-4 flex items-center gap-4" style={{ backgroundColor: theme.headerBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 {companyLogo && (
                   <img src={companyLogo} alt="Logo" className="object-contain rounded bg-white p-1 flex-shrink-0" style={{ maxHeight: 60, maxWidth: 130, height: "auto" }} />
                 )}
@@ -1003,7 +1083,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
                   <div className="text-[11px] opacity-90">Tel: {co.phone} | Email: {co.email}{co.website ? ` | Web: ${co.website}` : ""}</div>
                 </div>
               </div>
-              <div className="bg-[#1e6ab0] text-white text-center py-1" style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
+              <div className="text-white text-center py-1" style={{ background: theme.titleGradient ?? theme.titleBg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}>
                 <span className="text-[15px] font-black tracking-widest uppercase">{sec.title || "ADDITIONAL SECTION"}</span>
               </div>
             </div>
@@ -1019,6 +1099,6 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
           </div>
         ))}
       </div>
-    </>
+    </DocThemeContext.Provider>
   );
 }

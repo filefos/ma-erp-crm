@@ -421,7 +421,7 @@ function NotificationBell() {
 // Color schemes for Elite Prefab branding
 const ELITE_SCHEMES = {
   A: {
-    // Scheme A — Charcoal/Black
+    // Scheme A — Black → Dark gradient
     "--sidebar": "0 0% 8%",
     "--sidebar-foreground": "0 0% 93%",
     "--sidebar-border": "0 0% 16%",
@@ -429,11 +429,12 @@ const ELITE_SCHEMES = {
     "--sidebar-accent-foreground": "0 0% 100%",
     "--sidebar-active-item": "#8B0000",
     "--sidebar-avatar": "#8B0000",
+    gradient: "linear-gradient(180deg, #0D0D0D 0%, #1A1A1A 55%, #2D0808 100%)",
     label: "A",
     tip: "Black",
   },
   B: {
-    // Scheme B — Dark Crimson/Red
+    // Scheme B — Dark Red → Black gradient
     "--sidebar": "0 72% 20%",
     "--sidebar-foreground": "0 0% 95%",
     "--sidebar-border": "0 60% 28%",
@@ -441,6 +442,7 @@ const ELITE_SCHEMES = {
     "--sidebar-accent-foreground": "0 0% 100%",
     "--sidebar-active-item": "#1E1E1E",
     "--sidebar-avatar": "#1E1E1E",
+    gradient: "linear-gradient(180deg, #5E0000 0%, #8B0000 50%, #4a0000 100%)",
     label: "B",
     tip: "Red",
   },
@@ -465,6 +467,7 @@ function SidebarContent() {
         "--sidebar-accent": scheme["--sidebar-accent"],
         "--sidebar-accent-foreground": scheme["--sidebar-accent-foreground"],
         "--sidebar-active-item": scheme["--sidebar-active-item"],
+        background: scheme.gradient,
       } as React.CSSProperties
     : { "--sidebar-active-item": "#1e6ab0" } as React.CSSProperties;
 

@@ -1,0 +1,253 @@
+I want to keep the full document layout exactly the same as the existing reference quotation/document template, but I want to change the branding color style to match the attached Elite Prefabricated Houses branding reference.
+
+Very important:
+Do NOT change the document structure, page layout, table arrangement, spacing, footer structure, or content placement.
+Only update the visual branding/colors so the document looks aligned with the Elite logo branding image.
+
+MAIN REQUIREMENT
+Keep the same document setup as the current reference:
+- Same page structure
+- Same header position
+- Same title bar
+- Same company/client details box layout
+- Same item table layout
+- Same totals section layout
+- Same prepared by / for & on behalf section
+- Same footer line and page numbering
+- Same A4 print/PDF structure
+
+But update the branding appearance to match the Elite brand identity.
+
+BRANDING STYLE TO FOLLOW
+Use the branding style from the attached Elite Prefabricated Houses reference image.
+
+Brand mood:
+- Premium
+- Modern
+- Corporate
+- Clean
+- Strong
+- Professional
+
+PRIMARY BRAND COLORS
+Use these color directions:
+
+1. Dark Red
+Hex: #8B0000
+Use as the main brand accent color.
+
+2. Red Gradient
+Use a smooth premium gradient based on dark red tones.
+Example:
+- #C00000 to #8B0000
+or
+- #B30000 to #5E0000
+
+3. Black
+Hex: #0D0D0D
+Use for strong backgrounds, dark headers, and premium contrast.
+
+4. Charcoal
+Hex: #1E1E1E
+Use for secondary dark elements, borders, and subtle dark sections.
+
+5. Grey
+Hex: #6B6B6B
+Use for secondary text or support elements.
+
+6. White
+Hex: #FFFFFF
+Use for main background and text contrast.
+
+7. Light Grey
+Hex: #F3F3F3 or #F5F5F5
+Use for table row backgrounds and soft section fills.
+
+IMPORTANT DESIGN RULE
+The document must still look like an official ERP/business document, not like a marketing poster.
+
+So:
+- Keep the layout simple and structured
+- Use the brand colors professionally
+- Do not over-design the document
+- Do not use too many gradients everywhere
+- Use gradients only in key branded areas for a premium look
+
+WHERE TO APPLY THE NEW BRAND COLORS
+
+1. TOP HEADER
+Current header structure should remain the same, but recolor it using the Elite brand style.
+
+Use:
+- Black / dark charcoal base
+- Dark red gradient accent
+- White company name text
+- White contact detail text
+
+The company logo section should remain on the left as before.
+
+2. DOCUMENT TITLE BAR
+The title bar should remain in the same position and style, but change the color to:
+- dark red gradient background
+- white uppercase title text
+
+Example:
+QUOTATION ON PREFABRICATED CABIN
+PROFORMA INVOICE
+TAX INVOICE
+DELIVERY NOTE
+etc.
+
+3. SECTION HEADINGS
+For headings like:
+- Company Detail
+- Client Detail
+- Total Amount in Words
+- Grand Total Amount in Words
+
+Use:
+- black or charcoal background with dark red accent
+OR
+- dark red gradient background with white text
+
+Keep them sharp, clean, and readable.
+
+4. LABEL COLUMNS
+For left label cells like:
+- Company
+- Contact Person
+- Contact #
+- Email
+- Designation
+etc.
+
+Use:
+- dark charcoal / black fill
+- white text
+
+5. VALUE COLUMNS
+Use:
+- white or very light grey background
+- dark text
+- thin grey borders
+
+6. MAIN ITEM TABLE HEADER
+Keep the same table structure, but recolor the table header using:
+- black / charcoal with dark red accent
+OR
+- dark red gradient with white text
+
+Important:
+The item table should still look highly readable and professional.
+
+7. TOTALS SECTION
+Keep the same totals layout as current reference.
+
+Use:
+- dark background or red gradient for heading strips
+- white text
+- highlight the Grand Total box in a branded premium way
+
+For Grand Total:
+You can use:
+- dark red / red gradient box
+- white text
+or
+- dark charcoal box with red accent and white text
+
+Do not use green for grand total now.
+Replace that with Elite brand styling.
+
+8. FOOTER / SYSTEM BAR
+Keep the same footer structure:
+- PRIME ERP SYSTEM
+- UNIQUE ID
+- CLIENT CODE
+- PAGE NUMBER
+
+But update visual style to:
+- thin black/charcoal footer line
+- dark text or white text depending on background
+- subtle red accent line if needed
+
+9. PREPARED BY / SIGNATURE AREA
+Keep the structure exactly same.
+Only update the colors and border accents to match the Elite brand style.
+
+10. BORDERS AND LINES
+All borders should remain clean and thin.
+Use:
+- grey borders for normal tables
+- dark borders for important sections
+- dark red accent lines only where suitable
+
+DO NOT:
+- use thick random borders
+- use too many different colors
+- use rounded card UI style
+
+TYPOGRAPHY
+Keep document typography professional and readable.
+
+Recommended style:
+- Bold uppercase for company name and document title
+- Clean sans-serif font
+- Strong heading font
+- Normal readable font for body text
+
+If possible use professional fonts like:
+- Montserrat
+- Poppins
+- Arial
+- Helvetica
+or similar corporate fonts
+
+IMPORTANT PAGE RULE
+This branding update must apply across all printable/exportable documents while preserving the same layout system.
+
+Apply the same branded color style to:
+- Quotation
+- Proforma Invoice
+- Tax Invoice
+- Delivery Note
+- Handover Note
+- Undertaking Letter
+- Payment Receipt
+- Cheque Receipt
+- Journal Entry
+- Receivable Statement
+- Any other official PDF/print document
+
+KEEP THESE THINGS SAME
+Please do not change:
+- page size
+- page margins
+- page structure
+- header layout
+- title position
+- table positions
+- totals arrangement
+- footer information structure
+- signature block structure
+- dynamic field logic
+- print/PDF generation logic
+
+ONLY CHANGE
+- document brand color scheme
+- heading colors
+- title bar colors
+- table header colors
+- footer accent styling
+- overall premium branded visual appearance
+
+ACCEPTANCE CRITERIA
+The task is complete only when:
+1. The full page layout remains the same as the current reference document.
+2. The colors and branding match the Elite Prefabricated Houses branding reference.
+3. The document looks premium, modern, and official.
+4. Print/PDF remains perfectly aligned.
+5. Content remains fully readable.
+6. All pages and all document types follow the same branded style.
+7. No structural layout changes are made.
+
+Please inspect the current template and update only the branding layer/theme colors so the document keeps the same setup but visually matches the Elite black + dark red gradient + white brand identity.
