@@ -262,7 +262,7 @@ export function DocumentPrint({ data }: { data: DocumentData }) {
   const co = COMPANIES[data.companyId] ?? COMPANIES[1];
   const coName = data.companyRef ?? co.name;
   const companyLogo = data.companyId === 2
-    ? `${import.meta.env.BASE_URL}elite-prefab-logo.svg`
+    ? `${import.meta.env.BASE_URL}elite-prefab-logo.png`
     : `${import.meta.env.BASE_URL}prime-max-logo.png`;
   const isDelivery = data.type === "delivery_note";
   const _now = new Date();

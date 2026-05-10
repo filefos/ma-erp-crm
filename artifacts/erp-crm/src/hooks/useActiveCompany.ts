@@ -9,7 +9,7 @@ const ELITE_SCHEME_EVENT = "erp:elite-scheme-changed";
 
 const COMPANY_INFO: Record<number, { name: string; short: string; poweredBy: string; logoSrc: string }> = {
   1: { name: "Prime Max Prefab Houses Ind. LLC", short: "Prime Max", poweredBy: "Prime Solution", logoSrc: "/prime-max-logo.png" },
-  2: { name: "Elite Pre-Fabricated Houses Trading Co. LLC", short: "Elite Prefab", poweredBy: "Prime Solution", logoSrc: "/elite-prefab-logo.svg" },
+  2: { name: "Elite Pre-Fabricated Houses Trading Co. LLC", short: "Elite Prefab", poweredBy: "Prime Solution", logoSrc: "/elite-prefab-logo.png" },
 };
 
 export type EliteScheme = "A" | "B";

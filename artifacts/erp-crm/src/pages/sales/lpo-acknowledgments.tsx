@@ -1557,7 +1557,7 @@ export function LpoAcknowledgments() {
                 2: { name: "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC", address: "Sajja Industrial Area, Sharjah, UAE", phone: "054 777 7862", email: "asif@eliteprefab.com", contact: "Asif Latif", website: "www.eliteprefab.ae" },
               };
               const co = CO_INFO[companyId] ?? CO_INFO[1];
-              const logoSrc = companyId === 2 ? `${BASE}elite-prefab-logo.svg` : `${BASE}prime-max-logo.png`;
+              const logoSrc = companyId === 2 ? `${BASE}elite-prefab-logo.png` : `${BASE}prime-max-logo.png`;
 
               // Pull client contact fields from the linked quotation
               const linkedQt = (quotations ?? []).find((q: any) =>

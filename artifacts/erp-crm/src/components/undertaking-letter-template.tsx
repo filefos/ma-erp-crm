@@ -88,7 +88,7 @@ function MaterialLines({ text }: { text?: string | null }) {
 export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: UndertakingLetterDoc }>(
   ({ doc }, ref) => {
     const co = COMPANIES[doc.companyId] ?? COMPANIES[1];
-    const logoSrc = doc.companyId !== 2 ? "/prime-max-logo.png" : "/elite-prefab-logo.svg";
+    const logoSrc = doc.companyId !== 2 ? "/prime-max-logo.png" : "/elite-prefab-logo.png";
     const dateFmt = fmtDate(doc.letterDate);
     const projectDesc = doc.scope?.trim() || "Prefabricated Construction Works";
 
