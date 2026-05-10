@@ -49,7 +49,9 @@ export function PurchaseRequestsList() {
     },
   });
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(requests ?? []).filter(r =>
     !search ||
     r.prNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -82,7 +84,7 @@ export function PurchaseRequestsList() {
           />
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+            <Button className={primeBtnCls}>
               <Plus className="w-4 h-4 mr-2" />New PR
             </Button>
           </DialogTrigger>
@@ -112,7 +114,7 @@ export function PurchaseRequestsList() {
               <div className="space-y-1"><Label>Notes</Label><Input value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} /></div>
             </div>
             <Button
-              className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={`mt-4 ${primeBtnCls}`}
               onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId, 10), estimatedCost: form.estimatedCost ? parseFloat(form.estimatedCost) : undefined } as any })}
               disabled={!form.description || !form.companyId || create.isPending}
             >

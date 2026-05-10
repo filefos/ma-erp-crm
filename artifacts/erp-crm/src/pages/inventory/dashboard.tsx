@@ -59,6 +59,8 @@ function daysSince(d: string | Date | null | undefined) {
 
 export function InventoryDashboard() {
   const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
   const categoryPalette = activeCompanyId === 2
     ? ["#8B0000", "#C00000", "#3b82f6", "#10b981", "#8b5cf6", "#f97316", "#ef4444", "#14b8a6", "#6366f1", "#64748b"]
     : CATEGORY_PALETTE;
@@ -266,12 +268,12 @@ export function InventoryDashboard() {
 
       {/* AI Insights */}
       <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+        <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${eliteIconGrad}`} />
         <div className="p-4 pl-5">
           <div className="flex items-center gap-2 mb-3">
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#0f2d5a]/5 text-[#0f2d5a] dark:bg-[#1e6ab0]/15 dark:text-[#7eb9f0]">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span className="text-xs font-semibold">AI Inventory Insights</span>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/60">
+              <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">AI Inventory Insights</span>
             </div>
             <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <span className="relative flex h-1.5 w-1.5">
@@ -402,7 +404,7 @@ export function InventoryDashboard() {
                     innerRadius={42} outerRadius={70} paddingAngle={2}
                   >
                     {byCategory.slice(0, 8).map((_, i) => (
-                      <Cell key={i} fill={CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]} stroke="rgba(255,255,255,0.2)" />
+                      <Cell key={i} fill={categoryPalette[i % categoryPalette.length]} stroke="rgba(255,255,255,0.2)" />
                     ))}
                   </Pie>
                   <Tooltip
@@ -502,7 +504,7 @@ export function InventoryDashboard() {
                     <PieChart>
                       <Pie data={poByStatus} dataKey="value" nameKey="name" innerRadius={32} outerRadius={62} paddingAngle={2}>
                         {poByStatus.map((s, i) => (
-                          <Cell key={i} fill={PO_COLORS[s.name] ?? CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]} />
+                          <Cell key={i} fill={PO_COLORS[s.name] ?? categoryPalette[i % categoryPalette.length]} />
                         ))}
                       </Pie>
                       <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
@@ -557,7 +559,7 @@ export function InventoryDashboard() {
                       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${pct}%`, background: LPO_COLORS[s.name] ?? "#1e6ab0" }}
+                          style={{ width: `${pct}%`, background: LPO_COLORS[s.name] ?? (activeCompanyId === 2 ? "#8B0000" : "#1e6ab0") }}
                         />
                       </div>
                     </div>

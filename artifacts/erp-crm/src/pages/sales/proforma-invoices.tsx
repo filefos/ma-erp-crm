@@ -100,7 +100,9 @@ export function ProformaInvoicesList() {
     } as any });
   };
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(invoices ?? []).filter(i =>
     !search ||
     i.piNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -134,7 +136,7 @@ export function ProformaInvoicesList() {
           />
           <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />New Proforma</Button>
+            <Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />New Proforma</Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>New Proforma Invoice</DialogTitle></DialogHeader>
@@ -218,7 +220,7 @@ export function ProformaInvoicesList() {
               <div className="flex gap-3 justify-end pt-2">
                 <Button variant="outline" onClick={() => { setOpen(false); resetForm(); }}>Cancel</Button>
                 <Button
-                  className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                  className={primeBtnCls}
                   onClick={handleCreate}
                   disabled={!form.clientName || !form.companyId || create.isPending}
                 >

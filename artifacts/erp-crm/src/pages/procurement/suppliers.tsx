@@ -18,7 +18,9 @@ export function SuppliersList() {
   const [form, setForm] = useState({ name: "", contactPerson: "", email: "", phone: "", address: "", trn: "", category: "", paymentTerms: "" });
   const queryClient = useQueryClient();
   const { data: suppliers, isLoading } = useListSuppliers({ search: search || undefined });
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(suppliers ?? []);
   const create = useCreateSupplier({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() }); setOpen(false); } } });
 
@@ -45,7 +47,7 @@ export function SuppliersList() {
             title="Suppliers"
           />
           <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Supplier</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />Add Supplier</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Supplier</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-2">

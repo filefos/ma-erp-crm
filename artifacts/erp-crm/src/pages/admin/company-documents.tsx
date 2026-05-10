@@ -150,6 +150,8 @@ function FileIcon({ contentType }: { contentType: string }) {
 export function CompanyDocuments() {
   const { user } = useAuth();
   const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { data: companies } = useListCompanies();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -651,7 +653,7 @@ export function CompanyDocuments() {
                     />
                     <Button
                       size="sm"
-                      className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                      className={primeBtnCls}
                       disabled={!customGroupName.trim()}
                       onClick={() => {
                         openUpload(CUSTOM_CATEGORY, customGroupName.trim());
@@ -807,7 +809,7 @@ export function CompanyDocuments() {
                 Cancel
               </Button>
               <Button
-                className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                className={primeBtnCls}
                 disabled={
                   uploading ||
                   !uploadFile ||
@@ -978,7 +980,7 @@ export function CompanyDocuments() {
               No — Replace
             </Button>
             <AlertDialogAction
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={primeBtnCls}
               onClick={() => handleReplace(true)}
             >
               Yes — Keep Previous
@@ -1006,7 +1008,7 @@ export function CompanyDocuments() {
                 Cancel
               </Button>
               <Button
-                className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                className={primeBtnCls}
                 onClick={handleSaveRemarks}
               >
                 Save

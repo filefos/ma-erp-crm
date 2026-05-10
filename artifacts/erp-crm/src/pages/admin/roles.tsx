@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
   useListRoles, useGetRolePermissions, useUpdateRolePermissions,
   getGetRolePermissionsQueryKey,
@@ -37,6 +38,9 @@ type ModulePerm = {
 function PermissionMatrixDialog({
   roleId, roleName, isSuperAdmin, open, onClose,
 }: { roleId: number; roleName: string; isSuperAdmin: boolean; open: boolean; onClose: () => void }) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const queryClient = useQueryClient();
   const { data: perms, isLoading } = useGetRolePermissions(roleId, { query: { queryKey: getGetRolePermissionsQueryKey(roleId), enabled: open } });
   const [draft, setDraft] = useState<ModulePerm[] | null>(null);
@@ -134,7 +138,7 @@ function PermissionMatrixDialog({
           )}
           <Button variant="outline" onClick={() => { setDraft(null); onClose(); }}>Cancel</Button>
           <Button
-            className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            className={primeBtnCls}
             disabled={!isSuperAdmin || !draft || update.isPending}
             onClick={() => update.mutate({ id: roleId, data: { permissions: rows } })}
             data-testid="save-permissions"

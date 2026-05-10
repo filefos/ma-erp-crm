@@ -63,7 +63,9 @@ export function DealDetail({ id }: Props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
 
   const { data: dealsRaw, isLoading } = useListDeals({});
   const { data: activitiesRaw } = useListActivities({ dealId: did });
@@ -292,7 +294,7 @@ export function DealDetail({ id }: Props) {
             <h2 className="font-semibold text-lg">Activities</h2>
             <Badge variant="secondary">{activities.length}</Badge>
           </div>
-          <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => setActivityOpen(true)}>
+          <Button size="sm" className={primeBtnCls} onClick={() => setActivityOpen(true)}>
             <Plus className="w-4 h-4 mr-1.5" />Log Activity
           </Button>
         </div>
@@ -350,7 +352,7 @@ export function DealDetail({ id }: Props) {
               <Textarea value={editForm.notes} onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} rows={3} />
             </div>
           </div>
-          <Button className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submitEdit} disabled={!editForm.title || update.isPending}>
+          <Button className={`mt-2 ${primeBtnCls}`} onClick={submitEdit} disabled={!editForm.title || update.isPending}>
             {update.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogContent>
@@ -360,7 +362,7 @@ export function DealDetail({ id }: Props) {
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Log Activity</DialogTitle></DialogHeader>
           <ActivityFormFields form={activityForm} setForm={setActivityForm} />
-          <Button className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submitActivity} disabled={!activityForm.subject || createActivity.isPending}>
+          <Button className={`mt-2 ${primeBtnCls}`} onClick={submitActivity} disabled={!activityForm.subject || createActivity.isPending}>
             {createActivity.isPending ? "Saving…" : "Log Activity"}
           </Button>
         </DialogContent>
@@ -370,7 +372,7 @@ export function DealDetail({ id }: Props) {
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Edit Activity</DialogTitle></DialogHeader>
           <ActivityFormFields form={editActivityForm} setForm={setEditActivityForm} />
-          <Button className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submitEditActivity} disabled={!editActivityForm.subject || updateActivity.isPending}>
+          <Button className={`mt-2 ${primeBtnCls}`} onClick={submitEditActivity} disabled={!editActivityForm.subject || updateActivity.isPending}>
             {updateActivity.isPending ? "Saving…" : "Save"}
           </Button>
         </DialogContent>

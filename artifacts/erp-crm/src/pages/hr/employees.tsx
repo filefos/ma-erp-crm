@@ -37,7 +37,9 @@ export function EmployeesList() {
   const [form, setForm] = useState({ name: "", type: "staff", designation: "", companyId: "", phone: "", email: "", nationality: "", siteLocation: "", joiningDate: "" });
   const queryClient = useQueryClient();
   const { data: employees, isLoading } = useListEmployees({ type: type === "all" ? undefined : type, search: search || undefined });
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(employees ?? []);
   const create = useCreateEmployee({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListEmployeesQueryKey() }); setOpen(false); } } });
 
@@ -67,7 +69,7 @@ export function EmployeesList() {
             title="Employees & Labour"
           />
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Employee</Button></DialogTrigger>
+            <DialogTrigger asChild><Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />Add Employee</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>New Employee / Labour</DialogTitle></DialogHeader>
               <div className="grid grid-cols-2 gap-4 pt-2">

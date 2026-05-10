@@ -25,7 +25,10 @@ export function BankAccountsList() {
   const queryClient = useQueryClient();
   const { data: accounts, isLoading } = useListBankAccounts();
   const { data: companies } = useListCompanies();
-  const { filterByCompany, companyName } = useActiveCompany();
+  const { filterByCompany, companyName, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
   const filtered = filterByCompany(accounts ?? []);
   const create = useCreateBankAccount({
     mutation: {
@@ -43,14 +46,14 @@ export function BankAccountsList() {
   return (
     <div className="space-y-4">
       {/* Cheque-favor notice — pinned above the page so it is unmissable */}
-      <div className="rounded-xl border-2 border-[#0f2d5a] bg-gradient-to-r from-[#0f2d5a]/5 to-[#1e6ab0]/5 px-4 py-3 shadow-sm" data-testid="banner-cheque-favor">
+      <div className={`rounded-xl border-2 ${isElite ? "border-[#8B0000]" : "border-[#0f2d5a]"} bg-muted/30 px-4 py-3 shadow-sm`} data-testid="banner-cheque-favor">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white">
+          <div className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${eliteIconGrad} text-white`}>
             <Landmark className="h-4 w-4" />
           </div>
           <div className="flex-1">
-            <div className="text-[11px] font-bold uppercase tracking-wide text-[#0f2d5a]">Important — Cheque Instructions</div>
-            <div className="text-sm font-semibold text-[#0f2d5a] dark:text-white">
+            <div className="text-[11px] font-bold uppercase tracking-wide text-foreground">Important — Cheque Instructions</div>
+            <div className="text-sm font-semibold text-foreground dark:text-white">
               All cheques shall be prepared in favor of "{(companyName ?? "").toUpperCase()}".
             </div>
           </div>
@@ -79,7 +82,7 @@ export function BankAccountsList() {
           />
           <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Bank Account</Button>
+            <Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />Add Bank Account</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>Add Bank Account</DialogTitle></DialogHeader>
@@ -101,7 +104,7 @@ export function BankAccountsList() {
               </div>
             </div>
             <Button
-              className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={`mt-4 ${primeBtnCls}`}
               onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId, 10) } as any })}
               disabled={!form.bankName || !form.accountName || !form.accountNumber || !form.companyId || create.isPending}
             >

@@ -26,7 +26,11 @@ function fmtAED(v: number): string {
 }
 
 export function SalesDashboard() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
+  const palette = isElite ? ["#0D0D0D", "#8B0000", "#C00000", "#10b981", "#f97316", "#8b5cf6", "#14b8a6", "#ef4444"] : PALETTE;
   const now = new Date();
   const year = now.getFullYear();
 
@@ -246,9 +250,9 @@ export function SalesDashboard() {
       {/* Sales insights banner */}
       {salesInsights.length > 0 && (
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm" data-testid="banner-sales-insights">
-          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+          <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${eliteIconGrad}`} />
           <div className="flex items-center gap-2 mb-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <h3 className="text-sm font-semibold">Sales Insights</h3>
@@ -315,7 +319,7 @@ export function SalesDashboard() {
                 <Link key={c.name} href={href} className="block group" data-testid={`card-customer-${i}`}>
                   <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
                     <div className="flex items-center gap-2.5 mb-2.5">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-[#1e6ab0] to-[#0f2d5a]" : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : "bg-[#1e6ab0]"}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? `bg-gradient-to-br ${eliteIconGrad}` : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : ""}`} style={i >= 3 ? { background: chartBlue } : undefined}>
                         {i + 1}
                       </div>
                       <Avatar name={c.name} size={32} />
@@ -324,11 +328,11 @@ export function SalesDashboard() {
                         <div className="text-[10px] text-muted-foreground">Customer</div>
                       </div>
                     </div>
-                    <div className="rounded-lg bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5 p-2.5 mb-2">
+                    <div className="rounded-lg bg-muted/40 p-2.5 mb-2">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Quoted</div>
-                      <div className="text-lg font-bold text-[#0f2d5a] dark:text-white truncate">{fmtAED(c.value)}</div>
+                      <div className="text-lg font-bold text-foreground dark:text-white truncate">{fmtAED(c.value)}</div>
                       <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden mt-1.5">
-                        <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${pct}%` }} />
+                        <div className={`h-full bg-gradient-to-r ${eliteIconGrad}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-[11px]">
@@ -370,12 +374,12 @@ export function SalesDashboard() {
               >
                 <div className="h-full rounded-2xl border border-border/60 bg-card p-3 shadow-sm group-hover:shadow-lg group-hover:-translate-y-0.5 group-hover:border-[#1e6ab0]/40 transition-all">
                   <div className="flex items-center gap-2.5 mb-2.5">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-[#1e6ab0] to-[#0f2d5a]" : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : "bg-[#1e6ab0]"}`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? `bg-gradient-to-br ${eliteIconGrad}` : i === 2 ? "bg-gradient-to-br from-orange-300 to-orange-500" : ""}`} style={i >= 3 ? { background: chartBlue } : undefined}>
                       {i + 1}
                     </div>
                     <Avatar name={row.name} size={32} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold truncate text-[#0f2d5a] dark:text-white">{row.name}</div>
+                      <div className="text-sm font-semibold truncate text-foreground dark:text-white">{row.name}</div>
                       <div className="text-[10px] text-muted-foreground">Salesperson</div>
                     </div>
                   </div>
@@ -387,7 +391,7 @@ export function SalesDashboard() {
                     </div>
                     <div className="rounded-lg bg-muted/40 p-2">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Quoted</div>
-                      <div className="text-sm font-bold text-[#1e6ab0] truncate">{fmtAED(row.quoted)}</div>
+                      <div className="text-sm font-bold truncate" style={{ color: chartBlue }}>{fmtAED(row.quoted)}</div>
                       <div className="text-[10px] text-muted-foreground">{row.quoteCount} quote{row.quoteCount === 1 ? "" : "s"}</div>
                     </div>
                   </div>
@@ -395,13 +399,13 @@ export function SalesDashboard() {
                     <div className="mb-2">
                       <div className="flex items-center justify-between text-[10px] mb-1">
                         <span className="text-muted-foreground">Target {fmtAED(row.target)}</span>
-                        <span className={`font-bold ${row.attainment >= 100 ? "text-orange-600" : row.attainment >= 75 ? "text-[#1e6ab0]" : "text-[#0f2d5a] dark:text-white"}`}>
+                        <span className={`font-bold ${row.attainment >= 100 ? "text-orange-600" : "text-foreground"}`}>
                           {row.attainment}%
                         </span>
                       </div>
                       <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${row.attainment >= 100 ? "bg-gradient-to-r from-orange-500 to-orange-700" : row.attainment >= 75 ? "bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" : row.attainment >= 50 ? "bg-gradient-to-r from-[#1e6ab0] to-orange-400" : "bg-gradient-to-r from-orange-300 to-orange-500"}`}
+                          className={`h-full ${row.attainment >= 100 ? "bg-gradient-to-r from-orange-500 to-orange-700" : row.attainment >= 50 ? `bg-gradient-to-r ${eliteIconGrad}` : "bg-gradient-to-r from-orange-300 to-orange-500"}`}
                           style={{ width: `${Math.min(100, row.attainment)}%` }}
                         />
                       </div>
@@ -411,7 +415,7 @@ export function SalesDashboard() {
                   )}
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">Last 6 months</span>
-                    <Sparkline data={row.sparkline} color="#1e6ab0" width={90} height={24} />
+                    <Sparkline data={row.sparkline} color={chartBlue} width={90} height={24} />
                   </div>
                 </div>
               </Link>
@@ -433,7 +437,7 @@ export function SalesDashboard() {
                 <YAxis dataKey="stage" type="category" tick={{ fontSize: 12 }} width={100} />
                 <Tooltip formatter={(v: number, name: string) => name === "value" ? fmtAED(v) : v} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="count" fill="#1e6ab0" name="Count" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="count" fill={chartBlue} name="Count" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -446,7 +450,7 @@ export function SalesDashboard() {
             <ResponsiveContainer width="100%" height={260}>
               <RPieChart>
                 <Pie data={statusMix} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2}>
-                  {statusMix.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                  {statusMix.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
                 </Pie>
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -465,8 +469,8 @@ export function SalesDashboard() {
             <AreaChart data={monthlyTrend}>
               <defs>
                 <linearGradient id="grad-q" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1e6ab0" stopOpacity={0.5} />
-                  <stop offset="100%" stopColor="#1e6ab0" stopOpacity={0} />
+                  <stop offset="0%" stopColor={chartBlue} stopOpacity={0.5} />
+                  <stop offset="100%" stopColor={chartBlue} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="grad-p" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#f97316" stopOpacity={0.5} />
@@ -482,7 +486,7 @@ export function SalesDashboard() {
               <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v: number) => fmtAED(v)} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Area type="monotone" dataKey="quotations" stroke="#1e6ab0" strokeWidth={2} fill="url(#grad-q)" name="Quotations" />
+              <Area type="monotone" dataKey="quotations" stroke={chartBlue} strokeWidth={2} fill="url(#grad-q)" name="Quotations" />
               <Area type="monotone" dataKey="piValue"    stroke="#f97316" strokeWidth={2} fill="url(#grad-p)" name="Proforma" />
               <Area type="monotone" dataKey="lpos"       stroke="#10b981" strokeWidth={2} fill="url(#grad-l)" name="LPOs" />
             </AreaChart>
@@ -495,7 +499,7 @@ export function SalesDashboard() {
         <div className="lg:col-span-2 bg-card border rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
                 <Crown className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -513,7 +517,7 @@ export function SalesDashboard() {
             <div className="space-y-2">
               {leaderboard.map((row: any, i: number) => (
                 <div key={row.id} className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : ""}`} style={i >= 3 ? { background: chartBlue } : undefined}>
                     {i + 1}
                   </div>
                   <Avatar name={row.name} size={32} />
@@ -525,7 +529,7 @@ export function SalesDashboard() {
                     </div>
                   </div>
                   <div className="hidden md:block w-24 shrink-0">
-                    <Sparkline data={row.sparkline} color="#1e6ab0" />
+                    <Sparkline data={row.sparkline} color={chartBlue} />
                   </div>
                   {row.attainment != null && (
                     <Badge className={`text-[10px] ${row.attainment >= 100 ? "bg-emerald-100 text-emerald-700" : row.attainment >= 75 ? "bg-blue-100 text-blue-700" : row.attainment >= 50 ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
@@ -587,9 +591,9 @@ export function SalesDashboard() {
                     <div className="text-[11px] text-muted-foreground">{c.count} quotation{c.count === 1 ? "" : "s"}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-[#0f2d5a] dark:text-white">{fmtAED(c.value)}</div>
+                    <div className="text-sm font-bold text-foreground dark:text-white">{fmtAED(c.value)}</div>
                     <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden mt-1">
-                      <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${Math.min(100, (c.value / topClients[0].value) * 100)}%` }} />
+                      <div className={`h-full bg-gradient-to-r ${eliteIconGrad}`} style={{ width: `${Math.min(100, (c.value / topClients[0].value) * 100)}%` }} />
                     </div>
                     <div className="text-[10px] text-muted-foreground mt-0.5">#{i + 1}</div>
                   </div>

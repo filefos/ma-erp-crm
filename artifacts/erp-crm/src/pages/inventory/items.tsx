@@ -36,6 +36,8 @@ export function InventoryItemsList() {
   const queryClient = useQueryClient();
   const { data: items, isLoading } = useListInventoryItems({ search: search || undefined, category: category === "all" ? undefined : category });
   const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(items ?? []);
   const create = useCreateInventoryItem({ mutation: { onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: getListInventoryItemsQueryKey() });
@@ -139,7 +141,7 @@ export function InventoryItemsList() {
             </div>
           )}
           <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setForm(EMPTY_FORM); }}>
-            <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Item</Button></DialogTrigger>
+            <DialogTrigger asChild><Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />Add Item</Button></DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
               <DialogHeader>
                 <div className="flex items-center gap-2">
@@ -238,7 +240,7 @@ export function InventoryItemsList() {
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={submit} disabled={!form.name || create.isPending || uploading} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-save">
+                <Button onClick={submit} disabled={!form.name || create.isPending || uploading} className={primeBtnCls} data-testid="button-save">
                   {create.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</> : "Add Item"}
                 </Button>
               </div>

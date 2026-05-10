@@ -68,6 +68,8 @@ export function SupplierApplicationsList() {
   const [copied, setCopied] = useState(false);
 
   const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data, isLoading } = useListSupplierApplications(
@@ -120,7 +122,7 @@ export function SupplierApplicationsList() {
         </div>
         <Dialog open={inviteOpen} onOpenChange={v => { setInviteOpen(v); if (!v) { setInviteResult(null); setInviteForm({ companyId: String(activeCompanyId ?? ""), supplierEmail: "", supplierCompanyName: "" }); } }}>
           <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => { setInviteOpen(true); setInviteTab("create"); setInviteResult(null); setInviteForm(f => ({ ...f, companyId: String(activeCompanyId ?? "") })); }}>
+            <Button className={primeBtnCls} onClick={() => { setInviteOpen(true); setInviteTab("create"); setInviteResult(null); setInviteForm(f => ({ ...f, companyId: String(activeCompanyId ?? "") })); }}>
               <Link2 className="w-4 h-4 mr-2" />Invite Supplier
             </Button>
           </DialogTrigger>
@@ -159,7 +161,7 @@ export function SupplierApplicationsList() {
                         <Label>Supplier Company Name <span className="text-muted-foreground text-xs">(optional, pre-fills form)</span></Label>
                         <Input placeholder="ABC Trading LLC" value={inviteForm.supplierCompanyName} onChange={e => setInviteForm(f => ({ ...f, supplierCompanyName: e.target.value }))} />
                       </div>
-                      <Button className="w-full bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleGenerateInvite} disabled={createInvite.isPending || !inviteForm.companyId}>
+                      <Button className={`w-full ${primeBtnCls}`} onClick={handleGenerateInvite} disabled={createInvite.isPending || !inviteForm.companyId}>
                         {createInvite.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</> : <><Send className="w-4 h-4 mr-2" />Generate Invite Link</>}
                       </Button>
                     </>

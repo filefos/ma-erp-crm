@@ -82,7 +82,9 @@ export function PurchaseOrdersList() {
   const vat      = subtotal * 0.05;
   const grandTotal = subtotal + vat;
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(orders ?? []).filter(o =>
     !search ||
     o.poNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -131,7 +133,7 @@ export function PurchaseOrdersList() {
           />
           <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+              <Button className={primeBtnCls}>
                 <Plus className="w-4 h-4 mr-2" />Register Supplier LPO
               </Button>
             </DialogTrigger>
@@ -303,7 +305,7 @@ export function PurchaseOrdersList() {
                 </div>
 
                 <Button
-                  className="w-full bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                  className={`w-full ${primeBtnCls}`}
                   onClick={handleCreate}
                   disabled={!form.supplierId || !form.companyId || create.isPending}
                 >

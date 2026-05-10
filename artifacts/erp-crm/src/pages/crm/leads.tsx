@@ -108,7 +108,9 @@ export function LeadsList() {
     }
   }, []);
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = useMemo(() => filterByCompany(leads ?? []).filter(l => {
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
     if (scoreFilter !== "all" && l.leadScore !== scoreFilter) return false;
@@ -264,7 +266,7 @@ export function LeadsList() {
               </div>
             </div>
             <Button
-              className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={`mt-4 ${primeBtnCls}`}
               onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId, 10), budget: form.budget ? parseFloat(form.budget) : undefined } as any })}
               disabled={!form.leadName || !form.companyId || create.isPending}
             >

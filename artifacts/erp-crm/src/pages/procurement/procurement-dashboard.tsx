@@ -28,7 +28,12 @@ function fmtAED(v: number): string {
 }
 
 export default function ProcurementDashboardPage() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
+  const chartNavy = isElite ? "#0D0D0D" : "#0f2d5a";
+  const palette = isElite ? ["#8B0000", "#0D0D0D", "#10b981", "#f97316", "#8b5cf6", "#06b6d4", "#ef4444", "#14b8a6"] : PALETTE;
   // We deliberately do NOT call useGetProcurementDashboard() — that
   // endpoint is not active-company scoped, so its KPI numbers would leak
   // values from other tenants into this executive view. All KPIs below
@@ -155,9 +160,9 @@ export default function ProcurementDashboardPage() {
 
       {insights.length > 0 && (
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+          <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${eliteIconGrad}`} />
           <div className="flex items-center gap-2 mb-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <h3 className="text-sm font-semibold">Procurement Insights</h3>
@@ -196,7 +201,7 @@ export default function ProcurementDashboardPage() {
               <YAxis dataKey="stage" type="category" tick={{ fontSize: 12 }} width={140} />
               <Tooltip />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="count"   name="Total"   fill="#1e6ab0" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="count"   name="Total"   fill={chartBlue} radius={[0, 6, 6, 0]} />
               <Bar dataKey="pending" name="Pending" fill="#f97316" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -209,7 +214,7 @@ export default function ProcurementDashboardPage() {
             <ResponsiveContainer width="100%" height={260}>
               <RPieChart>
                 <Pie data={poStatusMix} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={45} paddingAngle={2}>
-                  {poStatusMix.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                  {poStatusMix.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
                 </Pie>
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -228,7 +233,7 @@ export default function ProcurementDashboardPage() {
             <AreaChart data={monthlyPo}>
               <defs>
                 <linearGradient id="grad-po" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1e6ab0" stopOpacity={0.5} /><stop offset="100%" stopColor="#1e6ab0" stopOpacity={0} />
+                  <stop offset="0%" stopColor={chartBlue} stopOpacity={0.5} /><stop offset="100%" stopColor={chartBlue} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
@@ -237,8 +242,8 @@ export default function ProcurementDashboardPage() {
               <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
               <Tooltip formatter={(v: number, name: string) => name === "Value" ? fmtAED(v) : v} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Area yAxisId="right" type="monotone" dataKey="value" stroke="#1e6ab0" strokeWidth={2} fill="url(#grad-po)" name="Value" />
-              <Area yAxisId="left"  type="monotone" dataKey="pos"   stroke="#0f2d5a" strokeWidth={2} fillOpacity={0}     name="POs" />
+              <Area yAxisId="right" type="monotone" dataKey="value" stroke={chartBlue} strokeWidth={2} fill="url(#grad-po)" name="Value" />
+              <Area yAxisId="left"  type="monotone" dataKey="pos"   stroke={chartNavy} strokeWidth={2} fillOpacity={0}     name="POs" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -249,7 +254,7 @@ export default function ProcurementDashboardPage() {
         <div className="lg:col-span-2 bg-card border rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
                 <Crown className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -267,7 +272,7 @@ export default function ProcurementDashboardPage() {
             <div className="space-y-2">
               {topSuppliers.map((s, i) => (
                 <div key={s.name} className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : ""}`} style={i >= 3 ? { background: chartBlue } : undefined}>
                     {i + 1}
                   </div>
                   <Avatar name={s.name} size={32} />

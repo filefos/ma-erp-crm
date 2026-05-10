@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
   useGetLead, useUpdateLead, getGetLeadQueryKey, getListLeadsQueryKey,
 } from "@workspace/api-client-react";
@@ -51,6 +52,10 @@ export function LeadDetail({ id }: Props) {
   const lid = parseInt(id, 10);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
   const [, navigate] = useLocation();
   const { data: lead, isLoading } = useGetLead(lid);
   const [editing, setEditing] = useState(false);
@@ -158,7 +163,7 @@ export function LeadDetail({ id }: Props) {
           {editing && (
             <>
               <Button variant="outline" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4 mr-1.5" />Cancel</Button>
-              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={saveEdit} disabled={update.isPending} data-testid="button-save-lead">
+              <Button size="sm" className={`bg-gradient-to-r ${eliteIconGrad} text-white hover:opacity-90`} onClick={saveEdit} disabled={update.isPending} data-testid="button-save-lead">
                 <Save className="w-4 h-4 mr-1.5" />{update.isPending ? "Saving..." : "Save"}
               </Button>
             </>
@@ -227,7 +232,7 @@ export function LeadDetail({ id }: Props) {
             ) : (
               <Badge variant="secondary" className={`${statusColors[l.status] ?? ""} capitalize`}>{l.status?.replace("_"," ")}</Badge>
             )}
-            <div className="flex items-center gap-1 bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] text-white rounded-full px-2.5 py-0.5 text-xs font-semibold" title={`AI score: ${ai.score}/100 (${ai.band})`}>
+            <div className={`flex items-center gap-1 bg-gradient-to-r ${eliteIconGrad} text-white rounded-full px-2.5 py-0.5 text-xs font-semibold`} title={`AI score: ${ai.score}/100 (${ai.band})`}>
               <Sparkles className="w-3 h-3" />AI {ai.score}
             </div>
           </div>
@@ -323,7 +328,7 @@ export function LeadDetail({ id }: Props) {
         <TabsContent value="ai" className="space-y-3">
           <div className="bg-card border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center">
+              <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center`}>
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -333,7 +338,7 @@ export function LeadDetail({ id }: Props) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              <div className="border rounded-lg p-3 bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5">
+              <div className="border rounded-lg p-3 bg-muted/40">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">AI Lead Score</span>
                   <Badge variant="secondary" className={`capitalize ${scoreColors[ai.band]}`}>{ai.band}</Badge>
@@ -357,7 +362,7 @@ export function LeadDetail({ id }: Props) {
                 size="sm"
                 onClick={onSuggestFollowUp}
                 disabled={aiFollowUpBusy}
-                className="bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] text-white hover:opacity-95"
+                className={`bg-gradient-to-r ${eliteIconGrad} text-white hover:opacity-95`}
                 data-testid="button-ai-suggest-followup"
               >
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
@@ -421,7 +426,7 @@ export function LeadDetail({ id }: Props) {
               </div>
               <div className="flex justify-between">
                 <Button variant="ghost" size="sm" onClick={() => setAiFollowUp(null)}>Close</Button>
-                <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={applyAiFollowUpDate} disabled={!aiFollowUp.recommendedDate}>
+                <Button size="sm" className={`bg-gradient-to-r ${eliteIconGrad} text-white hover:opacity-90`} onClick={applyAiFollowUpDate} disabled={!aiFollowUp.recommendedDate}>
                   Apply date to lead
                 </Button>
               </div>
@@ -433,11 +438,11 @@ export function LeadDetail({ id }: Props) {
       {/* AI text dialog */}
       <Dialog open={!!aiText} onOpenChange={open => !open && setAiText("")}>
         <DialogContent className="max-w-xl">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#1e6ab0]" />{aiTitle}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="w-4 h-4" style={{ color: chartBlue }} />{aiTitle}</DialogTitle></DialogHeader>
           <Textarea value={aiText} onChange={e => setAiText(e.target.value)} rows={10} className="font-mono text-sm" />
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setAiText("")}>Close</Button>
-            <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => copyText(aiText)}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button>
+            <Button size="sm" className={`bg-gradient-to-r ${eliteIconGrad} text-white hover:opacity-90`} onClick={() => copyText(aiText)}><Copy className="w-3.5 h-3.5 mr-1.5" />Copy</Button>
           </div>
         </DialogContent>
       </Dialog>

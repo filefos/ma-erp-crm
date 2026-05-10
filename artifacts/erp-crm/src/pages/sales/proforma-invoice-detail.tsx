@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 
 interface Props { id: string }
 
@@ -33,6 +34,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function ProformaInvoiceDetail({ id }: Props) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const pid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -290,7 +294,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
             </Link>
           </Button>
           <Button
-            size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            size="sm" className={primeBtnCls}
             onClick={handleConvertToTax} disabled={converting}
           >
             <Receipt className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Convert to Tax Invoice"}
@@ -426,7 +430,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setConvertDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleConfirmConvertToTax} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+          <Button onClick={handleConfirmConvertToTax} className={primeBtnCls}>
             <Receipt className="w-4 h-4 mr-1" />Create Tax Invoice
           </Button>
         </DialogFooter>

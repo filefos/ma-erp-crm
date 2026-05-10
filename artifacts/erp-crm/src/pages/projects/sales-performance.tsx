@@ -54,6 +54,9 @@ function isProjectInPeriod(p: any, year: number, month?: number): boolean {
 export function SalesPerformance() {
   const queryClient = useQueryClient();
   const { activeCompanyId, filterByCompany } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState<number | "all">(now.getMonth() + 1);
@@ -138,7 +141,7 @@ export function SalesPerformance() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Target className="w-6 h-6 text-[#1e6ab0]" />Sales Performance
+            <Target className="w-6 h-6" style={{ color: chartBlue }} />Sales Performance
           </h1>
           <p className="text-muted-foreground text-sm">
             Salesperson targets vs achieved · projects, timeline & remaining target — {periodLabel}
@@ -154,6 +157,7 @@ export function SalesPerformance() {
             defaultYear={year}
             defaultMonth={month === "all" ? now.getMonth() + 1 : (month as number)}
             onSubmit={(v) => createTarget.mutate({ data: v })}
+            primaryBtnClass={isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#163d76]"}
           />
         </div>
       </div>
@@ -177,7 +181,7 @@ export function SalesPerformance() {
 
       {/* Team KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiTile icon={Target}     label="Team Target"    value={fmtAED(teamTarget)}    tone="navy"  />
+        <KpiTile icon={Target}     label="Team Target"    value={fmtAED(teamTarget)}    tone="navy"  navyBg={`bg-gradient-to-br ${eliteIconGrad} text-white`} />
         <KpiTile icon={Trophy}     label="Achieved"       value={fmtAED(teamAchieved)}  tone="green" sub={`${teamAttain}% of target`} />
         <KpiTile icon={TrendingUp} label="Remaining"      value={fmtAED(teamRemaining)} tone="amber" sub={`${100 - Math.min(100, teamAttain)}% to go`} />
         <KpiTile icon={Briefcase}  label="Active Projects" value={totalProjects}        tone="blue"  sub={`${rows.length} salespeople`} />
@@ -195,7 +199,7 @@ export function SalesPerformance() {
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} />
                 <Tooltip formatter={(v: number) => `AED ${v.toLocaleString()}`} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="Target"   fill="#0f2d5a" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Target"   fill={chartBlue} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Achieved" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -218,6 +222,7 @@ export function SalesPerformance() {
             <SalespersonRow
               key={r.id}
               row={r}
+              accentColor={chartBlue}
               onDeleteTargets={() => r.targetIds.forEach((id: number) => deleteTarget.mutate({ id }))}
               onUpdateTarget={(amount) => {
                 if (r.targetIds.length === 1) {
@@ -268,7 +273,7 @@ export function SalesPerformance() {
                   <TableCell><Badge variant="secondary" className="capitalize">{t.period}</Badge></TableCell>
                   <TableCell>{t.year}</TableCell>
                   <TableCell>{t.month ? MONTHS[t.month - 1] : t.quarter ? `Q${t.quarter}` : "—"}</TableCell>
-                  <TableCell className="text-right font-semibold text-[#1e6ab0]">{Number(t.targetAmount).toLocaleString()}</TableCell>
+                  <TableCell className="text-right font-semibold" style={{ color: chartBlue }}>{Number(t.targetAmount).toLocaleString()}</TableCell>
                   <TableCell className="text-xs text-muted-foreground truncate max-w-[200px]">{t.notes ?? "—"}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteTarget.mutate({ id: t.id })}>
@@ -286,11 +291,12 @@ export function SalesPerformance() {
 }
 
 function SalespersonRow({
-  row, onUpdateTarget, onDeleteTargets,
+  row, onUpdateTarget, onDeleteTargets, accentColor,
 }: {
   row: { id: number; name: string; role: string; target: number; achieved: number; remaining: number; attainment: number; projects: any[]; targetIds: number[] };
   onUpdateTarget: (amount: number) => void;
   onDeleteTargets: () => void;
+  accentColor?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -324,7 +330,7 @@ function SalespersonRow({
                 <Button size="sm" className="h-7 px-2 text-[10px]" onClick={() => { onUpdateTarget(Number(draft) || 0); setEditing(false); }}>Save</Button>
               </div>
             ) : (
-              <div className="font-bold text-sm cursor-pointer hover:text-[#1e6ab0]" onClick={() => { setDraft(String(row.target || "")); setEditing(true); }}>
+              <div className="font-bold text-sm cursor-pointer hover:text-primary" onClick={() => { setDraft(String(row.target || "")); setEditing(true); }}>
                 {row.target > 0 ? fmtAED(row.target) : "Set →"}
               </div>
             )}
@@ -343,13 +349,13 @@ function SalespersonRow({
       {/* Progress bar */}
       <div className="mt-3 flex items-center gap-3">
         <Progress value={Math.min(100, row.attainment)} className="h-2 flex-1" />
-        <span className="text-xs font-bold w-14 text-right text-[#1e6ab0]">{row.attainment}%</span>
+        <span className="text-xs font-bold w-14 text-right" style={{ color: accentColor }}>{row.attainment}%</span>
       </div>
 
       {/* Toggle projects */}
       {row.projects.length > 0 && (
         <div className="mt-3">
-          <button onClick={() => setExpanded(!expanded)} className="text-xs text-[#1e6ab0] font-medium hover:underline">
+          <button onClick={() => setExpanded(!expanded)} className="text-xs font-medium hover:underline" style={{ color: accentColor }}>
             {expanded ? "Hide" : "Show"} projects ({row.projects.length})
           </button>
           {expanded && (
@@ -402,14 +408,15 @@ function SalespersonRow({
 }
 
 function KpiTile({
-  icon: Icon, label, value, tone, sub,
+  icon: Icon, label, value, tone, sub, navyBg,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string; value: string | number; sub?: string;
   tone: "navy" | "blue" | "green" | "amber";
+  navyBg?: string;
 }) {
   const styles = {
-    navy:  { bg: "bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white", icon: "bg-white/15 text-white" },
+    navy:  { bg: navyBg ?? "bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white", icon: "bg-white/15 text-white" },
     blue:  { bg: "bg-card border", icon: "bg-blue-100 text-blue-700" },
     green: { bg: "bg-card border", icon: "bg-emerald-100 text-emerald-700" },
     amber: { bg: "bg-card border", icon: "bg-orange-100 text-orange-700" },
@@ -430,13 +437,14 @@ function KpiTile({
 }
 
 function SetTargetDialog({
-  users, companyId, defaultYear, defaultMonth, onSubmit,
+  users, companyId, defaultYear, defaultMonth, onSubmit, primaryBtnClass,
 }: {
   users: any[];
   companyId: number;
   defaultYear: number;
   defaultMonth: number;
   onSubmit: (v: { companyId: number; userId: number; period: string; year: number; month?: number; quarter?: number; targetAmount: number; notes?: string }) => void;
+  primaryBtnClass?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [userId, setUserId] = useState<string>("");
@@ -463,7 +471,7 @@ function SetTargetDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#163d76]"><Plus className="w-4 h-4 mr-1.5" />Set Target</Button>
+        <Button size="sm" className={primaryBtnClass ?? "bg-[#0f2d5a] hover:bg-[#163d76]"}><Plus className="w-4 h-4 mr-1.5" />Set Target</Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>Set Sales Target</DialogTitle></DialogHeader>
@@ -523,7 +531,7 @@ function SetTargetDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={submit} disabled={!userId || !amount} className="bg-[#0f2d5a] hover:bg-[#163d76]">Save Target</Button>
+          <Button onClick={submit} disabled={!userId || !amount} className={primaryBtnClass ?? "bg-[#0f2d5a] hover:bg-[#163d76]"}>Save Target</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

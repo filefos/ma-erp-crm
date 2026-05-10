@@ -27,7 +27,10 @@ function localDayKey(raw?: string | null): string | null {
 }
 
 export function HrDashboard() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
   const { data: employeesRaw }   = useListEmployees({});
   const { data: attendanceRaw }  = useListAttendance({});
   const { data: usersRaw }       = useListUsers();
@@ -243,9 +246,9 @@ export function HrDashboard() {
 
       {insights.length > 0 && (
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+          <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${eliteIconGrad}`} />
           <div className="flex items-center gap-2 mb-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <h3 className="text-sm font-semibold">HR Insights · Today</h3>
@@ -342,7 +345,7 @@ export function HrDashboard() {
               <Area type="monotone" dataKey="present" stroke="#10b981" strokeWidth={2} fill="url(#grad-present)" name="Present" />
               <Area type="monotone" dataKey="late"    stroke="#f97316" strokeWidth={2} fillOpacity={0}        name="Late" />
               <Area type="monotone" dataKey="absent"  stroke="#ef4444" strokeWidth={2} fillOpacity={0}        name="Absent" />
-              <Area type="monotone" dataKey="leave"   stroke="#1e6ab0" strokeWidth={2} fillOpacity={0}        name="On Leave" />
+              <Area type="monotone" dataKey="leave"   stroke={chartBlue} strokeWidth={2} fillOpacity={0}        name="On Leave" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -360,7 +363,7 @@ export function HrDashboard() {
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={90} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#1e6ab0" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="value" fill={chartBlue} radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -393,7 +396,7 @@ export function HrDashboard() {
                   <div key={s.name} className="flex items-center gap-2">
                     <div className="text-xs font-medium truncate flex-1 min-w-0">{s.name}</div>
                     <div className="h-1.5 w-24 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${(s.value / max) * 100}%` }} />
+                      <div className={`h-full bg-gradient-to-r ${eliteIconGrad}`} style={{ width: `${(s.value / max) * 100}%` }} />
                     </div>
                     <div className="text-xs font-semibold w-8 text-right">{s.value}</div>
                   </div>
@@ -472,7 +475,7 @@ export function HrDashboard() {
       <div className="bg-card border rounded-2xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <Award className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -490,7 +493,7 @@ export function HrDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {topPerformers.map((p, i) => (
               <div key={p.id} className="border rounded-xl p-3 hover:bg-muted/40 transition-all flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : ""}`} style={i >= 3 ? { background: chartBlue } : undefined}>
                   {i + 1}
                 </div>
                 <Avatar name={p.name} size={32} />

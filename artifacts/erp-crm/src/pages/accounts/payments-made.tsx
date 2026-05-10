@@ -79,7 +79,9 @@ export function PaymentsMadeList() {
   const { data: payments = [], isLoading } = useListPaymentsMade();
   const { data: bankAccounts = [] } = useListBankAccounts();
   const { data: allSuppliers = [] } = useListSuppliers({});
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["/payments-made"] });
   const createMutation = useCreatePaymentMade({ mutation: { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Payment recorded." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
@@ -219,7 +221,7 @@ export function PaymentsMadeList() {
               title="Payable"
               size="sm"
             />
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
+            <Button className={primeBtnCls} onClick={openCreate}>
               <Plus className="w-4 h-4 mr-2" />Record Payment
             </Button>
           </>
@@ -447,7 +449,7 @@ export function PaymentsMadeList() {
           <div className="flex justify-end gap-2 pt-2 border-t">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={primeBtnCls}
               onClick={handleSave}
               disabled={!form.companyId || !form.payeeName || !form.amount || !form.paymentDate || createMutation.isPending || updateMutation.isPending}
             >

@@ -204,7 +204,9 @@ export function AttendanceList() {
     },
   });
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(attendance ?? []).filter(a => employeeFilter === "all" || a.employeeId === parseInt(employeeFilter, 10));
 
   const present = filtered?.filter(a => a.status === "present").length ?? 0;
@@ -251,7 +253,7 @@ export function AttendanceList() {
           />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+              <Button className={primeBtnCls}>
                 <Plus className="w-4 h-4 mr-2" />Mark Attendance
               </Button>
             </DialogTrigger>
@@ -287,7 +289,7 @@ export function AttendanceList() {
                 <div className="space-y-1 col-span-2"><Label>Notes</Label><Input value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} placeholder="Reason for absence, leave type, etc." /></div>
               </div>
               <Button
-                className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                className={`mt-4 ${primeBtnCls}`}
                 onClick={submit}
                 disabled={!canSubmit}
               >

@@ -18,7 +18,7 @@ import {
 
 const PALETTE = ["#1e6ab0", "#0f2d5a", "#10b981", "#f97316", "#8b5cf6", "#06b6d4", "#ef4444", "#14b8a6", "#a855f7", "#64748b"];
 
-const STATUS_COLORS: Record<string, string> = {
+const STATUS_COLORS_BASE: Record<string, string> = {
   in_use:        "#10b981",
   available:     "#1e6ab0",
   maintenance:   "#f97316",
@@ -27,7 +27,7 @@ const STATUS_COLORS: Record<string, string> = {
   out_of_service: "#ef4444",
 };
 
-const CONDITION_COLORS: Record<string, string> = {
+const CONDITION_COLORS_BASE: Record<string, string> = {
   excellent:  "#10b981",
   good:       "#1e6ab0",
   fair:       "#f97316",
@@ -49,7 +49,12 @@ function daysUntil(date?: string | null): number | null {
 }
 
 export function AssetsDashboard() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
+  const STATUS_COLORS: Record<string, string> = { ...STATUS_COLORS_BASE, available: chartBlue };
+  const CONDITION_COLORS: Record<string, string> = { ...CONDITION_COLORS_BASE, good: chartBlue };
   const { data: assetsRaw } = useListAssets({});
 
   const assets = useMemo(() => filterByCompany(assetsRaw ?? []), [assetsRaw, filterByCompany]);
@@ -160,9 +165,9 @@ export function AssetsDashboard() {
 
       {insights.length > 0 && (
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+          <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${eliteIconGrad}`} />
           <div className="flex items-center gap-2 mb-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <h3 className="text-sm font-semibold">Asset Insights</h3>
@@ -271,7 +276,7 @@ export function AssetsDashboard() {
                   <div key={l.name} className="flex items-center gap-2">
                     <div className="text-xs font-medium truncate flex-1 min-w-0">{l.name}</div>
                     <div className="h-1.5 w-32 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0]" style={{ width: `${(l.value / max) * 100}%` }} />
+                      <div className={`h-full bg-gradient-to-r ${eliteIconGrad}`} style={{ width: `${(l.value / max) * 100}%` }} />
                     </div>
                     <div className="text-xs font-semibold w-8 text-right">{l.value}</div>
                   </div>

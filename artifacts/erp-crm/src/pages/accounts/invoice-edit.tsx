@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
   useGetTaxInvoice,
   useUpdateTaxInvoice,
@@ -35,6 +36,9 @@ interface FormState {
 }
 
 export function InvoiceEdit({ id }: Props) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const invId = parseInt(id, 10);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -134,7 +138,7 @@ export function InvoiceEdit({ id }: Props) {
         </Button>
         <h1 className="text-xl font-semibold">Edit Tax Invoice — {inv.invoiceNumber}</h1>
         <div className="ml-auto">
-          <Button onClick={handleSave} disabled={update.isPending} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+          <Button onClick={handleSave} disabled={update.isPending} className={primeBtnCls}>
             <Save className="w-4 h-4 mr-1" />{update.isPending ? "Saving…" : "Save Changes"}
           </Button>
         </div>

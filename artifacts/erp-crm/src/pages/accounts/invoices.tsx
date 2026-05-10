@@ -64,7 +64,9 @@ export function TaxInvoicesList() {
       onError: () => toast({ title: "Failed to delete.", variant: "destructive" }),
     },
   });
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(invoices ?? []).filter(i => status === "all" || i.paymentStatus === status);
   const totalOutstanding = filtered?.reduce((s, i) => s + (i.balance ?? 0), 0) ?? 0;
 
@@ -142,7 +144,7 @@ export function TaxInvoicesList() {
             />
             <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) resetForm(); }}>
               <DialogTrigger asChild>
-                <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />New Tax Invoice</Button>
+                <Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />New Tax Invoice</Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle>New Tax Invoice</DialogTitle></DialogHeader>
@@ -232,7 +234,7 @@ export function TaxInvoicesList() {
                   <div className="flex gap-3 justify-end pt-2">
                     <Button variant="outline" onClick={() => { setOpen(false); resetForm(); }}>Cancel</Button>
                     <Button
-                      className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                      className={primeBtnCls}
                       onClick={handleCreate}
                       disabled={!form.clientName || !form.companyId || create.isPending}
                     >

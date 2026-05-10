@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
   useGetHandoverNote, getGetHandoverNoteQueryKey,
   useUpdateHandoverNote, useListCompanies,
@@ -32,6 +33,9 @@ const STATUS_COLORS: Record<string, string> = {
 const EMPTY_ITEM = (): HandoverItem => ({ description: "", quantity: 1, unit: "nos" });
 
 export function HandoverNoteDetail({ id }: Props) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const honId = parseInt(id, 10);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -347,7 +351,7 @@ export function HandoverNoteDetail({ id }: Props) {
           <div className="flex justify-end gap-2 pt-2 border-t">
             <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
             <Button
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={primeBtnCls}
               onClick={() => updateMutation.mutate({ id: honId, data: { ...form, itemsHandedOver: form.items.filter(i => i.description.trim()) } as any })}
               disabled={updateMutation.isPending}
             >

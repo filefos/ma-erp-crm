@@ -42,7 +42,9 @@ export function DeliveryNotesList() {
     },
   });
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(notes ?? []).filter(n =>
     !search ||
     n.dnNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -80,7 +82,7 @@ export function DeliveryNotesList() {
           )}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />New Delivery Note</Button>
+              <Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />New Delivery Note</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader><DialogTitle>Create Delivery Note</DialogTitle></DialogHeader>
@@ -96,7 +98,7 @@ export function DeliveryNotesList() {
                 </div>
               </div>
               <Button
-                className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                className={`mt-4 ${primeBtnCls}`}
                 onClick={() => create.mutate({ data: { ...form, companyId: parseInt(form.companyId, 10) } as any })}
                 disabled={!form.clientName || !form.companyId || create.isPending}
               >

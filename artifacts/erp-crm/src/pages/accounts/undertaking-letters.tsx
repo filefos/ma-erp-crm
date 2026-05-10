@@ -39,7 +39,9 @@ export function UndertakingLettersList() {
 
   const { data: letters = [], isLoading } = useListUndertakingLetters();
   const { data: lpos = [] } = useListLpos();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
 
   const createMutation = useCreateUndertakingLetter({
     mutation: {
@@ -117,7 +119,7 @@ export function UndertakingLettersList() {
             />
             <Dialog open={newOpen} onOpenChange={v => { setNewOpen(v); if (!v) { setNewForm(EMPTY_NEW_UL()); setLpoLookup("idle"); } }}>
               <DialogTrigger asChild>
-                <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+                <Button className={primeBtnCls}>
                   <Plus className="w-4 h-4 mr-2" />New Undertaking Letter
                 </Button>
               </DialogTrigger>
@@ -170,7 +172,7 @@ export function UndertakingLettersList() {
                 </div>
 
                 <Button
-                  className="mt-3 bg-[#0f2d5a] hover:bg-[#1e6ab0] w-full"
+                  className={`mt-3 ${primeBtnCls} w-full`}
                   onClick={() => createMutation.mutate({ data: { ...newForm, companyId: parseInt(newForm.companyId, 10) } as any })}
                   disabled={!newForm.clientName || !newForm.companyId || createMutation.isPending}
                 >

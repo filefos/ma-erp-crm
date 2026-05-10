@@ -57,6 +57,8 @@ export function ChartOfAccountsList() {
   const { data: accounts = [], isLoading } = useListChartOfAccounts();
   const { data: companies = [] } = useListCompanies();
   const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
 
   const invalidate = () => qc.invalidateQueries({
     predicate: q => {
@@ -173,7 +175,7 @@ export function ChartOfAccountsList() {
             <Button variant="outline" onClick={openSeed} title={`Bulk-load ${CONSTRUCTION_COA_COUNT} construction industry accounts`}>
               <Library className="w-4 h-4 mr-2" />Load Industry Template
             </Button>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
+            <Button className={primeBtnCls} onClick={openCreate}>
               <Plus className="w-4 h-4 mr-2" />Add Account
             </Button>
           </>
@@ -285,7 +287,7 @@ export function ChartOfAccountsList() {
             <Button variant="outline" onClick={() => setSeedOpen(false)} disabled={seeding}>
               {seeding ? "Working…" : "Close"}
             </Button>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSeedTemplate} disabled={!seedCompanyId || seeding}>
+            <Button className={primeBtnCls} onClick={handleSeedTemplate} disabled={!seedCompanyId || seeding}>
               {seeding ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Loading…</> : <>Load Template</>}
             </Button>
           </div>
@@ -339,7 +341,7 @@ export function ChartOfAccountsList() {
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSave} disabled={!form.companyId || !form.accountCode || !form.accountName || isPending}>
+            <Button className={primeBtnCls} onClick={handleSave} disabled={!form.companyId || !form.accountCode || !form.accountName || isPending}>
               {isPending ? "Saving..." : editId ? "Update" : "Create"}
             </Button>
           </div>

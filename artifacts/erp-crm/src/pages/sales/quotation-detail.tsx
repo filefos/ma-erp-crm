@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
 import {
   useGetQuotation, useApproveQuotation, useCreateProformaInvoice,
@@ -50,6 +51,9 @@ const STATUS_COLORS: Record<string, string> = {
 type ConvertTarget = "pi" | "tax";
 
 export function QuotationDetail({ id }: Props) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const qid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -503,7 +507,7 @@ export function QuotationDetail({ id }: Props) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" disabled={!!converting}>
+              <Button size="sm" className={primeBtnCls} disabled={!!converting}>
                 {converting ? "Creating…" : "Convert To"}
                 <ChevronDown className="w-3.5 h-3.5 ml-1" />
               </Button>
@@ -745,7 +749,7 @@ export function QuotationDetail({ id }: Props) {
             <Button
               onClick={handleConfirmConvert}
               disabled={!!converting}
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={primeBtnCls}
             >
               {converting ? "Creating…" : (() => {
                 const n = selected.filter(Boolean).length + (convertOpen === "tax" && includeFullAmount ? 1 : 0);

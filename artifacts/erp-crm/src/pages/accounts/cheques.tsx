@@ -47,7 +47,9 @@ export function ChequesList() {
     },
   });
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(cheques ?? []).filter(c =>
     !search ||
     c.chequeNumber.toLowerCase().includes(search.toLowerCase()) ||
@@ -81,7 +83,7 @@ export function ChequesList() {
           />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+              <Button className={primeBtnCls}>
                 <Plus className="w-4 h-4 mr-2" />New Cheque
               </Button>
             </DialogTrigger>
@@ -104,7 +106,7 @@ export function ChequesList() {
                 <div className="space-y-1 col-span-2"><Label>Memo / Purpose</Label><Input value={form.memo} onChange={e => setForm(p => ({...p, memo: e.target.value}))} placeholder="Payment for invoice #..." /></div>
               </div>
               <Button
-                className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                className={`mt-4 ${primeBtnCls}`}
                 onClick={() => create.mutate({ data: { ...form, amount: parseFloat(form.amount) || 0, bankAccountId: form.bankAccountId ? parseInt(form.bankAccountId, 10) : undefined, companyId: form.companyId ? parseInt(form.companyId, 10) : undefined } as any })}
                 disabled={!form.payeeName || !form.chequeNumber || !form.amount || create.isPending}
               >

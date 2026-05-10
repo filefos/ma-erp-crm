@@ -54,6 +54,8 @@ const EMPTY_FORM = { quotationNumber: "", clientRef: "", lpoNumber: "" }; // cli
 
 export function LpoAcknowledgments() {
   const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { data: quotations } = useListQuotations();
   const { data: companies } = useListCompanies();
   const { user } = useAuth();
@@ -705,7 +707,7 @@ export function LpoAcknowledgments() {
             <FileText className="w-3.5 h-3.5 mr-1.5" /> AC LETTER
           </Button>
           <Button
-            className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            className={primeBtnCls}
             onClick={() => { setForm({ ...EMPTY_FORM }); setFile(null); setUploadOpen(true); }}
           >
             <Upload className="w-4 h-4 mr-2" /> Upload LPO Acknowledgment
@@ -909,7 +911,7 @@ export function LpoAcknowledgments() {
               </div>
 
               <Button
-                className="w-full bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                className={`w-full ${primeBtnCls}`}
                 onClick={() => { setUploadOpen(false); setUploadedRecord(null); }}
               >
                 Close
@@ -1005,7 +1007,7 @@ export function LpoAcknowledgments() {
                   Cancel
                 </Button>
                 <Button
-                  className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                  className={primeBtnCls}
                   disabled={uploading || !file}
                   onClick={handleUpload}
                 >

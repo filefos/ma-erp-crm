@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useListDepartments, useCreateDepartment, useUpdateDepartment, getListDepartmentsQueryKey } from "@workspace/api-client-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,9 @@ import { Plus, Pencil } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function DepartmentsAdmin() {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { data: depts, isLoading } = useListDepartments();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -44,7 +48,7 @@ export function DepartmentsAdmin() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Department</Button>
+            <Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />Add Department</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Department</DialogTitle></DialogHeader>
@@ -52,7 +56,7 @@ export function DepartmentsAdmin() {
               <div className="space-y-1"><Label>Name *</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
               <div className="space-y-1"><Label>Description</Label><Input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} /></div>
             </div>
-            <Button className="mt-3 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.name || create.isPending}>
+            <Button className={`mt-3 ${primeBtnCls}`} onClick={submit} disabled={!form.name || create.isPending}>
               {create.isPending ? "Creating..." : "Create"}
             </Button>
           </DialogContent>
@@ -101,7 +105,7 @@ export function DepartmentsAdmin() {
             <div className="space-y-1"><Label>Name</Label><Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>
             <div className="space-y-1"><Label>Description</Label><Input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} /></div>
           </div>
-          <Button className="mt-3 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.name || update.isPending}>
+          <Button className={`mt-3 ${primeBtnCls}`} onClick={submit} disabled={!form.name || update.isPending}>
             {update.isPending ? "Saving..." : "Save"}
           </Button>
         </DialogContent>

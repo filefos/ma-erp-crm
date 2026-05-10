@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Link, useLocation } from "wouter";
 import {
   useGetOfferLetter, useUpdateOfferLetter, useSetOfferLetterStatus,
@@ -48,6 +49,9 @@ const STATUS_TONE: Record<string, string> = {
 };
 
 export function OfferLetterDetail({ id }: Props) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const oid = parseInt(id, 10);
   const qc = useQueryClient();
   const [, setLocation] = useLocation();
@@ -313,11 +317,11 @@ export function OfferLetterDetail({ id }: Props) {
           {canEdit && editing && (
             <>
               <Button variant="ghost" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4 mr-1" />Cancel</Button>
-              <Button size="sm" onClick={save} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-save-offer"><Save className="w-4 h-4 mr-1" />Save</Button>
+              <Button size="sm" onClick={save} className={primeBtnCls} data-testid="button-save-offer"><Save className="w-4 h-4 mr-1" />Save</Button>
             </>
           )}
           {isDraft && (
-            <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => setStatus.mutate({ id: oid, data: { status: "issued" } })} data-testid="button-issue-offer">
+            <Button size="sm" className={primeBtnCls} onClick={() => setStatus.mutate({ id: oid, data: { status: "issued" } })} data-testid="button-issue-offer">
               <Send className="w-4 h-4 mr-1" />Issue
             </Button>
           )}
@@ -337,7 +341,7 @@ export function OfferLetterDetail({ id }: Props) {
             </Button>
           )}
           {isAccepted && !(offer as any).convertedEmployeeId && (
-            <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={() => convert.mutate({ id: oid })} data-testid="button-convert-employee">
+            <Button size="sm" className={primeBtnCls} onClick={() => convert.mutate({ id: oid })} data-testid="button-convert-employee">
               <UserPlus className="w-4 h-4 mr-1" />Convert to Employee
             </Button>
           )}

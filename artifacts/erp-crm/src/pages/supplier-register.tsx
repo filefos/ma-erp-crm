@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
   useListPublicCompanies,
   useListSupplierCategories,
@@ -64,6 +65,9 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_FILES = 6;
 
 export default function SupplierRegisterPage() {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { data: companies } = useListPublicCompanies();
   const { data: categories } = useListSupplierCategories();
   const submit = useSubmitSupplierRegistration();
@@ -762,11 +766,11 @@ export default function SupplierRegisterPage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             {step < STEPS.length ? (
-              <Button type="button" onClick={next} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+              <Button type="button" onClick={next} className={primeBtnCls}>
                 Continue <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             ) : (
-              <Button type="button" onClick={onSubmit} disabled={submit.isPending} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+              <Button type="button" onClick={onSubmit} disabled={submit.isPending} className={primeBtnCls}>
                 {submit.isPending ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Submitting...</> : "Submit Application"}
               </Button>
             )}

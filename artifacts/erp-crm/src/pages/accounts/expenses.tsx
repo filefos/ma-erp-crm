@@ -57,7 +57,9 @@ export function ExpensesList() {
     }
   };
 
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(expenses ?? []).filter(e => !search || e.category.toLowerCase().includes(search.toLowerCase()) || e.description?.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -84,7 +86,7 @@ export function ExpensesList() {
               size="sm"
             />
             <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Expense</Button></DialogTrigger>
+              <DialogTrigger asChild><Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />Add Expense</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Expense</DialogTitle></DialogHeader>
             <div className="space-y-4 pt-2">

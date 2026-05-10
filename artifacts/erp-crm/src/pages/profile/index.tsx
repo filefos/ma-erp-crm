@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useAuth } from "@/hooks/useAuth";
 import { useUpdateUser, getGetMeQueryKey, useListCompanies } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,6 +26,9 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export function MyProfile() {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: companies } = useListCompanies();
@@ -313,7 +317,7 @@ export function MyProfile() {
               <Button variant="outline" size="sm" onClick={handleCancel}>
                 <X className="w-3.5 h-3.5 mr-1.5" /> Cancel
               </Button>
-              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSave} disabled={update.isPending || !form.name.trim()}>
+              <Button size="sm" className={primeBtnCls} onClick={handleSave} disabled={update.isPending || !form.name.trim()}>
                 <Check className="w-3.5 h-3.5 mr-1.5" />
                 {update.isPending ? "Saving..." : "Save"}
               </Button>
@@ -396,7 +400,7 @@ export function MyProfile() {
           <div className="flex items-center gap-3">
             <Button
               size="sm"
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={primeBtnCls}
               onClick={handleSaveSignature}
               disabled={!sigPreview || !sigDirty || sigSaving}
             >
@@ -461,7 +465,7 @@ export function MyProfile() {
             <div className="flex items-center gap-3">
               <Button
                 size="sm"
-                className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                className={primeBtnCls}
                 onClick={handleSaveStamp}
                 disabled={!stampPreview || !stampDirty || stampSaving}
               >

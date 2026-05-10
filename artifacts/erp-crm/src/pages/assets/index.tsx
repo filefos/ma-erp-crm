@@ -29,7 +29,9 @@ export function AssetsList() {
   const [form, setForm] = useState({ name: "", category: "Machinery", purchaseDate: "", purchaseValue: "", currentLocation: "", assignedTo: "", condition: "good", companyId: "", notes: "" });
   const queryClient = useQueryClient();
   const { data: assets, isLoading } = useListAssets({ search: search || undefined });
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(assets ?? []);
   const { data: companies } = useListCompanies();
   const create = useCreateAsset({ mutation: { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListAssetsQueryKey() }); setOpen(false); } } });
@@ -57,7 +59,7 @@ export function AssetsList() {
             title="Asset Register"
           />
           <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Plus className="w-4 h-4 mr-2" />Add Asset</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className={primeBtnCls}><Plus className="w-4 h-4 mr-2" />Add Asset</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Asset</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-2">

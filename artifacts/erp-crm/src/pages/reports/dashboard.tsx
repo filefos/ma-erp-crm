@@ -21,19 +21,22 @@ function fmtAED(v: number): string {
   return `AED ${Math.round(v).toLocaleString()}`;
 }
 
-const REPORTS = [
-  { href: "/reports/sales-pipeline", label: "Sales Pipeline",  desc: "Deal flow, conversion, stage analytics", icon: TrendingUp, color: "from-blue-500 to-blue-700" },
-  { href: "/reports/quotations",     label: "Quotations",      desc: "Drafts, sent, accepted by salesperson",  icon: FileText,   color: "from-[#0f2d5a] to-[#1e6ab0]" },
-  { href: "/reports/revenue",        label: "Revenue",         desc: "Invoiced revenue, collections, AR",      icon: Receipt,    color: "from-emerald-500 to-emerald-700" },
-  { href: "/reports/expenses",       label: "Expenses",        desc: "Cost analysis by category & department", icon: Banknote,   color: "from-orange-500 to-orange-700" },
-  { href: "/reports/inventory",      label: "Inventory",       desc: "Stock movement, low stock, valuation",   icon: Package,    color: "from-purple-500 to-purple-700" },
-  { href: "/reports/projects",       label: "Projects",        desc: "Stage breakdown, PM performance",        icon: Folders,    color: "from-teal-500 to-teal-700" },
-  { href: "/reports/procurement",    label: "Procurement",     desc: "PR/PO/RFQ funnel, supplier spend",       icon: ShoppingCart, color: "from-indigo-500 to-indigo-700" },
-  { href: "/reports/attendance",     label: "Attendance",      desc: "Workforce attendance & overtime",        icon: Clock,      color: "from-pink-500 to-pink-700" },
-];
-
 export function ReportsDashboard() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
+
+  const REPORTS = [
+    { href: "/reports/sales-pipeline", label: "Sales Pipeline",  desc: "Deal flow, conversion, stage analytics", icon: TrendingUp, color: "from-blue-500 to-blue-700" },
+    { href: "/reports/quotations",     label: "Quotations",      desc: "Drafts, sent, accepted by salesperson",  icon: FileText,   color: eliteIconGrad },
+    { href: "/reports/revenue",        label: "Revenue",         desc: "Invoiced revenue, collections, AR",      icon: Receipt,    color: "from-emerald-500 to-emerald-700" },
+    { href: "/reports/expenses",       label: "Expenses",        desc: "Cost analysis by category & department", icon: Banknote,   color: "from-orange-500 to-orange-700" },
+    { href: "/reports/inventory",      label: "Inventory",       desc: "Stock movement, low stock, valuation",   icon: Package,    color: "from-purple-500 to-purple-700" },
+    { href: "/reports/projects",       label: "Projects",        desc: "Stage breakdown, PM performance",        icon: Folders,    color: "from-teal-500 to-teal-700" },
+    { href: "/reports/procurement",    label: "Procurement",     desc: "PR/PO/RFQ funnel, supplier spend",       icon: ShoppingCart, color: "from-indigo-500 to-indigo-700" },
+    { href: "/reports/attendance",     label: "Attendance",      desc: "Workforce attendance & overtime",        icon: Clock,      color: "from-pink-500 to-pink-700" },
+  ];
   const { data: quotationsRaw } = useListQuotations();
   const { data: invoicesRaw }   = useListTaxInvoices();
   const { data: projectsRaw }   = useListProjects({});
@@ -136,7 +139,7 @@ export function ReportsDashboard() {
 
   // ---- Profit margin gauge ----
   const marginGauge = useMemo(() => ([
-    { name: "Margin", value: Math.max(-100, Math.min(100, grossMargin)), fill: grossMargin >= 30 ? "#10b981" : grossMargin >= 10 ? "#1e6ab0" : grossMargin >= 0 ? "#f97316" : "#ef4444" },
+    { name: "Margin", value: Math.max(-100, Math.min(100, grossMargin)), fill: grossMargin >= 30 ? "#10b981" : grossMargin >= 10 ? chartBlue : grossMargin >= 0 ? "#f97316" : "#ef4444" },
   ]), [grossMargin]);
 
   // ---- Project / Attendance tile data ----
@@ -185,9 +188,9 @@ export function ReportsDashboard() {
 
       {/* Executive insights */}
       <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+        <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${eliteIconGrad}`} />
         <div className="flex items-center gap-2 mb-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+          <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <h3 className="text-sm font-semibold">Reporting Highlights</h3>
@@ -245,7 +248,7 @@ export function ReportsDashboard() {
                   <stop offset="0%" stopColor="#f97316" stopOpacity={0.5} /><stop offset="100%" stopColor="#f97316" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="grad-prof" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1e6ab0" stopOpacity={0.5} /><stop offset="100%" stopColor="#1e6ab0" stopOpacity={0} />
+                  <stop offset="0%" stopColor={chartBlue} stopOpacity={0.5} /><stop offset="100%" stopColor={chartBlue} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
@@ -255,7 +258,7 @@ export function ReportsDashboard() {
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Area type="monotone" dataKey="revenue"  stroke="#10b981" strokeWidth={2} fill="url(#grad-rev)"  name="Revenue" />
               <Area type="monotone" dataKey="expenses" stroke="#f97316" strokeWidth={2} fill="url(#grad-exp)"  name="Expenses" />
-              <Area type="monotone" dataKey="profit"   stroke="#1e6ab0" strokeWidth={2} fill="url(#grad-prof)" name="Profit" />
+              <Area type="monotone" dataKey="profit"   stroke={chartBlue} strokeWidth={2} fill="url(#grad-prof)" name="Profit" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -318,7 +321,7 @@ export function ReportsDashboard() {
                 <XAxis type="number" tick={{ fontSize: 11 }} />
                 <YAxis dataKey="stage" type="category" tick={{ fontSize: 12 }} width={90} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#1e6ab0" name="Records" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="count" fill={chartBlue} name="Records" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -342,9 +345,9 @@ export function ReportsDashboard() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {projectStageTiles.map(t => (
-                <div key={t.stage} className="rounded-xl border bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5 p-3">
+                <div key={t.stage} className="rounded-xl border bg-muted/40 p-3">
                   <div className="text-[10px] uppercase tracking-wide text-muted-foreground capitalize">{t.stage}</div>
-                  <div className="text-2xl font-bold text-[#0f2d5a] dark:text-white">{t.count}</div>
+                  <div className="text-2xl font-bold text-foreground dark:text-white">{t.count}</div>
                 </div>
               ))}
             </div>
@@ -374,9 +377,9 @@ export function ReportsDashboard() {
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Absent</div>
               <div className="text-2xl font-bold text-red-700 dark:text-red-400">{attendance30d.absent}</div>
             </div>
-            <div className="rounded-xl border bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5 p-3">
+            <div className="rounded-xl border bg-muted/40 p-3">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Reliability</div>
-              <div className="text-2xl font-bold text-[#0f2d5a] dark:text-white">{attendance30d.rate}%</div>
+              <div className="text-2xl font-bold text-foreground dark:text-white">{attendance30d.rate}%</div>
             </div>
           </div>
         </div>
@@ -399,7 +402,7 @@ export function ReportsDashboard() {
             <XAxis dataKey="module" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="#1e6ab0" radius={[6, 6, 0, 0]} name="Records" />
+            <Bar dataKey="value" fill={chartBlue} radius={[6, 6, 0, 0]} name="Records" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -408,7 +411,7 @@ export function ReportsDashboard() {
       <div className="bg-card border rounded-2xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <BarChart3 className="w-4 h-4 text-white" />
             </div>
             <div>

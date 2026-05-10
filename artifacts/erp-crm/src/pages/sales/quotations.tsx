@@ -28,7 +28,9 @@ export function QuotationsList() {
   const queryClient = useQueryClient();
   const { data: quotations, isLoading } = useListQuotations({ status: status === "all" ? undefined : status, search: search || undefined });
   const approve = useApproveQuotation({ mutation: { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListQuotationsQueryKey() }) } });
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const filtered = filterByCompany(quotations ?? []);
 
   return (
@@ -53,7 +55,7 @@ export function QuotationsList() {
             filename="quotations"
             title="Quotations"
           />
-          <Button asChild className="bg-[#0f2d5a] hover:bg-[#1e6ab0]">
+          <Button asChild className={primeBtnCls}>
             <Link href="/sales/quotations/new"><Plus className="w-4 h-4 mr-2" />New Quotation</Link>
           </Button>
         </div>

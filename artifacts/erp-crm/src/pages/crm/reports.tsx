@@ -12,11 +12,21 @@ import { useMemo } from "react";
   } from "lucide-react";
   import { ExecutiveHeader, KPIWidget } from "@/components/crm/premium";
 
-  const SOURCE_COLORS = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f97316", "#ef4444", "#8b5cf6", "#64748b"];
-  const FUNNEL_STAGES = [
+  const PRIME_SOURCE_COLORS = ["#0f2d5a", "#1e6ab0", "#3b82f6", "#10b981", "#f97316", "#ef4444", "#8b5cf6", "#64748b"];
+  const ELITE_SOURCE_COLORS = ["#0D0D0D", "#8B0000", "#C00000", "#10b981", "#f97316", "#ef4444", "#5E0000", "#64748b"];
+
+  const PRIME_FUNNEL_STAGES = [
     { key: "new",            label: "New",          color: "#3b82f6" },
     { key: "contacted",      label: "Contacted",    color: "#6366f1" },
     { key: "qualified",      label: "Qualified",    color: "#8b5cf6" },
+    { key: "quotation_sent", label: "Proposal",     color: "#f97316" },
+    { key: "negotiation",    label: "Negotiation",  color: "#fb923c" },
+    { key: "won",            label: "Won",          color: "#10b981" },
+  ];
+  const ELITE_FUNNEL_STAGES = [
+    { key: "new",            label: "New",          color: "#8B0000" },
+    { key: "contacted",      label: "Contacted",    color: "#A00000" },
+    { key: "qualified",      label: "Qualified",    color: "#5E0000" },
     { key: "quotation_sent", label: "Proposal",     color: "#f97316" },
     { key: "negotiation",    label: "Negotiation",  color: "#fb923c" },
     { key: "won",            label: "Won",          color: "#10b981" },
@@ -26,7 +36,10 @@ import { useMemo } from "react";
     const { data: leadsRaw } = useListLeads({});
     const { data: quotationsRaw } = useListQuotations();
     const { data: users } = useListUsers();
-    const { filterByCompany } = useActiveCompany();
+    const { filterByCompany, activeCompanyId } = useActiveCompany();
+    const isElite = activeCompanyId === 2;
+    const SOURCE_COLORS = isElite ? ELITE_SOURCE_COLORS : PRIME_SOURCE_COLORS;
+    const FUNNEL_STAGES = isElite ? ELITE_FUNNEL_STAGES : PRIME_FUNNEL_STAGES;
 
     const leads = useMemo(() => filterByCompany(leadsRaw ?? []), [leadsRaw, filterByCompany]);
     const quotations = useMemo(() => filterByCompany(quotationsRaw ?? []), [quotationsRaw, filterByCompany]);
@@ -149,7 +162,7 @@ import { useMemo } from "react";
 
         <div className="bg-card border rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow bg-gradient-to-br ${isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]"}`}>
               <Target className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -241,7 +254,7 @@ import { useMemo } from "react";
                 <Tooltip formatter={(v: number) => `AED ${v.toLocaleString()}`} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="Won" stackId="a" fill="#10b981" radius={[0, 6, 6, 0]} />
-                <Bar dataKey="Pipeline" stackId="a" fill="#1e6ab0" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="Pipeline" stackId="a" fill={isElite ? "#8B0000" : "#1e6ab0"} radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -260,7 +273,7 @@ import { useMemo } from "react";
               <Tooltip formatter={(v: number) => `AED ${Number(v).toLocaleString()}`} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Line type="monotone" dataKey="Won" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-              <Line type="monotone" dataKey="Pipeline" stroke="#1e6ab0" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} strokeDasharray="4 4" />
+              <Line type="monotone" dataKey="Pipeline" stroke={isElite ? "#8B0000" : "#1e6ab0"} strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} strokeDasharray="4 4" />
             </LineChart>
           </ResponsiveContainer>
         </div>

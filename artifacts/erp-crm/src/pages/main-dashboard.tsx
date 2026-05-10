@@ -60,7 +60,10 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 export function MainExecutiveDashboard() {
   const { user } = useAuth();
-  const { filterByCompany, companyShort } = useActiveCompany();
+  const { filterByCompany, companyShort, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
   const { can, ready: permsReady } = usePermissions();
   const now = new Date();
 
@@ -503,8 +506,8 @@ export function MainExecutiveDashboard() {
                     <stop offset="100%" stopColor="#ef4444" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="md-prf" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1e6ab0" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#1e6ab0" stopOpacity={0} />
+                    <stop offset="0%" stopColor={chartBlue} stopOpacity={0.5} />
+                    <stop offset="100%" stopColor={chartBlue} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgb(0 0 0 / 0.06)" />
@@ -514,7 +517,7 @@ export function MainExecutiveDashboard() {
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Area type="monotone" dataKey="revenue"  stroke="#10b981" strokeWidth={2} fill="url(#md-rev)" name="Revenue" />
                 <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} fill="url(#md-exp)" name="Expenses" />
-                <Area type="monotone" dataKey="profit"   stroke="#1e6ab0" strokeWidth={2} fill="url(#md-prf)" name="Profit" />
+                <Area type="monotone" dataKey="profit"   stroke={chartBlue} strokeWidth={2} fill="url(#md-prf)" name="Profit" />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -544,7 +547,7 @@ export function MainExecutiveDashboard() {
                   <div className="text-sm font-bold text-red-700 dark:text-red-400">{fmtAED(cashSplit[1].value)}</div>
                 </div>
               </div>
-              <div className="rounded-xl border bg-gradient-to-br from-[#0f2d5a]/5 to-[#1e6ab0]/5 p-2 text-center">
+              <div className="rounded-xl border bg-muted/40 p-2 text-center">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Net</div>
                 <div className={`text-lg font-bold ${cashSplit[0].value - cashSplit[1].value >= 0 ? "text-emerald-700" : "text-red-700"}`}>
                   {fmtAED(cashSplit[0].value - cashSplit[1].value)}
@@ -591,7 +594,7 @@ export function MainExecutiveDashboard() {
               {topClients.map((c, i) => (
                 <Link key={c.name} href="/accounts/payments-received" className="block">
                   <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${eliteIconGrad} text-white flex items-center justify-center text-xs font-bold shrink-0`}>
                       #{i + 1}
                     </div>
                     <div className="flex-1 min-w-0">

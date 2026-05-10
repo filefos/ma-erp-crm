@@ -68,7 +68,9 @@ function formToBody(form: DealForm): CreateDealBody {
 export function DealsList() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const [view, setView] = useState<"list" | "kanban">("kanban");
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
@@ -190,7 +192,7 @@ export function DealsList() {
             <DialogHeader><DialogTitle>New Deal</DialogTitle></DialogHeader>
             <DealFormFields form={form} setForm={setForm} leads={leads} users={userList} />
             <Button
-              className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={`mt-2 ${primeBtnCls}`}
               onClick={() => create.mutate({ data: formToBody(form) })}
               disabled={!form.title || create.isPending}
             >{create.isPending ? "Saving…" : "Create Deal"}</Button>
@@ -359,7 +361,7 @@ export function DealsList() {
           <DialogHeader><DialogTitle>Edit Deal</DialogTitle></DialogHeader>
           <DealFormFields form={editForm} setForm={setEditForm} leads={leads} users={userList} />
           <Button
-            className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            className={`mt-2 ${primeBtnCls}`}
             onClick={() => editDeal && update.mutate({ id: editDeal.id, data: formToBody(editForm) })}
             disabled={!editForm.title || update.isPending}
           >{update.isPending ? "Saving…" : "Save Changes"}</Button>

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useListCompanies, useUpdateCompany, getListCompaniesQueryKey, type Company } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,9 @@ function StampPlacementPreview({
 }
 
 export function CompaniesAdmin() {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { data: companies, isLoading } = useListCompanies();
   const queryClient = useQueryClient();
   const [editId, setEditId] = useState<number | null>(null);
@@ -393,7 +397,7 @@ export function CompaniesAdmin() {
           </div>
 
           <Button
-            className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0] text-white w-full"
+            className={`mt-4 ${primeBtnCls} text-white w-full`}
             disabled={update.isPending || !editId}
             onClick={() => editId && update.mutate({ id: editId, data: form })}
           >

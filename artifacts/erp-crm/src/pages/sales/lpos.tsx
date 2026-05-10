@@ -170,7 +170,9 @@ export function LposList() {
   const { data: lpos = [], isLoading } = useListLpos();
   const { data: companies = [] } = useListCompanies();
   const { data: quotations = [] } = useListQuotations();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { user } = useAuth();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/lpos"] });
@@ -396,7 +398,7 @@ export function LposList() {
             size="sm"
           />
           <Button
-            className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            className={primeBtnCls}
             onClick={() => { setForm(EMPTY_FORM); setAttachments([]); setCreateOpen(true); }}
           >
             <Plus className="w-4 h-4 mr-2" /> Register LPO
@@ -545,7 +547,7 @@ export function LposList() {
           <div className="flex justify-end gap-2 pt-2 border-t">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
             <Button
-              className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={primeBtnCls}
               onClick={handleCreate}
               disabled={!form.clientName || !form.lpoNumber || !form.lpoValue || !form.companyId || createMutation.isPending}
             >
@@ -590,7 +592,7 @@ export function LposList() {
               <div className="flex justify-end gap-2 pt-2 border-t">
                 <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
                 <Button
-                  className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+                  className={primeBtnCls}
                   onClick={handleUpdate}
                   disabled={updateMutation.isPending}
                 >

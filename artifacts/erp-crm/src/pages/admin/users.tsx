@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import {
   useListUsers, useCreateUser, useUpdateUser, useListCompanies, useListDepartments,
   useGetUserPermissions, useUpdateUserPermissions,
@@ -50,6 +51,9 @@ type EditableUser = {
 };
 
 function ChangePasswordDialog({ user, open, onClose }: { user: EditableUser; open: boolean; onClose: () => void }) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const token = localStorage.getItem("erp_token");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -92,7 +96,7 @@ function ChangePasswordDialog({ user, open, onClose }: { user: EditableUser; ope
         {!success && (
           <DialogFooter className="border-t pt-3 mt-2">
             <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSubmit} disabled={!newPassword || !confirm || saving}>
+            <Button className={primeBtnCls} onClick={handleSubmit} disabled={!newPassword || !confirm || saving}>
               {saving ? "Saving..." : "Change Password"}
             </Button>
           </DialogFooter>
@@ -111,6 +115,9 @@ function EditUserDialog({
   departments: { id: number; name: string }[];
   companies: { id: number; shortName: string }[];
 }) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const token = localStorage.getItem("erp_token");
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -292,7 +299,7 @@ function EditUserDialog({
 
         <DialogFooter className="border-t pt-3 mt-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.name || !form.email || isBusy} data-testid="save-edit-user">
+          <Button className={primeBtnCls} onClick={submit} disabled={!form.name || !form.email || isBusy} data-testid="save-edit-user">
             {isBusy ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Saving...</> : <><Check className="w-3.5 h-3.5 mr-1.5" />Save changes</>}
           </Button>
         </DialogFooter>
@@ -312,6 +319,9 @@ function effectiveValue(p: UserModulePermission, key: Action): boolean {
 function UserPermissionsDialog({
   userId, userName, open, onClose, isSuperAdmin,
 }: { userId: number; userName: string; open: boolean; onClose: () => void; isSuperAdmin: boolean }) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const queryClient = useQueryClient();
   const { data: perms, isLoading } = useGetUserPermissions(userId, { query: { queryKey: getGetUserPermissionsQueryKey(userId), enabled: open } });
   const [overrides, setOverrides] = useState<OverrideMap>({});
@@ -438,7 +448,7 @@ function UserPermissionsDialog({
           )}
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button
-            className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            className={primeBtnCls}
             disabled={!isSuperAdmin || update.isPending}
             onClick={save}
             data-testid="save-user-permissions"
@@ -452,6 +462,9 @@ function UserPermissionsDialog({
 }
 
 export function UsersList() {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { user: me } = useAuth();
   const isSuperAdmin = (me as { permissionLevel?: string } | undefined)?.permissionLevel === "super_admin";
 
@@ -532,7 +545,7 @@ export function UsersList() {
           <p className="text-muted-foreground">Manage system users, departments, permission levels and per-user overrides.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="add-user-trigger"><Plus className="w-4 h-4 mr-2" />Add User</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className={primeBtnCls} data-testid="add-user-trigger"><Plus className="w-4 h-4 mr-2" />Add User</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New User</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-3 pt-2">
@@ -578,7 +591,7 @@ export function UsersList() {
                 </Select>
               </div>
             </div>
-            <Button className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.name || !form.email || !form.password || create.isPending}>
+            <Button className={`mt-4 ${primeBtnCls}`} onClick={submit} disabled={!form.name || !form.email || !form.password || create.isPending}>
               {create.isPending ? "Creating..." : "Create User"}
             </Button>
           </DialogContent>

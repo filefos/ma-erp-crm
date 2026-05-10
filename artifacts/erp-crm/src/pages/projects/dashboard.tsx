@@ -59,7 +59,10 @@ function projectProgress(p: any): number {
 }
 
 export function ProjectsDashboard() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
   const { data: projectsRaw }   = useListProjects({});
   const { data: lposRaw }       = useListLpos();
   const { data: invoicesRaw }   = useListTaxInvoices();
@@ -233,9 +236,9 @@ export function ProjectsDashboard() {
       {/* AI Risks */}
       {risks.length > 0 && (
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+          <div className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${eliteIconGrad}`} />
           <div className="flex items-center gap-2 mb-2.5">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <h3 className="text-sm font-semibold">Project Risk Insights</h3>
@@ -280,7 +283,7 @@ export function ProjectsDashboard() {
               <Bar yAxisId="left"  dataKey="count" name="Projects"    radius={[6, 6, 0, 0]}>
                 {stageData.map((e, i) => <Cell key={i} fill={STAGE_COLORS[e.key] ?? "#1e6ab0"} />)}
               </Bar>
-              <Bar yAxisId="right" dataKey="value" name="Value (AED)" fill="#0f2d5a" radius={[6, 6, 0, 0]} />
+              <Bar yAxisId="right" dataKey="value" name="Value (AED)" fill={chartBlue} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -298,7 +301,7 @@ export function ProjectsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="bg-card border rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0f2d5a] to-[#1e6ab0] flex items-center justify-center shadow">
+            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${eliteIconGrad} flex items-center justify-center shadow`}>
               <Crown className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -312,7 +315,7 @@ export function ProjectsDashboard() {
             <div className="space-y-2">
               {topPMs.map((pm, i) => (
                 <div key={pm.name} className="border rounded-xl p-2.5 hover:bg-muted/40 transition-all flex items-center gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : "bg-[#1e6ab0]"}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? "bg-gradient-to-br from-orange-500 to-orange-700" : i === 1 ? "bg-gradient-to-br from-slate-400 to-slate-500" : i === 2 ? "bg-gradient-to-br from-orange-400 to-orange-800" : ""}`} style={i >= 3 ? { background: chartBlue } : undefined}>
                     {i + 1}
                   </div>
                   <Avatar name={pm.name} size={32} />
@@ -399,7 +402,7 @@ export function ProjectsDashboard() {
                 return (
                   <Link key={p.id} href={`/projects/${p.id}`} className="block">
                     <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center shrink-0 text-white ${overdue ? "bg-red-500" : soon ? "bg-orange-500" : "bg-[#1e6ab0]"}`}>
+                      <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center shrink-0 text-white ${overdue ? "bg-red-500" : soon ? "bg-orange-500" : ""}`} style={!overdue && !soon ? { background: chartBlue } : undefined}>
                         <span className="text-xs font-bold leading-none">{Math.abs(p.daysToHandover)}d</span>
                         <span className="text-[9px] leading-none mt-0.5">{overdue ? "late" : "to go"}</span>
                       </div>
@@ -435,7 +438,7 @@ export function ProjectsDashboard() {
                   labelFormatter={(_, p: any) => p?.[0]?.payload?.fullName ?? ""}
                 />
                 <Legend wrapperStyle={{ fontSize: 10 }} />
-                <Bar dataKey="value"    name="Contract value" fill="#1e6ab0" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value"    name="Contract value" fill={chartBlue} radius={[0, 4, 4, 0]} />
                 <Bar dataKey="invoiced" name="Invoiced"       fill="#10b981" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -455,7 +458,7 @@ export function ProjectsDashboard() {
               const isUpdate = e.kind === "update";
               return (
                 <Link key={`${e.kind}-${e.id}`} href={`/projects/${p.id}`} className="block relative">
-                  <div className={`absolute -left-4 top-2 w-3.5 h-3.5 rounded-full border-2 border-card ${isUpdate ? "bg-[#1e6ab0]" : "bg-emerald-500"}`} />
+                  <div className={`absolute -left-4 top-2 w-3.5 h-3.5 rounded-full border-2 border-card ${isUpdate ? "" : "bg-emerald-500"}`} style={isUpdate ? { background: chartBlue } : undefined} />
                   <div className="border rounded-xl p-2.5 hover:bg-muted/40 hover:border-[#1e6ab0]/40 transition-all">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-[11px] font-mono text-primary">{p.projectNumber}</span>

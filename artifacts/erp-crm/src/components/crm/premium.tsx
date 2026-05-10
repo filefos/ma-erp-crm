@@ -1,20 +1,40 @@
 import { Link } from "wouter";
 import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 
-const TONES = {
-  navy:   { bg: "from-[#0f2d5a] to-[#1e6ab0]",        icon: "bg-white/15 text-white",                              spark: "#1e6ab0" },
-  blue:   { bg: "from-blue-500/10 to-blue-500/0",     icon: "bg-blue-500/15 text-blue-700 dark:text-blue-300",     spark: "#1e6ab0" },
-  red:    { bg: "from-red-500/10 to-red-500/0",       icon: "bg-red-500/15 text-red-600",                          spark: "#ef4444" },
-  amber:  { bg: "from-orange-500/10 to-orange-500/0",   icon: "bg-orange-500/15 text-orange-600",                      spark: "#f97316" },
-  green:  { bg: "from-emerald-500/10 to-emerald-500/0", icon: "bg-emerald-500/15 text-emerald-600",                spark: "#10b981" },
-  purple: { bg: "from-purple-500/10 to-purple-500/0", icon: "bg-purple-500/15 text-purple-600",                    spark: "#8b5cf6" },
-  indigo: { bg: "from-indigo-500/10 to-indigo-500/0", icon: "bg-indigo-500/15 text-indigo-600",                    spark: "#6366f1" },
-  teal:   { bg: "from-teal-500/10 to-teal-500/0",     icon: "bg-teal-500/15 text-teal-600",                        spark: "#14b8a6" },
-  slate:  { bg: "from-slate-500/10 to-slate-500/0",   icon: "bg-slate-500/15 text-slate-600",                      spark: "#64748b" },
-} as const;
+/* ── Tone types ─────────────────────────────────────────────────────────── */
+export type Tone = "navy" | "blue" | "red" | "amber" | "green" | "purple" | "indigo" | "teal" | "slate";
+type ToneStyle = { bg: string; icon: string; spark: string };
+type TonesMap = Record<Tone, ToneStyle>;
 
-export type Tone = keyof typeof TONES;
+/* ── Prime Max (default) tones ──────────────────────────────────────────── */
+const TONES: TonesMap = {
+  navy:   { bg: "from-[#0f2d5a] to-[#1e6ab0]",          icon: "bg-white/15 text-white",                              spark: "#1e6ab0" },
+  blue:   { bg: "from-blue-500/10 to-blue-500/0",        icon: "bg-blue-500/15 text-blue-700 dark:text-blue-300",     spark: "#1e6ab0" },
+  red:    { bg: "from-red-500/10 to-red-500/0",          icon: "bg-red-500/15 text-red-600",                          spark: "#ef4444" },
+  amber:  { bg: "from-orange-500/10 to-orange-500/0",    icon: "bg-orange-500/15 text-orange-600",                    spark: "#f97316" },
+  green:  { bg: "from-emerald-500/10 to-emerald-500/0",  icon: "bg-emerald-500/15 text-emerald-600",                  spark: "#10b981" },
+  purple: { bg: "from-purple-500/10 to-purple-500/0",    icon: "bg-purple-500/15 text-purple-600",                    spark: "#8b5cf6" },
+  indigo: { bg: "from-indigo-500/10 to-indigo-500/0",    icon: "bg-indigo-500/15 text-indigo-600",                    spark: "#6366f1" },
+  teal:   { bg: "from-teal-500/10 to-teal-500/0",        icon: "bg-teal-500/15 text-teal-600",                        spark: "#14b8a6" },
+  slate:  { bg: "from-slate-500/10 to-slate-500/0",      icon: "bg-slate-500/15 text-slate-600",                      spark: "#64748b" },
+};
+
+/* ── Elite Prefab tones — dark-red / crimson replaces navy / blue ────────
+   Other semantic tones (green = success, amber = warn, red = hot/danger)
+   are intentionally preserved.                                             */
+const ELITE_TONES: TonesMap = {
+  navy:   { bg: "from-[#0D0D0D] to-[#8B0000]",          icon: "bg-white/15 text-white",                              spark: "#C00000" },
+  blue:   { bg: "from-[#8B0000]/10 to-[#8B0000]/0",     icon: "bg-[#8B0000]/15 text-[#8B0000]",                     spark: "#8B0000" },
+  red:    { bg: "from-red-600/10 to-red-600/0",          icon: "bg-red-600/15 text-red-700",                          spark: "#C00000" },
+  amber:  { bg: "from-orange-500/10 to-orange-500/0",    icon: "bg-orange-500/15 text-orange-600",                    spark: "#f97316" },
+  green:  { bg: "from-emerald-500/10 to-emerald-500/0",  icon: "bg-emerald-500/15 text-emerald-600",                  spark: "#10b981" },
+  purple: { bg: "from-[#5E0000]/10 to-[#5E0000]/0",     icon: "bg-[#5E0000]/15 text-[#8B0000]",                     spark: "#8B0000" },
+  indigo: { bg: "from-[#8B0000]/10 to-[#8B0000]/0",     icon: "bg-[#8B0000]/15 text-[#8B0000]",                     spark: "#8B0000" },
+  teal:   { bg: "from-teal-500/10 to-teal-500/0",        icon: "bg-teal-500/15 text-teal-600",                        spark: "#14b8a6" },
+  slate:  { bg: "from-slate-500/10 to-slate-500/0",      icon: "bg-slate-500/15 text-slate-600",                      spark: "#64748b" },
+};
 
 /** Local-day "YYYY-MM-DD" key (avoids UTC drift around midnight). */
 export function localDayKey(d: Date | string | number = new Date()): string {
@@ -55,7 +75,9 @@ export function Sparkline({
 export function PremiumCard({
   children, className = "", tone = "blue",
 }: { children: ReactNode; className?: string; tone?: Tone }) {
-  const t = TONES[tone] ?? TONES.blue;
+  const { activeCompanyId } = useActiveCompany();
+  const toneMap = activeCompanyId === 2 ? ELITE_TONES : TONES;
+  const t = toneMap[tone] ?? toneMap.blue;
   return (
     <div className={`relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br ${t.bg} backdrop-blur-sm shadow-sm ${className}`}>
       {children}
@@ -76,7 +98,10 @@ export function KPIWidget({
   href?: string;
   testId?: string;
 }) {
-  const t = TONES[tone] ?? TONES.blue;
+  const { activeCompanyId } = useActiveCompany();
+  const toneMap = activeCompanyId === 2 ? ELITE_TONES : TONES;
+  const t = toneMap[tone] ?? toneMap.blue;
+
   const trendIcon = trend === undefined
     ? null
     : trend > 0 ? <ArrowUpRight className="w-3 h-3" />
@@ -169,7 +194,7 @@ export function AIScoreBadge({ score, className = "" }: { score?: string; classN
   const styles: Record<string, string> = {
     hot:  "bg-gradient-to-r from-red-500 to-orange-500 text-white",
     warm: "bg-gradient-to-r from-orange-400 to-orange-500 text-white",
-    cold: "bg-gradient-to-r from-sky-400 to-blue-500 text-white",
+    cold: "bg-gradient-to-r from-slate-400 to-slate-500 text-white",
   };
   const emoji: Record<string, string> = { hot: "🔥", warm: "🌡️", cold: "❄️" };
   return (
@@ -211,8 +236,17 @@ export function ExecutiveHeader({
   icon?: ComponentType<{ className?: string }>;
   children?: ReactNode;
 }) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const gradientCls = isElite
+    ? "from-[#0D0D0D] via-[#3d0000] to-[#8B0000]"
+    : "from-[#0f2d5a] via-[#163d76] to-[#1e6ab0]";
+
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f2d5a] via-[#163d76] to-[#1e6ab0] p-5 md:p-6 text-white shadow-lg">
+    <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradientCls} p-5 md:p-6 text-white shadow-lg`}>
+      {isElite && (
+        <div className="pointer-events-none absolute top-0 inset-x-0 h-0.5" style={{ background: "linear-gradient(90deg, #8B0000, #C00000, #5E0000)" }} />
+      )}
       <div
         className="pointer-events-none absolute inset-0 opacity-50"
         style={{ background: "radial-gradient(circle at 90% -20%, rgba(255,255,255,0.30), transparent 60%)" }}
@@ -220,8 +254,7 @@ export function ExecutiveHeader({
       <div
         className="pointer-events-none absolute inset-0 opacity-20"
         style={{
-          backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.25) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgba(255,255,255,0.25) 1px, transparent 1px)",
           backgroundSize: "16px 16px",
         }}
       />

@@ -485,7 +485,7 @@ export function AccountsDashboard() {
 
       {/* AI Insights */}
       <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#0f2d5a] to-[#1e6ab0]" />
+        <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${activeCompanyId === 2 ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]"}`} />
         <div className="p-4 pl-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#0f2d5a]/5 text-[#0f2d5a] dark:bg-[#1e6ab0]/15 dark:text-[#7eb9f0]">
@@ -630,7 +630,7 @@ export function AccountsDashboard() {
                     innerRadius={42} outerRadius={70} paddingAngle={2}
                   >
                     {invByStatus.map((s, i) => (
-                      <Cell key={i} fill={STATUS_COLORS[s.name] ?? CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]} stroke="rgba(255,255,255,0.2)" />
+                      <Cell key={i} fill={STATUS_COLORS[s.name] ?? categoryPalette[i % categoryPalette.length]} stroke="rgba(255,255,255,0.2)" />
                     ))}
                   </Pie>
                   <Tooltip
@@ -958,7 +958,7 @@ export function AccountsDashboard() {
                     innerRadius={36} outerRadius={64} paddingAngle={2}
                   >
                     {expByCategory.slice(0, 8).map((_, i) => (
-                      <Cell key={i} fill={CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]} />
+                      <Cell key={i} fill={categoryPalette[i % categoryPalette.length]} />
                     ))}
                   </Pie>
                   <Tooltip

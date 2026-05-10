@@ -79,7 +79,9 @@ function activityToForm(a: Activity): ActivityForm {
 export function ActivitiesPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
 
   const [typeFilter, setTypeFilter] = useState("all");
   const [leadFilter, setLeadFilter] = useState("all");
@@ -176,7 +178,7 @@ export function ActivitiesPage() {
             <DialogHeader><DialogTitle>New Activity</DialogTitle></DialogHeader>
             <ActivityFormFields form={form} setForm={setForm} leads={leads} deals={deals} contacts={contacts} />
             <Button
-              className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+              className={`mt-2 ${primeBtnCls}`}
               onClick={() => create.mutate({ data: formToBody(form) })}
               disabled={!form.subject || create.isPending}
             >{create.isPending ? "Saving…" : "Create Activity"}</Button>
@@ -260,7 +262,7 @@ export function ActivitiesPage() {
           <DialogHeader><DialogTitle>Edit Activity</DialogTitle></DialogHeader>
           <ActivityFormFields form={editForm} setForm={setEditForm} leads={leads} deals={deals} contacts={contacts} />
           <Button
-            className="mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0]"
+            className={`mt-2 ${primeBtnCls}`}
             onClick={() => editActivity && update.mutate({ id: editActivity.id, data: formToBody(editForm) })}
             disabled={!editForm.subject || update.isPending}
           >{update.isPending ? "Saving…" : "Save Changes"}</Button>

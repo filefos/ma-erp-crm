@@ -48,7 +48,9 @@ export function JournalEntriesList() {
   const { data: entries = [], isLoading } = useListJournalEntries();
   const { data: companies = [] } = useListCompanies();
   const { data: coaAccounts = [] } = useListChartOfAccounts();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["/journal-entries"] });
   const createMutation = useCreateJournalEntry({ mutation: { onSuccess: () => { invalidate(); setOpen(false); toast({ title: "Journal entry created." }); }, onError: (e: any) => toast({ title: e?.message ?? "Failed", variant: "destructive" }) } });
@@ -150,7 +152,7 @@ export function JournalEntriesList() {
               title="Journal Entries"
               size="sm"
             />
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={openCreate}>
+            <Button className={primeBtnCls} onClick={openCreate}>
               <Plus className="w-4 h-4 mr-2" />New Journal Entry
             </Button>
           </>
@@ -385,7 +387,7 @@ export function JournalEntriesList() {
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSave} disabled={!form.companyId || !form.description || !isBalanced || createMutation.isPending || updateMutation.isPending}>
+            <Button className={primeBtnCls} onClick={handleSave} disabled={!form.companyId || !form.description || !isBalanced || createMutation.isPending || updateMutation.isPending}>
               {createMutation.isPending || updateMutation.isPending ? "Saving..." : editId ? "Update" : "Create Journal Entry"}
             </Button>
           </div>

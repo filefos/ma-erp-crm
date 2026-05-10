@@ -68,7 +68,9 @@ export function OfferLettersList() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const qc = useQueryClient();
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const { data: offers, isLoading } = useListOfferLetters({ status: status === "all" ? undefined : status, templateType: templateType === "all" ? undefined : templateType });
   const { data: companies } = useListCompanies();
   const filtered = (filterByCompany(offers ?? []) as any[]).filter(o => {
@@ -176,7 +178,7 @@ export function OfferLettersList() {
           <p className="text-muted-foreground">Issue and track candidate offer letters.</p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setForm({ ...EMPTY_FORM }); }}>
-          <DialogTrigger asChild><Button className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-new-offer"><Plus className="w-4 h-4 mr-2" />New Offer Letter</Button></DialogTrigger>
+          <DialogTrigger asChild><Button className={primeBtnCls} data-testid="button-new-offer"><Plus className="w-4 h-4 mr-2" />New Offer Letter</Button></DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>New Offer Letter</DialogTitle></DialogHeader>
             <div className="grid grid-cols-2 gap-4 pt-2">
@@ -244,7 +246,7 @@ export function OfferLettersList() {
                 )}
               </div>
             </div>
-            <Button className="mt-4 bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submit} disabled={!form.candidateName || !form.companyId || create.isPending} data-testid="button-create-offer">
+            <Button className={`mt-4 ${primeBtnCls}`} onClick={submit} disabled={!form.candidateName || !form.companyId || create.isPending} data-testid="button-create-offer">
               {create.isPending ? "Creating…" : "Create Draft"}
             </Button>
           </DialogContent>

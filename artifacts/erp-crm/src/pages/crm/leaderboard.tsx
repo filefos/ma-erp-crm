@@ -18,7 +18,9 @@ import { useMemo } from "react";
   export function SalesLeaderboard() {
     const { data: leadsRaw } = useListLeads({});
     const { data: usersRaw } = useListUsers();
-    const { filterByCompany } = useActiveCompany();
+    const { filterByCompany, activeCompanyId } = useActiveCompany();
+    const isElite = activeCompanyId === 2;
+    const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
 
     const leads = useMemo(() => filterByCompany(leadsRaw ?? []), [leadsRaw, filterByCompany]);
     const users = (usersRaw ?? []).filter((u: any) =>
@@ -80,7 +82,7 @@ import { useMemo } from "react";
         </div>
 
         {top && top.score > 0 && (
-          <div className="bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] rounded-xl p-5 text-white flex items-center gap-4 flex-wrap">
+          <div className={`bg-gradient-to-r ${isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]"} rounded-xl p-5 text-white flex items-center gap-4 flex-wrap`}>
             <div className="w-14 h-14 rounded-full bg-orange-500 flex items-center justify-center shadow-lg"><Crown className="w-7 h-7 text-white" /></div>
             <div className="flex-1 min-w-0">
               <div className="text-xs uppercase tracking-wider text-white/70">Top Performer</div>
@@ -106,7 +108,7 @@ import { useMemo } from "react";
                 <Tooltip formatter={(v: number) => `AED ${v.toLocaleString()}`} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="Won" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Pipeline" fill="#1e6ab0" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Pipeline" fill={chartBlue} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

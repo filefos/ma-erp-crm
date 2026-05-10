@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useGetDashboardSummary, useGetPendingApprovals, useGetRecentActivity, useGetSalesPipeline, useGetInventoryAlerts, getGetRecentActivityQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +77,7 @@ const PIPELINE_STAGES = [
 ];
 
 function KPICard({
-  icon: Icon, label, value, sub, trend, tone = "primary",
+  icon: Icon, label, value, sub, trend, tone = "primary", bgOverride,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -84,13 +85,14 @@ function KPICard({
   sub?: string;
   trend?: string;
   tone?: "primary" | "success" | "warning" | "danger" | "neutral";
+  bgOverride?: string;
 }) {
   const tones: Record<string, { bg: string; icon: string }> = {
-    primary: { bg: "bg-[#1e6ab0]", icon: "text-white" },
+    primary: { bg: "bg-blue-600", icon: "text-white" },
     success: { bg: "bg-emerald-500", icon: "text-white" },
     warning: { bg: "bg-orange-500", icon: "text-white" },
     danger: { bg: "bg-red-500", icon: "text-white" },
-    neutral: { bg: "bg-[#0f2d5a]", icon: "text-white" },
+    neutral: { bg: "bg-slate-700", icon: "text-white" },
   };
   const t = tones[tone];
   return (
@@ -104,7 +106,7 @@ function KPICard({
             {sub && <p className="text-[11px] text-muted-foreground mt-0.5">{sub}</p>}
             {trend && <p className="text-[11px] text-emerald-600 font-medium mt-0.5">{trend}</p>}
           </div>
-          <div className={`p-2.5 rounded-xl ${t.bg} shrink-0`}>
+          <div className={`p-2.5 rounded-xl ${bgOverride ?? t.bg} shrink-0`}>
             <Icon className={`w-4 h-4 ${t.icon}`} />
           </div>
         </div>
@@ -124,6 +126,12 @@ function PendingBadge({ count }: { count: number }) {
 
 export function DepartmentDashboard() {
   const { user } = useAuth();
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const eliteIconGrad = isElite ? "from-[#0D0D0D] to-[#8B0000]" : "from-[#0f2d5a] to-[#1e6ab0]";
+  const chartBlue = isElite ? "#8B0000" : "#1e6ab0";
+  const kpiPrimaryBg = isElite ? "bg-gradient-to-br from-[#0D0D0D] to-[#8B0000]" : undefined;
+  const kpiNeutralBg = isElite ? "bg-[#0D0D0D]" : undefined;
   const u = user as { name?: string; role?: string; departmentName?: string; companyName?: string; permissionLevel?: string; uniqueUserId?: string | null } | undefined;
   const isAdmin = u?.permissionLevel === "super_admin" || u?.permissionLevel === "company_admin";
   const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary();
@@ -164,7 +172,7 @@ export function DepartmentDashboard() {
   return (
     <div className="space-y-6">
       {/* Hero banner */}
-      <div className="rounded-xl bg-gradient-to-r from-[#0f2d5a] to-[#1e6ab0] text-white p-6 relative overflow-hidden">
+      <div className={`rounded-xl bg-gradient-to-r ${eliteIconGrad} text-white p-6 relative overflow-hidden`}>
         <div className="absolute right-0 top-0 w-48 h-48 bg-white/5 rounded-full -translate-y-12 translate-x-12" />
         <div className="absolute right-10 bottom-0 w-24 h-24 bg-white/5 rounded-full translate-y-8" />
         <p className="text-sm text-white/70 mb-0.5">{todayGreeting()},</p>
@@ -199,14 +207,14 @@ export function DepartmentDashboard() {
         </div>
       ) : summary && (
         <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-          <KPICard icon={Users} label="Total Leads" value={summary.totalLeads} sub={`${summary.hotLeads} hot · ${summary.newLeadsThisMonth} this month`} tone="primary" />
-          <KPICard icon={Briefcase} label="Active Deals" value={summary.totalDeals} sub={`AED ${(summary.dealsValue / 1000).toFixed(0)}K pipeline`} tone="neutral" />
-          <KPICard icon={FileText} label="Quotations" value={summary.totalQuotations} sub={`AED ${(summary.quotationsValue / 1000).toFixed(0)}K total value`} tone="primary" />
+          <KPICard icon={Users} label="Total Leads" value={summary.totalLeads} sub={`${summary.hotLeads} hot · ${summary.newLeadsThisMonth} this month`} tone="primary" bgOverride={kpiPrimaryBg} />
+          <KPICard icon={Briefcase} label="Active Deals" value={summary.totalDeals} sub={`AED ${(summary.dealsValue / 1000).toFixed(0)}K pipeline`} tone="neutral" bgOverride={kpiNeutralBg} />
+          <KPICard icon={FileText} label="Quotations" value={summary.totalQuotations} sub={`AED ${(summary.quotationsValue / 1000).toFixed(0)}K total value`} tone="primary" bgOverride={kpiPrimaryBg} />
           <KPICard icon={DollarSign} label="Invoiced (AED)" value={`${(summary.invoicesValue / 1000).toFixed(0)}K`} sub={`${((summary.invoicesValue - summary.outstandingReceivables) / 1000).toFixed(0)}K collected`} tone="success" />
-          <KPICard icon={AlertTriangle} label="Outstanding" value={`AED ${(summary.outstandingReceivables / 1000).toFixed(0)}K`} sub="Receivables unpaid" tone={summary.outstandingReceivables > 100000 ? "warning" : "neutral"} />
+          <KPICard icon={AlertTriangle} label="Outstanding" value={`AED ${(summary.outstandingReceivables / 1000).toFixed(0)}K`} sub="Receivables unpaid" tone={summary.outstandingReceivables > 100000 ? "warning" : "neutral"} bgOverride={summary.outstandingReceivables <= 100000 ? kpiNeutralBg : undefined} />
           <KPICard icon={Target} label="Won This Month" value={summary.wonDealsThisMonth} sub={`AED ${(summary.wonDealsValue / 1000).toFixed(0)}K value`} tone="success" />
           <KPICard icon={Package} label="Low Stock Items" value={summary.lowStockItems} sub="Need reorder" tone={summary.lowStockItems > 0 ? "danger" : "success"} />
-          <KPICard icon={Building2} label="Active Projects" value={summary.activeProjects} sub={`${summary.todayAttendance} staff checked in today`} tone="neutral" />
+          <KPICard icon={Building2} label="Active Projects" value={summary.activeProjects} sub={`${summary.todayAttendance} staff checked in today`} tone="neutral" bgOverride={kpiNeutralBg} />
         </div>
       )}
 
@@ -219,12 +227,12 @@ export function DepartmentDashboard() {
               const Icon = link.icon;
               return (
                 <Link key={link.href} href={link.href}>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-sm hover:border-[#1e6ab0]/30 transition-all cursor-pointer group">
-                    <div className="p-1.5 rounded-md bg-[#1e6ab0]/10 group-hover:bg-[#1e6ab0]/20 transition-colors">
-                      <Icon className="w-4 h-4 text-[#1e6ab0]" />
+                  <div className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:shadow-sm transition-all cursor-pointer group">
+                    <div className="p-1.5 rounded-md bg-muted/60 transition-colors" style={{ color: chartBlue }}>
+                      <Icon className="w-4 h-4" />
                     </div>
                     <span className="flex-1 text-sm font-medium">{link.label}</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-[#1e6ab0] transition-colors" />
+                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground transition-colors" />
                   </div>
                 </Link>
               );
@@ -312,7 +320,7 @@ export function DepartmentDashboard() {
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#1e6ab0]" />Lead Pipeline
+                <TrendingUp className="w-4 h-4" style={{ color: chartBlue }} />Lead Pipeline
               </CardTitle>
               <Link href="/reports/sales-pipeline" className="text-xs text-primary hover:underline">Full report →</Link>
             </CardHeader>
@@ -337,7 +345,7 @@ export function DepartmentDashboard() {
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-sm flex items-center gap-2">
-                <BarChart2 className="w-4 h-4 text-[#1e6ab0]" />Monthly Revenue (AED)
+                <BarChart2 className="w-4 h-4" style={{ color: chartBlue }} />Monthly Revenue (AED)
               </CardTitle>
               <Link href="/reports/revenue" className="text-xs text-primary hover:underline">Full report →</Link>
             </CardHeader>
@@ -346,7 +354,7 @@ export function DepartmentDashboard() {
                 <div key={m.month} className="flex items-center gap-2">
                   <div className="w-14 text-xs text-muted-foreground shrink-0">{m.month?.substring(5)}/{m.month?.substring(2, 4)}</div>
                   <div className="flex-1 h-5 bg-muted rounded overflow-hidden">
-                    <div className="h-full bg-[#1e6ab0]/60 rounded transition-all" style={{ width: `${maxRevenue > 0 ? (m.revenue / maxRevenue) * 100 : 0}%` }} />
+                    <div className="h-full rounded transition-all" style={{ width: `${maxRevenue > 0 ? (m.revenue / maxRevenue) * 100 : 0}%`, background: `${chartBlue}99` }} />
                   </div>
                   <div className="text-xs font-medium w-16 text-right text-muted-foreground shrink-0">
                     AED {m.revenue >= 1000 ? `${(m.revenue / 1000).toFixed(0)}K` : m.revenue.toFixed(0)}
@@ -367,7 +375,7 @@ export function DepartmentDashboard() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <Flame className="w-4 h-4 text-[#1e6ab0]" />Lead Sources
+                <Flame className="w-4 h-4" style={{ color: chartBlue }} />Lead Sources
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -379,7 +387,7 @@ export function DepartmentDashboard() {
                     <div key={src.source} className="flex items-center gap-3">
                       <span className="capitalize text-xs w-24 shrink-0 text-muted-foreground">{src.source?.replace("_"," ") ?? "Unknown"}</span>
                       <div className="flex-1 h-4 bg-muted rounded overflow-hidden">
-                        <div className="h-full bg-[#0f2d5a]/60 rounded" style={{ width: `${pct}%` }} />
+                        <div className="h-full rounded" style={{ width: `${pct}%`, background: `${chartBlue}99` }} />
                       </div>
                       <span className="text-xs font-medium w-10 text-right">{src.count} <span className="text-muted-foreground">({pct}%)</span></span>
                     </div>
@@ -393,7 +401,7 @@ export function DepartmentDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#1e6ab0]" />Recent Activity
+              <Activity className="w-4 h-4" style={{ color: chartBlue }} />Recent Activity
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -401,7 +409,7 @@ export function DepartmentDashboard() {
               <div className="space-y-2">
                 {recent.slice(0, 8).map(log => (
                   <div key={log.id} className="flex items-start gap-2.5 text-xs border-b border-border/40 last:border-0 pb-2 last:pb-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#1e6ab0] mt-1.5 shrink-0" />
+                    <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: chartBlue }} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-medium">{log.userName ?? "System"}</span>
@@ -424,9 +432,9 @@ export function DepartmentDashboard() {
       </div>
 
       {/* Reports quick links */}
-      <div className="bg-gradient-to-r from-[#0f2d5a]/5 to-[#1e6ab0]/5 border border-[#1e6ab0]/20 rounded-xl p-5">
+      <div className="bg-muted/40 border rounded-xl p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold flex items-center gap-2"><BarChart2 className="w-4 h-4 text-[#1e6ab0]" />Analytics & Reports</h2>
+          <h2 className="text-sm font-semibold flex items-center gap-2"><BarChart2 className="w-4 h-4" style={{ color: chartBlue }} />Analytics & Reports</h2>
           <Link href="/reports" className="text-xs text-primary hover:underline">View all reports →</Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -443,10 +451,10 @@ export function DepartmentDashboard() {
             const Icon = r.icon;
             return (
               <Link key={r.href} href={r.href}>
-                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-card border hover:shadow-sm hover:border-[#1e6ab0]/40 transition-all cursor-pointer group">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-card border hover:shadow-sm transition-all cursor-pointer group">
                   <Icon className={`w-4 h-4 ${r.color}`} />
                   <span className="text-xs font-medium">{r.label}</span>
-                  <ArrowRight className="w-3 h-3 text-muted-foreground ml-auto group-hover:text-[#1e6ab0]" />
+                  <ArrowRight className="w-3 h-3 text-muted-foreground ml-auto" />
                 </div>
               </Link>
             );

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { useGetCheque, useListBankAccounts, useListCompanies, getListChequesQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,9 @@ function exportCSV(c: any) {
 interface Props { id: string }
 
 export function ChequeDetail({ id }: Props) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const cid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -124,7 +128,7 @@ export function ChequeDetail({ id }: Props) {
           ) : (
             <>
               <Button variant="outline" size="sm" onClick={() => setEditing(false)}><X className="w-3.5 h-3.5 mr-1" />Cancel</Button>
-              <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={handleSave} disabled={saving}>
+              <Button size="sm" className={primeBtnCls} onClick={handleSave} disabled={saving}>
                 <Check className="w-3.5 h-3.5 mr-1" />{saving ? "Saving..." : "Save Changes"}
               </Button>
             </>

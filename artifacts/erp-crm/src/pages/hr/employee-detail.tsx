@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useActiveCompany } from "@/hooks/useActiveCompany";
 import { Link } from "wouter";
 import {
   useGetEmployee, useUpdateEmployee,
@@ -35,6 +36,9 @@ function expiryClass(dateStr?: string | null): string {
 }
 
 export function EmployeeDetail({ id }: Props) {
+  const { activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const empId = parseInt(id, 10);
   const qc = useQueryClient();
   const { data: emp, isLoading } = useGetEmployee(empId, { query: { queryKey: getGetEmployeeQueryKey(empId), enabled: !!empId } });
@@ -135,11 +139,11 @@ export function EmployeeDetail({ id }: Props) {
             <FileImage className="w-4 h-4 mr-1" />{photoUrl ? "Change Photo" : "Upload Photo"}
           </Button>
           {!editing ? (
-            <Button size="sm" onClick={() => setEditing(true)} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-edit-employee"><Pencil className="w-4 h-4 mr-1" />Edit</Button>
+            <Button size="sm" onClick={() => setEditing(true)} className={primeBtnCls} data-testid="button-edit-employee"><Pencil className="w-4 h-4 mr-1" />Edit</Button>
           ) : (
             <>
               <Button variant="ghost" size="sm" onClick={() => setEditing(false)}><X className="w-4 h-4 mr-1" />Cancel</Button>
-              <Button size="sm" onClick={save} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-save-employee"><Save className="w-4 h-4 mr-1" />Save</Button>
+              <Button size="sm" onClick={save} className={primeBtnCls} data-testid="button-save-employee"><Save className="w-4 h-4 mr-1" />Save</Button>
             </>
           )}
         </div>
@@ -193,7 +197,7 @@ export function EmployeeDetail({ id }: Props) {
                   <SelectContent>{ATTACHMENT_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
                 </Select>
                 <input ref={attachmentInputRef} type="file" className="hidden" onChange={e => e.target.files?.[0] && handleAttachmentUpload(e.target.files[0])} />
-                <Button onClick={() => attachmentInputRef.current?.click()} disabled={uploading} className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" data-testid="button-upload-attachment">
+                <Button onClick={() => attachmentInputRef.current?.click()} disabled={uploading} className={primeBtnCls} data-testid="button-upload-attachment">
                   <Upload className="w-4 h-4 mr-1" />{uploading ? "Uploading…" : "Upload"}
                 </Button>
               </div>
@@ -247,7 +251,7 @@ export function EmployeeDetail({ id }: Props) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <CardTitle>Offer Letters</CardTitle>
-              <Button asChild size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]"><Link href={`/hr/offer-letters?new=1&employeeId=${empId}`}>New Offer Letter</Link></Button>
+              <Button asChild size="sm" className={primeBtnCls}><Link href={`/hr/offer-letters?new=1&employeeId=${empId}`}>New Offer Letter</Link></Button>
             </CardHeader>
             <CardContent>
               {!offers || offers.length === 0 ? (

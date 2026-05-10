@@ -94,7 +94,9 @@ const inDaysISO = (d: number) => {
 export function FollowUpCenter() {
   const { data: leadsRaw } = useListLeads({});
   const { data: activitiesRaw } = useListActivities({});
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const isElite = activeCompanyId === 2;
+  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const [search, setSearch] = useState("");
   const [reschedule, setReschedule] = useState<{ leadId: number; current: string } | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
@@ -193,7 +195,7 @@ export function FollowUpCenter() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" asChild><Link href="/crm"><ArrowRight className="w-4 h-4 mr-1.5 rotate-180" />Back to CRM</Link></Button>
-          <Button size="sm" className="bg-[#0f2d5a] hover:bg-[#1e6ab0]" asChild><Link href="/crm/leads">Open Leads</Link></Button>
+          <Button size="sm" className={primeBtnCls} asChild><Link href="/crm/leads">Open Leads</Link></Button>
         </div>
       </div>
 
@@ -239,7 +241,7 @@ export function FollowUpCenter() {
               <Button size="sm" variant="outline" onClick={() => setRescheduleDate(inDaysISO(3))}>+3 days</Button>
               <Button size="sm" variant="outline" onClick={() => setRescheduleDate(inDaysISO(7))}>+7 days</Button>
             </div>
-            <Button className="w-full bg-[#0f2d5a] hover:bg-[#1e6ab0]" onClick={submitReschedule}>Save</Button>
+            <Button className={`w-full ${primeBtnCls}`} onClick={submitReschedule}>Save</Button>
           </div>
         </DialogContent>
       </Dialog>
