@@ -251,7 +251,7 @@ export function printTable(
     <div class="co-sub">
       Tel: +971 50 2940 131 &nbsp;|&nbsp; info@primemaxprefab.com
       &nbsp;&nbsp;&bull;&nbsp;&nbsp;
-      Tel: +971 55 100 2000 &nbsp;|&nbsp; info@eliteprefab.ae
+      Tel: 054 777 7862 &nbsp;|&nbsp; asif@eliteprefab.com
     </div>
   </div>
 
