@@ -156,6 +156,8 @@ export interface Company {
   trn?: string;
   vatPercent?: number;
   logo?: string;
+  /** Base64-encoded authorized signatory signature image used on printed documents. */
+  signature?: string;
   stamp?: string;
   /** Width of the stamp as a percentage of the page width (default 30). */
   stampWidthPct?: number;
@@ -178,6 +180,8 @@ export interface CreateCompanyBody {
   trn?: string;
   vatPercent?: number;
   logo?: string;
+  /** Base64-encoded authorized signatory signature image used on printed documents. */
+  signature?: string;
   stamp?: string;
   /** Width of the stamp as a percentage of the page width (default 30). */
   stampWidthPct?: number;

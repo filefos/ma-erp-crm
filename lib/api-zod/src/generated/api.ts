@@ -192,6 +192,12 @@ export const ListCompaniesResponseItem = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  signature: zod
+    .string()
+    .optional()
+    .describe(
+      "Base64-encoded authorized signatory signature image used on printed documents.",
+    ),
   stamp: zod.string().optional(),
   stampWidthPct: zod
     .number()
@@ -226,6 +232,12 @@ export const CreateCompanyBody = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  signature: zod
+    .string()
+    .optional()
+    .describe(
+      "Base64-encoded authorized signatory signature image used on printed documents.",
+    ),
   stamp: zod.string().optional(),
   stampWidthPct: zod
     .number()
@@ -262,6 +274,12 @@ export const GetCompanyResponse = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  signature: zod
+    .string()
+    .optional()
+    .describe(
+      "Base64-encoded authorized signatory signature image used on printed documents.",
+    ),
   stamp: zod.string().optional(),
   stampWidthPct: zod
     .number()
@@ -299,6 +317,12 @@ export const UpdateCompanyBody = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  signature: zod
+    .string()
+    .optional()
+    .describe(
+      "Base64-encoded authorized signatory signature image used on printed documents.",
+    ),
   stamp: zod.string().optional(),
   stampWidthPct: zod
     .number()
@@ -328,6 +352,12 @@ export const UpdateCompanyResponse = zod.object({
   trn: zod.string().optional(),
   vatPercent: zod.number().optional(),
   logo: zod.string().optional(),
+  signature: zod
+    .string()
+    .optional()
+    .describe(
+      "Base64-encoded authorized signatory signature image used on printed documents.",
+    ),
   stamp: zod.string().optional(),
   stampWidthPct: zod
     .number()

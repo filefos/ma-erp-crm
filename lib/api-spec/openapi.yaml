@@ -4640,6 +4640,9 @@ components:
           type: number
         logo:
           type: string
+        signature:
+          type: string
+          description: Base64-encoded authorized signatory signature image used on printed documents.
         stamp:
           type: string
         stampWidthPct:
@@ -4681,6 +4684,9 @@ components:
           type: number
         logo:
           type: string
+        signature:
+          type: string
+          description: Base64-encoded authorized signatory signature image used on printed documents.
         stamp:
           type: string
         stampWidthPct:
