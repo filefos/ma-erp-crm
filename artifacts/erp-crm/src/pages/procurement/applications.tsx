@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   useListSupplierApplications,
   useGetSupplierApplication,
@@ -43,6 +43,36 @@ import {
   Banknote, Paperclip, Download, Loader2, FileText, ShieldCheck, ClipboardList,
   Tags, Image as ImageIcon, Link2, Copy, Send, ExternalLink,
 } from "lucide-react";
+
+function BlobIframe({ apiUrl, title, className }: { apiUrl: string; title: string; className?: string }) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const token = localStorage.getItem("erp_token") ?? "";
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    fetch(apiUrl, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        if (!cancelled) {
+          objectUrl = URL.createObjectURL(blob);
+          setBlobUrl(objectUrl);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [apiUrl, token]);
+  if (!blobUrl) {
+    return (
+      <div className={`${className ?? ""} flex items-center justify-center text-xs text-muted-foreground bg-muted/20`}>
+        Loading preview…
+      </div>
+    );
+  }
+  return <iframe src={blobUrl} title={title} className={className} />;
+}
 
 const STATUS_BADGES: Record<SupplierRegistrationStatus, string> = {
   pending_review: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
@@ -486,7 +516,7 @@ function DetailBody({ app, notes, setNotes, act, pending }: DetailProps) {
                       <img src={previewUrl} alt={f.filename} className="max-h-64 mx-auto object-contain" />
                     </a>
                   ) : isPdf ? (
-                    <iframe src={previewUrl} title={f.filename} className="w-full h-72 bg-muted/20" />
+                    <BlobIframe apiUrl={baseUrl} title={f.filename} className="w-full h-72 bg-muted/20" />
                   ) : (
                     <div className="px-3 py-4 text-xs text-muted-foreground text-center">
                       Inline preview not available for this file type — use Download.
