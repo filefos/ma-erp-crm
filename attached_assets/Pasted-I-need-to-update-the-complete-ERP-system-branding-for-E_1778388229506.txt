@@ -1,0 +1,264 @@
+I need to update the complete ERP system branding for ELITE PRE-FABRICATED HOUSES TRADING CO. LLC.
+
+Very important:
+Please do not change the system logic, database, modules, forms, calculations, or workflows.
+Only update the visual theme, color scheme, dashboard styling, and overall UI branding.
+
+Company:
+ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+
+Brand color scheme must strictly follow the Elite Prefabricated Houses standard:
+
+Primary colors:
+- Dark Red Gradient
+- Black
+- Charcoal
+- White
+- Light Grey
+
+Recommended color values:
+- Dark Red: #8B0000
+- Deep Burgundy: #5E0000
+- Premium Red: #B30000
+- Black: #0D0D0D
+- Charcoal: #1E1E1E
+- Dark Grey: #2B2B2B
+- Medium Grey: #6B6B6B
+- Light Grey: #F4F4F4
+- White: #FFFFFF
+
+Gradient examples:
+- Dark Red Gradient: linear-gradient(135deg, #B30000, #8B0000, #5E0000)
+- Black Gradient: linear-gradient(135deg, #0D0D0D, #1E1E1E, #2B2B2B)
+
+Main objective:
+Update the entire ERP interface to look premium, modern, professional, and branded for Elite Pre-Fabricated Houses Trading Co. LLC.
+
+The system should feel like a high-end corporate ERP for prefab construction, portable cabins, site offices, container units, security cabins, toilet blocks, and industrial project management.
+
+Apply the new theme to the following dashboards and all their related categories, pages, cards, tables, charts, forms, buttons, modals, and reports:
+
+1. Main Dashboard
+2. CRM Dashboard and all entire CRM categories
+3. Sales Dashboard and all entire Sales categories
+4. Accounts Dashboard and all entire Accounts categories
+5. Procurement Dashboard and all entire Procurement categories
+6. Inventory Dashboard and all entire Inventory categories
+7. Projects Dashboard and all entire Project categories
+8. HR Dashboard and all entire HR categories
+9. Assets Dashboard and all entire Assets categories
+10. Reports Dashboard and all entire Reports categories
+
+Theme requirements:
+
+1. Sidebar
+- Use black or charcoal background.
+- Active menu item should use dark red gradient.
+- Icons should be white or light grey.
+- Active icon/text should be white.
+- Hover effect should use dark red or charcoal highlight.
+- Sidebar must look clean, premium, and professional.
+
+2. Top Navbar
+- Use black / charcoal background or white background with dark red accent.
+- Company name and system name should be clearly visible.
+- Use dark red accent line or gradient strip where suitable.
+- Keep notification, profile, search, and settings icons clean and consistent.
+
+3. Dashboard Cards
+- Cards should use white or light grey background.
+- Use dark red gradient accents for important KPI cards.
+- Use black or charcoal headings.
+- Add clean shadows and professional spacing.
+- Avoid childish colors or random colors.
+- Every card must look corporate and high-end.
+
+4. KPI Cards
+Use this style:
+- Main value: black or dark red
+- Label: charcoal grey
+- Icon: dark red / black
+- Accent border: dark red gradient
+- Background: white or light grey
+
+Example KPI cards:
+- Total Clients
+- Active Projects
+- Pending Quotations
+- Approved LPOs
+- Proforma Invoices
+- Tax Invoices
+- Receivables
+- Payables
+- Inventory Value
+- Pending Procurement
+- HR Attendance
+- Assets Value
+- Reports Summary
+
+5. Tables
+Apply the theme to all tables across the system:
+- Table header: black / charcoal / dark red gradient
+- Header text: white
+- Row background: white
+- Alternate row: light grey
+- Border: soft grey
+- Action buttons: dark red / charcoal
+- Status badges should follow the theme and remain readable.
+
+6. Buttons
+Primary button:
+- Dark red gradient background
+- White text
+- Smooth hover effect
+
+Secondary button:
+- Charcoal background
+- White text
+
+Cancel / neutral button:
+- Light grey background
+- Charcoal text
+
+Danger button:
+- Deep red / dark red
+
+Do not use bright blue, green, purple, or orange as main UI colors unless it is necessary for status indication.
+
+7. Forms
+Apply professional form styling:
+- White background
+- Light grey input background or border
+- Dark red focus border
+- Black/charcoal labels
+- Clean spacing
+- Consistent field height
+- Required field indicator in dark red
+
+8. Charts and Reports
+Charts must follow the Elite color family:
+- Dark red
+- Burgundy
+- Black
+- Charcoal
+- Grey
+- Light grey
+
+Reports dashboard should look professional and executive-level.
+
+9. Status Badges
+Use controlled colors:
+- Approved: dark charcoal with subtle green only if necessary
+- Pending: dark red / burgundy
+- Draft: grey
+- Rejected: deep red
+- Completed: black/charcoal
+- In Progress: dark red outline or fill
+
+Keep badges readable and consistent.
+
+10. Module Headers
+Every module page should have a consistent header style:
+- Page title in black or charcoal
+- Small dark red accent line
+- Optional gradient header strip
+- Clean breadcrumb if already available
+
+11. Cards and Sections
+Use:
+- White / light grey backgrounds
+- Dark red accent borders
+- Charcoal headings
+- Premium spacing
+- Consistent rounded corners if the current UI uses rounded corners
+- Do not overuse heavy gradients
+
+12. Login Page
+Update the login page also:
+- Use Elite logo
+- Black and dark red gradient background
+- White login card or dark premium login card
+- Company name:
+  ELITE PRE-FABRICATED HOUSES TRADING CO. LLC
+- Keep login form clean and professional.
+
+13. Print/PDF Pages
+For printable documents, keep the existing official document layout.
+Only update branding colors if required:
+- Black
+- Dark red gradient
+- Charcoal
+- White
+- Light grey
+
+Do not disturb PDF alignment, footer, header, page numbering, or print area.
+
+14. Consistency Rule
+The same theme must be applied across the entire ERP system.
+No page should remain in old blue theme.
+No module should have a different random color scheme.
+
+Remove or replace old colors such as:
+- bright blue
+- old navy blue
+- random green
+- purple
+- orange
+- inconsistent gradients
+
+Use the Elite branding theme everywhere.
+
+15. Responsive Design
+Make sure the updated theme works properly on:
+- Desktop
+- Laptop
+- Tablet
+- Mobile view, if supported
+
+16. Do Not Break Anything
+Very important:
+Do not change:
+- database structure
+- business logic
+- invoice calculations
+- quotation calculations
+- LPO flow
+- client records
+- payment terms
+- project ID logic
+- authentication
+- API connections
+- module workflows
+
+Only update:
+- theme colors
+- UI styling
+- dashboard appearance
+- cards
+- tables
+- forms
+- buttons
+- navigation
+- charts
+- reports visual style
+
+17. Acceptance Criteria
+The task is complete only when:
+
+1. Entire ERP system follows Elite Pre-Fabricated Houses branding.
+2. Main Dashboard uses black, dark red gradient, charcoal, white, and light grey.
+3. CRM Dashboard and all CRM categories follow the same theme.
+4. Sales Dashboard and all Sales categories follow the same theme.
+5. Accounts Dashboard and all Accounts categories follow the same theme.
+6. Procurement Dashboard and all Procurement categories follow the same theme.
+7. Inventory Dashboard and all Inventory categories follow the same theme.
+8. Projects Dashboard and all Project categories follow the same theme.
+9. HR Dashboard and all HR categories follow the same theme.
+10. Assets Dashboard and all Assets categories follow the same theme.
+11. Reports Dashboard and all Reports categories follow the same theme.
+12. Sidebar, navbar, tables, forms, buttons, cards, modals, reports, and charts are consistent.
+13. Old blue theme is fully removed or replaced.
+14. UI looks premium, modern, professional, and suitable for a prefab construction ERP.
+15. No functionality or saved data is affected.
+
+Please inspect the current styling/theme files, dashboard components, module layouts, global CSS, Tailwind config, design tokens, and reusable UI components. Then create one centralized Elite brand theme and apply it system-wide in a clean and maintainable way.

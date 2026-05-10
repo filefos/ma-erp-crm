@@ -305,3 +305,95 @@
 
 /* ── hover:border opacity variants ───────────────────────────────────────── */
 .elite-active .hover\:border-\[#1e6ab0\]\/40:hover { border-color: rgb(139 0 0 / 0.40) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTY OVERRIDES
+   Overrides shadcn UI design tokens so that ALL components using var(--primary)
+   — buttons, focus rings, input outlines, checkboxes, badges — automatically
+   switch to Elite dark-red without any per-component edits.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.elite-active {
+  --primary:              0 100% 27%;   /* #8B0000 dark red           */
+  --primary-foreground:   0 0% 100%;    /* white text on primary       */
+  --ring:                 0 100% 27%;   /* dark red focus ring         */
+  --accent:               0 100% 97%;   /* very light red tint         */
+  --accent-foreground:    0 100% 27%;   /* dark red on accent bg       */
+  /* Chart palette → dark-red / burgundy / charcoal / grey family     */
+  --chart-1:              0 100% 27%;   /* #8B0000                     */
+  --chart-2:              0 100% 37%;   /* #C00000                     */
+  --chart-3:              0 0% 18%;     /* #2B2B2B charcoal            */
+  --chart-4:              0 0% 42%;     /* #6B6B6B medium grey         */
+  --chart-5:              0 73% 18%;    /* #5E0000 deep burgundy        */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BLUE / INDIGO TAILWIND UTILITY OVERRIDES
+   Catches status badges, pipeline stage chips, "cold" lead indicators,
+   activity icons, phone/email icons, qualification badges, and any other
+   blue/indigo Tailwind class used across module pages.
+   Status-semantic greens and ambers are intentionally NOT touched.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Text colours ─────────────────────────────────────────────────────────── */
+.elite-active .text-blue-200 { color: #f4a0a0 !important; }
+.elite-active .text-blue-300 { color: #e57373 !important; }
+.elite-active .text-blue-400,
+.elite-active .text-blue-500 { color: #C00000 !important; }
+.elite-active .text-blue-600 { color: #C00000 !important; }
+.elite-active .text-blue-700,
+.elite-active .text-blue-800,
+.elite-active .text-blue-900 { color: #8B0000 !important; }
+
+.elite-active .text-indigo-400,
+.elite-active .text-indigo-500,
+.elite-active .text-indigo-600 { color: #C00000 !important; }
+.elite-active .text-indigo-700,
+.elite-active .text-indigo-800 { color: #8B0000 !important; }
+
+/* dark-mode text variants */
+.elite-active .dark\:text-blue-400   { color: #e57373 !important; }
+.elite-active .dark\:text-indigo-400 { color: #e57373 !important; }
+
+/* ── Background colours ───────────────────────────────────────────────────── */
+.elite-active .bg-blue-50,
+.elite-active .bg-blue-50\/30,
+.elite-active .bg-blue-50\/50  { background-color: #fff5f5 !important; }
+.elite-active .bg-blue-100     { background-color: #ffe4e4 !important; }
+.elite-active .bg-blue-200     { background-color: #ffc9c9 !important; }
+.elite-active .bg-blue-500     { background-color: #8B0000 !important; }
+.elite-active .bg-blue-600     { background-color: #7a0000 !important; }
+
+/* dark bg tints (used in dark:bg-blue-900/20, dark:bg-blue-900/30 etc.) */
+.elite-active .bg-blue-900\/20,
+.elite-active .dark\:bg-blue-900\/20  { background-color: rgb(139 0 0 / 0.20) !important; }
+.elite-active .bg-blue-900\/30,
+.elite-active .dark\:bg-blue-900\/30  { background-color: rgb(139 0 0 / 0.30) !important; }
+.elite-active .bg-blue-950,
+.elite-active .bg-blue-950\/20        { background-color: rgb(92 0 0 / 0.20) !important; }
+
+/* indigo backgrounds */
+.elite-active .bg-indigo-50,
+.elite-active .bg-indigo-100          { background-color: #ffe4e4 !important; }
+.elite-active .bg-indigo-500          { background-color: #8B0000 !important; }
+.elite-active .bg-indigo-900\/20,
+.elite-active .dark\:bg-indigo-900\/20 { background-color: rgb(139 0 0 / 0.20) !important; }
+
+/* ── Border colours ───────────────────────────────────────────────────────── */
+.elite-active .border-blue-200  { border-color: #ffc9c9 !important; }
+.elite-active .border-blue-300  { border-color: #ffaaaa !important; }
+.elite-active .border-blue-500  { border-color: #8B0000 !important; }
+.elite-active .border-blue-700  { border-color: #6a0000 !important; }
+.elite-active .border-blue-800  { border-color: #5E0000 !important; }
+.elite-active .border-blue-900  { border-color: #3d0000 !important; }
+.elite-active .border-indigo-500 { border-color: #8B0000 !important; }
+
+/* ── Hover states ─────────────────────────────────────────────────────────── */
+.elite-active .hover\:bg-blue-50:hover,
+.elite-active .hover\:bg-blue-100:hover  { background-color: #fff0f0 !important; }
+.elite-active .hover\:bg-blue-200:hover  { background-color: #ffd0d0 !important; }
+.elite-active .hover\:bg-blue-950:hover  { background-color: #3d0000 !important; }
+.elite-active .hover\:text-blue-700:hover { color: #8B0000 !important; }
+
+/* ── Ring colours ─────────────────────────────────────────────────────────── */
+.elite-active .ring-blue-500  { --tw-ring-color: #8B0000 !important; }
+.elite-active .focus\:ring-blue-500:focus { --tw-ring-color: #8B0000 !important; }

@@ -14,13 +14,11 @@ export function Login() {
   const { data: companies } = useListAuthCompanies();
   const [mode, setMode] = useState<LoginMode>("password");
 
-  // password mode
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // otp mode
   const [otpStep, setOtpStep] = useState<OtpStep>("email");
   const [otpEmail, setOtpEmail] = useState("");
   const [otpCompanyId, setOtpCompanyId] = useState<number | null>(null);
@@ -142,7 +140,6 @@ export function Login() {
         setTimeout(() => digitRefs.current[0]?.focus(), 50);
         return;
       }
-      // Reuse the auth hook's internals via login mutation result
       localStorage.setItem("erp_token", data.token);
       window.location.reload();
     } catch {
@@ -161,6 +158,46 @@ export function Login() {
     setOtpSent(false);
   };
 
+  /* ── Brand tokens — reactive to selected company ── */
+  const activeCompanyForMode = mode === "password" ? companyId : otpCompanyId;
+  const isEliteLogin = activeCompanyForMode === 2;
+
+  const lBrand = isEliteLogin
+    ? {
+        panelBg:    "#0D0D0D",
+        radialA:    "radial-gradient(circle at 20% 20%, #8B0000 0%, transparent 55%), radial-gradient(circle at 80% 80%, #5E0000 0%, transparent 50%)",
+        primary:    "#8B0000",
+        primaryHov: "#C00000",
+        logoSrc:    "/elite-prefab-logo.png",
+        logoAlt:    "Elite Pre-Fabricated Houses",
+        tagline:    "Premium prefab ERP — built for Elite Pre-Fabricated Houses Trading Co. LLC.",
+        poweredBy:  "ELITE ERP SYSTEMS",
+        textCls:    "text-[#8B0000]",
+        borderCls:  "border-[#8B0000]",
+        bg5Cls:     "bg-[#8B0000]/5",
+        ringCls:    "ring-[#8B0000]/30",
+        focusCls:   "focus:ring-[#8B0000]/30 focus:border-[#8B0000]",
+        filledCls:  "border-[#8B0000] bg-[#8B0000]/5 text-[#5E0000]",
+        tabActiveCls: "text-white shadow-sm",
+      }
+    : {
+        panelBg:    "#0f2d5a",
+        radialA:    "radial-gradient(circle at 20% 20%, #1e6ab0 0%, transparent 50%), radial-gradient(circle at 80% 80%, #38bdf8 0%, transparent 45%)",
+        primary:    "#0f2d5a",
+        primaryHov: "#1e6ab0",
+        logoSrc:    "/prime-max-logo.png",
+        logoAlt:    "Prime Max Prefab Houses",
+        tagline:    "Multi-company sales, accounts, procurement, inventory, projects and HR — powered by PRIME ERP SYSTEMS.",
+        poweredBy:  "PRIME ERP SYSTEMS",
+        textCls:    "text-[#1e6ab0]",
+        borderCls:  "border-[#1e6ab0]",
+        bg5Cls:     "bg-[#1e6ab0]/5",
+        ringCls:    "ring-[#1e6ab0]/30",
+        focusCls:   "focus:ring-[#1e6ab0]/30 focus:border-[#1e6ab0]",
+        filledCls:  "border-[#1e6ab0] bg-[#1e6ab0]/5 text-[#0f2d5a]",
+        tabActiveCls: "text-white shadow-sm",
+      };
+
   const CompanySelector = ({ value, onChange }: { value: number | null; onChange: (id: number) => void }) =>
     companies && companies.length > 0 ? (
       <div className="space-y-2" data-testid="company-selector">
@@ -168,6 +205,11 @@ export function Login() {
         <div className="grid grid-cols-2 gap-2">
           {companies.map((c) => {
             const selected = value === c.id;
+            const isThisElite = c.id === 2;
+            const selBorder  = isThisElite ? "border-[#8B0000]" : "border-[#1e6ab0]";
+            const selBg5     = isThisElite ? "bg-[#8B0000]/5"   : "bg-[#1e6ab0]/5";
+            const selRing    = isThisElite ? "ring-[#8B0000]/30" : "ring-[#1e6ab0]/30";
+            const selText    = isThisElite ? "text-[#8B0000]"   : "text-[#1e6ab0]";
             return (
               <button
                 key={c.id}
@@ -178,13 +220,13 @@ export function Login() {
                 aria-pressed={selected}
                 className={`relative text-left rounded-lg border p-3 transition-all ${
                   selected
-                    ? "border-[#1e6ab0] bg-[#1e6ab0]/5 ring-2 ring-[#1e6ab0]/30"
-                    : "border-border hover:border-[#1e6ab0]/50 hover:bg-muted/40"
+                    ? `${selBorder} ${selBg5} ring-2 ${selRing}`
+                    : "border-border hover:border-muted-foreground/40 hover:bg-muted/40"
                 }`}
               >
-                <div className="text-[10px] font-mono text-[#1e6ab0] tracking-widest uppercase">{c.prefix}</div>
+                <div className={`text-[10px] font-mono tracking-widest uppercase ${selected ? selText : "text-muted-foreground"}`}>{c.prefix}</div>
                 <div className="text-xs font-semibold mt-1 leading-tight truncate">{c.shortName ?? c.name}</div>
-                {selected && <Check className="absolute top-2 right-2 w-3.5 h-3.5 text-[#1e6ab0]" />}
+                {selected && <Check className={`absolute top-2 right-2 w-3.5 h-3.5 ${selText}`} />}
               </button>
             );
           })}
@@ -194,32 +236,37 @@ export function Login() {
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-background">
+
       {/* LEFT — branding panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0f2d5a] text-white">
+      <div
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden text-white transition-colors duration-500"
+        style={{ background: lBrand.panelBg }}
+      >
         <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background:
-              "radial-gradient(circle at 20% 20%, #1e6ab0 0%, transparent 50%), radial-gradient(circle at 80% 80%, #38bdf8 0%, transparent 45%)",
-          }}
+          className="absolute inset-0 opacity-30 transition-all duration-500"
+          style={{ background: lBrand.radialA }}
         />
+        {/* accent hairline at top for Elite */}
+        {isEliteLogin && (
+          <div className="absolute top-0 inset-x-0 h-0.5" style={{ background: "linear-gradient(90deg, #8B0000, #C00000, #5E0000)" }} />
+        )}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center">
             <div className="bg-white/95 rounded-xl px-5 py-3 backdrop-blur ring-1 ring-white/20">
               <img
-                src="/prime-max-logo.png"
-                alt="Prime Max Prefab Houses"
-                className="h-12 w-auto object-contain"
+                src={lBrand.logoSrc}
+                alt={lBrand.logoAlt}
+                className="h-12 w-auto object-contain transition-all duration-300"
               />
             </div>
           </div>
           <div className="space-y-6 max-w-md">
             <h1 className="text-4xl font-bold leading-tight tracking-tight">
-              Run two companies from one secure platform.
+              {isEliteLogin
+                ? "Precision-built ERP for premium prefab construction."
+                : "Run two companies from one secure platform."}
             </h1>
-            <p className="text-white/70 text-sm leading-relaxed">
-              Multi-company sales, accounts, procurement, inventory, projects and HR — powered by PRIME ERP SYSTEMS.
-            </p>
+            <p className="text-white/70 text-sm leading-relaxed">{lBrand.tagline}</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-white/50">
             <Shield className="w-3.5 h-3.5" />
@@ -232,7 +279,7 @@ export function Login() {
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-sm space-y-6">
           <div className="lg:hidden flex items-center gap-3 mb-4">
-            <img src="/prime-max-logo.png" alt="PRIME ERP SYSTEMS" className="h-10 w-auto object-contain" />
+            <img src={lBrand.logoSrc} alt={lBrand.logoAlt} className="h-10 w-auto object-contain" />
           </div>
 
           <div className="space-y-2">
@@ -247,9 +294,10 @@ export function Login() {
               onClick={() => switchMode("password")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-all ${
                 mode === "password"
-                  ? "bg-[#0f2d5a] text-white shadow-sm"
+                  ? lBrand.tabActiveCls
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
+              style={mode === "password" ? { background: lBrand.primary } : {}}
             >
               <KeyRound className="w-3.5 h-3.5" />
               Password
@@ -259,9 +307,10 @@ export function Login() {
               onClick={() => switchMode("otp")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium transition-all ${
                 mode === "otp"
-                  ? "bg-[#0f2d5a] text-white shadow-sm"
+                  ? lBrand.tabActiveCls
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
+              style={mode === "otp" ? { background: lBrand.primary } : {}}
             >
               <MessageCircle className="w-3.5 h-3.5" />
               OTP Login
@@ -278,7 +327,7 @@ export function Login() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="name@primemax.ae"
+                    placeholder="name@company.ae"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -305,7 +354,10 @@ export function Login() {
                 )}
                 <Button
                   type="submit"
-                  className="w-full h-10 mt-2 bg-[#0f2d5a] hover:bg-[#1e6ab0] text-white font-medium"
+                  className="w-full h-10 mt-2 text-white font-medium transition-colors"
+                  style={{ background: lBrand.primary }}
+                  onMouseOver={e => (e.currentTarget.style.background = lBrand.primaryHov)}
+                  onMouseOut={e => (e.currentTarget.style.background = lBrand.primary)}
                   disabled={isLoggingIn}
                 >
                   {isLoggingIn ? (
@@ -331,7 +383,7 @@ export function Login() {
                       <Input
                         id="otp-email"
                         type="email"
-                        placeholder="name@primemax.ae"
+                        placeholder="name@company.ae"
                         value={otpEmail}
                         onChange={(e) => { setOtpEmail(e.target.value); setOtpError(null); }}
                         required
@@ -346,13 +398,16 @@ export function Login() {
                     )}
                     <Button
                       type="submit"
-                      className="w-full h-10 bg-[#0f2d5a] hover:bg-[#1e6ab0] text-white font-medium"
+                      className="w-full h-10 text-white font-medium transition-colors"
+                      style={{ background: lBrand.primary }}
+                      onMouseOver={e => (e.currentTarget.style.background = lBrand.primaryHov)}
+                      onMouseOut={e => (e.currentTarget.style.background = lBrand.primary)}
                       disabled={otpSending || !otpEmail}
                     >
                       {otpSending ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Sending OTP...</>
                       ) : (
-                        <><MessageCircle className="w-4 h-4 mr-2" />Send OTP</>          
+                        <><MessageCircle className="w-4 h-4 mr-2" />Send OTP</>
                       )}
                     </Button>
                   </form>
@@ -396,10 +451,7 @@ export function Login() {
                   {/* 6-digit OTP boxes */}
                   <div className="space-y-3">
                     <Label className="text-xs font-medium">Enter 6-digit OTP</Label>
-                    <div
-                      className="flex gap-2 justify-center"
-                      onPaste={handleOtpPaste}
-                    >
+                    <div className="flex gap-2 justify-center" onPaste={handleOtpPaste}>
                       {otpCode.map((digit, i) => (
                         <input
                           key={i}
@@ -410,8 +462,8 @@ export function Login() {
                           value={digit}
                           onChange={e => handleOtpDigit(i, e.target.value)}
                           onKeyDown={e => handleOtpKeyDown(i, e)}
-                          className={`w-11 h-14 text-center text-xl font-bold border-2 rounded-lg outline-none transition-all focus:ring-2 focus:ring-[#1e6ab0]/30 focus:border-[#1e6ab0] ${
-                            digit ? "border-[#1e6ab0] bg-[#1e6ab0]/5 text-[#0f2d5a]" : "border-border bg-background text-foreground"
+                          className={`w-11 h-14 text-center text-xl font-bold border-2 rounded-lg outline-none transition-all ${lBrand.focusCls} focus:ring-2 ${
+                            digit ? lBrand.filledCls : "border-border bg-background text-foreground"
                           } ${otpVerifying ? "opacity-60 pointer-events-none" : ""}`}
                           disabled={otpVerifying}
                         />
@@ -427,7 +479,10 @@ export function Login() {
 
                   <Button
                     type="button"
-                    className="w-full h-10 bg-[#0f2d5a] hover:bg-[#1e6ab0] text-white font-medium"
+                    className="w-full h-10 text-white font-medium transition-colors"
+                    style={{ background: lBrand.primary }}
+                    onMouseOver={e => (e.currentTarget.style.background = lBrand.primaryHov)}
+                    onMouseOut={e => (e.currentTarget.style.background = lBrand.primary)}
                     onClick={() => handleVerifyOtp()}
                     disabled={otpVerifying || otpCode.some(d => !d)}
                   >
@@ -448,7 +503,7 @@ export function Login() {
                         type="button"
                         onClick={handleRequestOtp}
                         disabled={otpSending}
-                        className="text-xs text-[#1e6ab0] hover:underline font-medium disabled:opacity-50"
+                        className={`text-xs font-medium hover:underline disabled:opacity-50 ${lBrand.textCls}`}
                       >
                         {otpSending ? "Sending..." : "Resend OTP"}
                       </button>
@@ -459,6 +514,9 @@ export function Login() {
             </div>
           )}
 
+          {/* unused otpSent ref suppressor */}
+          {otpSent && null}
+
           <div className="rounded-md border border-border bg-muted/40 p-3 text-[11px] text-muted-foreground">
             <span className="font-semibold text-foreground/80">Secure access</span> — All actions are
             recorded in the audit trail. Contact your administrator if you cannot sign in.
@@ -466,7 +524,7 @@ export function Login() {
 
           <div className="text-center text-xs text-muted-foreground border-t pt-3">
             Are you a vendor?{" "}
-            <a href="/supplier-register" className="text-[#1e6ab0] font-medium hover:underline">
+            <a href="/supplier-register" className={`font-medium hover:underline ${lBrand.textCls}`}>
               Become a supplier →
             </a>
           </div>
