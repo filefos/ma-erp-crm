@@ -45,7 +45,8 @@ async function reset() {
 
   console.log("All tables cleared.");
 
-  const [company] = await db.insert(companiesTable).values({
+  // ── Company 1: Prime Max (id=1) ────────────────────────────────────────────
+  const [primeMax] = await db.insert(companiesTable).values({
     name: "Prime Max Prefab Houses Ind. LLC",
     shortName: "Prime Max",
     prefix: "PM",
@@ -56,16 +57,40 @@ async function reset() {
       "IBAN: AE300030014498851920002",
       "Account Number: 14498851920002",
       "BIC / SWIFT: ADCBAEAAXXX",
+      "Bank: ABU DHABI COMMERCIAL BANK",
     ].join("\n"),
   }).returning();
+  console.log(`Created company: ${primeMax.name} (id=${primeMax.id})`);
 
-  console.log(`Created company: ${company.name} (id=${company.id})`);
+  // ── Company 2: Elite (id=2) ────────────────────────────────────────────────
+  const [elite] = await db.insert(companiesTable).values({
+    name: "Elite Pre-Fabricated Houses Trading Co. LLC",
+    shortName: "Elite",
+    prefix: "EL",
+    trn: "104200550200003",
+    vatPercent: 5,
+    bankDetails: [
+      "Account Title: E L I T E PRE FABRICATED HOUSES TRA",
+      "IBAN: AE320030013438011920001",
+      "Account Number: 13438011920001",
+      "BIC / SWIFT: ADCBAEAAXXX",
+      "Bank: ABU DHABI COMMERCIAL BANK",
+    ].join("\n"),
+  }).returning();
+  console.log(`Created company: ${elite.name} (id=${elite.id})`);
 
-  const [dept] = await db.insert(departmentsTable).values({
+  // ── Departments ────────────────────────────────────────────────────────────
+  const [pmDept] = await db.insert(departmentsTable).values({
     name: "Administration",
-    companyId: company.id,
+    companyId: primeMax.id,
   }).returning();
 
+  await db.insert(departmentsTable).values({
+    name: "Administration",
+    companyId: elite.id,
+  });
+
+  // ── Super Admin role ───────────────────────────────────────────────────────
   const [superAdminRole] = await db.insert(rolesTable).values({
     code: "super_admin",
     name: "Super Admin",
@@ -82,6 +107,7 @@ async function reset() {
   }));
   await db.insert(permissionsTable).values(permValues);
 
+  // ── Super Admin user ───────────────────────────────────────────────────────
   const passwordHash = await bcrypt.hash("Prime@2026", 10);
 
   const [admin] = await db.insert(usersTable).values({
@@ -90,25 +116,24 @@ async function reset() {
     passwordHash,
     phone: "",
     roleId: superAdminRole.id,
-    departmentId: dept.id,
-    companyId: company.id,
+    departmentId: pmDept.id,
+    companyId: primeMax.id,
     permissionLevel: "super_admin",
     isActive: true,
   }).returning();
 
-  await db.insert(userCompanyAccessTable).values({
-    userId: admin.id,
-    companyId: company.id,
-    isPrimary: true,
-  });
+  // Grant access to both companies
+  await db.insert(userCompanyAccessTable).values([
+    { userId: admin.id, companyId: primeMax.id, isPrimary: true },
+    { userId: admin.id, companyId: elite.id, isPrimary: false },
+  ]);
 
   console.log("\n✓ Reset complete!");
-  console.log("─────────────────────────────────────────────────");
-  console.log(`  Company:  Prime Max Prefab Houses Ind. LLC`);
-  console.log(`  TRN:      105383255400003`);
-  console.log(`  Email:    filefos@gmail.com`);
-  console.log(`  Password: Prime@2026`);
-  console.log("─────────────────────────────────────────────────");
+  console.log("──────────────────────────────────────────────────────────────");
+  console.log(`  Company 1: Prime Max Prefab Houses Ind. LLC  (TRN: 105383255400003)`);
+  console.log(`  Company 2: Elite Pre-Fabricated Houses Trading Co. LLC  (TRN: 104200550200003)`);
+  console.log(`  Login:     filefos@gmail.com  /  Prime@2026`);
+  console.log("──────────────────────────────────────────────────────────────");
   process.exit(0);
 }
 

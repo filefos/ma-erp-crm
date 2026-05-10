@@ -8,6 +8,7 @@
     "seed": "tsx ./src/seed.ts",
     "fix-roles": "tsx ./src/fix-roles.ts",
     "reset": "tsx ./src/reset.ts",
+    "add-elite": "tsx ./src/add-elite.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
