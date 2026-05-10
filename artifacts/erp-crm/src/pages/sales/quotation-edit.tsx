@@ -44,6 +44,14 @@ const BANK_DETAILS: Record<number, {
     swift: "ADCBAEAA",
     currency: "AED",
   },
+  2: {
+    bankName: "Abu Dhabi Commercial Bank (ADCB)",
+    accountTitle: "ELITE PRE FABRICATED HOUSES TRADING CO. LLC",
+    accountNumber: "13438011920001",
+    iban: "AE320030013438011920001",
+    swift: "ADCBAEAAXXX",
+    currency: "AED",
+  },
 };
 
 interface Item {

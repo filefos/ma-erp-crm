@@ -39,7 +39,7 @@ const COMPANIES: Record<number, {
   2: {
     name: "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC",
     address: "Sajja Industrial Area, Sharjah, UAE",
-    trn: "100345678900001",
+    trn: "104200550200003",
     phone: "+971 55 100 2000",
     email: "info@eliteprefab.ae",
     website: "www.eliteprefab.ae",

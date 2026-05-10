@@ -114,12 +114,21 @@ const COMPANIES: Record<number, CompanyInfo> = {
     },
   },
   2: {
-    name: "ELITE PREFAB INDUSTRIES LLC",
-    address: "Industrial Area, Dubai, UAE",
-    trn: "100345678900001",
+    name: "ELITE PRE-FABRICATED HOUSES TRADING CO. LLC",
+    address: "Sajja Industrial Area, Sharjah, UAE",
+    trn: "104200550200003",
     phone: "+971 55 100 2000",
     email: "info@eliteprefab.ae",
-    contact: "Sales Team",
+    contact: "General Manager",
+    website: "www.eliteprefab.ae",
+    bank: {
+      bankName: "Abu Dhabi Commercial Bank (ADCB)",
+      accountTitle: "ELITE PRE FABRICATED HOUSES TRADING CO. LLC",
+      accountNumber: "13438011920001",
+      iban: "AE320030013438011920001",
+      swift: "ADCBAEAAXXX",
+      currency: "AED",
+    },
   },
 };
 

@@ -246,7 +246,7 @@ export function printTable(
     <div class="co-sub">
       Industrial Area 12, Sharjah, UAE &nbsp;|&nbsp; TRN: 100234567890001
       &nbsp;&nbsp;&bull;&nbsp;&nbsp;
-      Industrial Area, Dubai, UAE &nbsp;|&nbsp; TRN: 100345678900001
+      Sajja Industrial Area, Sharjah, UAE &nbsp;|&nbsp; TRN: 104200550200003
     </div>
     <div class="co-sub">
       Tel: +971 50 2940 131 &nbsp;|&nbsp; info@primemaxprefab.com
