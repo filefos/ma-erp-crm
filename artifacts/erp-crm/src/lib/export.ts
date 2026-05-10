@@ -81,13 +81,18 @@ export async function downloadExcel(
 export function downloadWord(
   filename: string,
   title: string,
-  rows: (string | number | null | undefined)[][]
+  rows: (string | number | null | undefined)[][],
+  options?: { companyId?: number }
 ) {
+  const isElite = options?.companyId === 2;
+  const thBg    = isElite ? "#0D0D0D" : "#0f2d5a";
+  const h2Color = isElite ? "#8B0000"  : "#0f2d5a";
+
   const header = rows[0] ?? [];
   const body = rows.slice(1);
 
   const headerCells = header.map(h =>
-    `<th style="background:#0f2d5a;color:#fff;padding:8px 10px;border:1px solid #ccc;text-align:left;font-weight:bold;">${escapeHtml(h)}</th>`
+    `<th style="background:${thBg};color:#fff;padding:8px 10px;border:1px solid #ccc;text-align:left;font-weight:bold;">${escapeHtml(h)}</th>`
   ).join("");
 
   const bodyRows = body.map(row => {
@@ -106,10 +111,10 @@ export function downloadWord(
   <title>${escapeHtml(title)}</title>
   <style>
     body { font-family: Arial, sans-serif; font-size: 11pt; margin: 24px; }
-    h2 { color: #0f2d5a; margin-bottom: 16px; }
+    h2 { color: ${h2Color}; margin-bottom: 16px; }
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ccc; padding: 7px 10px; }
-    th { background: #0f2d5a; color: #fff; }
+    th { background: ${thBg}; color: #fff; }
   </style>
 </head>
 <body>
@@ -134,8 +139,31 @@ export function downloadWord(
 export function printTable(
   title: string,
   rows: (string | number | null | undefined)[][],
-  landscape = true
+  landscape = true,
+  options?: { companyId?: number }
 ) {
+  const isElite = options?.companyId === 2;
+
+  /* ── Theme tokens ─────────────────────────────────────── */
+  const letterheadBg  = isElite ? "#0D0D0D"  : "#0f2d5a";
+  const titleBg       = isElite
+    ? "linear-gradient(90deg,#8B0000 0%,#C00000 50%,#8B0000 100%)"
+    : "#1e6ab0";
+  const thBg          = isElite ? "#0D0D0D"  : "#0f2d5a";
+  const altRowBg      = isElite ? "#F3F3F3"  : "#f3f7fc";
+  const recCountColor = isElite ? "#8B0000"  : "#0f2d5a";
+  const footerStrong  = isElite ? "#8B0000"  : "#0f2d5a";
+  const coName        = isElite
+    ? "Elite Pre-Fabricated Houses Trading Co. LLC"
+    : "Prime Max Prefab Houses Ind. LLC | Elite Pre-Fabricated Houses Trading Co. LLC";
+  const coSub1        = isElite
+    ? "Sajja Industrial Area, Sharjah, UAE &nbsp;|&nbsp; TRN: 104200550200003"
+    : "Industrial Area 12, Sharjah, UAE &nbsp;|&nbsp; TRN: 100234567890001 &nbsp;&nbsp;&bull;&nbsp;&nbsp; Sajja Industrial Area, Sharjah, UAE &nbsp;|&nbsp; TRN: 104200550200003";
+  const coSub2        = isElite
+    ? "Tel: 054 777 7862 &nbsp;|&nbsp; asif@eliteprefab.com"
+    : "Tel: +971 50 2940 131 &nbsp;|&nbsp; info@primemaxprefab.com &nbsp;&nbsp;&bull;&nbsp;&nbsp; Tel: 054 777 7862 &nbsp;|&nbsp; asif@eliteprefab.com";
+  const footerLabel   = isElite ? "ELITE ERP SYSTEMS" : "PRIME ERP SYSTEMS";
+
   const header = rows[0] ?? [];
   const body = rows.slice(1);
   const printDate = new Date().toLocaleString("en-GB", {
@@ -170,7 +198,7 @@ export function printTable(
 
     /* ── LETTERHEAD ── */
     .letterhead {
-      background: #0f2d5a;
+      background: ${letterheadBg};
       color: #fff;
       padding: 10px 16px 8px;
       text-align: center;
@@ -183,7 +211,7 @@ export function printTable(
 
     /* ── TITLE STRIP ── */
     .doc-title {
-      background: #1e6ab0;
+      background: ${titleBg};
       color: #fff;
       text-align: center;
       padding: 5px 16px;
@@ -206,12 +234,12 @@ export function printTable(
       margin-bottom: 8px;
       color: #444;
     }
-    .meta .rec-count { font-weight: bold; color: #0f2d5a; }
+    .meta .rec-count { font-weight: bold; color: ${recCountColor}; }
 
     /* ── DATA TABLE ── */
     table { border-collapse: collapse; width: 100%; font-size: 8.5pt; }
     th {
-      background: #0f2d5a !important;
+      background: ${thBg} !important;
       color: #fff !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -222,13 +250,13 @@ export function printTable(
       white-space: nowrap;
     }
     td { padding: 6px 8px; border: 1px solid #ccc; vertical-align: top; }
-    tr.alt td { background: #f3f7fc; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tr.alt td { background: ${altRowBg}; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
     /* ── FOOTER ── */
     .footer {
       margin-top: 14px;
       padding-top: 6px;
-      border-top: 1px solid #ccc;
+      border-top: 2px solid ${footerStrong};
       display: flex;
       justify-content: space-between;
       font-size: 7.5pt;
@@ -236,23 +264,15 @@ export function printTable(
     }
     .footer .left  { text-align: left; }
     .footer .right { text-align: right; }
-    .footer strong { color: #0f2d5a; }
+    .footer strong { color: ${footerStrong}; }
   </style>
 </head>
 <body>
 
   <div class="letterhead">
-    <div class="co-name">Prime Max Prefab Houses Ind. LLC <span class="co-div"></span> Elite Pre-Fabricated Houses Trading Co. LLC</div>
-    <div class="co-sub">
-      Industrial Area 12, Sharjah, UAE &nbsp;|&nbsp; TRN: 100234567890001
-      &nbsp;&nbsp;&bull;&nbsp;&nbsp;
-      Sajja Industrial Area, Sharjah, UAE &nbsp;|&nbsp; TRN: 104200550200003
-    </div>
-    <div class="co-sub">
-      Tel: +971 50 2940 131 &nbsp;|&nbsp; info@primemaxprefab.com
-      &nbsp;&nbsp;&bull;&nbsp;&nbsp;
-      Tel: 054 777 7862 &nbsp;|&nbsp; asif@eliteprefab.com
-    </div>
+    <div class="co-name">${coName}</div>
+    <div class="co-sub">${coSub1}</div>
+    <div class="co-sub">${coSub2}</div>
   </div>
 
   <div class="doc-title">${escapeHtml(title)}</div>
@@ -268,7 +288,7 @@ export function printTable(
   </table>
 
   <div class="footer">
-    <div class="left"><strong>PRIME ERP SYSTEMS</strong> — Confidential</div>
+    <div class="left"><strong>${footerLabel}</strong> — Confidential</div>
     <div class="right">Generated: ${printDate}</div>
   </div>
 

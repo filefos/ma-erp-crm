@@ -197,3 +197,75 @@
   50%  { transform: translateX(100%); }
   100% { transform: translateX(250%); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ELITE PRE-FABRICATED HOUSES — Global brand colour overrides
+   Applied when the root layout carries .elite-active (set by AppLayout).
+   This single block themes ALL module pages without per-file edits.
+   Primary:   #0D0D0D (jet black)
+   Accent:    #8B0000 → #C00000 (dark-red / crimson)
+   Secondary: #1E1E1E (charcoal)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Background fills ─────────────────────────────────────────────────────── */
+.elite-active .bg-\[#0f2d5a\],
+.elite-active .bg-\[#1e3a6e\] {
+  background-color: #0D0D0D !important;
+}
+.elite-active .bg-\[#1e6ab0\] {
+  background-color: #8B0000 !important;
+}
+.elite-active .bg-\[#1e5a9e\] {
+  background-color: #6B0000 !important;
+}
+
+/* ── Text colours ─────────────────────────────────────────────────────────── */
+.elite-active .text-\[#0f2d5a\] {
+  color: #8B0000 !important;
+}
+.elite-active .text-\[#1e6ab0\] {
+  color: #8B0000 !important;
+}
+.elite-active .text-\[#1e3a6e\] {
+  color: #1E1E1E !important;
+}
+
+/* ── Border colours ───────────────────────────────────────────────────────── */
+.elite-active .border-\[#0f2d5a\] {
+  border-color: #8B0000 !important;
+}
+.elite-active .border-\[#1e6ab0\] {
+  border-color: #8B0000 !important;
+}
+
+/* ── Hover states ─────────────────────────────────────────────────────────── */
+.elite-active .hover\:bg-\[#1e6ab0\]:hover {
+  background-color: #6B0000 !important;
+}
+.elite-active .hover\:bg-\[#0f2d5a\]:hover {
+  background-color: #1E1E1E !important;
+}
+.elite-active .hover\:text-\[#1e6ab0\]:hover {
+  color: #8B0000 !important;
+}
+
+/* ── Focus / ring ─────────────────────────────────────────────────────────── */
+.elite-active .focus\:ring-\[#0f2d5a\]:focus,
+.elite-active .ring-\[#0f2d5a\] {
+  --tw-ring-color: #8B0000 !important;
+}
+
+/* ── acc-premium table — header bottom rule ───────────────────────────────── */
+.elite-active .acc-premium thead th {
+  border-bottom-color: #8B0000 !important;
+}
+
+/* ── Header top rule in layout (letterhead band) ─────────────────────────── */
+.elite-active .elite-header-rule {
+  background-color: #8B0000 !important;
+}
+
+/* ── Loading spinner icon ─────────────────────────────────────────────────── */
+.elite-active .elite-spinner-icon {
+  background-color: #0D0D0D !important;
+}

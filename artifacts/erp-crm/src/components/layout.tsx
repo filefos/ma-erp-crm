@@ -589,8 +589,11 @@ const CATEGORY_HOMES: Record<string, { label: string; href: string }> = {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const { activeCompanyId } = useActiveCompany();
   const [location] = useLocation();
   useActivityTracker();
+
+  const isElite = activeCompanyId === 2;
 
   const showBreadcrumb =
     location !== "/" &&
@@ -647,10 +650,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-sidebar">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 bg-[#1e6ab0] rounded-xl flex items-center justify-center mx-auto">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto elite-spinner-icon" style={{ backgroundColor: isElite ? "#0D0D0D" : "#1e6ab0" }}>
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <div className="text-white/60 text-sm">Loading PRIME ERP SYSTEMS...</div>
+          <div className="text-white/60 text-sm">{isElite ? "Loading ELITE ERP SYSTEMS..." : "Loading PRIME ERP SYSTEMS..."}</div>
         </div>
       </div>
     );
@@ -659,7 +662,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated || location === "/login" || location === "/supplier-register") return <>{children}</>;
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className={`flex h-screen bg-background overflow-hidden${isElite ? " elite-active" : ""}`}>
       {/* Desktop sidebar */}
       <div className="hidden md:flex w-56 lg:w-60 flex-shrink-0">
         <div className="w-full">
@@ -670,9 +673,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="bg-white flex-shrink-0">
-          {/* Navy top rule + gold hairline (letterhead band) */}
-          <div className="h-[2px] w-full bg-[#0f2d5a]" />
-          <div className="h-[1px] w-32 bg-[#c9a14a] mt-[1px] ml-4" />
+          {/* Brand top rule + gold hairline (letterhead band) */}
+          <div className="h-[2px] w-full" style={{ backgroundColor: isElite ? "#8B0000" : "#0f2d5a" }} />
+          <div className="h-[1px] w-32 mt-[1px] ml-4" style={{ backgroundColor: isElite ? "#C00000" : "#c9a14a" }} />
 
           <div className="h-12 flex items-center justify-between px-4 gap-4 border-b border-gray-200">
             {/* Mobile hamburger */}
@@ -711,7 +714,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <>
                 <Link
                   href={backTarget.href}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-[#0f2d5a] text-white hover:bg-[#1e6ab0] transition-colors shrink-0 font-medium"
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-white transition-colors shrink-0 font-medium"
+                  style={{ backgroundColor: isElite ? "#8B0000" : "#0f2d5a" }}
                   data-testid="link-back-to-category"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
