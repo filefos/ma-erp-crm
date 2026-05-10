@@ -47,6 +47,53 @@ const COMPANIES: Record<number, {
   },
 };
 
+interface DocColors {
+  headerBg: string;
+  titleBg: string;
+  titleGradient?: string;
+  sectionHeaderBg: string;
+  labelHalfBg: string;
+  tableHeaderBg: string;
+  oddRowBg: string;
+  footerColor: string;
+  footerBorderColor: string;
+  footerBg: string;
+  accentColor: string;
+  sigBorderColor: string;
+  sigTextColor: string;
+}
+
+const PRIME_COLORS: DocColors = {
+  headerBg: "#0f2d5a",
+  titleBg: "#1e6ab0",
+  sectionHeaderBg: "#0f2d5a",
+  labelHalfBg: "#1e3a6e",
+  tableHeaderBg: "#0f2d5a",
+  oddRowBg: "#dce6f1",
+  footerColor: "#0f2d5a",
+  footerBorderColor: "#0f2d5a",
+  footerBg: "#1e6ab015",
+  accentColor: "#0f2d5a",
+  sigBorderColor: "#0f2d5a",
+  sigTextColor: "#0f2d5a",
+};
+
+const ELITE_COLORS: DocColors = {
+  headerBg: "#0D0D0D",
+  titleBg: "#8B0000",
+  titleGradient: "linear-gradient(90deg, #8B0000 0%, #C00000 50%, #8B0000 100%)",
+  sectionHeaderBg: "#0D0D0D",
+  labelHalfBg: "#1E1E1E",
+  tableHeaderBg: "#0D0D0D",
+  oddRowBg: "#F3F3F3",
+  footerColor: "#0D0D0D",
+  footerBorderColor: "#8B0000",
+  footerBg: "#8B000010",
+  accentColor: "#8B0000",
+  sigBorderColor: "#8B0000",
+  sigTextColor: "#8B0000",
+};
+
 function fmtDate(d?: string | null) {
   if (!d) return new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   const p = new Date(d);
@@ -59,11 +106,11 @@ function parseItems(raw: HandoverItem[] | string | null | undefined): HandoverIt
   try { return JSON.parse(raw as string) as HandoverItem[]; } catch { return []; }
 }
 
-function LabelTdHalf({ children }: { children: React.ReactNode }) {
+function LabelTdHalf({ children, bg }: { children: React.ReactNode; bg: string }) {
   return (
     <td
       className="border border-gray-400 px-2 py-[2px] text-[11px] font-semibold text-white whitespace-nowrap"
-      style={{ width: "38%", backgroundColor: "#1e3a6e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+      style={{ width: "38%", backgroundColor: bg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
     >
       {children}
     </td>
@@ -81,10 +128,12 @@ function Td({ children, bold, center }: { children: React.ReactNode; bold?: bool
 export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNoteDoc }>(
   ({ doc }, ref) => {
     const co = COMPANIES[doc.companyId] ?? COMPANIES[1];
+    const theme = doc.companyId === 2 ? ELITE_COLORS : PRIME_COLORS;
     const logoSrc = doc.companyId !== 2 ? "/prime-max-logo.png" : "/elite-prefab-logo.png";
     const dateFmt = fmtDate(doc.handoverDate);
     const items = parseItems(doc.itemsHandedOver).filter(i => i.description?.trim());
     const projDesc = doc.projectDescription?.trim() || "Prefabricated Construction Works";
+    const ps = { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties;
 
     return (
       <div
@@ -119,11 +168,11 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           }
         `}</style>
 
-        {/* ── LETTERHEAD (identical to DocumentPrint) ── */}
+        {/* ── LETTERHEAD ── */}
         <div className="overflow-hidden mb-[2px]">
           <div
-            className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4"
-            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+            className="text-white py-2 px-4 flex items-center gap-4"
+            style={{ backgroundColor: theme.headerBg, ...ps }}
           >
             {logoSrc && (
               <img
@@ -140,14 +189,14 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             </div>
           </div>
           <div
-            className="bg-[#1e6ab0] text-white text-center py-1"
-            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+            className="text-white text-center py-1"
+            style={{ background: theme.titleGradient ?? theme.titleBg, ...ps }}
           >
             <span className="text-[15px] font-black tracking-widest uppercase">Handover Note / Certificate</span>
           </div>
         </div>
 
-        {/* ── COMPANY DETAIL | CLIENT DETAIL (same as DocumentPrint) ── */}
+        {/* ── COMPANY DETAIL | CLIENT DETAIL ── */}
         <div className="flex gap-2 mb-[2px]">
           <table className="flex-1 border-collapse border border-gray-400">
             <thead>
@@ -155,20 +204,20 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
                 <th
                   colSpan={2}
                   className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left"
-                  style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                  style={{ backgroundColor: theme.sectionHeaderBg, ...ps }}
                 >
                   Company Detail
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr><LabelTdHalf>Company</LabelTdHalf><Td>{co.name}</Td></tr>
-              <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{co.contact}</Td></tr>
-              <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{co.phone}</Td></tr>
-              <tr><LabelTdHalf>Email</LabelTdHalf><Td>{co.email}</Td></tr>
-              <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{co.contact}</Td></tr>
-              <tr><LabelTdHalf>HON Ref. No.</LabelTdHalf><Td bold>{doc.honNumber}</Td></tr>
-              <tr><LabelTdHalf>Date of Handover</LabelTdHalf><Td>{dateFmt}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Company</LabelTdHalf><Td>{co.name}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact Person</LabelTdHalf><Td>{co.contact}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact #</LabelTdHalf><Td>{co.phone}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Email</LabelTdHalf><Td>{co.email}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Designation</LabelTdHalf><Td>{co.contact}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>HON Ref. No.</LabelTdHalf><Td bold>{doc.honNumber}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Date of Handover</LabelTdHalf><Td>{dateFmt}</Td></tr>
             </tbody>
           </table>
 
@@ -178,33 +227,29 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
                 <th
                   colSpan={2}
                   className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left"
-                  style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                  style={{ backgroundColor: theme.sectionHeaderBg, ...ps }}
                 >
                   Client DETAIL
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr><LabelTdHalf>Company</LabelTdHalf><Td>{doc.clientName}</Td></tr>
-              <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{doc.clientRepresentative || ""}</Td></tr>
-              <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{""}</Td></tr>
-              <tr><LabelTdHalf>Email</LabelTdHalf><Td>{""}</Td></tr>
-              <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{doc.receivedByDesignation || ""}</Td></tr>
-              <tr><LabelTdHalf>LPO Reference</LabelTdHalf><Td>{doc.lpoNumber || "—"}</Td></tr>
-              <tr><LabelTdHalf>Project Ref</LabelTdHalf><Td>{doc.projectRef || "—"}</Td></tr>
-              <tr><LabelTdHalf>Project / Site</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Company</LabelTdHalf><Td>{doc.clientName}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact Person</LabelTdHalf><Td>{doc.clientRepresentative || ""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact #</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Email</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Designation</LabelTdHalf><Td>{doc.receivedByDesignation || ""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>LPO Reference</LabelTdHalf><Td>{doc.lpoNumber || "—"}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Project Ref</LabelTdHalf><Td>{doc.projectRef || "—"}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Project / Site</LabelTdHalf><Td>{""}</Td></tr>
             </tbody>
           </table>
         </div>
 
-        {/* ── ITEMS TABLE (same navy header style as DocumentPrint line items) ── */}
-        <table
-          className="w-full border-collapse border border-gray-400 mb-0"
-        >
+        {/* ── ITEMS TABLE ── */}
+        <table className="w-full border-collapse border border-gray-400 mb-0">
           <thead>
-            <tr
-              style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
-            >
+            <tr style={{ backgroundColor: theme.tableHeaderBg, ...ps }}>
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-center w-8">S#</th>
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-left">Description of Works / Materials</th>
               <th className="border border-gray-400 px-2 py-[2px] text-xs font-bold text-white text-center w-16">Qty.</th>
@@ -215,17 +260,14 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td
-                  colSpan={5}
-                  className="border border-gray-400 px-2 py-[2px] text-xs text-center text-gray-400 italic"
-                >
+                <td colSpan={5} className="border border-gray-400 px-2 py-[2px] text-xs text-center text-gray-400 italic">
                   — To be completed upon project handover —
                 </td>
               </tr>
             ) : items.map((item, i) => (
               <tr
                 key={i}
-                style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#dce6f1", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : theme.oddRowBg, ...ps }}
               >
                 <Td center bold>{String(i + 1).padStart(2, "0")}</Td>
                 <td className="border border-gray-400 px-2 py-[2px] text-xs text-left">{item.description}</td>
@@ -274,8 +316,8 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           <div className="flex gap-0 w-full mb-4 border border-gray-300">
             <div className="flex-1 p-3 border-r border-gray-300">
               <div className="text-[10px] text-gray-500">Handed over by:</div>
-              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[11px] font-semibold text-[#0f2d5a]">Name &amp; Signature</div>
+              <div className="mt-6 pt-2" style={{ borderTop: `1px solid ${theme.sigBorderColor}` }}>
+                <div className="text-[11px] font-semibold" style={{ color: theme.sigTextColor }}>Name &amp; Signature</div>
                 <div className="text-[10px] text-gray-500 mt-1">
                   For &amp; on behalf of <strong>{co.name}</strong>
                 </div>
@@ -283,27 +325,25 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             </div>
             <div className="flex-1 p-3 border-r border-gray-300">
               <div className="text-[10px] text-gray-500">Received &amp; Accepted by:</div>
-              <div className="mt-6 border-t border-[#0f2d5a] pt-2">
-                <div className="text-[11px] font-semibold text-[#0f2d5a]">
-                  {doc.receivedByName || "Name, Signature &amp; Stamp"}
+              <div className="mt-6 pt-2" style={{ borderTop: `1px solid ${theme.sigBorderColor}` }}>
+                <div className="text-[11px] font-semibold" style={{ color: theme.sigTextColor }}>
+                  {doc.receivedByName || "Name, Signature & Stamp"}
                 </div>
                 <div className="text-[10px] text-gray-500 mt-1 uppercase">{doc.clientName}</div>
               </div>
             </div>
             <div className="flex-1 p-3">
               <div className="text-[10px] text-gray-500">Handover Date &amp; Time:</div>
-              <div className="mt-2 text-[11px] text-[#0f2d5a]">{dateFmt}</div>
-              <div className="mt-4 border-t border-[#0f2d5a] pt-2">
+              <div className="mt-2 text-[11px]" style={{ color: theme.sigTextColor }}>{dateFmt}</div>
+              <div className="mt-4 pt-2" style={{ borderTop: `1px solid ${theme.sigBorderColor}` }}>
                 <div className="text-[10px] text-gray-500">Date / Time</div>
               </div>
             </div>
           </div>
-
         </div>
 
-        {/* ── FOR & ON BEHALF — signature + stamp left, client right (matches delivery note layout) ── */}
+        {/* ── FOR & ON BEHALF — signature + stamp ── */}
         <div className="print-sig-block flex items-end justify-between text-xs pt-3 pb-3 px-4">
-          {/* Left — signature + stamp together above our company */}
           <div>
             <div data-html2canvas-ignore="true" style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 8 }}>
               {doc.signatureUrl && (
@@ -324,7 +364,6 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
             <div className="font-bold mb-0.5">For &amp; on behalf of</div>
             <div className="font-bold text-[13px]">{co.name}</div>
           </div>
-          {/* Right — client For & on behalf of */}
           <div className="text-right">
             <div className="font-bold mb-0.5">For &amp; on behalf of</div>
             <div className="font-bold text-[13px]">{doc.clientName}</div>
@@ -336,10 +375,10 @@ export const HandoverNoteTemplate = forwardRef<HTMLDivElement, { doc: HandoverNo
           This is a computer generated document. No signature or stamp required.
         </div>
 
-        {/* ── FOOTER — fixed to bottom in print ── */}
+        {/* ── FOOTER ── */}
         <div
-          className="hon-page-footer border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
-          style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+          className="hon-page-footer px-4 py-1 text-center text-[9px]"
+          style={{ borderTop: `2px solid ${theme.footerBorderColor}`, color: theme.footerColor, backgroundColor: theme.footerBg, ...ps }}
         >
           <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
         </div>

@@ -40,6 +40,44 @@ const COMPANIES: Record<number, {
   },
 };
 
+interface DocColors {
+  headerBg: string;
+  titleBg: string;
+  titleGradient?: string;
+  sectionHeaderBg: string;
+  labelHalfBg: string;
+  footerColor: string;
+  footerBorderColor: string;
+  footerBg: string;
+  accentColor: string;
+  subjectBg: string;
+}
+
+const PRIME_COLORS: DocColors = {
+  headerBg: "#0f2d5a",
+  titleBg: "#1e6ab0",
+  sectionHeaderBg: "#0f2d5a",
+  labelHalfBg: "#1e3a6e",
+  footerColor: "#0f2d5a",
+  footerBorderColor: "#0f2d5a",
+  footerBg: "#1e6ab015",
+  accentColor: "#0f2d5a",
+  subjectBg: "#edf2f9",
+};
+
+const ELITE_COLORS: DocColors = {
+  headerBg: "#0D0D0D",
+  titleBg: "#8B0000",
+  titleGradient: "linear-gradient(90deg, #8B0000 0%, #C00000 50%, #8B0000 100%)",
+  sectionHeaderBg: "#0D0D0D",
+  labelHalfBg: "#1E1E1E",
+  footerColor: "#0D0D0D",
+  footerBorderColor: "#8B0000",
+  footerBg: "#8B000010",
+  accentColor: "#8B0000",
+  subjectBg: "#F5F0F0",
+};
+
 const DEFAULT_MATERIALS = [
   "MS Steel: Fire-rated mild steel for structural components.",
   "GI Framing: Fire-rated galvanized iron framing for support structures.",
@@ -53,11 +91,11 @@ function fmtDate(d?: string | null) {
   return isNaN(p.getTime()) ? d : p.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function LabelTdHalf({ children }: { children: React.ReactNode }) {
+function LabelTdHalf({ children, bg }: { children: React.ReactNode; bg: string }) {
   return (
     <td
       className="border border-gray-400 px-2 py-[2px] text-[11px] font-semibold text-white whitespace-nowrap"
-      style={{ width: "38%", backgroundColor: "#1e3a6e", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+      style={{ width: "38%", backgroundColor: bg, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
     >
       {children}
     </td>
@@ -88,9 +126,11 @@ function MaterialLines({ text }: { text?: string | null }) {
 export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: UndertakingLetterDoc }>(
   ({ doc }, ref) => {
     const co = COMPANIES[doc.companyId] ?? COMPANIES[1];
+    const theme = doc.companyId === 2 ? ELITE_COLORS : PRIME_COLORS;
     const logoSrc = doc.companyId !== 2 ? "/prime-max-logo.png" : "/elite-prefab-logo.png";
     const dateFmt = fmtDate(doc.letterDate);
     const projectDesc = doc.scope?.trim() || "Prefabricated Construction Works";
+    const ps = { WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties;
 
     return (
       <div
@@ -124,11 +164,11 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
           }
         `}</style>
 
-        {/* ── LETTERHEAD (identical to DocumentPrint) ── */}
+        {/* ── LETTERHEAD ── */}
         <div className="overflow-hidden mb-[2px]">
           <div
-            className="bg-[#0f2d5a] text-white py-2 px-4 flex items-center gap-4"
-            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+            className="text-white py-2 px-4 flex items-center gap-4"
+            style={{ backgroundColor: theme.headerBg, ...ps }}
           >
             {logoSrc && (
               <img
@@ -145,14 +185,14 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
             </div>
           </div>
           <div
-            className="bg-[#1e6ab0] text-white text-center py-1"
-            style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+            className="text-white text-center py-1"
+            style={{ background: theme.titleGradient ?? theme.titleBg, ...ps }}
           >
             <span className="text-[15px] font-black tracking-widest uppercase">Undertaking Letter</span>
           </div>
         </div>
 
-        {/* ── COMPANY DETAIL | CLIENT DETAIL (same as DocumentPrint) ── */}
+        {/* ── COMPANY DETAIL | CLIENT DETAIL ── */}
         <div className="flex gap-2 mb-[2px]">
           <table className="flex-1 border-collapse border border-gray-400">
             <thead>
@@ -160,20 +200,20 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
                 <th
                   colSpan={2}
                   className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left"
-                  style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                  style={{ backgroundColor: theme.sectionHeaderBg, ...ps }}
                 >
                   Company Detail
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr><LabelTdHalf>Company</LabelTdHalf><Td>{co.name}</Td></tr>
-              <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{co.contact}</Td></tr>
-              <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{co.phone}</Td></tr>
-              <tr><LabelTdHalf>Email</LabelTdHalf><Td>{co.email}</Td></tr>
-              <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{co.contact}</Td></tr>
-              <tr><LabelTdHalf>UL Ref. No.</LabelTdHalf><Td bold>{doc.ulNumber}</Td></tr>
-              <tr><LabelTdHalf>Date</LabelTdHalf><Td>{dateFmt}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Company</LabelTdHalf><Td>{co.name}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact Person</LabelTdHalf><Td>{co.contact}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact #</LabelTdHalf><Td>{co.phone}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Email</LabelTdHalf><Td>{co.email}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Designation</LabelTdHalf><Td>{co.contact}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>UL Ref. No.</LabelTdHalf><Td bold>{doc.ulNumber}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Date</LabelTdHalf><Td>{dateFmt}</Td></tr>
             </tbody>
           </table>
 
@@ -183,21 +223,21 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
                 <th
                   colSpan={2}
                   className="border border-gray-400 px-2 py-[2px] text-[11px] font-bold text-white text-left"
-                  style={{ backgroundColor: "#0f2d5a", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+                  style={{ backgroundColor: theme.sectionHeaderBg, ...ps }}
                 >
                   Client DETAIL
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr><LabelTdHalf>Company</LabelTdHalf><Td>{doc.clientName}</Td></tr>
-              <tr><LabelTdHalf>Contact Person</LabelTdHalf><Td>{""}</Td></tr>
-              <tr><LabelTdHalf>Contact #</LabelTdHalf><Td>{""}</Td></tr>
-              <tr><LabelTdHalf>Email</LabelTdHalf><Td>{""}</Td></tr>
-              <tr><LabelTdHalf>Designation</LabelTdHalf><Td>{""}</Td></tr>
-              <tr><LabelTdHalf>LPO Reference</LabelTdHalf><Td>{doc.lpoNumber || "—"}</Td></tr>
-              <tr><LabelTdHalf>Project Ref</LabelTdHalf><Td>{doc.projectRef || "—"}</Td></tr>
-              <tr><LabelTdHalf>Project / Scope</LabelTdHalf><Td>{projectDesc}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Company</LabelTdHalf><Td>{doc.clientName}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact Person</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Contact #</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Email</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Designation</LabelTdHalf><Td>{""}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>LPO Reference</LabelTdHalf><Td>{doc.lpoNumber || "—"}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Project Ref</LabelTdHalf><Td>{doc.projectRef || "—"}</Td></tr>
+              <tr><LabelTdHalf bg={theme.labelHalfBg}>Project / Scope</LabelTdHalf><Td>{projectDesc}</Td></tr>
             </tbody>
           </table>
         </div>
@@ -205,9 +245,9 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
         {/* ── SUBJECT BAR ── */}
         <div
           className="mx-0 mb-[2px] px-3 py-1 border border-gray-300"
-          style={{ backgroundColor: "#edf2f9" }}
+          style={{ backgroundColor: theme.subjectBg }}
         >
-          <span className="text-[11px] font-bold text-[#0f2d5a]">Subject: </span>
+          <span className="text-[11px] font-bold" style={{ color: theme.accentColor }}>Subject: </span>
           <span className="text-[11px] font-bold text-black">Undertaking Letter for Use of Fire-Rated Materials</span>
         </div>
 
@@ -254,14 +294,11 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
           )}
 
           <p className="mb-4">Thank you for your cooperation and understanding.</p>
-
-
         </div>
 
         {/* ── SIGNATURE BLOCK — fixed above footer in print ── */}
         <div className="print-sig-block px-4 pb-1">
           <div className="flex items-end justify-between">
-            {/* LEFT: signature + stamp + "For & on behalf of [our company]" */}
             <div>
               {doc.stampUrl && (
                 <div data-html2canvas-ignore="true" style={{ marginBottom: 4 }}>
@@ -284,19 +321,17 @@ export const UndertakingLetterTemplate = forwardRef<HTMLDivElement, { doc: Under
               <div className="text-[10px] text-gray-600">For &amp; on behalf of</div>
               <div className="text-[11px] font-black uppercase">{co.name}</div>
             </div>
-
           </div>
 
-          {/* Disclaimer */}
           <div className="text-center text-[8px] text-gray-400 italic pt-1">
             This is a computer generated document. No signature or stamp required.
           </div>
         </div>
 
-        {/* ── FOOTER — fixed to bottom in print ── */}
+        {/* ── FOOTER ── */}
         <div
-          className="ul-page-footer border-t-2 border-[#0f2d5a] px-4 py-1 text-center text-[9px] text-[#0f2d5a]"
-          style={{ backgroundColor: "#1e6ab015", WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" } as React.CSSProperties}
+          className="ul-page-footer px-4 py-1 text-center text-[9px]"
+          style={{ borderTop: `2px solid ${theme.footerBorderColor}`, color: theme.footerColor, backgroundColor: theme.footerBg, ...ps }}
         >
           <div>{co.address} | Tel: {co.phone} | Email: {co.email} | {co.website}</div>
         </div>
