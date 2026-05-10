@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { CompanyField } from "@/components/CompanyField";
 import {
@@ -217,7 +217,10 @@ export function EmployeeRegistrations() {
       {/* Create dialog */}
       <Dialog open={showCreate} onOpenChange={(o) => { if (!o) { setShowCreate(false); setCreatedResult(null); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>New Employee Registration</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>New Employee Registration</DialogTitle>
+            <DialogDescription>Generate a secure registration link to share with the candidate.</DialogDescription>
+          </DialogHeader>
           {createdResult ? (
             <div className="space-y-4 pt-2">
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 space-y-3">
