@@ -269,3 +269,39 @@
 .elite-active .elite-spinner-icon {
   background-color: #0D0D0D !important;
 }
+
+/* ── SVG presentation attributes (Recharts fill/stroke, area stops) ─────────
+   SVG attributes have lower priority than CSS — these overrides apply to all
+   chart bars, lines, areas, pie cells, and Sparkline strokes automatically.  */
+.elite-active [fill="#0f2d5a"],
+.elite-active [fill="#1e3a6e"],
+.elite-active [fill="#1e5a9e"] { fill: #0D0D0D !important; }
+.elite-active [fill="#1e6ab0"]  { fill: #8B0000 !important; }
+
+.elite-active [stroke="#0f2d5a"],
+.elite-active [stroke="#1e3a6e"] { stroke: #0D0D0D !important; }
+.elite-active [stroke="#1e6ab0"] { stroke: #8B0000 !important; }
+
+.elite-active [stop-color="#0f2d5a"] { stop-color: #0D0D0D !important; }
+.elite-active [stop-color="#1e6ab0"] { stop-color: #8B0000 !important; }
+
+/* ── Tailwind gradient from/to stops ─────────────────────────────────────── */
+.elite-active .from-\[#0f2d5a\],
+.elite-active .from-\[#1e3a6e\] { --tw-gradient-from: #8B0000 !important; }
+.elite-active .from-\[#1e6ab0\] { --tw-gradient-from: #C00000 !important; }
+.elite-active .to-\[#0f2d5a\],
+.elite-active .to-\[#1e3a6e\]   { --tw-gradient-to: #8B0000 !important; }
+.elite-active .to-\[#1e6ab0\]   { --tw-gradient-to: #C00000 !important; }
+
+/* ── Background opacity variants — tints and badge backgrounds ───────────── */
+.elite-active .bg-\[#1e6ab0\]\/10  { background-color: rgb(139 0 0 / 0.10) !important; }
+.elite-active .bg-\[#1e6ab0\]\/15  { background-color: rgb(139 0 0 / 0.15) !important; }
+.elite-active .bg-\[#0f2d5a\]\/5   { background-color: rgb(13 13 13 / 0.05) !important; }
+.elite-active .dark\:bg-\[#1e6ab0\]\/15 { background-color: rgb(139 0 0 / 0.15) !important; }
+
+/* Gradient tint panels (from-[#...]/5 to-[#...]/5) */
+.elite-active .from-\[#0f2d5a\]\/5 { --tw-gradient-from: rgb(139 0 0 / 0.05) !important; }
+.elite-active .to-\[#1e6ab0\]\/5   { --tw-gradient-to:   rgb(192 0 0 / 0.05) !important; }
+
+/* ── hover:border opacity variants ───────────────────────────────────────── */
+.elite-active .hover\:border-\[#1e6ab0\]\/40:hover { border-color: rgb(139 0 0 / 0.40) !important; }

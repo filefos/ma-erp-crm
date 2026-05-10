@@ -58,7 +58,10 @@ function daysSince(d: string | Date | null | undefined) {
 }
 
 export function InventoryDashboard() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const categoryPalette = activeCompanyId === 2
+    ? ["#8B0000", "#C00000", "#3b82f6", "#10b981", "#8b5cf6", "#f97316", "#ef4444", "#14b8a6", "#6366f1", "#64748b"]
+    : CATEGORY_PALETTE;
   const { data: itemsRaw, isLoading: itemsLoading } = useListInventoryItems();
   const { data: entriesRaw } = useListStockEntries();
   const { data: posRaw } = useListPurchaseOrders();
@@ -413,7 +416,7 @@ export function InventoryDashboard() {
               {byCategory.slice(0, 5).map((c, i) => (
                 <div key={c.name} className="flex items-center justify-between text-[11px] gap-2">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: CATEGORY_PALETTE[i % CATEGORY_PALETTE.length] }} />
+                    <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: categoryPalette[i % categoryPalette.length] }} />
                     <span className="truncate">{c.name}</span>
                   </div>
                   <span className="tabular-nums font-medium shrink-0">{fmtAED(c.value)}</span>

@@ -83,7 +83,10 @@ function localDayMs(d: string | Date | null | undefined): number {
 }
 
 export function AccountsDashboard() {
-  const { filterByCompany } = useActiveCompany();
+  const { filterByCompany, activeCompanyId } = useActiveCompany();
+  const categoryPalette = activeCompanyId === 2
+    ? ["#8B0000", "#C00000", "#3b82f6", "#10b981", "#8b5cf6", "#f97316", "#ef4444", "#14b8a6", "#6366f1", "#64748b"]
+    : CATEGORY_PALETTE;
   const { data: invoicesRaw, isLoading: invLoading } = useListTaxInvoices({});
   const { data: paymentsRecRaw } = useListPaymentsReceived();
   const { data: paymentsMadeRaw } = useListPaymentsMade();
@@ -969,7 +972,7 @@ export function AccountsDashboard() {
               {expByCategory.slice(0, 5).map((c, i) => (
                 <div key={c.name} className="flex items-center justify-between text-[11px] gap-2">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: CATEGORY_PALETTE[i % CATEGORY_PALETTE.length] }} />
+                    <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: categoryPalette[i % categoryPalette.length] }} />
                     <span className="truncate capitalize">{c.name.replace(/_/g, " ")}</span>
                   </div>
                   <span className="tabular-nums font-medium shrink-0">{fmtAED(c.value)}</span>
