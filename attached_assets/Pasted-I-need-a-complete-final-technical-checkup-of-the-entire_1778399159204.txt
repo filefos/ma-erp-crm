@@ -1,0 +1,390 @@
+I need a complete final technical checkup of the entire ERP system before we deploy it live to our VPS server.
+
+Very important:
+Please do not randomly change the system design, database, modules, workflows, or business logic.
+First inspect, test, and verify the full system carefully.
+Only fix real errors, broken logic, missing connections, UI bugs, API issues, security issues, build errors, or deployment issues.
+
+Company/System:
+ELITE PRE-FABRICATED HOUSES TRADING CO. LLC ERP SYSTEM
+
+Main purpose:
+We are preparing to go live on our VPS server, so I need a full professional system health check before deployment.
+
+Please perform a complete audit and final readiness check for the entire ERP.
+
+CHECK THE FOLLOWING MODULES COMPLETELY
+
+1. Main Dashboard
+- Check KPI cards
+- Check charts
+- Check summary counts
+- Check navigation links
+- Check dashboard data loading
+- Check responsive layout
+
+2. CRM Module
+- Client creation
+- Client master data
+- Client code generation
+- Duplicate client prevention
+- Client search
+- Client profile
+- Client linked records
+- CRM dashboard
+- CRM reports
+
+3. Sales Module
+- Quotation creation
+- Quotation item calculation
+- Discount, VAT, subtotal, grand total
+- Quotation print/PDF export
+- LPO registration
+- LPO link with quotation
+- Proforma invoice draft creation from payment terms
+- No auto tax invoice draft after LPO registration
+- Sales dashboard
+- Sales reports
+
+4. Accounts Module
+- Proforma invoice
+- Tax invoice
+- Receivables
+- Payment receipt
+- Cheque receipt
+- Journal entries
+- Client balance
+- Amount in words
+- VAT calculation
+- Invoice numbering
+- Print/PDF export
+- Accounts dashboard
+- Accounts reports
+
+5. Procurement Module
+- Purchase request
+- Purchase order
+- Supplier records
+- Procurement approval flow
+- Procurement dashboard
+- Procurement reports
+- Project ID linking
+
+6. Inventory Module
+- Stock items
+- Stock inward
+- Stock outward
+- Stock adjustment
+- Inventory value
+- Low stock alert
+- Inventory dashboard
+- Inventory reports
+- Project ID linking
+
+7. Projects Module
+- Project creation
+- Project ID generation
+- Project status
+- Project documents
+- Project costing
+- Project progress
+- Project dashboard
+- Project reports
+
+8. HR Module
+- Employee/user creation
+- Unique employee ID generation
+- Secure employee registration link
+- Employee registration form
+- Document upload
+- EID, passport, academic certificate, country ID, visa, labour card, work permit, medical, insurance, experience documents
+- Document expiry tracking
+- HR review panel
+- Employee approval/rejection/correction flow
+- HR dashboard
+- HR reports
+
+9. Assets Module
+- Asset creation
+- Asset code
+- Asset assignment
+- Asset status
+- Asset tracking
+- Assets dashboard
+- Assets reports
+
+10. Reports Module
+- All reports loading correctly
+- Filters working
+- Date range filters
+- Client filters
+- Project filters
+- Export functions
+- PDF/print/download
+- Reports dashboard
+
+11. User Management / Auth
+- Login
+- Logout
+- User roles
+- Permissions
+- Admin access
+- Department access
+- Restricted pages
+- Public employee registration link security
+- Session handling
+- Password security
+- Unauthorized access prevention
+
+12. Document Templates / PDF / Print
+Check all print and PDF export documents:
+- Quotation
+- Proforma Invoice
+- Tax Invoice
+- Delivery Note
+- Handover Note
+- Undertaking Letter
+- Payment Receipt
+- Cheque Receipt
+- Journal Entry
+- Receivable Statement
+- LPO related documents
+- HR employee documents if printable
+
+Verify:
+- Header alignment
+- Footer alignment
+- Logo visibility
+- Unique ID in footer
+- Client code in footer
+- Project ID where required
+- Page numbering
+- No overlap
+- No extra browser header/footer
+- A4 print layout
+- PDF export layout
+- Amount calculations
+- Amount in words
+- VAT calculation
+- Tables breaking correctly across pages
+
+13. Theme / UI Branding
+Verify the complete ERP follows Elite Prefabricated Houses theme:
+- Dark red gradient
+- Black
+- Charcoal
+- White
+- Light grey
+
+Check:
+- Sidebar
+- Navbar
+- Cards
+- Tables
+- Buttons
+- Forms
+- Modals
+- Dashboards
+- Reports
+- Login page
+- Print/PDF pages
+
+No old blue theme should remain unless intentionally required.
+
+14. Database Check
+Please inspect database tables, relations, and migrations.
+
+Check:
+- Missing tables
+- Broken relationships
+- Wrong foreign keys
+- Duplicate fields
+- Null errors
+- Data save issues
+- Data fetch issues
+- Client ID linking
+- Project ID linking
+- User ID linking
+- Employee ID linking
+- Invoice/LPO/Quotation linking
+- Safe migrations
+
+Do not delete any important existing data.
+
+15. API / Backend Check
+Check:
+- All API routes
+- Server errors
+- Form submissions
+- CRUD operations
+- File upload APIs
+- Download APIs
+- Auth APIs
+- Report APIs
+- PDF generation APIs
+- Email/Resend integration if used
+- Environment variable usage
+- Error handling
+
+16. Frontend Check
+Check:
+- Broken pages
+- Broken links
+- Missing imports
+- Console errors
+- Form validation
+- Button actions
+- Modal actions
+- Loading states
+- Empty states
+- Responsive design
+- Mobile/tablet compatibility if supported
+
+17. File Upload / Storage Check
+Check:
+- Employee document upload
+- Company document upload
+- Project document upload
+- File preview
+- File download
+- File path security
+- Allowed file types
+- File size control
+- Missing file error handling
+
+18. Security Check
+Before VPS live deployment, check:
+- Environment variables are not exposed
+- API keys are not visible in frontend
+- Database credentials are secure
+- Public registration links are token-based
+- Admin pages are protected
+- User role access is respected
+- File uploads are restricted
+- No sensitive data in console logs
+- No hardcoded passwords
+- CORS configuration is safe
+- Production build does not expose secrets
+
+19. Performance Check
+Check:
+- Slow pages
+- Large unnecessary files
+- Heavy components
+- Dashboard loading speed
+- Report loading speed
+- Database query optimization
+- Image/logo optimization
+- PDF generation performance
+
+20. VPS Deployment Readiness
+Please prepare and verify the system for VPS deployment.
+
+Check:
+- Production build command works
+- No TypeScript/build errors
+- No dependency conflicts
+- No missing packages
+- Environment variables are documented
+- Database connection is production-ready
+- File storage path is production-ready
+- Server start command is clear
+- Port configuration is clear
+- Domain/SSL readiness
+- Reverse proxy readiness if needed
+- PM2/process manager readiness if needed
+
+Please provide or update:
+- .env.example
+- Production build instructions
+- VPS deployment checklist
+- Required environment variables
+- Start command
+- Build command
+- Database migration command, if applicable
+
+21. Final Testing Requirement
+Please run the complete test/check process:
+
+- Install dependencies
+- Run lint if available
+- Run type check if available
+- Run build
+- Start development server if needed
+- Check backend/API routes
+- Check major workflows manually through code
+- Fix any real errors found
+
+IMPORTANT WORKFLOW TESTS
+
+Please specifically test these workflows:
+
+Workflow 1:
+Create client → client appears in quotation, invoice, delivery note, handover note, receipts, receivables, journal entries.
+
+Workflow 2:
+Create quotation → calculate totals → register LPO → create proforma invoice drafts based on payment terms → do not create tax invoice draft automatically.
+
+Workflow 3:
+Payment term with 2 installments creates 2 proforma invoice drafts.
+
+Workflow 4:
+Payment term with 3 installments creates 3 proforma invoice drafts.
+
+Workflow 5:
+Create project → project ID appears in procurement, inventory, accounts, and project module.
+
+Workflow 6:
+Create employee → generate unique employee ID and registration link → employee submits details/documents → HR reviews documents.
+
+Workflow 7:
+Print/PDF export works for all official documents without layout breaking.
+
+Workflow 8:
+Login/logout/role permission works correctly.
+
+Workflow 9:
+Reports load and export correctly.
+
+Workflow 10:
+Production build completes successfully without errors.
+
+ERROR FIXING RULE
+If you find any issue:
+- Fix it cleanly
+- Do not create duplicate functions
+- Do not remove required features
+- Do not break existing modules
+- Keep code maintainable
+- Use existing design/components where possible
+- Add comments only where necessary
+
+FINAL OUTPUT REQUIRED FROM REPLIT
+After completing the checkup, provide a clear final report with:
+
+1. What was checked
+2. What issues were found
+3. What issues were fixed
+4. Any remaining risk or warning
+5. Whether the ERP is ready for VPS deployment
+6. Exact deployment steps for VPS
+7. Required environment variables
+8. Build/start commands
+9. Any database migration steps
+10. Final confirmation checklist
+
+Acceptance Criteria:
+The system is ready only when:
+- No build errors
+- No major console errors
+- No broken main workflows
+- No broken PDF/print layout
+- No broken invoice/quotation/LPO logic
+- No broken employee registration link
+- No unauthorized access issue
+- No exposed secret/API key
+- All dashboards open correctly
+- All modules save and fetch data correctly
+- Production deployment instructions are clear
+
+Please perform this as a professional pre-deployment audit and live server readiness check for the full ERP system.
