@@ -9,7 +9,8 @@
       "distribution": "internal",
       "pnpm": "10.26.1",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "primerpsystem.com",
@@ -20,7 +21,8 @@
       "distribution": "internal",
       "pnpm": "10.26.1",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "primerpsystem.com",
@@ -30,7 +32,8 @@
     "production": {
       "pnpm": "10.26.1",
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
       },
       "ios": {
         "simulator": false
