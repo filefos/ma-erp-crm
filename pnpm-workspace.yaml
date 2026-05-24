@@ -1,0 +1,3 @@
+packages:
+  - "artifacts/mobile"
+  - "lib/api-client-react"
