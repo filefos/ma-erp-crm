@@ -12,7 +12,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "primerpsystem.com"
+        "EXPO_PUBLIC_DOMAIN": "primerpsystem.com",
+        "NODE_VERSION": "20"
       }
     },
     "preview": {
@@ -22,7 +23,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "primerpsystem.com"
+        "EXPO_PUBLIC_DOMAIN": "primerpsystem.com",
+        "NODE_VERSION": "20"
       }
     },
     "production": {
@@ -34,7 +36,8 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "primerpsystem.com"
+        "EXPO_PUBLIC_DOMAIN": "primerpsystem.com",
+        "NODE_VERSION": "20"
       }
     }
   },
