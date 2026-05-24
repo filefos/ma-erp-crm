@@ -12,7 +12,8 @@
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "primerpsystem.com"
-      }
+      },
+      "workspaceRootDir": "../../"
     },
     "preview": {
       "distribution": "internal",
@@ -21,7 +22,8 @@
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "primerpsystem.com"
-      }
+      },
+      "workspaceRootDir": "../../"
     },
     "production": {
       "android": {
@@ -32,7 +34,8 @@
       },
       "env": {
         "EXPO_PUBLIC_DOMAIN": "primerpsystem.com"
-      }
+      },
+      "workspaceRootDir": "../../"
     }
   },
   "submit": {
