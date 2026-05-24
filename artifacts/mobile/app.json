@@ -73,6 +73,11 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "owner": "filefos"
+    "owner": "filefos",
+    "extra": {
+      "eas": {
+        "projectId": "824dde53-3c5e-429a-8296-a75aa5ed8b56"
+      }
+    }
   }
 }
