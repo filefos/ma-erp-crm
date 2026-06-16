@@ -33,12 +33,11 @@ interface FormState {
   paymentStatus: string;
   status: string;
   paymentTerms: string;
+  lpoNumber: string;
 }
 
 export function InvoiceEdit({ id }: Props) {
   const { activeCompanyId } = useActiveCompany();
-  const isElite = activeCompanyId === 2;
-  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const invId = parseInt(id, 10);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -53,7 +52,7 @@ export function InvoiceEdit({ id }: Props) {
     invoiceDate: "", supplyDate: "",
     subtotal: 0, vatPercent: 5, vatAmount: 0, grandTotal: 0,
     amountPaid: 0, paymentStatus: "unpaid", status: "active",
-    paymentTerms: "",
+    paymentTerms: "", lpoNumber: "",
   });
 
   useEffect(() => {
@@ -72,15 +71,28 @@ export function InvoiceEdit({ id }: Props) {
       paymentStatus: inv.paymentStatus ?? "unpaid",
       status: (inv as any).status ?? "active",
       paymentTerms: (inv as any).paymentTerms ?? "",
+      lpoNumber: (inv as any).lpoNumber ?? "",
     });
   }, [inv]);
 
-  // Auto-recalc VAT and grand total when subtotal or VAT % change
-  useEffect(() => {
-    const vatAmount = +(form.subtotal * form.vatPercent / 100).toFixed(2);
-    const grandTotal = +(form.subtotal + vatAmount).toFixed(2);
-    setForm(p => (p.vatAmount === vatAmount && p.grandTotal === grandTotal ? p : { ...p, vatAmount, grandTotal }));
-  }, [form.subtotal, form.vatPercent]);
+  // Helpers — each recalculates the other derived fields inline so all 4
+  // amount fields stay consistent without fighting useEffect loops.
+  const onSubtotalChange = (v: number) => {
+    const vatAmount = +(v * form.vatPercent / 100).toFixed(2);
+    setForm(p => ({ ...p, subtotal: v, vatAmount, grandTotal: +(v + vatAmount).toFixed(2) }));
+  };
+  const onVatPctChange = (pct: number) => {
+    const vatAmount = +(form.subtotal * pct / 100).toFixed(2);
+    setForm(p => ({ ...p, vatPercent: pct, vatAmount, grandTotal: +(p.subtotal + vatAmount).toFixed(2) }));
+  };
+  const onVatAmountChange = (v: number) => {
+    setForm(p => ({ ...p, vatAmount: v, grandTotal: +(p.subtotal + v).toFixed(2) }));
+  };
+  const onGrandTotalChange = (v: number) => {
+    const subtotal = +(v / (1 + form.vatPercent / 100)).toFixed(2);
+    const vatAmount = +(v - subtotal).toFixed(2);
+    setForm(p => ({ ...p, grandTotal: v, subtotal, vatAmount }));
+  };
 
   // Auto-derive payment status from amountPaid vs grandTotal
   useEffect(() => {
@@ -125,6 +137,7 @@ export function InvoiceEdit({ id }: Props) {
           amountPaid: form.amountPaid,
           status: form.status,
           paymentTerms: form.paymentTerms || null,
+          lpoNumber: form.lpoNumber || null,
         } as Record<string, unknown>),
       } as any,
     });
@@ -138,7 +151,7 @@ export function InvoiceEdit({ id }: Props) {
         </Button>
         <h1 className="text-xl font-semibold">Edit Tax Invoice — {inv.invoiceNumber}</h1>
         <div className="ml-auto">
-          <Button onClick={handleSave} disabled={update.isPending} className={primeBtnCls}>
+          <Button onClick={handleSave} disabled={update.isPending} className="btn-brand">
             <Save className="w-4 h-4 mr-1" />{update.isPending ? "Saving…" : "Save Changes"}
           </Button>
         </div>
@@ -158,6 +171,10 @@ export function InvoiceEdit({ id }: Props) {
           <div className="space-y-1">
             <Label>Company TRN</Label>
             <Input value={form.companyTrn} onChange={e => setForm(p => ({ ...p, companyTrn: e.target.value }))} placeholder="e.g. 100987654300001" />
+          </div>
+          <div className="space-y-1">
+            <Label>LPO Ref # <span className="text-xs text-muted-foreground font-normal">(manual — auto-filled if linked Sales LPO exists)</span></Label>
+            <Input value={form.lpoNumber} onChange={e => setForm(p => ({ ...p, lpoNumber: e.target.value }))} placeholder="e.g. EP-LPO-2026-0010" />
           </div>
           <div className="space-y-1">
             <Label>Invoice Date</Label>
@@ -195,23 +212,28 @@ export function InvoiceEdit({ id }: Props) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Amounts</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center justify-between">
+            Amounts
+            <span className="text-[11px] font-normal text-muted-foreground">All fields editable — edit any one and the others update automatically</span>
+          </CardTitle>
+        </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="space-y-1">
-            <Label>Subtotal</Label>
-            <Input type="number" value={form.subtotal} onChange={e => setForm(p => ({ ...p, subtotal: parseFloat(e.target.value) || 0 }))} />
+            <Label>Subtotal (excl. VAT)</Label>
+            <Input type="number" value={form.subtotal} onChange={e => onSubtotalChange(parseFloat(e.target.value) || 0)} />
           </div>
           <div className="space-y-1">
             <Label>VAT %</Label>
-            <Input type="number" value={form.vatPercent} onChange={e => setForm(p => ({ ...p, vatPercent: parseFloat(e.target.value) || 0 }))} />
+            <Input type="number" value={form.vatPercent} onChange={e => onVatPctChange(parseFloat(e.target.value) || 0)} />
           </div>
           <div className="space-y-1">
             <Label>VAT Amount</Label>
-            <Input type="number" value={form.vatAmount} readOnly className="bg-muted" />
+            <Input type="number" value={form.vatAmount} onChange={e => onVatAmountChange(parseFloat(e.target.value) || 0)} />
           </div>
           <div className="space-y-1">
-            <Label>Grand Total</Label>
-            <Input type="number" value={form.grandTotal} readOnly className="bg-muted font-semibold" />
+            <Label className="font-semibold">Grand Total (incl. VAT)</Label>
+            <Input type="number" value={form.grandTotal} onChange={e => onGrandTotalChange(parseFloat(e.target.value) || 0)} className="font-semibold ring-1 ring-primary/30" />
           </div>
           <div className="space-y-1">
             <Label>Amount Paid</Label>
