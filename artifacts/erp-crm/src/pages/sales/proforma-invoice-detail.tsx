@@ -1,7 +1,7 @@
 import {
   useGetProformaInvoice, useGetQuotation,
   getGetProformaInvoiceQueryKey, getGetQuotationQueryKey,
-  useCreateTaxInvoice, useListCompanies, useUpdateProformaInvoice,
+  useCreateTaxInvoice, useListCompanies, getListCompaniesQueryKey, useUpdateProformaInvoice,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,40 +12,69 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Receipt, Pencil, FileText, Mail, Loader2, Download, Truck } from "lucide-react";
+import { Receipt, FileText, Truck, Mail, Loader2 } from "lucide-react";
+import { RevisionHistoryPanel } from "@/components/revision-history-panel";
 import { useEmailCompose } from "@/contexts/email-compose-context";
-import { ExportButtons } from "@/components/export-buttons";
 import { DocumentPrint } from "@/components/document-print";
 import type { DocumentData } from "@/components/document-print";
 import { SignatureStampPreview } from "@/components/signature-stamp-preview";
 import { canSignDocuments } from "@/lib/permissions";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { captureElementToPdfBase64, downloadBase64Pdf } from "@/lib/print-to-pdf";
+import { captureElementToPdfBase64 } from "@/lib/print-to-pdf";
+import { DocumentActionBar } from "@/components/document-action-bar";
 import { useAuth } from "@/hooks/useAuth";
 import { useActiveCompany } from "@/hooks/useActiveCompany";
+import { parsePaymentTerms } from "@/lib/payment-terms";
 
 interface Props { id: string }
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-gray-100 text-gray-700",
-  pending: "bg-orange-100 text-orange-800",
-  approved: "bg-green-100 text-green-800",
+  draft:              "bg-gray-100 text-gray-700",
+  pending:            "bg-orange-100 text-orange-800",
+  approved:           "bg-green-100 text-green-800",
+  paid:               "bg-emerald-100 text-emerald-800",
+  unpaid:             "bg-red-100 text-red-800",
+  approved_not_paid:  "bg-blue-100 text-blue-800",
 };
 
 export function ProformaInvoiceDetail({ id }: Props) {
   const { activeCompanyId } = useActiveCompany();
-  const isElite = activeCompanyId === 2;
-  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const pid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const isAdmin = ["super_admin", "company_admin"].includes((user as any)?.permissionLevel ?? "");
   const { openCompose } = useEmailCompose();
   const queryClient = useQueryClient();
   const [converting, setConverting] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [lockLoading, setLockLoading] = useState(false);
+  const handleUnlock = async () => {
+    setLockLoading(true);
+    try {
+      const token = localStorage.getItem("erp_token");
+      const res = await fetch(`/api/proforma-invoices/${pid}/unlock`, { method: "PATCH", headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed to unlock"); }
+      queryClient.invalidateQueries();
+      toast({ title: "Document unlocked." });
+    } catch (e: any) { toast({ title: e.message, variant: "destructive" }); }
+    finally { setLockLoading(false); }
+  };
+  const handleLock = async () => {
+    setLockLoading(true);
+    try {
+      const token = localStorage.getItem("erp_token");
+      const res = await fetch(`/api/proforma-invoices/${pid}/lock`, { method: "PATCH", headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed to lock"); }
+      queryClient.invalidateQueries();
+      toast({ title: "Document locked." });
+    } catch (e: any) { toast({ title: e.message, variant: "destructive" }); }
+    finally { setLockLoading(false); }
+  };
+  const [showSignature, setShowSignature] = useState(true);
+  const [showStamp, setShowStamp] = useState(true);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [convertPaymentTerms, setConvertPaymentTerms] = useState("");
   const [convertNotes, setConvertNotes] = useState("");
@@ -54,7 +83,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const { data: pi, isLoading } = useGetProformaInvoice(pid, {
     query: { queryKey: getGetProformaInvoiceQueryKey(pid), enabled: !!pid },
   });
-  const { data: companies } = useListCompanies();
+  const { data: companies } = useListCompanies({ query: { queryKey: getListCompaniesQueryKey(), staleTime: 0 } });
 
   const qid = (pi as any)?.quotationId as number | undefined;
   const { data: quotation } = useGetQuotation(qid!, {
@@ -148,19 +177,35 @@ export function ProformaInvoiceDetail({ id }: Props) {
   const fraction = qCombinedBase > 0 ? subtotal / qCombinedBase : 1;
   const isInstallment = fraction < 0.9999 && qCombinedBase > 0;
 
-  // Project-items subtotal to use for BAR 1
-  const docSubtotal = isInstallment ? +(qSubtotal * fraction).toFixed(2) : subtotal;
-  // Additional items scaled to the installment fraction
-  const docAdditionalItems = isInstallment && additionalItems
-    ? additionalItems.map(ai => ({ ...ai, price: +((ai.price ?? 0) * fraction).toFixed(2) }))
-    : additionalItems;
+  // Always show full contract amounts in Module 1 (the document body).
+  // For installment PIs: use the full quotation project-items subtotal so BAR 1,
+  // BAR 2, VAT, and Grand Total reflect the entire contract value.
+  // The installment breakdown appears in Module 2 (Payment Schedule table below).
+  // For non-installment PIs: subtract qAdditionalIncluded so BAR 1 shows project
+  // items only (document-print adds additionalTotal separately).
+  const docSubtotal = isInstallment
+    ? qSubtotal
+    : +(subtotal - qAdditionalIncluded).toFixed(2);
+  // Always use full (unscaled) additional item prices
+  const docAdditionalItems = additionalItems;
 
-  // Installment label row shown between BAR 2 and grand total
-  const piPct = Math.round(fraction * 100);
+  // Installment label row shown between BAR 2 and grand total.
+  // Find the matching stage from payment terms so the label is accurate
+  // (e.g. "Progress Payment" not "Advance Payment" for a 2.38% stage).
+  const exactPct = fraction * 100;
+  const qtInstallments = parsePaymentTerms((quotation as any)?.paymentTerms);
+  const matchedStage = qtInstallments.length > 0
+    ? qtInstallments.reduce((best, inst) =>
+        Math.abs(inst.percent - exactPct) < Math.abs(best.percent - exactPct) ? inst : best
+      )
+    : null;
+  const cleanPct = matchedStage
+    ? `${+matchedStage.percent.toFixed(2)}%`
+    : `${Math.round(exactPct)}%`;
   const installmentNote = isInstallment
-    ? piPct > 50
-      ? `${piPct}% Final Payment upon Delivery before Offloading`
-      : `${piPct}% Advance Payment`
+    ? matchedStage
+      ? `${cleanPct} ${matchedStage.label}`
+      : `${cleanPct} Payment`
     : undefined;
 
   // Format raw ISO validity date (e.g. "2026-05-09") to "09 May 2026"
@@ -195,19 +240,27 @@ export function ProformaInvoiceDetail({ id }: Props) {
     paymentTerms: pi.paymentTerms ?? (quotation as any)?.paymentTerms,
     notes: (pi as any).notes,
     installmentNote,
+    installmentFraction: isInstallment ? fraction : undefined,
     additionalItems: docAdditionalItems,
     items: sourceItems.map((i: any) => ({
       description: i.description,
-      sizeStatus: i.unit,
+      sizeStatus: i.sizeStatus ?? i.unit,
       unitPrice: i.rate ?? i.unitPrice,
       quantity: i.quantity,
       total: i.amount ?? i.total,
     })),
-    preparedByName: (pi as any).preparedByName,
-    printedByUniqueId: (user as any)?.uniqueUserId ?? undefined,
+    preparedByName: (pi as any)?.creatorName ?? (pi as any)?.preparedByName ?? undefined,
+    printedByUniqueId: (pi as any)?.creatorUniqueId ?? (user as any)?.uniqueUserId ?? undefined,
+    salesPersonContact: (pi as any)?.creatorName ?? (pi as any)?.preparedByName ?? undefined,
+    salesPersonPhone: (pi as any)?.creatorPhone ?? undefined,
+    salesPersonEmail: (pi as any)?.creatorEmail ?? undefined,
+    salesPersonDesignation: (pi as any)?.creatorDesignation ?? undefined,
+    clientDesignation: (pi as any)?.clientDesignation ?? undefined,
     clientCode: (pi as any).clientCode ?? undefined,
-    preparedBySignatureUrl: (user as any)?.signatureUrl ?? undefined,
-    stampUrl: companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined,
+    clientAddress: (pi as any)?.clientAddress ?? undefined,
+    lpoRef: (pi as any).lpoNumber ?? undefined,
+    preparedBySignatureUrl: showSignature ? ((pi as any)?.creatorSignatureUrl ?? (user as any)?.signatureUrl ?? undefined) : undefined,
+    stampUrl: showStamp ? (companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined) : undefined,
   };
 
   const handleConvertToTax = () => {
@@ -222,6 +275,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
     setConvertDialogOpen(false);
     setConverting(true);
     const today = convertSupplyDate || new Date().toISOString().split("T")[0];
+    const computedGrandTotal = +(subtotal + vatAmount).toFixed(2);
     createTax.mutate({ data: {
       companyId: pi.companyId,
       clientName: pi.clientName,
@@ -232,7 +286,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
       subtotal,
       vatPercent,
       vatAmount,
-      grandTotal: pi.total,
+      grandTotal: pi.total || computedGrandTotal,
       paymentStatus: "unpaid",
       ...({
         paymentTerms: convertPaymentTerms || pi.paymentTerms,
@@ -244,6 +298,8 @@ export function ProformaInvoiceDetail({ id }: Props) {
         clientPhone: (pi as any).clientPhone,
         projectLocation: (pi as any).projectLocation,
         projectRef: (pi as any).projectRef,
+        lpoNumber: (pi as any).lpoNumber ?? undefined,
+        contactId: (pi as any).contactId ?? undefined,
       } as Record<string, unknown>),
     } });
   };
@@ -251,76 +307,74 @@ export function ProformaInvoiceDetail({ id }: Props) {
   return (
     <>
     <div className="max-w-4xl mx-auto space-y-4">
-      <div className="no-print flex items-center gap-2 flex-wrap">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/sales/proforma-invoices"><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
-        </Button>
-        <Select value={pi.status} onValueChange={handleStatusChange} disabled={updatePi.isPending}>
-          <SelectTrigger className={`h-7 w-32 text-xs font-medium capitalize border-0 ${STATUS_COLORS[pi.status] ?? "bg-gray-100 text-gray-700"}`}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-          </SelectContent>
-        </Select>
-        {(pi as any)?.projectRef && (
-          <Badge className="bg-[#0f2d5a] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
-            PROJECT ID: {(pi as any).projectRef}
-          </Badge>
-        )}
-        {(pi as any)?.clientCode && (
-          <Badge className="bg-[#0f2d5a] text-[#c9a14a] border border-[#c9a14a]/30 font-mono text-[11px] tracking-wide">
-            {(pi as any).clientCode}
-          </Badge>
-        )}
-        {qid ? (
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/sales/quotations/${qid}`}>
-              <FileText className="w-4 h-4 mr-1" />Quotation {(quotation as any)?.quotationNumber ?? `#${qid}`}
-            </Link>
-          </Button>
-        ) : null}
-        {(quotation as any)?.leadId ? (
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/crm/leads/${(quotation as any).leadId}`}>Lead</Link>
-          </Button>
-        ) : null}
-        <div className="ml-auto flex gap-2">
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/sales/proforma-invoices/${pid}/edit`}>
-              <Pencil className="w-4 h-4 mr-1" />Edit
-            </Link>
-          </Button>
-          <Button
-            size="sm" className={primeBtnCls}
-            onClick={handleConvertToTax} disabled={converting}
-          >
-            <Receipt className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Convert to Tax Invoice"}
-          </Button>
-          <Button
-            size="sm" variant="outline"
-            disabled={downloadingPdf}
-            onClick={async () => {
-              const docEl = document.querySelector<HTMLElement>(".print-doc");
-              if (!docEl) return;
-              setDownloadingPdf(true);
-              try {
-                const filename = `ProformaInvoice_${pi.piNumber ?? pi.id ?? "doc"}.pdf`;
-                const signatureUrl = user?.signatureUrl || undefined;
-                const co = companies?.find(c => c.id === pi.companyId);
-                const stampUrl = co?.stamp || undefined;
-                const stampWidthPct = co?.stampWidthPct ?? undefined;
-                const stampMarginPct = co?.stampMarginPct ?? undefined;
-                const { base64, filename: fname } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
-                downloadBase64Pdf(base64, fname);
-              } catch { /* silent */ } finally { setDownloadingPdf(false); }
-            }}
-          >
-            {downloadingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Generating…</> : <><Download className="w-4 h-4 mr-1" />Download PDF</>}
-          </Button>
+      {(pi as any)?.isUserDeleted && (isAdmin || (pi as any)?.userDeletedById === (user as any)?.id) && (
+        <div className="no-print bg-orange-50 border border-orange-300 text-orange-700 rounded-lg px-4 py-3 text-sm font-semibold flex items-center gap-2">
+          <span>⏳</span> This document has a pending deletion request awaiting admin approval.
+        </div>
+      )}
+      {(pi as any)?.deleteRejectedAt && (isAdmin || (pi as any)?.userDeletedById === (user as any)?.id) && (
+        <div className="no-print bg-red-50 border border-red-300 text-red-700 rounded-lg px-4 py-3 text-sm font-semibold flex flex-col gap-2">
+          <div className="flex items-center gap-2"><span>✕</span>Deletion Rejected{(pi as any).deleteRejectionNote ? `: ${(pi as any).deleteRejectionNote}` : ""}</div>
+          <div className="flex gap-2">
+            <button className="text-xs px-3 py-1 rounded bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 cursor-pointer" onClick={async () => { const t = localStorage.getItem("erp_token"); await fetch(`/api/pending-document-deletions/proforma_invoice/${pi.id}/dismiss-rejection`, { method: "POST", headers: { Authorization: `Bearer ${t}` } }); window.location.reload(); }}>Dismiss</button>
+            <span className="text-xs text-red-500/70 self-center">Use the Delete button below to re-request deletion.</span>
+          </div>
+        </div>
+      )}
+      <RevisionHistoryPanel
+        apiPath={`/api/proforma-invoices/${pid}/revisions`}
+        currentId={pid}
+        detailBasePath="/accounts/proforma-invoices"
+      />
 
+      <DocumentActionBar
+        backHref="/accounts/proforma-invoices"
+        statusNode={
+          <Select value={pi.status} onValueChange={handleStatusChange} disabled={updatePi.isPending}>
+            <SelectTrigger className={`h-7 w-44 text-xs font-medium capitalize border-0 ${STATUS_COLORS[pi.status] ?? "bg-gray-100 text-gray-700"}`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="approved_not_paid">Approved — Not Paid Yet</SelectItem>
+              <SelectItem value="unpaid">Unpaid</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+            </SelectContent>
+          </Select>
+        }
+        clientCode={(pi as any)?.clientCode}
+        clientCodeHref={(pi as any)?.contactId ? `/crm/contacts/${(pi as any).contactId}` : undefined}
+        extraRow1={
+          (pi as any)?.projectRef ? (
+            <Badge className="bg-[#1E0040] text-white border border-blue-300/40 font-mono text-[11px] tracking-wide px-2.5">
+              PROJECT ID: {(pi as any).projectRef}
+            </Badge>
+          ) : undefined
+        }
+        sourceLinkNode={
+          qid ? (
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/sales/quotations/${qid}`}>
+                <FileText className="w-4 h-4 mr-1" />Quotation {(quotation as any)?.quotationNumber ?? `#${qid}`}
+              </Link>
+            </Button>
+          ) : undefined
+        }
+        leadHref={(quotation as any)?.leadId ? `/crm/leads/${(quotation as any).leadId}` : undefined}
+        isLocked={(pi as any)?.isLocked}
+        permissionLevel={(user as any)?.permissionLevel}
+        showStamp={showStamp}
+        onStampToggle={() => setShowStamp(s => !s)}
+        showSignature={showSignature}
+        onSignatureToggle={() => setShowSignature(s => !s)}
+        editHref={`/accounts/proforma-invoices/${pid}/edit`}
+        editLabel="Edit / Revise"
+        lockLoading={lockLoading}
+        onLock={handleLock}
+        onUnlock={handleUnlock}
+        extraActionsRow2={
           <Button
             size="sm" variant="outline"
             disabled={generatingPdf}
@@ -331,9 +385,9 @@ export function ProformaInvoiceDetail({ id }: Props) {
                 setGeneratingPdf(true);
                 try {
                   const filename = `ProformaInvoice_${pi.piNumber ?? pi.id ?? "doc"}.pdf`;
-                  const signatureUrl = user?.signatureUrl || undefined;
+                  const signatureUrl = showSignature ? (user?.signatureUrl || undefined) : undefined;
                   const co = companies?.find(c => c.id === pi.companyId);
-                  const stampUrl = co?.stamp || undefined;
+                  const stampUrl = showStamp ? (co?.stamp || undefined) : undefined;
                   const stampWidthPct = co?.stampWidthPct ?? undefined;
                   const stampMarginPct = co?.stampMarginPct ?? undefined;
                   const { base64 } = await captureElementToPdfBase64(docEl, filename, { signatureUrl, stampUrl, stampWidthPct, stampMarginPct });
@@ -354,14 +408,38 @@ export function ProformaInvoiceDetail({ id }: Props) {
           >
             {generatingPdf ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Preparing PDF…</> : <><Mail className="w-4 h-4 mr-1" />Send Email</>}
           </Button>
-          <ExportButtons docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"} recipientPhone={(pi as any).clientPhone ?? undefined} recipientEmail={(pi as any).clientEmail ?? undefined} companyId={pi.companyId ?? undefined} docTypeLabel="Proforma Invoice" signatureUrl={user?.signatureUrl ?? undefined} stampUrl={companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined} stampWidthPct={companies?.find(c => c.id === pi.companyId)?.stampWidthPct ?? undefined} stampMarginPct={companies?.find(c => c.id === pi.companyId)?.stampMarginPct ?? undefined} />
-        </div>
-      </div>
+        }
+        convertToNode={
+          <Button size="sm" className="btn-brand" onClick={handleConvertToTax} disabled={converting}>
+            <Receipt className="w-4 h-4 mr-1" />{converting ? "Creating…" : "Convert to Tax Invoice"}
+          </Button>
+        }
+        docNumber={pi.piNumber ?? pi.id?.toString() ?? "PI"}
+        recipientPhone={(pi as any).clientPhone ?? undefined}
+        recipientEmail={(pi as any).clientEmail ?? undefined}
+        companyId={pi.companyId ?? undefined}
+        docTypeLabel="Proforma Invoice"
+        signatureUrl={showSignature ? (user?.signatureUrl ?? undefined) : undefined}
+        stampUrl={showStamp ? (companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined) : undefined}
+        stampWidthPct={companies?.find(c => c.id === pi.companyId)?.stampWidthPct ?? undefined}
+        stampMarginPct={companies?.find(c => c.id === pi.companyId)?.stampMarginPct ?? undefined}
+      />
       {canSignDocuments((user as any)?.permissionLevel) && (
         <SignatureStampPreview
-          signatureUrl={user?.signatureUrl ?? undefined}
-          stampUrl={companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined}
+          signatureUrl={showSignature ? (user?.signatureUrl ?? undefined) : undefined}
+          stampUrl={showStamp ? (companies?.find(c => c.id === pi.companyId)?.stamp ?? undefined) : undefined}
         />
+      )}
+      {/* Admin metadata panel — visible to manager / admin / super_admin only */}
+      {["manager", "company_admin", "super_admin"].includes((user as any)?.permissionLevel ?? "") && (
+        <div className="no-print bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs text-slate-700 flex flex-wrap gap-x-5 gap-y-1">
+          <span><span className="font-semibold text-slate-500">Created By:</span> {(pi as any)?.creatorName ?? "—"}</span>
+          <span><span className="font-semibold text-slate-500">User ID:</span>{" "}{(pi as any)?.createdById ? <Link href="/admin/users" className="text-blue-600 hover:underline font-mono">{(pi as any).createdById}</Link> : "—"}</span>
+          <span><span className="font-semibold text-slate-500">Unique ID:</span>{" "}{(pi as any)?.creatorUniqueId ? <Link href="/admin/users" className="text-blue-600 hover:underline font-mono">{(pi as any).creatorUniqueId}</Link> : "—"}</span>
+          <span><span className="font-semibold text-slate-500">Designation:</span> {(pi as any)?.creatorDesignation ?? "—"}</span>
+          <span><span className="font-semibold text-slate-500">Status:</span> {(pi as any)?.isLocked ? "🔒 Locked" : "🔓 Unlocked"}</span>
+          <span><span className="font-semibold text-slate-500">Created:</span> {(pi as any)?.createdAt ? new Date((pi as any).createdAt).toLocaleDateString("en-GB") : "—"}</span>
+        </div>
       )}
       <DocumentPrint data={docData} />
     </div>
@@ -369,7 +447,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
     {/* ── Convert to Tax Invoice Dialog ── */}
     <Dialog open={convertDialogOpen} onOpenChange={(o) => { if (!o) setConvertDialogOpen(false); }}>
       <DialogContent className="max-w-lg">
-        <DialogHeader>
+        <DialogHeader className="dlg-corp-header">
           <DialogTitle>Convert to Tax Invoice</DialogTitle>
           <DialogDescription>
             Review and confirm the details below. A Delivery Note (draft) will be
@@ -389,7 +467,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
             <span className="text-muted-foreground">VAT ({vatPercent}%)</span>
             <span className="tabular-nums">AED {vatAmount.toLocaleString()}</span>
             <span className="text-muted-foreground font-semibold">Grand Total</span>
-            <span className="font-bold text-[#0f2d5a] tabular-nums">AED {Number(pi?.total ?? 0).toLocaleString()}</span>
+            <span className="font-bold text-[#1E0040] tabular-nums">AED {Number(pi?.total ?? 0).toLocaleString()}</span>
           </div>
 
           <div className="space-y-1">
@@ -430,7 +508,7 @@ export function ProformaInvoiceDetail({ id }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setConvertDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleConfirmConvertToTax} className={primeBtnCls}>
+          <Button onClick={handleConfirmConvertToTax} className="btn-brand">
             <Receipt className="w-4 h-4 mr-1" />Create Tax Invoice
           </Button>
         </DialogFooter>
