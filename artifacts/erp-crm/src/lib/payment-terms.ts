@@ -1,6 +1,7 @@
 export interface Installment {
   label: string;
   percent: number;
+  dueDate?: string; // ISO date or DD/MM/YYYY — used by PDC cheques
 }
 
 export interface InstallmentWithAmount extends Installment {
@@ -14,7 +15,12 @@ export interface PaymentTermsPreset {
   label: string;
   text: string;
   installments: Installment[];
+  isPDC?: boolean;
 }
+
+/** Keys used to identify payment modes in the UI */
+export const PDC_PRESET_KEY = "pdc";
+export const CDC_PDC_PRESET_KEY = "cdc_pdc";
 
 export const PAYMENT_TERMS_PRESETS: PaymentTermsPreset[] = [
   {
@@ -71,12 +77,126 @@ export const PAYMENT_TERMS_PRESETS: PaymentTermsPreset[] = [
       { label: "Final Payment", percent: 25 },
     ],
   },
+  {
+    key: PDC_PRESET_KEY,
+    label: "PDC — Post-Dated Cheques",
+    text: "",
+    installments: [],
+    isPDC: true,
+  },
 ];
 
 const PRESET_BY_KEY = new Map(PAYMENT_TERMS_PRESETS.map((p) => [p.key, p]));
 
 export const getPresetByKey = (key: string): PaymentTermsPreset | undefined =>
   PRESET_BY_KEY.get(key);
+
+/** Returns true if the raw payment-terms string is a PDC schedule */
+export function isPDCPaymentTerms(raw: string | null | undefined): boolean {
+  return !!raw && raw.trimStart().toUpperCase().startsWith("PDC:");
+}
+
+/** Returns true if the raw payment-terms string is a CDC+PDC mixed schedule */
+export function isCDCPDCPaymentTerms(raw: string | null | undefined): boolean {
+  return !!raw && raw.trimStart().toUpperCase().startsWith("CDC+PDC:");
+}
+
+export interface CDCInstallment {
+  label: string;
+  percent: number;
+}
+
+export interface CDCPDCData {
+  cdcInstallments: CDCInstallment[];
+  pdcCheques: Array<{ percent: number; date: string }>;
+}
+
+/**
+ * Build a canonical CDC+PDC payment-terms string.
+ * Format: CDC+PDC: 30% Advance (CDC), PDC: Cheque 1: 40% due 15/06/2026, Cheque 2: 30% due 15/09/2026
+ */
+export function buildCDCPDCTermsText(data: CDCPDCData): string {
+  const cdcParts = data.cdcInstallments.map(
+    (inst) => `${inst.percent}% ${inst.label} (CDC)`
+  );
+  const pdcParts = data.pdcCheques.map(
+    (c, i) => `PDC Cheque ${i + 1}: ${c.percent}% due ${c.date || "TBD"}`
+  );
+  return `CDC+PDC: ${[...cdcParts, ...pdcParts].join(", ")}`;
+}
+
+/**
+ * Parse a CDC+PDC payment-terms string into structured data.
+ */
+export function parseCDCPDCTerms(raw: string): CDCPDCData {
+  const body = raw.replace(/^CDC\+PDC:\s*/i, "");
+  const cdcInstallments: CDCInstallment[] = [];
+  const pdcCheques: Array<{ percent: number; date: string }> = [];
+
+  const cdcRegex = /(\d+(?:\.\d+)?)\s*%\s+([\w\s]+?)\s*\(CDC\)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = cdcRegex.exec(body)) !== null) {
+    const pct = parseFloat(m[1]);
+    if (isFinite(pct) && pct > 0)
+      cdcInstallments.push({ percent: pct, label: m[2].trim() });
+  }
+
+  const pdcRegex = /PDC Cheque\s+\d+:\s*(\d+(?:\.\d+)?)\s*%\s+due\s+([\w/\-]+)/gi;
+  while ((m = pdcRegex.exec(body)) !== null) {
+    const pct = parseFloat(m[1]);
+    if (isFinite(pct) && pct > 0)
+      pdcCheques.push({ percent: pct, date: m[2].trim() });
+  }
+
+  return { cdcInstallments, pdcCheques };
+}
+
+/**
+ * Build a canonical CDC payment-terms string from an array of installments.
+ * e.g. "30% Advance, 40% Progress Payment, 30% Final Payment"
+ */
+export function buildCDCTermsText(installments: CDCInstallment[]): string {
+  return installments.map((i) => `${i.percent}% ${i.label}`).join(", ");
+}
+
+/**
+ * Build a canonical PDC payment-terms string from an array of cheques.
+ * Stored format (plain-text, parseable):
+ *   PDC: Cheque 1: 33% due 15/03/2026, Cheque 2: 33% due 15/06/2026, Cheque 3: 34% due 15/09/2026
+ */
+export function buildPDCTermsText(
+  cheques: Array<{ percent: number; date: string }>
+): string {
+  const parts = cheques.map(
+    (c, i) => `Cheque ${i + 1}: ${c.percent}% due ${c.date}`
+  );
+  return `PDC: ${parts.join(", ")}`;
+}
+
+/**
+ * Parse a PDC payment-terms string into structured Installment objects.
+ * Each installment label is "PDC Cheque N – DD/MM/YYYY".
+ */
+export function parsePDCPaymentTerms(raw: string): Installment[] {
+  const body = raw.replace(/^PDC:\s*/i, "");
+  const results: Installment[] = [];
+  const chequeRegex =
+    /Cheque\s+(\d+)\s*:\s*(\d+(?:\.\d+)?)\s*%\s+due\s+([\d/\-]+)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = chequeRegex.exec(body)) !== null) {
+    const num = m[1];
+    const percent = parseFloat(m[2]);
+    const date = m[3];
+    if (isFinite(percent) && percent > 0) {
+      results.push({
+        label: `PDC Cheque ${num} – ${date}`,
+        percent,
+        dueDate: date,
+      });
+    }
+  }
+  return results;
+}
 
 const STAGE_KEYWORDS: { match: RegExp; label: string }[] = [
   { match: /\bfinal\b/i, label: "Final Payment" },
@@ -98,6 +218,9 @@ const labelFromFragment = (fragment: string, isFirst: boolean): string => {
 export function parsePaymentTerms(raw: string | null | undefined): Installment[] {
   if (!raw || !raw.trim()) return [];
 
+  // PDC fast-path
+  if (isPDCPaymentTerms(raw)) return parsePDCPaymentTerms(raw);
+
   const text = raw.replace(/\s+/g, " ").trim();
 
   // Coarse split on commas, semicolons, newlines, or " and "
@@ -106,8 +229,7 @@ export function parsePaymentTerms(raw: string | null | undefined): Installment[]
     .map((s) => s.trim())
     .filter(Boolean);
 
-  // Sub-split any fragment that contains more than one percentage value,
-  // e.g. "30% ADVANCE 70% UPON DELIVERY" → ["30% ADVANCE", "70% UPON DELIVERY"]
+  // Sub-split any fragment that contains more than one percentage value
   const fragments: string[] = [];
   for (const frag of coarseFragments) {
     const pctRegex = /\d+(?:\.\d+)?\s*%/g;
@@ -119,7 +241,6 @@ export function parsePaymentTerms(raw: string | null | undefined): Installment[]
     if (positions.length <= 1) {
       fragments.push(frag);
     } else {
-      // Split at every percentage boundary after the first
       let prev = 0;
       for (let i = 1; i < positions.length; i++) {
         fragments.push(frag.slice(prev, positions[i]).trim());
@@ -159,10 +280,11 @@ export function calculateInstallments(
     return { ...inst, subtotal, vatAmount, total };
   });
 
-  // Absorb rounding drift into the final installment so installments sum exactly to source totals
-  // (only when the percentages add up to 100%).
+  // Absorb rounding drift into the final installment so installments sum exactly to source totals.
+  // Threshold is 1% — handles both floating-point drift (< 0.001%) and user-entered rounded
+  // percentages that are slightly off (e.g. 11.90476 + 2.38095 + 50 + 35.8 = 100.08571%).
   const sumPct = totalPercent(installments);
-  if (Math.abs(sumPct - 100) < 0.001) {
+  if (Math.abs(sumPct - 100) < 1) {
     const sumSubtotal = computed.reduce((s, c) => s + c.subtotal, 0);
     const sumVat = computed.reduce((s, c) => s + c.vatAmount, 0);
     const sumTotal = computed.reduce((s, c) => s + c.total, 0);
@@ -182,4 +304,20 @@ export function totalPercent(installments: Installment[]): number {
 export function installmentToTermsText(inst: Installment, index: number, total: number): string {
   const stage = total > 1 ? ` (${index + 1} of ${total})` : "";
   return `${inst.percent}% ${inst.label}${stage}`;
+}
+
+/**
+ * Distribute N cheques equally (last cheque absorbs rounding).
+ * Returns array of {percent, date} with date as empty string.
+ */
+export function distributePDCCheques(
+  n: number
+): Array<{ percent: number; date: string }> {
+  if (n <= 0) return [];
+  const base = Math.floor(100 / n);
+  const remainder = 100 - base * n;
+  return Array.from({ length: n }, (_, i) => ({
+    percent: i === n - 1 ? base + remainder : base,
+    date: "",
+  }));
 }
