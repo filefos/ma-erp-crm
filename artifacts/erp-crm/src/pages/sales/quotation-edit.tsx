@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, RotateCcw, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -31,7 +31,9 @@ import {
 import { TechSpecEditor } from "@/components/tech-spec-editor";
 import { TCEditor, parseTCString, serializeTCSections, type TCSection } from "@/components/tc-editor";
 import { STANDARD_TC } from "@/lib/tc-templates";
-import { PAYMENT_TERMS_PRESETS, getPresetByKey } from "@/lib/payment-terms";
+import { PaymentTermsBuilder } from "@/components/payment-terms-builder";
+import { AdditionalItemsTable, type AdditionalItem } from "@/components/additional-items-table";
+import { ProjectItemsTable, emptyProjectItem, type ProjectItem } from "@/components/project-items-table";
 
 const BANK_DETAILS: Record<number, {
   bankName: string; accountTitle: string; accountNumber: string;
@@ -55,38 +57,6 @@ const BANK_DETAILS: Record<number, {
   },
 };
 
-interface Item {
-  description: string;
-  quantity: number;
-  sizeStatus: string;
-  rate: number;
-  amount: number;
-  discount: number;
-}
-
-interface AdditionalItem {
-  description: string;
-  status: string;
-  price: number;
-  quantity: number;
-  amount: number;
-}
-
-const emptyItem = (): Item => ({ description: "", quantity: 1, sizeStatus: "", rate: 0, amount: 0, discount: 0 });
-
-const DESCRIPTION_PRESETS = [
-  { value: "fire_rated",      label: "Fire Rated Portacabin",    text: "Supply and delivery of prefabricated fire rated portacabin following detail;\n• " },
-  { value: "site_office",     label: "Site Office",              text: "Supply and delivery of prefabricated site office following detail;\n• " },
-  { value: "security_cabin",  label: "Security Cabin",           text: "Supply and delivery of prefabricated security cabin following detail;\n• " },
-  { value: "standard_cabin",  label: "Standard Cabin",           text: "Supply and delivery of prefabricated standard cabin following detail;\n• " },
-  { value: "container",       label: "Modified Container",       text: "Supply and delivery of modified container following detail;\n• " },
-  { value: "aluminium",       label: "Aluminium Cladded Cabin",  text: "Supply and delivery of Aluminium cladded cabin following detail;\n• " },
-  { value: "sandwich",        label: "Sandwich Panel Cabin",     text: "Supply and delivery of Sandwich panel type cabin following detail;\n• " },
-  { value: "fencing",         label: "Fencing",                  text: "Supply and delivery of fencing following detail;\n• " },
-  { value: "parking_shade",   label: "Parking Shade",            text: "Supply and delivery of Parking shade following detail;\n• " },
-  { value: "furniture",       label: "Furniture Installation",   text: "Supply and delivery of Furniture installation following detail;\n• " },
-  { value: "custom",          label: "Custom (type below)",      text: "" },
-];
 
 const DEFAULT_ADDITIONAL_ITEMS: AdditionalItem[] = [
   { description: "Transportation including RTA Permit", status: "Included", price: 0, quantity: 1, amount: 0 },
@@ -109,8 +79,6 @@ interface Props { id: string }
 
 export function QuotationEdit({ id }: Props) {
   const { activeCompanyId } = useActiveCompany();
-  const isElite = activeCompanyId === 2;
-  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const qid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -130,7 +98,11 @@ export function QuotationEdit({ id }: Props) {
         toast({ title: "Quotation updated!", description: `Saved as ${(data as any).quotationNumber}` });
         navigate(`/sales/quotations/${qid}`);
       },
-      onError: () => toast({ title: "Failed to save.", variant: "destructive" }),
+      onError: (e: any) => toast({
+        title: "Failed to save.",
+        description: e?.data?.error ?? e?.data?.message ?? e?.message ?? "Unexpected error",
+        variant: "destructive",
+      }),
     },
   });
 
@@ -141,6 +113,8 @@ export function QuotationEdit({ id }: Props) {
     clientContactPerson: "",
     clientEmail: "",
     clientPhone: "",
+    clientDesignation: "",
+    clientAddress: "",
     customerTrn: "",
     projectName: "",
     projectLocation: "",
@@ -149,12 +123,17 @@ export function QuotationEdit({ id }: Props) {
     discount: 0,
     paymentTerms: "",
     validity: "30 days",
+    leadTime: "",
     termsConditions: "",
     techSpecs: "",
     quotationNumber: "",
     preparedByName: "",
+    creatorName: "",
+    creatorPhone: "",
+    creatorEmail: "",
+    creatorDesignation: "",
   });
-  const [items, setItems] = useState<Item[]>([emptyItem()]);
+  const [items, setItems] = useState<ProjectItem[]>([emptyProjectItem()]);
   const [additionalItems, setAdditionalItems] = useState<AdditionalItem[]>(DEFAULT_ADDITIONAL_ITEMS);
   const [specType, setSpecType] = useState<SpecTypeKey>(DEFAULT_SPEC_TYPE);
   const [techSpecSections, setTechSpecSections] = useState<TechSpecSection[]>([]);
@@ -162,6 +141,7 @@ export function QuotationEdit({ id }: Props) {
   const [showTechSpecs, setShowTechSpecs] = useState(false);
   const [showTC, setShowTC] = useState(false);
   const [bumpRev, setBumpRev] = useState(false);
+
   const [customSections, setCustomSections] = useState<{ title: string; content: string }[]>([]);
 
   const handleSpecTypeChange = (key: SpecTypeKey) => {
@@ -172,7 +152,7 @@ export function QuotationEdit({ id }: Props) {
   useEffect(() => {
     if (!q || initialised) return;
     const raw = (q as any);
-    const loadedItems: Item[] = ((raw.items ?? []) as any[]).map((i: any) => ({
+    const loadedItems: ProjectItem[] = ((raw.items ?? []) as any[]).map((i: any) => ({
       description: i.description ?? "",
       quantity: Number(i.quantity ?? 1),
       sizeStatus: i.sizeStatus ?? i.unit ?? "",
@@ -191,6 +171,8 @@ export function QuotationEdit({ id }: Props) {
       clientContactPerson: raw.clientContactPerson ?? "",
       clientEmail: q.clientEmail ?? "",
       clientPhone: q.clientPhone ?? "",
+      clientDesignation: raw.clientDesignation ?? "",
+      clientAddress: raw.clientAddress ?? "",
       customerTrn: raw.customerTrn ?? "",
       projectName: q.projectName ?? "",
       projectLocation: q.projectLocation ?? "",
@@ -199,14 +181,19 @@ export function QuotationEdit({ id }: Props) {
       discount: Number(q.discount ?? 0),
       paymentTerms: q.paymentTerms ?? "",
       validity: q.validity ?? "30 days",
+      leadTime: (raw as any).leadTime ?? "",
       termsConditions: q.termsConditions ?? "",
       techSpecs: raw.techSpecs ?? "",
       quotationNumber: q.quotationNumber ?? "",
       preparedByName: raw.preparedByName ?? "",
+      creatorName: raw.creatorName ?? "",
+      creatorPhone: raw.creatorPhone ?? "",
+      creatorEmail: raw.creatorEmail ?? "",
+      creatorDesignation: raw.creatorDesignation ?? "",
     });
     setTechSpecSections(parseTechSpecs(raw.techSpecs ?? ""));
     setTcSections(parseTCString(q.termsConditions ?? ""));
-    setItems(loadedItems.length > 0 ? loadedItems : [emptyItem()]);
+    setItems(loadedItems.length > 0 ? loadedItems : [emptyProjectItem()]);
     setAdditionalItems(loadedAdditional);
     try {
       if (raw.customSections) setCustomSections(JSON.parse(raw.customSections));
@@ -214,56 +201,20 @@ export function QuotationEdit({ id }: Props) {
     setInitialised(true);
   }, [q, initialised]);
 
-  const updateItem = (i: number, field: keyof Item, val: string | number) => {
-    setItems(prev => {
-      const next = [...prev];
-      next[i] = { ...next[i], [field]: val };
-      const qty = field === "quantity" ? Number(val) : next[i].quantity;
-      const rate = field === "rate" ? Number(val) : next[i].rate;
-      const disc = field === "discount" ? Number(val) : next[i].discount;
-      next[i].amount = qty * rate * (1 - disc / 100);
-      return next;
-    });
+
+
+
+  const company = companies?.find(c => c.id === Number(form.companyId));
+  const isPrime = /prime/i.test(company?.name ?? "") || /prime/i.test(company?.shortName ?? "");
+  const brand = {
+    header:      isPrime ? "#1E0040" : "#0D0D0D",
+    headerHover: isPrime ? "#8B008B" : "#1E1E1E",
+    border:      isPrime ? "#8B008B" : "#8B0000",
+    rowBg:       isPrime ? "#f3e8ff" : "#F3F3F3",
+    rowHover:    isPrime ? "#ead5fb" : "#E8E8E8",
+    lightBg:     isPrime ? "#faf0ff" : "#F8F8F8",
+    lightHover:  isPrime ? "#f5e8ff" : "#EEEEEE",
   };
-
-  const [previewItems, setPreviewItems] = useState<Set<number>>(new Set());
-
-  const renderDescriptionPreview = (text: string) =>
-    text.split("\n").map((line, idx) =>
-      line.startsWith("• ") ? (
-        <div key={idx} className="flex gap-2 items-start text-sm text-[#1a3d6e]">
-          <span className="mt-0.5 shrink-0 font-bold">•</span>
-          <span>{line.slice(2)}</span>
-        </div>
-      ) : line ? (
-        <div key={idx} className="text-sm text-[#1a3d6e]">{line}</div>
-      ) : (
-        <div key={idx} className="h-2" />
-      )
-    );
-
-  const handleDescriptionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, i: number) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    const ta = e.currentTarget;
-    const pos = ta.selectionStart;
-    const newVal = ta.value.slice(0, pos) + "\n• " + ta.value.slice(ta.selectionEnd);
-    updateItem(i, "description", newVal);
-    requestAnimationFrame(() => { ta.selectionStart = ta.selectionEnd = pos + 3; });
-  };
-
-  const updateAdditionalItem = (i: number, field: keyof AdditionalItem, val: string | number) => {
-    setAdditionalItems(prev => {
-      const next = [...prev];
-      const updated = { ...next[i], [field]: val };
-      const p = field === "price" ? Number(val) : updated.price;
-      const qty = field === "quantity" ? Number(val) : updated.quantity;
-      updated.amount = updated.status === "Included" ? p * qty : 0;
-      next[i] = updated;
-      return next;
-    });
-  };
-
   const projectItemsTotal = items.reduce((s, it) => s + (it.amount || 0), 0);
   const discountedProjectTotal = projectItemsTotal * (1 - (form.discount || 0) / 100);
   const additionalTotal = additionalItems.reduce((s, ai) => s + (ai.status === "Included" ? (ai.amount || 0) : 0), 0);
@@ -300,18 +251,20 @@ export function QuotationEdit({ id }: Props) {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={`/sales/quotations/${qid}`}><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Edit Quotation</h1>
-          <p className="text-sm text-muted-foreground font-mono">{form.quotationNumber}</p>
+      <div className="flex flex-wrap gap-3 items-start">
+        <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/sales/quotations/${qid}`}><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
+          </Button>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Edit Quotation</h1>
+            <p className="text-sm text-muted-foreground font-mono">{form.quotationNumber}</p>
+          </div>
+          <Badge className="capitalize bg-gray-100 text-gray-700">{q.status}</Badge>
         </div>
-        <Badge className="capitalize bg-gray-100 text-gray-700">{q.status}</Badge>
 
         {/* Revision bump toggle */}
-        <div className="ml-auto flex items-center gap-2 border rounded-lg px-3 py-2 bg-orange-50 border-orange-200">
+        <div className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-orange-50 border-orange-200 shrink-0">
           <RotateCcw className="w-4 h-4 text-orange-600 flex-shrink-0" />
           <div className="text-sm">
             <span className="text-orange-800 font-medium">Bump revision: </span>
@@ -334,8 +287,8 @@ export function QuotationEdit({ id }: Props) {
       {/* Client & Project Details */}
       <Card>
         <CardHeader><CardTitle>Company Detail &amp; Client Detail</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          <div className="space-y-1 col-span-2 sm:col-span-1">
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1 sm:col-span-1">
             <Label>Our Company *</Label>
             <Select value={form.companyId} onValueChange={v => setForm(p => ({ ...p, companyId: v }))}>
               <SelectTrigger><SelectValue placeholder="Select company" /></SelectTrigger>
@@ -361,6 +314,10 @@ export function QuotationEdit({ id }: Props) {
             <Input type="email" value={form.clientEmail} onChange={e => setForm(p => ({ ...p, clientEmail: e.target.value }))} />
           </div>
           <div className="space-y-1">
+            <Label>Client Designation</Label>
+            <Input value={form.clientDesignation} onChange={e => setForm(p => ({ ...p, clientDesignation: e.target.value }))} placeholder="e.g. Project Manager" />
+          </div>
+          <div className="space-y-1">
             <Label>Customer TRN</Label>
             <Input value={form.customerTrn} onChange={e => setForm(p => ({ ...p, customerTrn: e.target.value }))} placeholder="Optional" />
           </div>
@@ -372,276 +329,83 @@ export function QuotationEdit({ id }: Props) {
             <Label>Project Location / Site</Label>
             <Input value={form.projectLocation} onChange={e => setForm(p => ({ ...p, projectLocation: e.target.value }))} />
           </div>
+          <div className="space-y-1 col-span-2">
+            <Label>Client Company Office Address</Label>
+            <Textarea
+              value={form.clientAddress}
+              onChange={e => setForm(p => ({ ...p, clientAddress: e.target.value }))}
+              placeholder="e.g. Office 301, Al Bateen Business Centre, Abu Dhabi, UAE"
+              rows={2}
+              className="resize-none"
+            />
+          </div>
           <div className="space-y-1">
-            <Label>Validity</Label>
+            <Label>Quotation Validity</Label>
             <Input value={form.validity} onChange={e => setForm(p => ({ ...p, validity: e.target.value }))} />
           </div>
           <div className="space-y-1">
+            <Label>Lead Time for Delivery <span className="text-red-500">*</span></Label>
+            <Input
+              value={form.leadTime}
+              onChange={e => setForm(p => ({ ...p, leadTime: e.target.value }))}
+              placeholder="e.g. 45–60 working days"
+            />
+          </div>
+          <div className="space-y-1 col-span-2">
             <Label>Payment Terms</Label>
-            <Select
-              onValueChange={(key) => {
-                const preset = getPresetByKey(key);
-                if (preset) setForm(p => ({ ...p, paymentTerms: preset.text }));
-              }}
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Pick a standard preset…" />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_TERMS_PRESETS.map(p => (
-                  <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input value={form.paymentTerms} onChange={e => setForm(p => ({ ...p, paymentTerms: e.target.value }))} placeholder="e.g. 75% Advance upon LPO, 25% Before Delivery" />
+            <PaymentTermsBuilder
+              value={form.paymentTerms}
+              onChange={(v) => setForm(p => ({ ...p, paymentTerms: v }))}
+              grandTotal={grandTotal}
+            />
           </div>
           <div className="space-y-1">
             <Label>Prepared By</Label>
             <Input value={form.preparedByName} onChange={e => setForm(p => ({ ...p, preparedByName: e.target.value }))} placeholder="e.g. ASIF LATIF" />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Line Items */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Project Items</CardTitle>
-          <Button variant="outline" size="sm" onClick={() => setItems(p => [...p, emptyItem()])}>
-            <Plus className="w-4 h-4 mr-1" />Add Row
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto rounded border border-[#1a3d6e]">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-[#1a3d6e] text-white">
-                  <th className="text-center py-2 px-2 font-semibold w-12 border border-[#2d5a9e] border-t-0 border-l-0">S#</th>
-                  <th className="text-center py-2 px-2 font-semibold border border-[#2d5a9e] border-t-0">Description</th>
-                  <th className="text-center py-2 px-2 font-semibold w-32 border border-[#2d5a9e] border-t-0">Size / Status</th>
-                  <th className="text-center py-2 px-2 font-semibold w-28 border border-[#2d5a9e] border-t-0">Price (AED)</th>
-                  <th className="text-center py-2 px-2 font-semibold w-16 border border-[#2d5a9e] border-t-0">Qty.</th>
-                  <th className="text-center py-2 px-2 font-semibold w-24 border border-[#2d5a9e] border-t-0">Discount %</th>
-                  <th className="text-center py-2 px-2 font-semibold w-32 border border-[#2d5a9e] border-t-0 border-r-0">Total (AED)</th>
-                  <th className="w-8 bg-[#1a3d6e] border-0"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, i) => (
-                  <tr key={i} className="bg-[#d6e8f7] hover:bg-[#c5ddf3]">
-                    <td className="px-2 text-center font-semibold text-[#1a3d6e] border border-[#6fa3d8] border-t-0 border-l-0 align-middle">
-                      {String(i + 1).padStart(2, "0")}
-                    </td>
-                    <td className="p-1 border border-[#6fa3d8] border-t-0 align-top">
-                      <div className="flex gap-1 mb-1">
-                        <Select
-                          value=""
-                          onValueChange={v => {
-                            const preset = DESCRIPTION_PRESETS.find(p => p.value === v);
-                            if (preset && preset.value !== "custom") updateItem(i, "description", preset.text);
-                            else if (preset?.value === "custom") updateItem(i, "description", "");
-                          }}
-                        >
-                          <SelectTrigger className="h-7 text-xs flex-1 bg-[#1a3d6e] text-white border-[#1a3d6e] hover:bg-[#2d5a9e] [&>svg]:text-white">
-                            <SelectValue placeholder="▾ Select template..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {DESCRIPTION_PRESETS.map(p => (
-                              <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <button
-                          type="button"
-                          title={previewItems.has(i) ? "Edit" : "Preview"}
-                          onClick={() => setPreviewItems(prev => {
-                            const next = new Set(prev);
-                            next.has(i) ? next.delete(i) : next.add(i);
-                            return next;
-                          })}
-                          className="h-7 w-7 shrink-0 flex items-center justify-center rounded border border-[#6fa3d8] bg-white hover:bg-[#e8f1fb] text-[#1a3d6e]"
-                        >
-                          {previewItems.has(i) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                        </button>
-                      </div>
-                      {previewItems.has(i) ? (
-                        <div className="min-h-[120px] w-full rounded border border-[#6fa3d8] bg-[#eaf3fb] p-2 space-y-0.5">
-                          {item.description ? renderDescriptionPreview(item.description) : (
-                            <span className="text-xs text-muted-foreground italic">No content yet…</span>
-                          )}
-                        </div>
-                      ) : (
-                        <Textarea
-                          value={item.description}
-                          onChange={e => updateItem(i, "description", e.target.value)}
-                          onKeyDown={e => handleDescriptionKeyDown(e, i)}
-                          className="text-sm w-full min-h-[120px] resize-y bg-transparent border-[#6fa3d8] focus:border-[#1a3d6e]"
-                          placeholder="Select a template above or type freely..."
-                        />
-                      )}
-                    </td>
-                    <td className="p-0 border border-[#6fa3d8] border-t-0">
-                      <Input
-                        value={item.sizeStatus}
-                        onChange={e => updateItem(i, "sizeStatus", e.target.value)}
-                        className="h-full w-full min-h-[156px] rounded-none text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        placeholder="e.g. 12X6X2.4M"
-                      />
-                    </td>
-                    <td className="p-0 border border-[#6fa3d8] border-t-0">
-                      <Input
-                        type="number"
-                        value={item.rate}
-                        onChange={e => updateItem(i, "rate", e.target.value)}
-                        className="h-full w-full min-h-[156px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </td>
-                    <td className="p-0 border border-[#6fa3d8] border-t-0">
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={e => updateItem(i, "quantity", e.target.value)}
-                        className="h-full w-full min-h-[156px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </td>
-                    <td className="p-0 border border-[#6fa3d8] border-t-0">
-                      <Input
-                        type="number"
-                        value={item.discount}
-                        onChange={e => updateItem(i, "discount", e.target.value)}
-                        className="h-full w-full min-h-[156px] rounded-none text-right text-sm bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        min={0} max={100}
-                      />
-                    </td>
-                    <td className="px-2 text-right font-semibold text-[#1a3d6e] border border-[#6fa3d8] border-t-0 border-r-0 align-middle">
-                      AED {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-1 border-0 align-middle">
-                      {items.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => setItems(p => p.filter((_, j) => j !== i))}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-3 flex justify-end">
-            <div className="w-80 space-y-2 text-sm">
-              <div className="flex justify-between font-semibold border-t pt-2">
-                <span className="text-muted-foreground">Project Items Subtotal (Excl. VAT)</span>
-                <span>AED {projectItemsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+          <div className="col-span-2 border-t pt-3 mt-1">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Company Contact / Sales Person (shown on document)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Contact Person Name</Label>
+                <Input value={form.creatorName} onChange={e => setForm(p => ({ ...p, creatorName: e.target.value }))} placeholder="e.g. Asif Latif" />
+              </div>
+              <div className="space-y-1">
+                <Label>Contact Phone</Label>
+                <Input value={form.creatorPhone} onChange={e => setForm(p => ({ ...p, creatorPhone: e.target.value }))} placeholder="e.g. +971-50-100-0001" />
+              </div>
+              <div className="space-y-1">
+                <Label>Contact Email</Label>
+                <Input type="email" value={form.creatorEmail} onChange={e => setForm(p => ({ ...p, creatorEmail: e.target.value }))} placeholder="e.g. sales@primemaxprefab.com" />
+              </div>
+              <div className="space-y-1">
+                <Label>Designation</Label>
+                <Input value={form.creatorDesignation} onChange={e => setForm(p => ({ ...p, creatorDesignation: e.target.value }))} placeholder="e.g. Sales Manager" />
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Line Items */}
+      <ProjectItemsTable brand={brand} items={items} onChange={setItems} />
+
       {/* Additional Commercial Items */}
-      <Card style={{ margin: "10px" }}>
-        <CardHeader><CardTitle>Additional Commercial Items</CardTitle></CardHeader>
-        <CardContent>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="text-left pb-2 pt-1 font-semibold pl-2">Item</th>
-                <th className="text-right pb-2 pt-1 font-semibold w-32">Price (AED)</th>
-                <th className="text-right pb-2 pt-1 font-semibold w-16">Qty</th>
-                <th className="text-center pb-2 pt-1 font-semibold w-36">Status</th>
-                <th className="text-right pb-2 pt-1 font-semibold w-36 pr-2">Total (AED)</th>
-                <th className="w-8"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {additionalItems.map((ai, i) => (
-                <tr key={i} className="border-b last:border-0 align-middle">
-                  <td className="py-1.5 pl-2">
-                    <Input
-                      value={ai.description}
-                      onChange={e => updateAdditionalItem(i, "description", e.target.value)}
-                      className="h-8 text-sm"
-                    />
-                  </td>
-                  <td className="py-1.5 px-1">
-                    <Input
-                      type="number"
-                      value={ai.price ?? 0}
-                      onChange={e => updateAdditionalItem(i, "price", parseFloat(e.target.value) || 0)}
-                      className="h-8 text-right text-sm"
-                      disabled={ai.status === "Excluded"}
-                    />
-                  </td>
-                  <td className="py-1.5 px-1">
-                    <Input
-                      type="number"
-                      value={ai.quantity ?? 1}
-                      onChange={e => updateAdditionalItem(i, "quantity", parseFloat(e.target.value) || 1)}
-                      className="h-8 text-right text-sm"
-                      disabled={ai.status === "Excluded"}
-                    />
-                  </td>
-                  <td className="py-1.5 px-2">
-                    <Select value={ai.status} onValueChange={v => updateAdditionalItem(i, "status", v)}>
-                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Included">Included</SelectItem>
-                        <SelectItem value="Excluded">Excluded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="py-1.5 px-2 text-right text-sm font-medium">
-                    {ai.status === "Included"
-                      ? `AED ${(ai.amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-                      : <span className="text-muted-foreground">—</span>}
-                  </td>
-                  <td className="py-1.5 pl-1">
-                    {additionalItems.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={() => setAdditionalItems(p => p.filter((_, j) => j !== i))}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            onClick={() => setAdditionalItems(p => [...p, { description: "", status: "Excluded", price: 0, quantity: 1, amount: 0 }])}
-          >
-            <Plus className="w-4 h-4 mr-1" />Add Row
-          </Button>
-          {/* Additional Commercial Items Subtotal */}
-          <div className="flex justify-end items-baseline gap-4 mt-4 pt-3 border-t">
-            <span className="text-sm text-muted-foreground">Additional Commercial Items Subtotal (Excl. VAT)</span>
-            <span className="text-base font-bold text-[#0f2d5a]">
-              AED {additionalTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      <div style={{ margin: "10px" }}>
+        <AdditionalItemsTable
+          items={additionalItems}
+          onChange={setAdditionalItems}
+        />
+      </div>
 
       {/* Totals */}
       <Card>
         <CardHeader><CardTitle>Totals</CardTitle></CardHeader>
         <CardContent>
-          <div className="flex gap-6 items-start">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
             {BANK_DETAILS[Number(form.companyId)] && (
-              <div className="flex-1 border rounded-lg p-4 bg-muted/40">
-                <div className="text-xs font-bold uppercase tracking-wide text-[#0f2d5a] mb-2">Bank Details</div>
+              <div className="flex-1 w-full border rounded-lg p-4 bg-muted/40">
+                <div className="text-xs font-bold uppercase tracking-wide text-[#1E0040] mb-2">Bank Details</div>
                 <table className="text-xs w-full">
                   <tbody>
                     {[
@@ -661,7 +425,7 @@ export function QuotationEdit({ id }: Props) {
                 </table>
               </div>
             )}
-            <div className="w-96 flex-shrink-0 space-y-2">
+            <div className="w-full lg:w-96 lg:flex-shrink-0 space-y-2">
               {/* Project Items row */}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Project Items Subtotal (Excl. VAT)</span>
@@ -743,7 +507,7 @@ export function QuotationEdit({ id }: Props) {
             <TechSpecEditor
               sections={techSpecSections}
               onChange={setTechSpecSections}
-            />
+            brand={brand} />
           </CardContent>
         )}
       </Card>
@@ -766,7 +530,7 @@ export function QuotationEdit({ id }: Props) {
               sections={tcSections}
               onChange={setTcSections}
               onReset={() => setTcSections(parseTCString(STANDARD_TC))}
-            />
+            brand={brand} />
           </CardContent>
         )}
       </Card>
@@ -848,7 +612,7 @@ export function QuotationEdit({ id }: Props) {
           Save as Draft
         </Button>
         <Button
-          className={primeBtnCls}
+          className="btn-brand"
           onClick={() => handleSave("sent")}
           disabled={update.isPending || !form.companyId || !form.clientName}
         >
