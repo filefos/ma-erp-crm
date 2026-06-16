@@ -36,12 +36,11 @@ interface FormState {
   validityDate: string;
   status: string;
   notes: string;
+  lpoNumber: string;
 }
 
 export function ProformaInvoiceEdit({ id }: Props) {
   const { activeCompanyId } = useActiveCompany();
-  const isElite = activeCompanyId === 2;
-  const primeBtnCls = isElite ? "bg-[#0D0D0D] hover:bg-[#8B0000]" : "bg-[#0f2d5a] hover:bg-[#1e6ab0]";
   const pid = parseInt(id, 10);
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
@@ -56,7 +55,7 @@ export function ProformaInvoiceEdit({ id }: Props) {
     clientTrn: "", companyTrn: "",
     projectName: "", projectLocation: "",
     subtotal: 0, vatPercent: 5, vatAmount: 0, total: 0,
-    paymentTerms: "", validityDate: "", status: "draft", notes: "",
+    paymentTerms: "", validityDate: "", status: "draft", notes: "", lpoNumber: "",
   });
 
   useEffect(() => {
@@ -77,15 +76,28 @@ export function ProformaInvoiceEdit({ id }: Props) {
       validityDate: pi.validityDate ?? "",
       status: pi.status ?? "draft",
       notes: (pi as any).notes ?? "",
+      lpoNumber: (pi as any).lpoNumber ?? "",
     });
   }, [pi]);
 
-  // Auto-recalc VAT and total when subtotal or VAT% change
-  useEffect(() => {
-    const vatAmount = +(form.subtotal * form.vatPercent / 100).toFixed(2);
-    const total = +(form.subtotal + vatAmount).toFixed(2);
-    setForm(p => (p.vatAmount === vatAmount && p.total === total ? p : { ...p, vatAmount, total }));
-  }, [form.subtotal, form.vatPercent]);
+  // Helpers — each recalculates the other derived fields inline so all 4
+  // amount fields stay consistent without fighting useEffect loops.
+  const onSubtotalChange = (v: number) => {
+    const vatAmount = +(v * form.vatPercent / 100).toFixed(2);
+    setForm(p => ({ ...p, subtotal: v, vatAmount, total: +(v + vatAmount).toFixed(2) }));
+  };
+  const onVatPctChange = (pct: number) => {
+    const vatAmount = +(form.subtotal * pct / 100).toFixed(2);
+    setForm(p => ({ ...p, vatPercent: pct, vatAmount, total: +(p.subtotal + vatAmount).toFixed(2) }));
+  };
+  const onVatAmountChange = (v: number) => {
+    setForm(p => ({ ...p, vatAmount: v, total: +(p.subtotal + v).toFixed(2) }));
+  };
+  const onGrandTotalChange = (v: number) => {
+    const subtotal = +(v / (1 + form.vatPercent / 100)).toFixed(2);
+    const vatAmount = +(v - subtotal).toFixed(2);
+    setForm(p => ({ ...p, total: v, subtotal, vatAmount }));
+  };
 
   const update = useUpdateProformaInvoice({
     mutation: {
@@ -93,7 +105,7 @@ export function ProformaInvoiceEdit({ id }: Props) {
         queryClient.invalidateQueries({ queryKey: getGetProformaInvoiceQueryKey(pid) });
         queryClient.invalidateQueries({ queryKey: getListProformaInvoicesQueryKey() });
         toast({ title: "Proforma Invoice updated." });
-        navigate("/sales/proforma-invoices/" + pid);
+        navigate("/accounts/proforma-invoices/" + pid);
       },
       onError: () => toast({ title: "Failed to update.", variant: "destructive" }),
     },
@@ -126,6 +138,7 @@ export function ProformaInvoiceEdit({ id }: Props) {
           companyTrn: form.companyTrn || null,
           projectLocation: form.projectLocation || null,
           notes: form.notes || null,
+          lpoNumber: form.lpoNumber || null,
         } as Record<string, unknown>),
       },
     });
@@ -135,11 +148,11 @@ export function ProformaInvoiceEdit({ id }: Props) {
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/sales/proforma-invoices/${pid}`}><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
+          <Link href={`/accounts/proforma-invoices/${pid}`}><ArrowLeft className="w-4 h-4 mr-1" />Back</Link>
         </Button>
         <h1 className="text-xl font-semibold">Edit Proforma Invoice — {pi.piNumber}</h1>
         <div className="ml-auto">
-          <Button onClick={handleSave} disabled={update.isPending} className={primeBtnCls}>
+          <Button onClick={handleSave} disabled={update.isPending} className="btn-brand">
             <Save className="w-4 h-4 mr-1" />{update.isPending ? "Saving…" : "Save Changes"}
           </Button>
         </div>
@@ -169,6 +182,10 @@ export function ProformaInvoiceEdit({ id }: Props) {
             <Input value={form.companyTrn} onChange={e => setForm(p => ({ ...p, companyTrn: e.target.value }))} placeholder="e.g. 105383255400003" data-testid="input-company-trn" />
           </div>
           <div className="space-y-1">
+            <Label>LPO Ref # <span className="text-xs text-muted-foreground font-normal">(manual — auto-filled if linked Sales LPO exists)</span></Label>
+            <Input value={form.lpoNumber} onChange={e => setForm(p => ({ ...p, lpoNumber: e.target.value }))} placeholder="e.g. EP-LPO-2026-0010" />
+          </div>
+          <div className="space-y-1">
             <Label>Status</Label>
             <Select value={form.status} onValueChange={(v) => setForm(p => ({ ...p, status: v }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -191,23 +208,28 @@ export function ProformaInvoiceEdit({ id }: Props) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Amounts</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center justify-between">
+            Amounts
+            <span className="text-[11px] font-normal text-muted-foreground">All fields editable — edit any one and the others update automatically</span>
+          </CardTitle>
+        </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="space-y-1">
-            <Label>Subtotal</Label>
-            <Input type="number" value={form.subtotal} onChange={e => setForm(p => ({ ...p, subtotal: parseFloat(e.target.value) || 0 }))} />
+            <Label>Subtotal (excl. VAT)</Label>
+            <Input type="number" value={form.subtotal} onChange={e => onSubtotalChange(parseFloat(e.target.value) || 0)} />
           </div>
           <div className="space-y-1">
             <Label>VAT %</Label>
-            <Input type="number" value={form.vatPercent} onChange={e => setForm(p => ({ ...p, vatPercent: parseFloat(e.target.value) || 0 }))} />
+            <Input type="number" value={form.vatPercent} onChange={e => onVatPctChange(parseFloat(e.target.value) || 0)} />
           </div>
           <div className="space-y-1">
             <Label>VAT Amount</Label>
-            <Input type="number" value={form.vatAmount} readOnly className="bg-muted" />
+            <Input type="number" value={form.vatAmount} onChange={e => onVatAmountChange(parseFloat(e.target.value) || 0)} />
           </div>
           <div className="space-y-1">
-            <Label>Grand Total</Label>
-            <Input type="number" value={form.total} readOnly className="bg-muted font-semibold" />
+            <Label className="font-semibold">Grand Total (incl. VAT)</Label>
+            <Input type="number" value={form.total} onChange={e => onGrandTotalChange(parseFloat(e.target.value) || 0)} className="font-semibold ring-1 ring-primary/30" />
           </div>
         </CardContent>
       </Card>
